@@ -48,7 +48,17 @@ internal sealed partial class UltimusDirectorActor {
 
     // While its creatures stand: the fight by the thing comes before the thing itself.
     private UltimusPlanner.Target GuardFight(UltimusMember.Status leader, UltimusPlanner.Target target) {
-        if (target?.Kind != UltimusPlanner.USE || !BotUseGuards.On(leader.CharId, target.Quest, target.Goal)) {
+        if (target?.Kind != UltimusPlanner.USE) {
+            return null;
+        }
+
+        // Learned before: this thing needed its creatures beaten first, so he fights them first this time.
+        if (BotUseGuards.FightFirst(leader.CharId, target.Quest, target.Goal, leader.Zone, leader.ZoneActor, target.X, target.Y)) {
+            Note("Ultimus", $"{leader.Name} remembers that {target.What} needed the creatures by it beaten first: fights them first this time.",
+                UltimusLink.NOTABLE);
+        }
+
+        if (!BotUseGuards.On(leader.CharId, target.Quest, target.Goal)) {
             return null;
         }
 

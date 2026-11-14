@@ -49,7 +49,17 @@ internal sealed partial class QuestTeamDirectorActor {
 
     // While its creatures stand: the fight by the thing comes before the thing itself.
     private QuestTeamPlanner.Target GuardFight(QuestTeamMember.Status leader, QuestTeamPlanner.Target target) {
-        if (target?.Kind != QuestTeamPlanner.USE || !BotUseGuards.On(leader.CharId, target.Quest, target.Goal)) {
+        if (target?.Kind != QuestTeamPlanner.USE) {
+            return null;
+        }
+
+        // Learned before: this thing needed its creatures beaten first, so he fights them first this time.
+        if (BotUseGuards.FightFirst(leader.CharId, target.Quest, target.Goal, leader.Zone, leader.ZoneActor, target.X, target.Y)) {
+            Note("Team", $"{leader.Name} remembers that {target.What} needed the creatures by it beaten first: fights them first this time.",
+                QuestTeamLink.NOTABLE);
+        }
+
+        if (!BotUseGuards.On(leader.CharId, target.Quest, target.Goal)) {
             return null;
         }
 
