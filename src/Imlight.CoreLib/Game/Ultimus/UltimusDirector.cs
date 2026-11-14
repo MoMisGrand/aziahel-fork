@@ -538,6 +538,8 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
 
         // Every new move checked against his mission, with its "because" (UltimusDirector.Guard.cs).
         var target = MissionCheck(leader, PickTarget(group));
+        // A quest thing that did not work with its boss or creatures still standing: they are fought first (BotUseGuards).
+        target = GuardFight(leader, target) ?? target;
         // Healing first, above all before a fight (UltimusDirector.Health.cs).
         if (HealFirst(group, target)) {
             _healingAt = DateTime.UtcNow;
@@ -1143,6 +1145,18 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
             // stands in its own wall, so he never got within 120 of its middle and stood 134 away for minutes, offered it
             // the whole time (his PC log, 2026-11-14). A player clicks what lights up.
             var far = UltimusPlanner.Far(member.X, member.Y, target.X, target.Y);
+            // By it for 10 seconds and the game offers nothing to click: with creatures by it, they are fought first and it is
+            // tried again (Niduus, 2026-11-14: the Frozen Forge with Odji Sokkwi still standing).
+            if (index == 0 && far <= 300 && _useNear.Key != target.Key) {
+                _useNear = (target.Key, DateTime.UtcNow);
+            }
+
+            if (everything.Count == 0 && index == 0 && far <= 300 && DateTime.UtcNow - _useNear.Since > TimeSpan.FromSeconds(10)
+                && !BotCollect.HasDone(member.CharId, target.Quest, target.Goal, target.X, target.Y)
+                && UseNeedsFight(member, target, "the game offers nothing to click there yet")) {
+                return;
+            }
+
             if (!searching && far > 120 && (usable.Count == 0 || far > 300)) {
                 WalkTo(index, target);
 
@@ -1150,6 +1164,17 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
             }
 
             if (usable.Count == 0 && everything.Count > 0) {
+                // He clicked it and nothing happened: a few seconds for the step to finish, then, with creatures by it, they
+                // are fought first and it is tried again (Niduus, 2026-11-14, the Frozen Forge with Odji Sokkwi standing).
+                var lastUse = everything.Select(id => _clicks.TryGetValue($"{target.Key}|{index}|{id}", out var c) ? c.Last : DateTime.MinValue).Max();
+                if (DateTime.UtcNow - lastUse < TimeSpan.FromSeconds(6)) {
+                    return;
+                }
+
+                if (index == 0 && UseNeedsFight(member, target, "used it and nothing happened")) {
+                    return;
+                }
+
                 BotCollect.SpotDone(member.CharId, target.Quest, target.Goal, target.X, target.Y);
                 Note(member.Role, $"{member.Name} already used what is here for {target.What}: on to the next one.");
 
@@ -1199,6 +1224,9 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
             return;
         }
     }
+
+    // The use step he came within reach of, and since when (UseHere: 10 seconds by it with nothing offered).
+    private (string Key, DateTime Since) _useNear = ("", DateTime.MaxValue);
 
     // Steps he is searching the area for more to pick up, and since when (UseHere).
     private readonly Dictionary<string, DateTime> _collectSearch = [];

@@ -131,6 +131,9 @@ internal static class BotCollect {
         }
     }
 
+    /// <summary>Forgets what a wizard used for one step, so it is tried again (its guards were beaten, BotUseGuards).</summary>
+    internal static void ForgetStep(ulong charId, string quest, string goal) => s_steps.TryRemove(Key(charId, quest, goal), out _);
+
     /// <summary>Forgets a wizard's steps (a restart makes new wizards).</summary>
     internal static void Forget(ulong charId) {
         foreach (var key in s_steps.Keys.Where(k => k.StartsWith(charId + "|", StringComparison.Ordinal)).ToList()) {

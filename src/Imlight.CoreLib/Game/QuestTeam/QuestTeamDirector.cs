@@ -527,6 +527,8 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
     private void Lead(List<QuestTeamMember.Status> group) {
         var leader = group[0];
         var target = PickTarget(group);
+        // A quest thing that did not work with its boss or creatures still standing: they are fought first (BotUseGuards).
+        target = GuardFight(leader, target) ?? target;
         if (target?.Kind == QuestTeamPlanner.FIGHT && !ReadyToFight(group)) {
             return;
         }
@@ -1020,17 +1022,40 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
     private void UseHere(List<QuestTeamMember.Status> group, QuestTeamPlanner.Target target) {
         foreach (var member in group.Where(m => HoldsGoal(m, target.Quest, target.Goal))) {
             var index = _team.IndexOf(member);
-            if (QuestTeamPlanner.Far(member.X, member.Y, target.X, target.Y) > 120) {
+            // Only what this wizard hasn't used for the step yet; a spot with nothing left is done for it, and the team
+            // goes on to the next (Niduus, 2026-11-13: "Not revisiting collected ones they have collected independently").
+            var everything = member.Options.Where(o => o.Value.Any(s => s.Service == "Interact")).Select(o => o.Key).ToList();
+            var usable = everything.Where(id => !BotCollect.HasUsed(member.CharId, target.Quest, target.Goal, id)).ToList();
+            var far = QuestTeamPlanner.Far(member.X, member.Y, target.X, target.Y);
+            if (index == 0 && far <= 300 && _useNear.Key != target.Key) {
+                _useNear = (target.Key, DateTime.UtcNow);
+            }
+
+            // By it for 10 seconds and the game offers nothing to click: with creatures by it, they are fought first and it is
+            // tried again (Niduus, 2026-11-14: the Frozen Forge with Odji Sokkwi still standing).
+            if (everything.Count == 0 && index == 0 && far <= 300 && DateTime.UtcNow - _useNear.Since > TimeSpan.FromSeconds(10)
+                && !BotCollect.HasDone(member.CharId, target.Quest, target.Goal, target.X, target.Y)
+                && UseNeedsFight(member, target, "the game offers nothing to click there yet")) {
+                return;
+            }
+
+            if (far > 120 && (usable.Count == 0 || far > 300)) {
                 WalkTo(index, target);
 
                 return;
             }
 
-            // Only what this wizard hasn't used for the step yet; a spot with nothing left is done for it, and the team
-            // goes on to the next (Niduus, 2026-11-13: "Not revisiting collected ones they have collected independently").
-            var everything = member.Options.Where(o => o.Value.Any(s => s.Service == "Interact")).Select(o => o.Key).ToList();
-            var usable = everything.Where(id => !BotCollect.HasUsed(member.CharId, target.Quest, target.Goal, id)).ToList();
             if (usable.Count == 0 && everything.Count > 0) {
+                // Clicked and nothing happened: a few seconds for the step to finish, then the creatures by it first.
+                var lastUse = everything.Select(id => _clicks.TryGetValue($"{target.Key}|{index}|{id}", out var c) ? c.Last : DateTime.MinValue).Max();
+                if (DateTime.UtcNow - lastUse < TimeSpan.FromSeconds(6)) {
+                    return;
+                }
+
+                if (index == 0 && UseNeedsFight(member, target, "used it and nothing happened")) {
+                    return;
+                }
+
                 BotCollect.SpotDone(member.CharId, target.Quest, target.Goal, target.X, target.Y);
                 Note(member.Role, $"{member.Name} already used what is here for {target.What}: on to the next one.");
 
