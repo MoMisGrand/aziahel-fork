@@ -503,6 +503,7 @@ internal sealed partial class UltimusDirectorActor {
             Logger.Warning("Ultimus: could not write the watchdog stop: {0}", Logger.Args(e.Message));
         }
 
+        StuckStop($"{where} at ({leader.X:0}, {leader.Y:0})" + (_target is { } step ? $", on \"{UltimusText.Short(step.What, 70)}\"" : "") + ".");
         _paused = true;
         _doing = "stopped by the watchdog (nothing done for a long time)";
         _watchdogStage = 0;

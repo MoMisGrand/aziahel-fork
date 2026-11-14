@@ -315,6 +315,10 @@ internal sealed partial class UltimusDirectorActor {
         // The last 7 days' 5 worst spots, for the top of his Daily diary in Ahziael.
         public List<string> Week { get; set; } = [];
 
+        // The times the watchdog stopped him (two hours with nothing done), "yyyy-MM-dd|HH:mm|what", for the weekly report
+        // (Niduus, 2026-11-14).
+        public List<string> Stops { get; set; } = [];
+
         // The Monday of the week the weekly report was last written to his log.
         public string WeekNoted { get; set; } = "";
     }
@@ -419,12 +423,33 @@ internal sealed partial class UltimusDirectorActor {
             }
         }
 
+        // The watchdog's stops in those days come after the spots: each one is two hours lost in one go.
+        var stops = _stuckDays.Stops.Select(l => l.Split('|', 3)).Where(p => p.Length == 3 && days.Contains(p[0]))
+            .Select(p => $"Stopped himself on {DayName(p[0])} at {p[1]} (two hours with no step done and no XP): {p[2]}");
+
         return [.. summed.Values.OrderByDescending(v => v.Spot.Seconds).Take(5).Select(v => {
             var (why, fix) = StuckFix(v.Spot);
             var quest = string.IsNullOrEmpty(v.Spot.LastQuest) ? "" : $" ({UltimusText.Title(v.Spot.LastQuest)})";
             return $"{v.Spot.Seconds / 60:0} min over {(v.Days == 1 ? "1 day" : $"{v.Days} days")} in {UltimusText.Zone(v.Spot.Zone)} near " +
                    $"({v.Spot.X:0}, {v.Spot.Y:0}), mostly {why}, last on \"{UltimusText.Short(v.Spot.LastStep, 70)}\"{quest}. Likely fix: {fix}.";
-        })];
+        }), .. stops];
+    }
+
+    private static string DayName(string day) => DateTime.TryParseExact(day, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture,
+        System.Globalization.DateTimeStyles.None, out var d) ? d.ToString("dddd d MMMM", System.Globalization.CultureInfo.InvariantCulture) : day;
+
+    /// <summary>The watchdog stopped him: written down for the weekly stuck report and his Daily diary.</summary>
+    private void StuckStop(string what) {
+        _stuckDays ??= ReadStuckDays();
+        var now = DateTime.Now;
+        var today = now.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+        if (_stuckDays.Date != today) {
+            _stuckDays.Date = today;
+            _stuckDays.Today = [];
+        }
+
+        _stuckDays.Stops.Add($"{today}|{now:HH:mm}|{what.Replace('|', '/')}");
+        WriteStuckDays();
     }
 
     // Once a week (the first time he plays in a new week): last week's report goes in his log and weekly-stuck.txt.
@@ -461,8 +486,10 @@ internal sealed partial class UltimusDirectorActor {
             Logger.Debug("Ultimus: weekly-stuck.txt could not be written: {0}", Logger.Args(ex.Message));
         }
 
+        var stopCount = lastWeek.Count(l => l.StartsWith("Stopped himself", StringComparison.Ordinal));
         Note("Ultimus", "WEEKLY STUCK REPORT: the places he lost the most time last week: " +
-                        string.Join(" ", lastWeek.Take(3).Select((l, i) => $"{i + 1}. {l}")) + " (all 5 in weekly-stuck.txt and his Daily diary).",
+                        string.Join(" ", lastWeek.Take(3).Select((l, i) => $"{i + 1}. {l}")) +
+                        (stopCount > 0 ? $" The watchdog stopped him {stopCount} time(s)." : "") + " (all of it in weekly-stuck.txt and his Daily diary).",
             UltimusLink.NOTABLE);
     }
 
@@ -502,6 +529,9 @@ internal sealed partial class UltimusDirectorActor {
             _stuckDays.DayKeys.Remove(old);
             _stuckDays.DaySpots.Remove(old);
         }
+
+        var keepFrom = DateTime.Now.AddDays(-14).ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+        _stuckDays.Stops.RemoveAll(l => string.CompareOrdinal(l, keepFrom) < 0);
 
         try {
             Directory.CreateDirectory(UltimusWire.Folder);
