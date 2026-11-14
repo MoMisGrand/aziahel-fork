@@ -1116,6 +1116,17 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
             // quest arrow's spot and then stood there for 12 minutes, caught by Hall Servants again and again): what he
             // passes on the way that he hasn't used for the step is used, as a player picks up what they find.
             var searching = _collectSearch.TryGetValue(target.Key, out var searchSince);
+            // Searching ends after 10 minutes: the step is planned again from the start (the arrow, the step's area), not
+            // searched for 10 hours (his PC log, 2026-11-14: the Entrance Hall, "Taking it to the Tuts").
+            if (searching && DateTime.UtcNow - searchSince > TimeSpan.FromMinutes(10)) {
+                _collectSearch.Remove(target.Key);
+                UltimusPlanner.SetAside(target.Key, TimeSpan.FromMinutes(2));
+                Think($"I looked around for 10 minutes and found nothing more for {target.What}. I stop searching and work the step out " +
+                      "again from the start: where its arrow points and which area it is in.", "search-end|" + target.Key);
+
+                return;
+            }
+
             if (searching && usable.Count == 0) {
                 if (DateTime.UtcNow - searchSince > TimeSpan.FromMinutes(5)) {
                     Issue("quest", target.Quest, $"{target.What}: {member.Name} used what was at the quest arrow's spot and looked around the area " +
@@ -1128,7 +1139,11 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
                 return;
             }
 
-            if (!searching && UltimusPlanner.Far(member.X, member.Y, target.X, target.Y) > 120) {
+            // A thing the game already offers him here is clicked from where he stands: the Frozen Forge in Odji's Chamber
+            // stands in its own wall, so he never got within 120 of its middle and stood 134 away for minutes, offered it
+            // the whole time (his PC log, 2026-11-14). A player clicks what lights up.
+            var far = UltimusPlanner.Far(member.X, member.Y, target.X, target.Y);
+            if (!searching && far > 120 && (usable.Count == 0 || far > 300)) {
                 WalkTo(index, target);
 
                 return;
