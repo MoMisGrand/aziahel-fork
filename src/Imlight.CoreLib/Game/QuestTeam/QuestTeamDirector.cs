@@ -572,6 +572,10 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
             QuestTeamPlanner.TALK or QuestTeamPlanner.OFFER or QuestTeamPlanner.TRAIN or QuestTeamPlanner.SHOP => 160f,
             QuestTeamPlanner.DOOR or QuestTeamPlanner.SPIRAL or QuestTeamPlanner.STONE => 140f,
             QuestTeamPlanner.FIGHT => 40f,
+            // A thing to use: within 300 the step itself decides (it clicks what the game offers from there, walks closer
+            // when nothing is offered, and fights what guards it). At 25 he never got there: the Frozen Forge stands in its
+            // wall and he stopped 135 from its middle for hours (Niduus's log, 2026-11-14, v0.10.860).
+            QuestTeamPlanner.USE => 300f,
             _ => 25f,
         };
 
@@ -1034,7 +1038,6 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
             // By it for 10 seconds and the game offers nothing to click: with creatures by it, they are fought first and it is
             // tried again (Niduus, 2026-11-14: the Frozen Forge with Odji Sokkwi still standing).
             if (everything.Count == 0 && index == 0 && far <= 300 && DateTime.UtcNow - _useNear.Since > TimeSpan.FromSeconds(10)
-                && !BotCollect.HasDone(member.CharId, target.Quest, target.Goal, target.X, target.Y)
                 && UseNeedsFight(member, target, "the game offers nothing to click there yet")) {
                 return;
             }
