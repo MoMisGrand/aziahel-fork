@@ -412,6 +412,11 @@ internal static class UltimusPlanner {
         if (goal.m_goalType == GOAL_TYPE.GOAL_TYPE_USAGE && usageHere
             && QuestStepSpots.UsageObjects(zone, questName, goalName) is { Count: > 0 } things) {
             spots = things;
+            // In the room with the thing: the tracker says what to do here, not where to go (Niduus's screenshot, 2026-11-14:
+            // "Now: Go to Krokotopia,Hall of Champions" while he stood by the Frozen Forge in Odji's Chamber).
+            if (OverlayQuestTracker.GameStepText(goal) is { Length: > 0 } useText && !useText.StartsWith("Go to", StringComparison.OrdinalIgnoreCase)) {
+                step = $"{useText} here";
+            }
         }
 
         // A "use" step that names no area, with its arrow in another area: that area is where the step is (the forge in Odji's
