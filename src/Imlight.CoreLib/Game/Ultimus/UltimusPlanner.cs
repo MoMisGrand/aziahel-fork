@@ -403,8 +403,22 @@ internal static class UltimusPlanner {
         var spots = QuestArrowGoals.GetSpots(quest, goal).Where(s => OverlayQuestTracker.SameZone(s.Zone, zone)).Select(s => s.Spot).ToList();
         // A "use" step clicks the things the step names where they stand, not only the arrow's one spot (Niduus's log,
         // 2026-11-14: "Get Some Bling" sent Ultimus round the Hall of Champions for 15 minutes; its four gems were never at the arrow).
-        if (goal.m_goalType == GOAL_TYPE.GOAL_TYPE_USAGE && QuestStepSpots.UsageObjects(zone, questName, goalName) is { Count: > 0 } things) {
+        // Only in the area the step is in: the quest's own area, else the one its arrow points into. The Frozen Forge of "Taking
+        // it to the Tuts" stands in Odji's Chamber, where the arrow points; the Entrance Hall's braziers carry the same "use the
+        // forge" tag, and Ultimus clicked them and then searched the Entrance Hall for 10 hours (his PC log, 2026-11-14).
+        var arrowZones = QuestArrowGoals.GetSpots(quest, goal).Select(s => s.Zone).Where(z => !string.IsNullOrEmpty(z)).ToList();
+        var usageHere = stepZone.Length > 0 ? OverlayQuestTracker.SameZone(stepZone, zone)
+            : arrowZones.Count == 0 || arrowZones.Any(z => OverlayQuestTracker.SameZone(z, zone));
+        if (goal.m_goalType == GOAL_TYPE.GOAL_TYPE_USAGE && usageHere
+            && QuestStepSpots.UsageObjects(zone, questName, goalName) is { Count: > 0 } things) {
             spots = things;
+        }
+
+        // A "use" step that names no area, with its arrow in another area: that area is where the step is (the forge in Odji's
+        // Chamber, after he had left it), so he goes back there as a player follows the arrow.
+        if (goal.m_goalType == GOAL_TYPE.GOAL_TYPE_USAGE && stepZone.Length == 0 && spots.Count == 0 && arrowZones.Count > 0
+            && !arrowZones.Any(z => OverlayQuestTracker.SameZone(z, zone))) {
+            stepZone = arrowZones[0];
         }
 
         var nearest = spots.OrderBy(s => Far(leader.X, leader.Y, s.X, s.Y)).Select(s => ((float, float)?) (s.X, s.Y)).FirstOrDefault();
