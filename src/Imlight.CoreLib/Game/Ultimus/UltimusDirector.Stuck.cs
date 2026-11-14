@@ -98,6 +98,13 @@ internal sealed partial class UltimusDirectorActor {
             skip.Add(UltimusFixes.START);
         }
 
+        // Inside a dungeon the Commons button throws the dungeon away (Niduus's log, 2026-11-14: it took him out of Odji's
+        // Chamber while his step was in it), so it is never one of his fixes there.
+        var inDungeon = InDungeon(member);
+        if (inDungeon) {
+            skip.Add(UltimusFixes.START);
+        }
+
         // The line of sight circle's hop: only by a goal in sight with a clear spot next to it.
         var hop = goal is not null && UltimusSight.InSight(member.X, member.Y, goal.X, goal.Y)
             ? UltimusSight.HopBy(member.Zone, goal.X, goal.Y, member.Z) : null;
@@ -116,7 +123,14 @@ internal sealed partial class UltimusDirectorActor {
         var absent = (_doing ?? "").Contains("no creature for this step is in", StringComparison.OrdinalIgnoreCase);
         if (absent) {
             skip.AddRange([UltimusFixes.ASIDE, UltimusFixes.OTHER_WAY, UltimusFixes.HOP, UltimusFixes.AWAY]);
-            skip.Remove(UltimusFixes.START);
+            if (inDungeon) {
+                // No Commons button in a dungeon: walking well away and back is the nearest to going out and in.
+                skip.Remove(UltimusFixes.AWAY);
+            }
+            else {
+                skip.Remove(UltimusFixes.START);
+            }
+
             Issue("quest", quest, $"The creature for \"{goal?.What ?? _doing}\" never showed up in {UltimusText.Zone(member.Zone)}: "
                                   + "he leaves the area and comes back in, as a player would, and keeps checking. Nothing is skipped.",
                 key: $"absent|{member.Zone}|{step}", level: UltimusLink.ABNORMAL);
@@ -229,6 +243,12 @@ internal sealed partial class UltimusDirectorActor {
     private readonly Dictionary<int, (string Zone, DateTime At)> _recalling = [];
 
     private void Recall(int index, UltimusMember.Status member) {
+        if (InDungeon(member)) {
+            Aside(index, member, 900f, 2500f, "walks well away inside the dungeon (no Commons button in a dungeon)");
+
+            return;
+        }
+
         _actors[index].Tell(new UltimusMember.Recall());
         _recalling[index] = (member.Zone ?? "", DateTime.UtcNow);
         _unstickUntil[index] = DateTime.UtcNow + UNSTICK_FOR;
@@ -266,6 +286,10 @@ internal sealed partial class UltimusDirectorActor {
 
     // A patch under a twentieth of the area's main ground with no teleporter on it.
     private const double BOXED_IN_SHARE = 0.05;
+
+    /// <summary>In a dungeon (an instance): the Commons button would throw it away.</summary>
+    private static bool InDungeon(UltimusMember.Status member)
+        => member.Wizard?.ZoneIsInstance == true || OverlayQuestRoute.IsDungeon(member.Zone);
 
     private static bool BoxedIn(UltimusMember.Status member) {
         var share = OverlayQuestPath.IslandShare(member.Zone, member.X, member.Y);

@@ -426,12 +426,22 @@ internal sealed partial class UltimusDirectorActor {
         var limit = TimeSpan.FromMinutes(Math.Max(5, UltimusPlaybook.Value("Watchdog.Minutes")));
         var idle = DateTime.UtcNow - _progressAt;
         var stage = (int) (idle.TotalMinutes / limit.TotalMinutes);
+        var where = $"{UltimusText.Zone(leader.Zone)}, while {_doing}";
+
+        // Two hours with nothing (Niduus, 2026-11-14, approved): he stops, so he does not spend the night going round the same
+        // spot, and Ahziael shows a red note with what he was doing until Niduus resumes him.
+        var pauseAfter = UltimusPlaybook.Value("Watchdog.PauseMinutes");
+        if (pauseAfter > 0 && idle.TotalMinutes >= pauseAfter) {
+            WatchdogStop(leader, idle, where);
+
+            return;
+        }
+
         if (stage <= _watchdogStage) {
             return;
         }
 
         _watchdogStage = stage;
-        var where = $"{UltimusText.Zone(leader.Zone)}, while {_doing}";
         Issue("team", _currentQuest, $"WATCHDOG: no step done and no XP gained for {idle.TotalMinutes:0} minutes ({where}).",
             key: $"watchdog|{_progressMark}|{stage}", level: UltimusLink.CRITICAL);
         Count("watchdog alarms");
@@ -441,6 +451,14 @@ internal sealed partial class UltimusDirectorActor {
 
         // Only the unstuck moves a player has (the Commons button, walking a new way); never a skip and never being moved.
         switch (stage) {
+            case 1 when InDungeon(leader) && _team.Count > 0:
+                // Inside a dungeon the Commons button throws the dungeon away (Niduus's log, 2026-11-14: it took him out of
+                // Odji's Chamber while his step was in it): he walks well away inside it instead.
+                Think("I have not moved my quest forward in a long time. I am in a dungeon, so I don't press the Commons button: " +
+                      "I walk well away and search for a new way to my step in here.", "watchdog");
+                OverlayQuestPath.Forget(_team[0].CharId);
+                Aside(0, _team[0], 900f, 2500f, "searches the dungeon for a new way to his step");
+                break;
             case 1:
                 Think("I have not moved my quest forward in a long time. I press the Commons button and find my way again from there.", "watchdog");
                 _actors[0].Tell(new UltimusMember.Recall());
@@ -454,6 +472,47 @@ internal sealed partial class UltimusDirectorActor {
             default:
                 Think("Still nothing, and every unstuck move is used. I keep trying and wait for Niduus to look.", "watchdog");
                 break;
+        }
+    }
+
+    internal const string WATCHDOG_STOP_FILE = "watchdog-stop.txt";
+
+    /// <summary>
+    /// No step and no XP for Watchdog.PauseMinutes: he is paused (paused.txt, which Ahziael's Pause button also uses) and
+    /// watchdog-stop.txt says where and what he was doing, for Ahziael's red note.
+    /// </summary>
+    private void WatchdogStop(UltimusMember.Status leader, TimeSpan idle, string where) {
+        var text = new StringBuilder();
+        text.AppendLine(CultureInfo.InvariantCulture, $"Stopped at {DateTime.Now:yyyy-MM-dd HH:mm}: no step done and no XP gained for {idle.TotalMinutes:0} minutes.");
+        text.AppendLine(CultureInfo.InvariantCulture, $"Where: {where} at ({leader.X:0}, {leader.Y:0}).");
+        text.AppendLine(CultureInfo.InvariantCulture, $"Quest: {(string.IsNullOrEmpty(_currentQuest) ? "none" : UltimusText.Title(_currentQuest))}");
+        if (_target is { } target) {
+            text.AppendLine(CultureInfo.InvariantCulture, $"Step: {target.What} ({target.Goal}) at ({target.X:0}, {target.Y:0}).");
+        }
+
+        if (!string.IsNullOrEmpty(_lastReasoning)) {
+            text.AppendLine(CultureInfo.InvariantCulture, $"Last thought: {_lastReasoning}");
+        }
+
+        try {
+            Directory.CreateDirectory(UltimusWire.Folder);
+            File.WriteAllText(Path.Combine(UltimusWire.Folder, WATCHDOG_STOP_FILE), text.ToString());
+            File.WriteAllText(Path.Combine(UltimusWire.Folder, UltimusWire.PAUSE_FILE), "Watchdog: " + text.ToString().Split('\n')[0]);
+        }
+        catch (IOException e) {
+            Logger.Warning("Ultimus: could not write the watchdog stop: {0}", Logger.Args(e.Message));
+        }
+
+        _paused = true;
+        _doing = "stopped by the watchdog (nothing done for a long time)";
+        _watchdogStage = 0;
+        _progressAt = DateTime.UtcNow;
+        Note("Ultimus", $"WATCHDOG STOP: no step done and no XP gained for {idle.TotalMinutes:0} minutes ({where}). He is paused until " +
+                        "Niduus resumes him in Ahziael.", UltimusLink.CRITICAL);
+        Think("I have gone round for hours without moving my quest forward. I stop here and wait for Niduus to look.", "watchdog-stop");
+        Milestone("stuck", $"Ultimus stopped himself: no step done and no XP gained for {idle.TotalMinutes:0} minutes in {where}.");
+        for (var i = 0; i < _team.Count; i++) {
+            StopWalking(i);
         }
     }
 

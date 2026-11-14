@@ -85,6 +85,7 @@ internal static class UltimusPlaybook {
         ("Guard", new("MinWinChance", 70, "Risk budget: a fight I trust less than this (out of 100) is not started until I have prepared (full health and mana, a deck for it).")),
         ("Push", new("ShopMinutes", 30, "In push mode, shop trips only in my first this-many minutes in a new world (its shops have the next gear).")),
         ("Watchdog", new("Minutes", 45, "No step done and no XP gained for this long: I raise the alarm and use a player's unstuck moves (area start, then .stuck go).")),
+        ("Watchdog", new("PauseMinutes", 120, "No step done and no XP gained for this long: I stop (paused) and Ahziael shows a red note on the Ultimus page. 0 = never.")),
         ("Pace", new("StepPause", 4, "After a step is done I take up to this many seconds, as a player reads the next step. 0 = no pause.")),
         ("Pace", new("DialogPerLine", 0.8, "Seconds I read each line of a dialog.")),
         ("Pace", new("DialogMost", 7, "...and at most this many seconds for one dialog.")),
