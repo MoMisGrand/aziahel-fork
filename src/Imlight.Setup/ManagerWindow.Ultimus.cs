@@ -89,6 +89,65 @@ internal sealed partial class ManagerWindow {
         return _ultDoorNote;
     }
 
+    // A red note when the watchdog stopped him: two hours with no step done and no XP (Niduus, 2026-11-14, approved). The
+    // server pauses him (paused.txt starting "Watchdog:") and writes watchdog-stop.txt with where and what he was doing.
+    private readonly TextBlock _ultWatchdogText = new() {
+        TextWrapping = TextWrapping.Wrap, FontWeight = FontWeight.SemiBold, Foreground = new SolidColorBrush(Color.Parse("#E5484D")),
+    };
+    private StackPanel? _ultWatchdogNote;
+
+    private string WatchdogStopped() {
+        try {
+            var pause = Path.Combine(UltimusFolder, "paused.txt");
+            if (File.Exists(pause) && File.ReadAllText(pause).StartsWith("Watchdog:", StringComparison.Ordinal)) {
+                var stop = Path.Combine(UltimusFolder, "watchdog-stop.txt");
+
+                return File.Exists(stop) ? File.ReadAllText(stop).Trim() : File.ReadAllText(pause).Trim();
+            }
+        }
+        catch (Exception) {
+            // Only a note: nothing shows when the files can't be read.
+        }
+
+        return "";
+    }
+
+    private Control UltimusWatchdogNote() {
+        _ultWatchdogNote = new StackPanel { Spacing = 6, IsVisible = false, Margin = new Thickness(0, 4, 0, 4) };
+        _ultWatchdogNote.Children.Add(_ultWatchdogText);
+        _ultWatchdogNote.Children.Add(Row(
+            Action(Plain("Copy what he was doing"), () => CopyAsync(WatchdogStopped(), "Copied. Paste it in the chat so the spot can be fixed.")),
+            Action(Plain("Resume him"), () => {
+                try {
+                    File.Delete(Path.Combine(UltimusFolder, "paused.txt"));
+                    Say("Resumed. Ultimus goes on with his quest.");
+                }
+                catch (Exception) {
+                    Say("Could not resume him. Try the Pause or resume button.");
+                }
+
+                ShowUltimusWatchdogNote();
+
+                return Task.CompletedTask;
+            })));
+
+        return _ultWatchdogNote;
+    }
+
+    private void ShowUltimusWatchdogNote() {
+        if (_ultWatchdogNote is null) {
+            return;
+        }
+
+        var stopped = WatchdogStopped();
+        _ultWatchdogNote.IsVisible = stopped.Length > 0;
+        if (stopped.Length > 0) {
+            _ultWatchdogText.Text = "Ultimus stopped himself: he went two hours without finishing a step or gaining XP, so he is paused " +
+                                    "and waits for you. " + stopped.Split('\n')[0] + " Press Copy what he was doing and paste it in the " +
+                                    "chat, then Resume him.";
+        }
+    }
+
     private void ShowUltimusDoorNote() {
         if (_ultDoorNote is null) {
             return;
@@ -242,6 +301,7 @@ internal sealed partial class ManagerWindow {
                 "Something odd it notices shows in pink in its log. It runs in a little program of its own next to the server; " +
                 "it never touches your own wizards.",
                 _ultState,
+                UltimusWatchdogNote(),
                 UltimusDoorNote(),
                 SwitchRow("Ultimus", _ultEnabled, "On: Ultimus logs in a few seconds later and starts questing. Off: it logs out."),
                 _ultDoing,
@@ -1074,6 +1134,7 @@ internal sealed partial class ManagerWindow {
 
         if (_ultState.IsEffectivelyVisible) {
             ShowUltimusStatus();
+            ShowUltimusWatchdogNote();
             ShowUltimusDoorNote();
         }
 
