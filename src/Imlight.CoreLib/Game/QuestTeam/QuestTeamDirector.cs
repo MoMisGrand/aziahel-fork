@@ -580,6 +580,12 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
         };
 
         var distance = QuestTeamPlanner.Far(leader.X, leader.Y, target.X, target.Y);
+        // The game already offers it (he is in its range): he is there, wherever its middle is. An NPC behind a counter, a
+        // door or a thing set into a wall can't be walked onto (the Frozen Forge, Niduus's log, 2026-11-14).
+        if (distance > reach && distance <= 300 && target.GlobalId != 0 && leader.Options.ContainsKey(target.GlobalId)) {
+            reach = distance;
+        }
+
         if (distance > reach) {
             WalkTo(0, target);
 
@@ -943,7 +949,7 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
 
             var index = _team.IndexOf(member);
             var key = $"{target.Key}|{index}";
-            if (QuestTeamPlanner.Far(member.X, member.Y, target.X, target.Y) > 200) {
+            if (QuestTeamPlanner.Far(member.X, member.Y, target.X, target.Y) > 200 && !member.Options.ContainsKey(target.GlobalId)) {
                 WalkTo(index, target with { X = target.X - 40 });
 
                 return;
@@ -1105,7 +1111,7 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
         }
 
         var index = _team.IndexOf(member);
-        if (QuestTeamPlanner.Far(member.X, member.Y, target.X, target.Y) > 200) {
+        if (QuestTeamPlanner.Far(member.X, member.Y, target.X, target.Y) > 200 && !member.Options.ContainsKey(target.GlobalId)) {
             WalkTo(index, target with { X = target.X - 40 });
 
             return;

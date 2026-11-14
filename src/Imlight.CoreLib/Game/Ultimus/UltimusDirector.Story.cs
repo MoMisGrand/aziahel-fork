@@ -250,10 +250,15 @@ internal sealed partial class UltimusDirectorActor {
     /// many of the things the area's files place, and the steps where none are placed (they come from a trigger or creature
     /// there, so he searches the area for them, which is slower and worth a look).
     /// </summary>
+    // A thing whose nearest floor is farther than this can't be clicked: the game offers it within 300, less a margin.
+    private const float USE_REACH_WARN = 250f;
+
     internal static void AuditUseSteps() {
         try {
             var found = new List<string>();
             var missing = new List<string>();
+            var unreachable = new List<string>();
+            var inWall = new List<string>();
             foreach (var quest in Imlight.CoreLib.WizardData.SpiralDB.QuestTemplates.Where(q => q is not null && !q.m_outdated && UltimusPlanner.IsMainStoryWorld(q))) {
                 foreach (var goal in (quest.m_goals ?? []).Where(g => g is not null && g.m_goalType == Imcodec.ObjectProperty.TypeCache.GOAL_TYPE.GOAL_TYPE_USAGE)) {
                     string zone = goal.m_destinationZone;
@@ -267,18 +272,41 @@ internal sealed partial class UltimusDirectorActor {
                         continue;
                     }
 
-                    var things = QuestStepSpots.UsageObjects(zone, quest.m_questName, goal.m_goalName).Count;
+                    var placed = QuestStepSpots.UsageObjects(zone, quest.m_questName, goal.m_goalName);
+                    var things = placed.Count;
+                    // Can he get within reach of each? Its nearest floor: within 300 the game offers it (he clicks from
+                    // there); farther, he can't (Niduus, 2026-11-14, approved: the Frozen Forge stands in its wall).
+                    foreach (var spot in placed) {
+                        var floor = OverlayQuestPath.OnFloor(zone, spot.X, spot.Y) ? (spot.X, spot.Y) : OverlayQuestPath.NearestFloor(zone, spot.X, spot.Y);
+                        var gap = floor is { } f ? UltimusPlanner.Far(f.X, f.Y, spot.X, spot.Y) : float.MaxValue;
+                        if (gap > USE_REACH_WARN) {
+                            unreachable.Add($"{title} in {UltimusText.Zone(zone)}: the thing at ({spot.X:0}, {spot.Y:0}) is " +
+                                            (floor is null ? "far from any floor he can walk on" : $"{gap:0} from the nearest floor (he clicks from up to 300)"));
+                        }
+                        else if (gap > 25) {
+                            inWall.Add($"{title} in {UltimusText.Zone(zone)}: the thing at ({spot.X:0}, {spot.Y:0}) stands {gap:0} into a wall; he clicks it from the floor");
+                        }
+                    }
+
                     var wanted = goal.m_tallyCounter?.m_count ?? 1;
                     var line = $"{title} in {UltimusText.Zone(zone)}: {things} placed, {wanted} needed";
                     (things >= Math.Max(1, wanted) ? found : missing).Add(line);
                 }
             }
 
+            if (unreachable.Count > 0) {
+                Note("Ultimus", $"USE-STEP CHECK: {unreachable.Count} quest thing(s) of the main story stand where he can't get within reach " +
+                                "(use-steps.txt, CAN'T REACH).", UltimusLink.NOTABLE);
+            }
+
             File.WriteAllLines(Path.Combine(UltimusWire.Folder, "use-steps.txt"), [
                 $"CLICK-THESE-THINGS STEPS OF THE MAIN STORY ({DateTime.Now:yyyy-MM-dd HH:mm})",
                 $"{found.Count} steps: Ultimus and the Quest Team walk to each placed thing and click it.",
                 $"{missing.Count} steps: fewer placed than needed; they appear from something in the area, so he searches for them.",
-                "", "SEARCHED FOR (worth a look if he gets stuck there)", .. missing.Order(), "", "PLACED", .. found.Order(),
+                $"{unreachable.Count} things he can't get within reach of (see CAN'T REACH).",
+                "", "CAN'T REACH (the game won't offer them from the floor: worth a look)", .. unreachable.Order(),
+                "", "SEARCHED FOR (worth a look if he gets stuck there)", .. missing.Order(),
+                "", "IN A WALL (fine: clicked from the floor)", .. inWall.Order(), "", "PLACED", .. found.Order(),
             ]);
         }
         catch (Exception e) {

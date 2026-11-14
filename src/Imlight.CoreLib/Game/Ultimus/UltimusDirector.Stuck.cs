@@ -78,6 +78,13 @@ internal sealed partial class UltimusDirectorActor {
         // through it no longer counts (Niduus, 2026-11-13: "adapt to new paths to get to his quest goal").
         RouteMemory.Stuck(member.CharId, member.Zone, member.X, member.Y);
 
+        // Ten alarms at one spot on one step: the same moves again are no use (Niduus, 2026-11-14, approved: at the Frozen
+        // Forge he tried the same four fixes 75 times). He changes his approach: the creatures around him are fought, or,
+        // with none, the step is set aside for a while.
+        if (index == 0 && TenAlarms(member, goal, step, quest, where)) {
+            return;
+        }
+
         // A fresh look at the way: the old walk and the old order are forgotten.
         _sent.Remove(index);
         OverlayQuestPath.Forget(member.CharId);
