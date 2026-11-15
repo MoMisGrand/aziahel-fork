@@ -61,9 +61,12 @@ internal static class OverlayButtons {
         }
 
         // A minimap button acts on the map it sits on: the player's (by game window) or Ultimus's own.
-        var ultimusMap = button.Command == OverlayRenderer.MapButton.ULTIMUS;
-        var mapKey = ultimusMap ? OverlayUltimusData.KEY : game.ToInt64();
-        var otherKey = ultimusMap ? game.ToInt64() : OverlayUltimusData.KEY;
+        var mapKey = button.Command switch {
+            OverlayRenderer.MapButton.ULTIMUS => OverlayUltimusData.KEY,
+            OverlayRenderer.MapButton.TEAM => OverlayUltimusData.TEAM_KEY,
+            _ => game.ToInt64(),
+        };
+        long[] otherKeys = [.. new[] { game.ToInt64(), OverlayUltimusData.KEY, OverlayUltimusData.TEAM_KEY }.Where(k => k != mapKey)];
         switch (button.Action) {
             case OverlayAction.DISMISS_NOTE:
                 OverlayHost.ShowNotice(game, "");
@@ -97,7 +100,7 @@ internal static class OverlayButtons {
                 return;
             case OverlayAction.TEAM_NEXT: {
                 // The Quest Team Spectator (Niduus, 2026-11-15): only the four team members, one after the other.
-                if (!OverlayUltimusData.WatchTeam) {
+                if (!OverlayUltimusData.IsWanted(OverlayUltimusData.TEAM_KEY)) {
                     Report("Add the Quest Team Spectator's map or quest box to the overlay to watch the Quest Team.", false, done);
 
                     return;
@@ -109,8 +112,10 @@ internal static class OverlayButtons {
             }
             case OverlayAction.MAP_FULL:
                 // One full screen map at a time: the player's, or Ultimus's (a button on Ultimus's map acts on his).
-                if (OverlayMinimapData.FullZoom(mapKey) is null && OverlayMinimapData.FullZoom(otherKey) is not null) {
-                    OverlayMinimapData.ToggleFull(otherKey, 0);
+                if (OverlayMinimapData.FullZoom(mapKey) is null) {
+                    foreach (var other in otherKeys.Where(k => OverlayMinimapData.FullZoom(k) is not null)) {
+                        OverlayMinimapData.ToggleFull(other, 0);
+                    }
                 }
 
                 OverlayMinimapData.ToggleFull(mapKey, button.Map is { FullZoom: > 0 } kept ? kept.FullZoom : (button.Map?.Zoom ?? 2200) * 2.5);

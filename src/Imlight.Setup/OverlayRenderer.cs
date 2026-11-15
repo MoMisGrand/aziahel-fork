@@ -70,10 +70,10 @@ internal static class OverlayRenderer {
         if (window != 0) {
             AddMapButtons(panel, window, e => e.IsMinimap, window, "");
             // Ultimus's own minimap gets the same full screen and zoom buttons (Niduus, 2026-11-14: "Allow for fullscreen and
-            // Zoom to Ultimus Minimap"), unless the player's map is full screen over it.
-            if (OverlayMinimapData.FullZoom(window) is null) {
-                AddMapButtons(panel, window, e => e.IsUltimusMap, OverlayUltimusData.KEY, MapButton.ULTIMUS);
-            }
+            // Zoom to Ultimus Minimap"), unless another map is full screen over it. The Quest Team Spectator's map is its own,
+            // with its own buttons (Niduus, 2026-11-15: separate add-ons).
+            AddMapButtons(panel, window, e => e.IsUltimusMap && !e.WatchesTeam, OverlayUltimusData.KEY, MapButton.ULTIMUS);
+            AddMapButtons(panel, window, e => e.IsUltimusMap && e.WatchesTeam, OverlayUltimusData.TEAM_KEY, MapButton.TEAM);
         }
 
         return panel;
@@ -95,7 +95,7 @@ internal static class OverlayRenderer {
         var at = panel.Children.Count - 1;
         if (OverlayMinimapData.FullZoom(key) is null) {
             // Ultimus's full screen map covers the game: no buttons of the player's corner map under it.
-            if (which.Length == 0 && OverlayMinimapData.FullZoom(OverlayUltimusData.KEY) is not null) {
+            if (OtherFull(key, window)) {
                 return;
             }
 
@@ -124,6 +124,10 @@ internal static class OverlayRenderer {
         panel.Children.Insert(at + 3, new MapButton(full, 2, OverlayAction.MAP_OUT, minimap, which));
     }
 
+    // Another map (the player's, Ultimus's or the Quest Team's) is full screen over this one: no corner buttons under it.
+    private static bool OtherFull(long key, long window)
+        => new[] { window, OverlayUltimusData.KEY, OverlayUltimusData.TEAM_KEY }.Any(k => k != key && OverlayMinimapData.FullZoom(k) is not null);
+
     /// <summary>The full screen map: it fills the game window, less a margin, whatever its design.</summary>
     internal sealed class FullMap : Border {
 
@@ -148,6 +152,9 @@ internal static class OverlayRenderer {
 
         /// <summary>What a button on Ultimus's own minimap carries (its tag's Command), so its click acts on his map.</summary>
         internal const string ULTIMUS = "ultimus";
+
+        /// <summary>What a button on the Quest Team Spectator's own minimap carries.</summary>
+        internal const string TEAM = "questteam";
 
         internal MapButton(Control over, int slot, string action, OverlayElement minimap, string which = "") {
             Over = over;
@@ -457,7 +464,7 @@ internal static class OverlayRenderer {
             // Ultimus's own minimap: the Minimap's drawing, centred on Ultimus, with his quest's way (never the player's).
             // It needs the Minimap add-on downloaded (Niduus, 2026-11-14: required "for install, for Spectate to work"),
             // not the player's Minimap on the overlay.
-            var key = window == 0 ? 0 : OverlayUltimusData.KEY;
+            var key = window == 0 ? 0 : OverlayUltimusData.KeyOf(e);
             border.Background = null;
             border.BorderThickness = default;
             border.Padding = default;

@@ -311,7 +311,7 @@ internal static class OverlayMinimapData {
     internal static void Tick() {
         lock (s_lock) {
             // Ultimus's own map (the Ultimus Spectator add-on) is kept while it shows, beside the game windows' maps.
-            var wanted = OverlayUltimusData.Wanted ? [.. Wanted, OverlayUltimusData.KEY] : Wanted;
+            long[] wanted = [.. Wanted, .. OverlayUltimusData.WantedKeys];
             foreach (var window in wanted) {
                 var stale = !s_maps.TryGetValue(window, out var map) || map.Stale;
                 if (stale && s_staleShown.Add(window)) {
@@ -701,7 +701,7 @@ internal sealed class MinimapView : Control {
         }
 
 
-        var sends = _window == OverlayUltimusData.KEY ? OverlayHost.Link.SendsUltimus : OverlayHost.Link.SendsMap;
+        var sends = OverlayUltimusData.IsSpectator(_window) ? OverlayHost.Link.SendsUltimus : OverlayHost.Link.SendsMap;
         var note = stale
             ? data is { Note.Length: > 0 } ? data.Note : OverlayHost.Link.Connected ? sends
                 ? "Waiting for the map..." : "This server's Imlight is too old for the minimap. The host needs to update it."

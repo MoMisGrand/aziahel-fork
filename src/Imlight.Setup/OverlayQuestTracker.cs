@@ -768,7 +768,7 @@ internal static class OverlayQuestRouteDrawing {
         }
 
         // Ultimus's own map draws his line in the same colours and width as the player's Quest Tracker line.
-        var look = OverlayQuestData.LookOf(window) ?? (window == OverlayUltimusData.KEY ? OverlayQuestData.AnyLook() : null) ?? new OverlayQuestList();
+        var look = OverlayQuestData.LookOf(window) ?? (OverlayUltimusData.IsSpectator(window) ? OverlayQuestData.AnyLook() : null) ?? new OverlayQuestList();
         var color = OverlayRenderer.Parse(look.ColorOf(route.Kind)) ?? Colors.Gold;
         var width = look.RouteWidth;
         // The other steps' walks first, faded and thinner, so the nearest one's line reads on top (Niduus, 2026-11-14).
