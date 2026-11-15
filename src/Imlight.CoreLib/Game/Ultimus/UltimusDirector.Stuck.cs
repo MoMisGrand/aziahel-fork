@@ -71,7 +71,7 @@ internal sealed partial class UltimusDirectorActor {
     /// </summary>
     private void Unstick(int index, string why = null) {
         var member = _team[index];
-        var where = $"{UltimusText.Zone(member.Zone)} at ({member.X:0}, {member.Y:0})";
+        var where = $"{UltimusText.Zone(member.Zone)} at ({member.X:0}, {member.Y:0}, height {member.Z:0})";
         why ??= $"has stood still over {(int) _stuck.Still.TotalSeconds} seconds";
         NoteDayStuck();
         var quest = _target?.Quest ?? _currentQuest;
@@ -117,7 +117,14 @@ internal sealed partial class UltimusDirectorActor {
         }
 
         // The line of sight circle's hop: only by a goal in sight with a clear spot next to it.
-        var hop = goal is not null && UltimusSight.InSight(member.X, member.Y, goal.X, goal.Y)
+        // Not to a goal on another floor: in sight from above or below is not a way there.
+        var otherFloor = index == 0 && goal is not null && OtherFloor(member, goal);
+        if (otherFloor) {
+            Think($"I am stuck and my step is on another floor ({FloorWords(member, goal)}). A hop or a step aside on this floor " +
+                  "can't get me there: I look for the stairs or ramp between the floors.", "stuck-floor|" + goal.Key);
+        }
+
+        var hop = goal is not null && !otherFloor && UltimusSight.InSight(member.X, member.Y, goal.X, goal.Y)
             ? UltimusSight.HopBy(member.Zone, goal.X, goal.Y, member.Z) : null;
         if (hop is null) {
             skip.Add(UltimusFixes.HOP);

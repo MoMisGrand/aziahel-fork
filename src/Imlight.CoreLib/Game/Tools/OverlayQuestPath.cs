@@ -76,7 +76,7 @@ internal static class OverlayQuestPath {
     private static readonly ConcurrentDictionary<string, Grid> s_grids = new(StringComparer.OrdinalIgnoreCase);
 
     // The last walk found for each wizard: found again only when they moved off its start or the step changed.
-    private static readonly ConcurrentDictionary<ulong, (string Zone, int Goal, int Start, DateTime At, List<(float X, float Y)> Points)> s_walks = new();
+    private static readonly ConcurrentDictionary<ulong, (string Zone, int Goal, int Start, int Floor, DateTime At, List<(float X, float Y)> Points)> s_walks = new();
 
     /// <summary>The points to walk through from (<paramref name="fromX"/>, <paramref name="fromY"/>) to the step, ending at the step; straight when unknown.</summary>
     /// <remarks>
@@ -86,8 +86,11 @@ internal static class OverlayQuestPath {
     /// </remarks>
     /// <param name="avoid">Creatures to keep away from (a wizard collecting quest objects goes around them, Niduus,
     /// 2026-11-13: "avoid battles as much as possible"): ground near them costs as much as water, so the way bends round.</param>
+    /// <param name="fromZ">The wizard's own height, so the walk starts on the floor it stands on (a deck over a hall).</param>
+    /// <param name="toZ">The step's height, so the walk ends on the step's own floor, by the stairs or ramps between
+    /// (Niduus, 2026-11-15: the Grand Arena entrance was on the floor below Ultimus, and he did not know it).</param>
     internal static List<(float X, float Y)> Walk(ulong charId, string zonePath, float fromX, float fromY, float toX, float toY, bool body = false,
-        IReadOnlyList<(float X, float Y)> avoid = null) {
+        IReadOnlyList<(float X, float Y)> avoid = null, float fromZ = float.NaN, float toZ = float.NaN) {
         if (body) {
             // A walk that already got a wizard from about here to about there (RouteMemory): taken as it is. Else the way
             // finder's own, bent round the spots where wizards got stuck on this street.
@@ -103,7 +106,7 @@ internal static class OverlayQuestPath {
             }
         }
 
-        return WalkCore(charId, zonePath, fromX, fromY, toX, toY, body, avoid, remember: true);
+        return WalkCore(charId, zonePath, fromX, fromY, toX, toY, body, avoid, remember: true, fromZ, toZ);
     }
 
     // Whether this thread's last WalkCore found a way on the floor (not the straight fallback).
@@ -111,7 +114,7 @@ internal static class OverlayQuestPath {
     private static bool t_found;
 
     private static List<(float X, float Y)> WalkCore(ulong charId, string zonePath, float fromX, float fromY, float toX, float toY, bool body,
-        IReadOnlyList<(float X, float Y)> avoid, bool remember) {
+        IReadOnlyList<(float X, float Y)> avoid, bool remember, float fromZ = float.NaN, float toZ = float.NaN) {
         var straight = new List<(float X, float Y)> { (toX, toY) };
         // Ground not known (no collision file, a spot off the map): the straight line is all there is.
         t_found = true;
@@ -130,7 +133,7 @@ internal static class OverlayQuestPath {
                 grid = Avoiding(grid, avoid);
             }
             else if (remember && s_walks.TryGetValue(charId, out var last) && last.Zone == zonePath && last.Goal == goal && last.Start == start
-                && DateTime.UtcNow - last.At < TimeSpan.FromSeconds(20)) {
+                && last.Floor == FloorKey(fromZ, toZ) && DateTime.UtcNow - last.At < TimeSpan.FromSeconds(20)) {
                 return last.Points;
             }
 
@@ -139,7 +142,12 @@ internal static class OverlayQuestPath {
             // Niduus, 2026-11-13: "This needs better intel, logic and behavior").
             var from = Open(grid, start);
             var to = Open(grid, goal, IslandLabel(zonePath, grid, from));
-            var cells = Search(grid, from, to);
+            var cells = Search(grid, from, to, fromZ: fromZ, toZ: toZ);
+            // The step's own floor can't be reached (the file shows no way between the floors there): any floor of its spot.
+            if (cells is null && !float.IsNaN(toZ)) {
+                cells = Search(grid, from, to, fromZ: fromZ);
+            }
+
             // No way without a ledge (a ramp the file doesn't show as one): the way past walls only.
             if (cells is null) {
                 grid = grid with { Heights = null };
@@ -176,7 +184,7 @@ internal static class OverlayQuestPath {
             t_found = cells is not null && (!body || cells.Count == 0 || cells[^1] == to);
             var points = cells is null ? straight : Smooth(grid, cells, endX, endY);
             if (remember) {
-                s_walks[charId] = (zonePath, goal, start, DateTime.UtcNow, points);
+                s_walks[charId] = (zonePath, goal, start, FloorKey(fromZ, toZ), DateTime.UtcNow, points);
             }
 
             return points;
@@ -202,9 +210,10 @@ internal static class OverlayQuestPath {
     /// Ultimus all take their way from here.
     /// </summary>
     /// <param name="avoid">Spots to keep away from (the street's creature walks, <see cref="RouteMobs.Avoid"/>).</param>
+    /// <param name="fromZ">The wizard's height (the line starts on its own floor); <paramref name="toZ"/> the step's.</param>
     internal static List<Spot> Route(ulong charId, string zonePath, float fromX, float fromY, float toX, float toY,
-        IReadOnlyList<(float X, float Y)> avoid = null) {
-        var key = (Zone: zonePath ?? string.Empty, From: Rough(fromX, fromY), To: Rough(toX, toY));
+        IReadOnlyList<(float X, float Y)> avoid = null, float fromZ = float.NaN, float toZ = float.NaN) {
+        var key = (Zone: zonePath ?? string.Empty, From: HashCode.Combine(Rough(fromX, fromY), FloorKey(fromZ, toZ)), To: Rough(toX, toY));
         if (s_routes.TryGetValue(charId, out var last) && last.Zone == key.Zone && last.From == key.From && last.To == key.To
             && DateTime.UtcNow - last.At < TimeSpan.FromSeconds(10)) {
             return last.Spots;
@@ -222,7 +231,7 @@ internal static class OverlayQuestPath {
                 }
 
                 taken.Add(pad);
-                foreach (var (px, py) in WalkCore(charId, zonePath, x, y, pad.X, pad.Y, false, avoid, remember: false)) {
+                foreach (var (px, py) in WalkCore(charId, zonePath, x, y, pad.X, pad.Y, false, avoid, remember: false, hop == 0 ? fromZ : float.NaN)) {
                     spots.Add(new Spot(px, py));
                 }
 
@@ -235,7 +244,7 @@ internal static class OverlayQuestPath {
             // off a ledge (Niduus, 2026-11-13: "it still draws through"). With no legal way, the line stops where the
             // known way stops (at the wizard when there is none): the ring still shows the step.
             if (!Apart(zonePath, x, y, toX, toY)) {
-                var final = WalkCore(charId, zonePath, x, y, toX, toY, false, avoid, remember: false);
+                var final = WalkCore(charId, zonePath, x, y, toX, toY, false, avoid, remember: false, taken.Count == 0 ? fromZ : float.NaN, toZ);
                 if (t_found) {
                     spots.AddRange(final.Select(p => new Spot(p.X, p.Y)));
                 }
@@ -264,23 +273,23 @@ internal static class OverlayQuestPath {
     /// <see cref="Route"/> instead (after it lands, the next walk goes on from there).
     /// </summary>
     internal static List<(float X, float Y)> WalkLegal(ulong charId, string zonePath, float fromX, float fromY, float toX, float toY,
-        IReadOnlyList<(float X, float Y)> avoid = null) {
+        IReadOnlyList<(float X, float Y)> avoid = null, float fromZ = float.NaN, float toZ = float.NaN) {
         try {
             if (Apart(zonePath, fromX, fromY, toX, toY)
                 && Ultimus.UltimusPads.Toward(zonePath, fromX, fromY, toX, toY) is { } pad) {
-                return Walk(charId, zonePath, fromX, fromY, pad.X, pad.Y, body: true, avoid: avoid);
+                return Walk(charId, zonePath, fromX, fromY, pad.X, pad.Y, body: true, avoid: avoid, fromZ: fromZ);
             }
 
             // A teleporter that gets there much faster than walking (one any bot found counts for all).
             if (Ultimus.UltimusPads.Faster(zonePath, fromX, fromY, toX, toY) is { } faster) {
-                return Walk(charId, zonePath, fromX, fromY, faster.X, faster.Y, body: true, avoid: avoid);
+                return Walk(charId, zonePath, fromX, fromY, faster.X, faster.Y, body: true, avoid: avoid, fromZ: fromZ);
             }
         }
         catch (Exception) {
             // The plain walk below.
         }
 
-        return Walk(charId, zonePath, fromX, fromY, toX, toY, body: true, avoid: avoid);
+        return Walk(charId, zonePath, fromX, fromY, toX, toY, body: true, avoid: avoid, fromZ: fromZ, toZ: toZ);
     }
 
     // A spot rounded to 60 units, so a wizard standing still keeps the route it has.
@@ -702,17 +711,48 @@ internal static class OverlayQuestPath {
     private static (float X, float Y) Center(Grid grid, int cell)
         => (grid.Left + ((cell % grid.Width) + 0.5f) * grid.Cell, grid.Top - ((cell / grid.Width) + 0.5f) * grid.Cell);
 
-    // A* from start to goal over the costs; null when there is no way (with partial, the way to the cell it got nearest).
-    private static List<int> Search(Grid grid, int start, int goal, bool partial = false) {
-        if (start == goal) {
+    // How far apart two floors of one spot must be to count as two floors (a hall under a balcony, a tunnel under a deck),
+    // not one floor's bumps.
+    private const float FLOOR_GAP = 150f;
+
+    // The heights the cache of a wizard's last walk was found for, rounded to floors.
+    private static int FloorKey(float fromZ, float toZ)
+        => HashCode.Combine(float.IsNaN(fromZ) ? int.MinValue : (int) MathF.Round(fromZ / FLOOR_GAP), float.IsNaN(toZ) ? int.MinValue : (int) MathF.Round(toZ / FLOOR_GAP));
+
+    // Whether a cell has two floors (ground under a balcony, a deck over a tunnel).
+    private static bool TwoFloors(Grid grid, int cell)
+        => grid.Heights is { } heights && grid.Lows is { } lows && !float.IsNaN(heights[cell]) && !float.IsNaN(lows[cell])
+           && heights[cell] - lows[cell] > FLOOR_GAP;
+
+    // The height of a cell's floor: 0 is its top floor, 1 the floor under it (NaN when it has only one, or none known).
+    private static float FloorOf(Grid grid, int cell, int floor)
+        => grid.Heights is null ? float.NaN : floor == 0 ? grid.Heights[cell] : TwoFloors(grid, cell) ? grid.Lows[cell] : float.NaN;
+
+    // The floor of a cell nearest a height (its top floor when the height is not known).
+    private static int FloorNearest(Grid grid, int cell, float z) {
+        if (float.IsNaN(z) || !TwoFloors(grid, cell)) {
+            return 0;
+        }
+
+        return MathF.Abs(grid.Lows[cell] - z) < MathF.Abs(grid.Heights[cell] - z) ? 1 : 0;
+    }
+
+    // A* from start to goal over the costs, floor by floor: each cell is walked on one of its floors (a hall and the
+    // balcony over it are two places), and a step only goes on to a floor about as high as the one it stands on, so the
+    // way between floors is a stair or ramp the ground shows (Niduus, 2026-11-15: "he doesn't seem to understand the
+    // layers"). <paramref name="fromZ"/> picks the floor the wizard stands on and <paramref name="toZ"/> the floor the step
+    // is on (either floor when not known). Null when there is no way (with partial, the way to the cell it got nearest).
+    private static List<int> Search(Grid grid, int start, int goal, bool partial = false, float fromZ = float.NaN, float toZ = float.NaN) {
+        if (start == goal && (float.IsNaN(toZ) || !TwoFloors(grid, goal) || FloorNearest(grid, goal, toZ) == FloorNearest(grid, start, fromZ))) {
             return [goal];
         }
 
         var size = grid.Width * grid.Height;
-        var best = new float[size];
+        var best = new float[size * 2];
         Array.Fill(best, float.MaxValue);
-        var cameFrom = new int[size];
+        var cameFrom = new int[size * 2];
         var (gx, gy) = (goal % grid.Width, goal / grid.Width);
+        var goalFloor = float.IsNaN(toZ) || !TwoFloors(grid, goal) ? -1 : FloorNearest(grid, goal, toZ);
         float Guess(int cell) {
             var (x, y) = (cell % grid.Width, cell / grid.Width);
             var (ax, ay) = (Math.Abs(x - gx), Math.Abs(y - gy));
@@ -721,15 +761,28 @@ internal static class OverlayQuestPath {
         }
 
         var open = new PriorityQueue<int, float>();
-        best[start] = 0;
-        cameFrom[start] = -1;
-        open.Enqueue(start, Guess(start));
+        void Begin(int floor) {
+            var at = (start * 2) + floor;
+            best[at] = 0;
+            cameFrom[at] = -1;
+            open.Enqueue(at, Guess(start));
+        }
+
+        // The wizard's own floor; both when its height is not known.
+        if (!float.IsNaN(fromZ) || !TwoFloors(grid, start)) {
+            Begin(FloorNearest(grid, start, fromZ));
+        }
+        else {
+            Begin(0);
+            Begin(1);
+        }
+
         var looked = 0;
-        var (nearest, nearestGuess) = (start, Guess(start));
+        var (nearest, nearestGuess) = (start * 2, Guess(start));
         List<int> PathTo(int end) {
             var path = new List<int>();
             for (var at = end; at != -1; at = cameFrom[at]) {
-                path.Add(at);
+                path.Add(at / 2);
             }
 
             path.Reverse();
@@ -737,9 +790,11 @@ internal static class OverlayQuestPath {
             return path;
         }
 
-        while (open.TryDequeue(out var cell, out var priority)) {
-            if (cell == goal) {
-                return PathTo(goal);
+        var most = grid.Heights is null ? 0f : 30f;
+        while (open.TryDequeue(out var state, out var priority)) {
+            var (cell, floor) = (state / 2, state % 2);
+            if (cell == goal && (goalFloor < 0 || goalFloor == floor)) {
+                return PathTo(state);
             }
 
             if (++looked > 400000) {
@@ -747,14 +802,15 @@ internal static class OverlayQuestPath {
             }
 
             if (Guess(cell) < nearestGuess) {
-                (nearest, nearestGuess) = (cell, Guess(cell));
+                (nearest, nearestGuess) = (state, Guess(cell));
             }
 
             // An old entry for a cell reached more cheaply since.
-            if (priority - Guess(cell) > best[cell] + 0.001f) {
+            if (priority - Guess(cell) > best[state] + 0.001f) {
                 continue;
             }
 
+            var here = FloorOf(grid, cell, floor);
             var (x, y) = (cell % grid.Width, cell / grid.Width);
             foreach (var (dx, dy, len) in s_moves) {
                 var (nx, ny) = (x + dx, y + dy);
@@ -765,21 +821,121 @@ internal static class OverlayQuestPath {
                 var next = (ny * grid.Width) + nx;
                 var cost = grid.Cost[next];
                 // No cutting a wall's corner on a slant.
-                if (cost == BLOCKED || grid.TooSteep(cell, next, len)
-                    || (dx != 0 && dy != 0 && (grid.Cost[(y * grid.Width) + nx] == BLOCKED || grid.Cost[(ny * grid.Width) + x] == BLOCKED))) {
+                if (cost == BLOCKED || (dx != 0 && dy != 0 && (grid.Cost[(y * grid.Width) + nx] == BLOCKED || grid.Cost[(ny * grid.Width) + x] == BLOCKED))) {
                     continue;
                 }
 
-                var through = best[cell] + (len * cost);
-                if (through < best[next]) {
-                    best[next] = through;
-                    cameFrom[next] = cell;
-                    open.Enqueue(next, through + Guess(next));
+                for (var nextFloor = 0; nextFloor < 2; nextFloor++) {
+                    var there = FloorOf(grid, next, nextFloor);
+                    if (nextFloor == 1 && float.IsNaN(there)) {
+                        break;
+                    }
+
+                    // Only onto a floor about as high as this one: a stair or ramp climbs a little each cell.
+                    if (grid.Heights is not null && !float.IsNaN(here) && !float.IsNaN(there) && MathF.Abs(here - there) > most + (grid.Cell * len)) {
+                        continue;
+                    }
+
+                    var to = (next * 2) + nextFloor;
+                    var through = best[state] + (len * cost);
+                    if (through < best[to]) {
+                        best[to] = through;
+                        cameFrom[to] = state;
+                        open.Enqueue(to, through + Guess(next));
+                    }
                 }
             }
         }
 
         return partial ? PathTo(nearest) : null;
+    }
+
+    /// <summary>
+    /// The height of the floor at (x, y): the one nearest <paramref name="nearZ"/> where a spot has two floors (the top one
+    /// when no height is given), or NaN when the ground there is not known.
+    /// </summary>
+    internal static float FloorAt(string zonePath, float x, float y, float nearZ = float.NaN) {
+        try {
+            if (GridOf(zonePath) is not { Heights: not null } grid) {
+                return float.NaN;
+            }
+
+            var cell = Cell(grid, x, y);
+            if (cell < 0) {
+                return float.NaN;
+            }
+
+            return FloorOf(grid, cell, FloorNearest(grid, cell, nearZ));
+        }
+        catch (Exception) {
+            return float.NaN;
+        }
+    }
+
+    /// <summary>
+    /// Whether (x, y) has a floor within <paramref name="within"/> of height <paramref name="z"/>: the same floor as that
+    /// height, not a balcony over it or a hall under it. True when the ground there or the height is not known.
+    /// </summary>
+    internal static bool FloorNear(string zonePath, float x, float y, float z, float within = FLOOR_GAP) {
+        var floor = FloorAt(zonePath, x, y, z);
+
+        return float.IsNaN(floor) || float.IsNaN(z) || MathF.Abs(floor - z) <= within;
+    }
+
+    /// <summary>
+    /// Where a wizard walks to be inside a walk-through exit centred at (x, y, z) reaching <paramref name="radius"/> from its
+    /// middle, on the floor it is on: null when its middle is on a floor already. When the middle is under a deck or over a
+    /// hall (the Entrance Hall's way to the Grand Arena sits on the ground, under the deck above it), the floor spot nearest
+    /// the middle that is still inside it, with that floor's height.
+    /// </summary>
+    internal static (float X, float Y, float Z)? EntrySpot(string zonePath, float x, float y, float z, float radius) {
+        try {
+            if (float.IsNaN(z) || radius <= 0 || GridOf(zonePath) is not { Heights: not null } grid) {
+                return null;
+            }
+
+            var middle = Cell(grid, x, y);
+            if (middle < 0) {
+                return null;
+            }
+
+            var onFloor = FloorOf(grid, middle, FloorNearest(grid, middle, z));
+            if (grid.Cost[middle] != BLOCKED && (float.IsNaN(onFloor) || MathF.Abs(onFloor - z) <= MathF.Max(FLOOR_GAP, radius * 0.6f))) {
+                return null;
+            }
+
+            var (mx, my) = (middle % grid.Width, middle / grid.Width);
+            var cells = (int) MathF.Ceiling(radius / grid.Cell);
+            (float X, float Y, float Z)? best = null;
+            var bestFar = radius * 0.9f;
+            for (var dy = -cells; dy <= cells; dy++) {
+                for (var dx = -cells; dx <= cells; dx++) {
+                    var (nx, ny) = (mx + dx, my + dy);
+                    if (nx < 0 || ny < 0 || nx >= grid.Width || ny >= grid.Height || grid.Cost[(ny * grid.Width) + nx] == BLOCKED) {
+                        continue;
+                    }
+
+                    var at = (ny * grid.Width) + nx;
+                    var (cx, cy) = Center(grid, at);
+                    for (var floor = 0; floor < 2; floor++) {
+                        var h = FloorOf(grid, at, floor);
+                        if (float.IsNaN(h)) {
+                            continue;
+                        }
+
+                        var far = MathF.Sqrt(((cx - x) * (cx - x)) + ((cy - y) * (cy - y)) + ((h - z) * (h - z)));
+                        if (far < bestFar) {
+                            (best, bestFar) = ((cx, cy, h), far);
+                        }
+                    }
+                }
+            }
+
+            return best;
+        }
+        catch (Exception) {
+            return null;
+        }
     }
 
     // Straight runs where the cells between are as easy to walk, so the line has few bends; then the step itself.

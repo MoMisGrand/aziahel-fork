@@ -90,7 +90,7 @@ internal static class UltimusSpectate {
 
         var here = wizard.Location;
         var walk = new JsonArray();
-        foreach (var spot in Tools.OverlayQuestPath.Route(wizard.CharId, zonePath, here.X, here.Y, now.X, now.Y, Tools.RouteMobs.Avoid(zone, now.X, now.Y))) {
+        foreach (var spot in Tools.OverlayQuestPath.Route(wizard.CharId, zonePath, here.X, here.Y, now.X, now.Y, Tools.RouteMobs.Avoid(zone, now.X, now.Y), here.Z)) {
             walk.Add(spot.Pad ? new JsonArray(Round(spot.X), Round(spot.Y), 1) : new JsonArray(Round(spot.X), Round(spot.Y)));
         }
 

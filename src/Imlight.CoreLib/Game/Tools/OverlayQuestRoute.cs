@@ -207,7 +207,8 @@ internal static class OverlayQuestRoute {
             var walk = new JsonArray();
             // Round the street's creature areas the step does not need (their walks by the step are left in).
             var (gx, gy) = ((int) nearest["x"], (int) nearest["y"]);
-            foreach (var spot in OverlayQuestPath.Route(wizard.CharId, zonePath, here.X, here.Y, gx, gy, RouteMobs.Avoid(zone, gx, gy))) {
+            // From the floor he stands on, to the exit's own floor (a deck over a hall is not the hall).
+            foreach (var spot in OverlayQuestPath.Route(wizard.CharId, zonePath, here.X, here.Y, gx, gy, RouteMobs.Avoid(zone, gx, gy), here.Z, ExitZ(zonePath, gx, gy))) {
                 walk.Add(spot.Pad ? new JsonArray(Round(spot.X), Round(spot.Y), 1) : new JsonArray(Round(spot.X), Round(spot.Y)));
             }
 
@@ -223,7 +224,7 @@ internal static class OverlayQuestRoute {
 
                 var trail = new JsonArray();
                 var (ox, oy) = ((int) other["x"], (int) other["y"]);
-                foreach (var spot in OverlayQuestPath.Route(wizard.CharId ^ (TRAIL_ID + (ulong) i), zonePath, here.X, here.Y, ox, oy)) {
+                foreach (var spot in OverlayQuestPath.Route(wizard.CharId ^ (TRAIL_ID + (ulong) i), zonePath, here.X, here.Y, ox, oy, fromZ: here.Z, toZ: ExitZ(zonePath, ox, oy))) {
                     trail.Add(spot.Pad ? new JsonArray(Round(spot.X), Round(spot.Y), 1) : new JsonArray(Round(spot.X), Round(spot.Y)));
                 }
 
@@ -557,8 +558,11 @@ internal static class OverlayQuestRoute {
     // ---- This area's exits: its doors (live) and its walk-through exits (the zone's own volumes and triggers, with
     // the destinations SpiralDB recorded for them, as the server's zones use them) ----
 
-    /// <summary>An exit: where it is, where it goes, and for a walk-through exit how far its trigger reaches (0 for a door).</summary>
-    internal sealed record Exit(float X, float Y, string To, float Reach = 0);
+    /// <summary>
+    /// An exit: where it is, where it goes, and for a walk-through exit how far its trigger reaches (0 for a door). Z is the
+    /// height of the floor it is walked into on (NaN when not known), so a wizard on a deck above it knows to go down.
+    /// </summary>
+    internal sealed record Exit(float X, float Y, string To, float Reach = 0, float Z = float.NaN);
 
     /// <summary>
     /// How far the walk-through exit at (x, y) reaches from its middle (its trigger's radius, or half its longest side), or 0
@@ -586,7 +590,7 @@ internal static class OverlayQuestRoute {
     internal static List<Exit> ExitsHere(string zonePath, List<MinimapIndex.Mark> live, Wizard wizard = null) {
         var exits = new List<Exit>();
         foreach (var door in live.Where(m => m.Kind is MinimapIndex.DOOR or MinimapIndex.SIGIL && !string.IsNullOrEmpty(m.To))) {
-            exits.Add(new Exit(door.Object.m_location.X, door.Object.m_location.Y, door.To.Trim()));
+            exits.Add(new Exit(door.Object.m_location.X, door.Object.m_location.Y, door.To.Trim(), Z: door.Object.m_location.Z));
         }
 
         if (!string.IsNullOrEmpty(zonePath)) {
@@ -638,7 +642,7 @@ internal static class OverlayQuestRoute {
                     foreach (var volume in volumes.Where(v => v.m_enterEvents?.Any(e => (string) e == fire) == true
                                                               || "Enter_" + (string) v.m_volumeName == fire)) {
                         var reach = volume.m_radius > 0 ? volume.m_radius : MathF.Max(volume.m_length, volume.m_width) / 2;
-                        exits.Add(new Exit(volume.m_locationX, volume.m_locationY, to.Trim(), reach));
+                        exits.Add(OnItsFloor(zonePath, new Exit(volume.m_locationX, volume.m_locationY, to.Trim(), reach, volume.m_locationZ)));
                     }
                 }
             }
@@ -648,6 +652,36 @@ internal static class OverlayQuestRoute {
         }
 
         return [.. exits.DistinctBy(e => ((int) (e.X / 100), (int) (e.Y / 100), e.To.ToLowerInvariant()))];
+    }
+
+    // A walk-through exit whose middle is not on a floor (under a deck, over a hall): moved to the floor spot inside it that is
+    // nearest its middle, on the floor it is really walked into on (Niduus, 2026-11-15: the Entrance Hall's way to the Grand
+    // Arena is on the ground under the deck; Ultimus stood on the deck right over its middle and was never taken on). Its
+    // reach is then how far the trigger still reaches round that spot, at that floor.
+    private static Exit OnItsFloor(string zonePath, Exit exit) {
+        if (float.IsNaN(exit.Z) || OverlayQuestPath.EntrySpot(zonePath, exit.X, exit.Y, exit.Z, exit.Reach) is not { } spot) {
+            var floor = OverlayQuestPath.FloorAt(zonePath, exit.X, exit.Y, exit.Z);
+
+            return float.IsNaN(exit.Z) ? exit : exit with { Z = float.IsNaN(floor) ? exit.Z : floor };
+        }
+
+        var level = MathF.Sqrt(MathF.Max(0, (exit.Reach * exit.Reach) - ((spot.Z - exit.Z) * (spot.Z - exit.Z))));
+        var off = MathF.Sqrt(((spot.X - exit.X) * (spot.X - exit.X)) + ((spot.Y - exit.Y) * (spot.Y - exit.Y)));
+        Logger.Debug("Quest tracker: the exit of {0} to {1} at ({2:0}, {3:0}, {4:0}) is walked into on the floor at ({5:0}, {6:0}, {7:0}).",
+            Logger.Args(zonePath, exit.To, exit.X, exit.Y, exit.Z, spot.X, spot.Y, spot.Z));
+
+        return exit with { X = spot.X, Y = spot.Y, Z = spot.Z, Reach = MathF.Max(60f, level - off) };
+    }
+
+    /// <summary>The height of the floor the exit at (x, y) is walked into on, or NaN when not known.</summary>
+    internal static float ExitZ(string zonePath, float x, float y) {
+        if (string.IsNullOrEmpty(zonePath)) {
+            return float.NaN;
+        }
+
+        return s_walkExits.GetOrAdd(zonePath, WalkExits)
+            .Where(e => MathF.Abs(e.X - x) < 80 && MathF.Abs(e.Y - y) < 80)
+            .Select(e => e.Z).DefaultIfEmpty(float.NaN).First();
     }
 
     private static T Read<T>(byte[] data) where T : Imcodec.ObjectProperty.PropertyClass {

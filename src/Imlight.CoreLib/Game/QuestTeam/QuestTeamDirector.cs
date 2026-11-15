@@ -1195,7 +1195,8 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
         var avoid = RouteMobs.Avoid(member.ZoneActor, target.X, target.Y, target.Template == 0 ? null : [target.Template],
             target.Kind == QuestTeamPlanner.USE ? Creatures(member) : null);
         // The legal way (Niduus, 2026-11-13): a step cut off by walls, water or a ledge is reached through the area's teleporter.
-        var points = OverlayQuestPath.WalkLegal(member.CharId, member.Zone, member.X, member.Y, target.X, target.Y, avoid);
+        // From the floor they stand on to the step's own floor, by the stairs or ramps between (Niduus, 2026-11-15: floors).
+        var points = OverlayQuestPath.WalkLegal(member.CharId, member.Zone, member.X, member.Y, target.X, target.Y, avoid, member.Z, TargetZ(member, target));
         _sent[index] = (target, DateTime.UtcNow, member.X, member.Y);
         _actors[index].Tell(new QuestTeamMember.WalkTo(points, target.What));
         if (index == 0) {
@@ -1296,6 +1297,29 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
         _exitStood.Clear();
     }
 
+    // The height of the step: its own (an exit, a door), else the thing standing there (an NPC, an object, a creature),
+    // else the floor under the spot nearest their own height; NaN when not known.
+    private static float TargetZ(QuestTeamMember.Status member, QuestTeamPlanner.Target target) {
+        if (!float.IsNaN(target.Z)) {
+            return target.Z;
+        }
+
+        try {
+            if (target.GlobalId != 0 && MinimapIndex.In(member.ZoneActor).FirstOrDefault(m => m.Object.m_globalID.Full == target.GlobalId) is { } mark) {
+                return mark.Object.m_location.Z;
+            }
+
+            if (target.Kind == QuestTeamPlanner.EXIT && OverlayQuestRoute.ExitZ(member.Zone, target.X, target.Y) is var exitZ && !float.IsNaN(exitZ)) {
+                return exitZ;
+            }
+        }
+        catch (Exception) {
+            // The floor under the spot below.
+        }
+
+        return OverlayQuestPath.FloorAt(member.Zone, target.X, target.Y, member.Z);
+    }
+
     private void IntoExit(QuestTeamMember.Status leader, QuestTeamPlanner.Target target) {
         if (_exitKey != target.Key) {
             (_exitKey, _exitSince, _exitTries) = (target.Key, DateTime.UtcNow, 0);
@@ -1305,7 +1329,15 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
 
         var reach = OverlayQuestRoute.ExitReach(leader.Zone, target.X, target.Y);
         var near = QuestTeamPlanner.Far(leader.X, leader.Y, target.X, target.Y);
-        // Not there yet, or there only a moment: on into the exit, a step past its middle.
+        // Not there yet, or there only a moment: on into the exit, a step past its middle. Right over or under it on
+        // another floor is not there (Niduus, 2026-11-15: the Grand Arena's way in is on the ground under a deck).
+        var exitZ = TargetZ(leader, target);
+        if (MathF.Abs(exitZ - leader.Z) > 150f) {
+            WalkTo(0, target with { X = target.X + 5, Y = target.Y + 5, Z = exitZ });
+
+            return;
+        }
+
         if (near > Math.Max(260f, reach) || DateTime.UtcNow - _exitSince < TimeSpan.FromSeconds(_exitTries == 0 ? 6 : 12)) {
             if (_exitTries == 0) {
                 WalkTo(0, target with { X = target.X + 5, Y = target.Y + 5 });
@@ -1326,12 +1358,12 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
         var turn = (_exitTries * 1.7f) + (Random.Shared.NextSingle() * 0.4f);
         var back = Math.Max(300f, reach + 150f);
         var outside = (X: target.X + (MathF.Cos(turn) * back), Y: target.Y + (MathF.Sin(turn) * back));
-        for (var side = 1; side < 8 && !OverlayQuestPath.OnFloor(leader.Zone, outside.X, outside.Y); side++) {
+        for (var side = 1; side < 8 && !(OverlayQuestPath.OnFloor(leader.Zone, outside.X, outside.Y) && OverlayQuestPath.FloorNear(leader.Zone, outside.X, outside.Y, exitZ)); side++) {
             var other = turn + (side * MathF.PI / 4f);
             outside = (target.X + (MathF.Cos(other) * back), target.Y + (MathF.Sin(other) * back));
         }
 
-        var points = OverlayQuestPath.Walk(leader.CharId, leader.Zone, leader.X, leader.Y, outside.X, outside.Y, body: true);
+        var points = OverlayQuestPath.Walk(leader.CharId, leader.Zone, leader.X, leader.Y, outside.X, outside.Y, body: true, fromZ: leader.Z, toZ: exitZ);
         if (points.Count == 0) {
             points.Add(outside);
         }
