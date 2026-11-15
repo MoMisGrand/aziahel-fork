@@ -16,6 +16,7 @@ namespace Imlight.Setup;
 internal sealed partial class ManagerWindow {
 
     private readonly ToggleSwitch _ultAi = new() { OnContent = "On", OffContent = "Off" };
+    private readonly ToggleSwitch _ultAiStuck = new() { OnContent = "On", OffContent = "Off" };
     private readonly TextBox _ultAiUrl = new() { Width = 320, Watermark = "http://localhost:11434/v1" };
     private readonly TextBox _ultAiModel = new() { Width = 220, Watermark = "llama3.2" };
     private readonly TextBlock _ultAiTest = new() { TextWrapping = TextWrapping.Wrap };
@@ -31,6 +32,14 @@ internal sealed partial class ManagerWindow {
             if (!_showingUltAi) {
                 _ = Guard(() => SaveUltimusAiAsync("LocalAI", _ultAi.IsChecked == true ? "true" : "false",
                     _ultAi.IsChecked == true ? "Ultimus's AI chat is on. If the AI app isn't running, he answers with his normal chat." : "Ultimus's AI chat is off: he answers with his normal chat."));
+            }
+        };
+        _ultAiStuck.IsCheckedChanged += (_, _) => {
+            if (!_showingUltAi) {
+                _ = Guard(() => SaveUltimusAiAsync("StuckThinking", _ultAiStuck.IsChecked == true ? "true" : "false",
+                    _ultAiStuck.IsChecked == true
+                        ? "Ultimus thinks it through when he is stuck (with the AI app running), and always uses what worked before."
+                        : "Stuck thinking is off: Ultimus uses only his usual fixes when he is stuck.", "StuckThinking"));
             }
         };
         _ultAiUrl.LostFocus += (_, _) => {
@@ -49,9 +58,14 @@ internal sealed partial class ManagerWindow {
         return Fold("users", ULTIMUS_TAB, "AI chat (optional, on your PC)",
             "Ultimus can use a language model running on your own PC to chat more naturally and keep up with a conversation. " +
             "Only his real facts (level, area, quest, step, health, his latest memories) and the talk with that player are given to it. " +
-            "Private details are always blocked, whatever the AI says. It is never used for things that make him act (follow, potions, gold), " +
+            "Private details are always blocked, whatever the AI says. In chat it is never used for things that make him act (follow, potions, gold), " +
             "and when it is off, slow or not running he answers with his normal chat. Nothing goes to the internet: only this PC or your home network.",
             SwitchRow("AI chat", _ultAi, "Off by default. Changes count right away, no restart."),
+            SwitchRow("Think it through when stuck", _ultAiStuck,
+                "On by default. When Ultimus is stuck on the same step again, he first does what worked there before; if nothing has, the AI " +
+                "guesses why and picks one of his normal unstuck moves (step aside, walk away, another route, Commons, fight what's around, " +
+                "click what's offered, or set the step aside). He never skips a step. His reasoning shows in Ultimus Thoughts and his log. " +
+                "Uses the address and model below; the AI chat switch can stay off. What worked is shared with the Quest Team."),
             SwitchRow("AI address", _ultAiUrl, "Ollama: http://localhost:11434/v1   LM Studio: http://localhost:1234/v1"),
             SwitchRow("Model name", _ultAiModel, "Exactly as the AI app names it, for example llama3.2 or qwen2.5:7b."),
             Row(Action(Plain("Test connection"), TestUltimusAiAsync), Action(Plain("Scan my PC for a recommendation"), ScanForAiAsync)),
@@ -146,6 +160,7 @@ internal sealed partial class ManagerWindow {
         _showingUltAi = true;
         try {
             _ultAi.IsChecked = _manager.GetSwitch("Ultimus", "LocalAI");
+            _ultAiStuck.IsChecked = !_manager.HasSetting("Ultimus", "StuckThinking") || _manager.GetSwitch("Ultimus", "StuckThinking");
             _ultAiUrl.Text = _manager.GetSetting("Ultimus", "LocalAIUrl") is { Length: > 0 } url ? url : "http://localhost:11434/v1";
             _ultAiModel.Text = _manager.GetSetting("Ultimus", "LocalAIModel") is { Length: > 0 } model ? model : "llama3.2";
         }
@@ -154,10 +169,10 @@ internal sealed partial class ManagerWindow {
         }
     }
 
-    private Task SaveUltimusAiAsync(string key, string value, string said) {
-        if (!_manager.HasSetting("Ultimus", "LocalAI")) {
+    private Task SaveUltimusAiAsync(string key, string value, string said, string needs = "LocalAI") {
+        if (!_manager.HasSetting("Ultimus", needs)) {
             LoadUltimusAi();
-            throw new PanelException("This server's Imlight.ini has no [Ultimus] LocalAI yet. Click \"Update Ahziael\" once, then try again.");
+            throw new PanelException($"This server's Imlight.ini has no [Ultimus] {needs} yet. Click \"Update Ahziael\" once, then try again.");
         }
 
         _manager.SaveSettings([new Setting("Ultimus", key, value, "")]);

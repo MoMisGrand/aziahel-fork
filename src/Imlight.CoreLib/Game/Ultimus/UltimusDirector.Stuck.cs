@@ -53,6 +53,10 @@ internal sealed partial class UltimusDirectorActor {
             RouteMemory.Track("Ultimus", member.CharId, member.Zone, member.X, member.Y);
             NoteStartLanding(i, member);
             NoteFreed(i, member);
+            if (i == 0) {
+                CheckReasonedTry(member);
+            }
+
             // Standing still while it works a walk-through exit is the exit work, not being stuck (it flagged itself stuck
             // over and over at The Oasis's exit, v0.10.851).
             if (_stuck.Look(i, member.Zone, member.X, member.Y, resting || (i == 0 && (WorkingExit || _grabWaiting))) is var tries and > 0) {
@@ -141,6 +145,12 @@ internal sealed partial class UltimusDirectorActor {
             Issue("quest", quest, $"The creature for \"{goal?.What ?? _doing}\" never showed up in {UltimusText.Zone(member.Zone)}: "
                                   + "he leaves the area and comes back in, as a player would, and keeps checking. Nothing is skipped.",
                 key: $"absent|{member.Zone}|{step}", level: UltimusLink.ABNORMAL);
+        }
+
+        // Stuck on this step here before: what worked here first, else his local AI thinks it through while the usual fix runs
+        // (UltimusDirector.Reason.cs, Niduus, 2026-11-14). Only unstuck moves; nothing is skipped.
+        if (index == 0 && ReasonAboutStuck(member, goal, step, quest, where, why, skip)) {
+            return;
         }
 
         var (fix, flag) = UltimusFixes.Next(member.Zone, member.X, member.Y, step, skip);
