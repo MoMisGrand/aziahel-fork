@@ -120,30 +120,47 @@ internal static class UltimusSpectate {
     private static int Round(float value) => float.IsFinite(value) ? (int) MathF.Round(value) : 0;
 
     private static readonly object s_lock = new();
-    private static JsonObject s_round;
-    private static ulong s_battle;
-    private static readonly LinkedList<string> s_casts = new();
+
+    // One battle book per wizard watched (Niduus, 2026-11-15: the Quest Team Spectator gets a battle box too): "" is
+    // Ultimus, a role (Ice, Life, Death, Storm) a Quest Team wizard.
+    private sealed class Book {
+        public JsonObject Round;
+        public ulong Battle;
+        public readonly LinkedList<string> Casts = new();
+    }
+
+    private static readonly Dictionary<string, Book> s_books = new(StringComparer.OrdinalIgnoreCase);
+
+    private static Book BookOf(string who) => s_books.TryGetValue(who ?? "", out var book) ? book : s_books[who ?? ""] = new Book();
 
     /// <summary>
     /// One of Ultimus's rounds: his hand as he saw it, his pips and health, the enemies, what he threw away and what he
     /// picked to cast (and on whom).
     /// </summary>
     internal static void NoteRound(ulong duel, int round, CombatDuelSubCircle me, IReadOnlyList<CombatDuelSubCircle> circles,
-                                   UltimusTactics.Choice choice, IReadOnlyList<string> discards) {
+                                   UltimusTactics.Choice choice, IReadOnlyList<string> discards)
+        => NoteRound("", duel, round, me, circles, choice.Move == UltimusTactics.Move.Cast, choice.Card, choice.Target, choice.Why, discards);
+
+    /// <summary>
+    /// One round of the wizard <paramref name="who"/> ("" Ultimus, else a Quest Team role), the same way: its hand, pips,
+    /// health, the enemies and allies, what it threw away and what it cast. Read only.
+    /// </summary>
+    internal static void NoteRound(string who, ulong duel, int round, CombatDuelSubCircle me, IReadOnlyList<CombatDuelSubCircle> circles,
+                                   bool cast, int card, int targetSlot, string why, IReadOnlyList<string> discards) {
         try {
             var hand = new JsonArray();
             var picked = "";
             for (byte i = 0; i < 24; i++) {
-                if (me.GetSpellFromLastHand(i) is not { } spell || RewrittenAI.Read(spell) is not { } card) {
+                if (me.GetSpellFromLastHand(i) is not { } spell || RewrittenAI.Read(spell) is not { } read) {
                     continue;
                 }
 
-                var name = card.Shown.Length > 0 ? card.Shown : card.Name;
+                var name = read.Shown.Length > 0 ? read.Shown : read.Name;
                 hand.Add(new JsonObject {
-                    ["n"] = Short(name, 60), ["s"] = Short(card.School, 12), ["r"] = card.Rank, ["ok"] = me.HasPipsForSpell(spell),
-                    ["pick"] = choice.Move == UltimusTactics.Move.Cast && choice.Card == i,
+                    ["n"] = Short(name, 60), ["s"] = Short(read.School, 12), ["r"] = read.Rank, ["ok"] = me.HasPipsForSpell(spell),
+                    ["pick"] = cast && card == i,
                 });
-                if (choice.Move == UltimusTactics.Move.Cast && choice.Card == i) {
+                if (cast && card == i) {
                     picked = name;
                 }
             }
@@ -153,14 +170,14 @@ internal static class UltimusSpectate {
             var allies = new JsonArray();
             foreach (var circle in circles.Where(c => c.Occupied && c != me)) {
                 var row = new JsonObject {
-                    ["n"] = Short(NameOf(circle), 60), ["hp"] = RewrittenAI.Health(circle), ["max"] = RewrittenAI.MostHealth(circle), ["alive"] = circle.IsAlive,
+                    ["n"] = Short(NameOf(circle, me, who), 60), ["hp"] = RewrittenAI.Health(circle), ["max"] = RewrittenAI.MostHealth(circle), ["alive"] = circle.IsAlive,
                 };
                 (circle.OccupiedTeam == me.OccupiedTeam ? allies : enemies).Add(row);
             }
 
-            var target = choice.Target < 0 ? "" : circles.FirstOrDefault(c => c.SlotIndex == choice.Target) is { } on ? NameOf(on) : "";
-            var pick = choice.Move == UltimusTactics.Move.Cast
-                ? picked.Length == 0 ? "a spell" : picked + (target.Length > 0 ? " on " + target : choice.Target < 0 ? " on every enemy" : "")
+            var target = targetSlot < 0 ? "" : circles.FirstOrDefault(c => c.SlotIndex == targetSlot) is { } on ? NameOf(on, me, who) : "";
+            var pick = cast
+                ? picked.Length == 0 ? "a spell" : picked + (target.Length > 0 ? " on " + target : targetSlot < 0 ? " on every enemy" : "")
                 : "passes";
             var json = new JsonObject {
                 ["round"] = round,
@@ -168,7 +185,7 @@ internal static class UltimusSpectate {
                 ["pips"] = pips?.m_genericPips ?? 0, ["power"] = pips?.m_powerPips ?? 0, ["shadow"] = pips?.m_shadowPips ?? 0,
                 ["hand"] = hand,
                 ["pick"] = Short(pick, 120),
-                ["why"] = Short(choice.Why ?? "", 160),
+                ["why"] = Short(why ?? "", 160),
                 ["discards"] = new JsonArray([.. discards.Take(8).Select(d => (JsonNode) Short(d, 60))]),
                 ["enemies"] = enemies,
                 ["allies"] = allies,
@@ -176,57 +193,67 @@ internal static class UltimusSpectate {
             };
 
             lock (s_lock) {
-                if (s_battle != duel) {
-                    s_battle = duel;
-                    s_casts.Clear();
+                var book = BookOf(who);
+                if (book.Battle != duel) {
+                    book.Battle = duel;
+                    book.Casts.Clear();
                 }
 
                 // The same round looked at again (a player changed their pick) replaces that round's line, and keeps
                 // what was thrown away at its first look.
-                if (s_round is not null && (int?) s_round["round"] == round) {
-                    if (s_casts.Count > 0) {
-                        s_casts.RemoveFirst();
+                if (book.Round is not null && (int?) book.Round["round"] == round) {
+                    if (book.Casts.Count > 0) {
+                        book.Casts.RemoveFirst();
                     }
 
-                    if (discards.Count == 0 && s_round["discards"] is JsonArray thrown) {
+                    if (discards.Count == 0 && book.Round["discards"] is JsonArray thrown) {
                         json["discards"] = thrown.DeepClone();
                     }
                 }
 
-                s_casts.AddFirst($"Round {round}: {(choice.Move == UltimusTactics.Move.Cast ? "casts " : "")}{pick}");
-                while (s_casts.Count > MAX_CASTS) {
-                    s_casts.RemoveLast();
+                book.Casts.AddFirst($"Round {round}: {(cast ? "casts " : "")}{pick}");
+                while (book.Casts.Count > MAX_CASTS) {
+                    book.Casts.RemoveLast();
                 }
 
-                s_round = json;
+                book.Round = json;
             }
         }
         catch (Exception e) {
-            Logger.Debug("Ultimus spectator: the round could not be noted: {0}", Logger.Args(e.Message));
+            Logger.Debug("Spectator: the round could not be noted: {0}", Logger.Args(e.Message));
         }
     }
 
-    /// <summary>Ultimus's battle as the overlay shows it, or null while he is not in one.</summary>
-    internal static JsonObject Battle(ulong globalId) {
+    /// <summary>The battle of <paramref name="who"/> ("" Ultimus) as the overlay shows it, or null while it is not in one.</summary>
+    internal static JsonObject Battle(ulong globalId, string who = "") {
         if (globalId == 0 || !CombatDuelComponent.IsInBattle(globalId)) {
             lock (s_lock) {
-                s_round = null;
-                s_battle = 0;
-                s_casts.Clear();
+                s_books.Remove(who ?? "");
             }
 
             return null;
         }
 
         lock (s_lock) {
-            var battle = s_round?.DeepClone() as JsonObject ?? new JsonObject { ["round"] = 0, ["hand"] = new JsonArray() };
-            battle["casts"] = new JsonArray([.. s_casts.Select(c => (JsonNode) c)]);
+            var book = BookOf(who);
+            var battle = book.Round?.DeepClone() as JsonObject ?? new JsonObject { ["round"] = 0, ["hand"] = new JsonArray() };
+            battle["casts"] = new JsonArray([.. book.Casts.Select(c => (JsonNode) c)]);
 
             return battle;
         }
     }
 
-    private static string NameOf(CombatDuelSubCircle circle) {
+    private static string NameOf(CombatDuelSubCircle circle, CombatDuelSubCircle me, string who) {
+        if (who.Length > 0 && circle == me) {
+            return "itself";
+        }
+
+        if (who.Length > 0 && circle.IsHumanPlayer) {
+            // A Quest Team teammate by its locked name.
+            return QuestTeam.QuestTeamDirector.Members.FirstOrDefault(m => m.Wizard is not null && m.GlobalId == (circle.ParticipantObject?.m_globalID.Full ?? 0))?.Name
+                   ?? (circle.ParticipantObject?.m_debugName is { Length: > 0 } player ? player : $"slot {circle.SlotIndex + 1}");
+        }
+
         if (circle.IsHumanPlayer) {
             return UltimusDirector.RoleOf(circle.ParticipantObject?.m_globalID.Full ?? 0) is not null ? "himself"
                 : circle.ParticipantObject?.m_debugName is { Length: > 0 } wizard ? wizard : $"slot {circle.SlotIndex + 1}";

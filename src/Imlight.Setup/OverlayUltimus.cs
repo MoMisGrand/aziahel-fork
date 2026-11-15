@@ -118,6 +118,15 @@ internal static class OverlayUltimusData {
     /// <summary>Who the server is asked for: "" for Ultimus (KEY), else the Quest Team role watched now (TEAM_KEY).</summary>
     internal static string Who(long key) => key == TEAM_KEY ? TeamRoles[Volatile.Read(ref s_teamIndex) % TeamRoles.Length] : "";
 
+    /// <summary>The watched Quest Team member's school colour (for its map's border); null for Ultimus's feed.</summary>
+    internal static Color? SchoolColor(long key) => key != TEAM_KEY ? null : Who(key) switch {
+        "Ice" => Color.FromArgb(0xF0, 0x6E, 0xC8, 0xFF),
+        "Life" => Color.FromArgb(0xF0, 0x5C, 0xD6, 0x5C),
+        "Death" => Color.FromArgb(0xF0, 0xA8, 0xAE, 0xB4),
+        "Storm" => Color.FromArgb(0xF0, 0xB4, 0x6E, 0xFF),
+        _ => null,
+    };
+
     /// <summary>A plain name of whom a feed watches, for its boxes' headings and notes.</summary>
     internal static string Watched(long key) => key == TEAM_KEY ? $"Quest Team: {Who(key)}" : "Ultimus";
 
