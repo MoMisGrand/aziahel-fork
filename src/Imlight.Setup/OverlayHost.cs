@@ -633,6 +633,8 @@ internal static class OverlayHost {
         var wantsUltimus = (ShowsMine(s_design) && OverlayRenderer.HasUltimus(s_design.Elements)) || OverlayRenderer.HasUltimus(ServerElements);
         // It needs the Minimap add-on downloaded, not the player's Minimap on the overlay (Niduus, 2026-11-14).
         OverlayUltimusData.Wanted = wantsUltimus && s_windows.Count > 0 && OverlayAddon.IsInstalled(s_installFolder, "Minimap");
+        // The Quest Team Spectator's pieces watch one Quest Team wizard instead of Ultimus (Niduus, 2026-11-15).
+        OverlayUltimusData.WatchTeam = ((ShowsMine(s_design) ? s_design.Elements : []).Concat(ServerElements)).Any(e => e.Visible && e.WatchesTeam);
     }
 
     // The game's own moves, resizes, shows and hides reach the overlay as they happen, not only on the next tick.
@@ -1764,6 +1766,8 @@ internal static class OverlayHost {
                 ["op"] = "ultimus", ["have"] = s_have, ["groundKey"] = OverlayMinimapData.GroundKey(OverlayUltimusData.KEY), ["shapes"] = true,
                 // His full screen map reaches farther, like the player's.
                 ["reach"] = (OverlayMinimapData.FullZoom(OverlayUltimusData.KEY) ?? 0) * 2,
+                // The Quest Team Spectator: the team member watched now ("" is Ultimus).
+                ["who"] = OverlayUltimusData.Who,
             }, null, stop);
             using var answerWait = CancellationTokenSource.CreateLinkedTokenSource(stop);
             answerWait.CancelAfter(TimeSpan.FromSeconds(10));

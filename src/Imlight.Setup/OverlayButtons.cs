@@ -95,6 +95,18 @@ internal static class OverlayButtons {
                 done(true);
 
                 return;
+            case OverlayAction.TEAM_NEXT: {
+                // The Quest Team Spectator (Niduus, 2026-11-15): only the four team members, one after the other.
+                if (!OverlayUltimusData.WatchTeam) {
+                    Report("Add the Quest Team Spectator's map or quest box to the overlay to watch the Quest Team.", false, done);
+
+                    return;
+                }
+
+                Report($"Watching the Quest Team's {OverlayUltimusData.NextMember()} wizard.", true, done);
+
+                return;
+            }
             case OverlayAction.MAP_FULL:
                 // One full screen map at a time: the player's, or Ultimus's (a button on Ultimus's map acts on his).
                 if (OverlayMinimapData.FullZoom(mapKey) is null && OverlayMinimapData.FullZoom(otherKey) is not null) {

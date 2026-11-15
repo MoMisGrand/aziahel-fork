@@ -350,7 +350,8 @@ internal class CommandService(SessionActor sessionActor) : MessageService(sessio
         try {
             var map = Tools.OverlayMinimap.Build(wizard, zone, message.Reach);
             // His quest's way, drawn like the player's Quest Tracker line (the shared route finder).
-            if (Ultimus.UltimusSpectate.Route(wizard, zone) is { } route) {
+            // A Quest Team wizard (the Quest Team Spectator): the team's quest, drawn the same way.
+            if ((message.Team ? Ultimus.UltimusSpectate.RouteFor(wizard, zone, message.Quest) : Ultimus.UltimusSpectate.Route(wizard, zone)) is { } route) {
                 map["route"] = route;
             }
 

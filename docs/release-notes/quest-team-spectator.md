@@ -1,0 +1,4 @@
+New: Quest Team Spectator add-on
+A new overlay add-on lets you watch the Quest Team one wizard at a time. Its own minimap follows that wizard and draws the team's quest way, and a quest box shows the team's quest and step. The Next member button switches between Freya (Ice), Terra (Life), Anubis (Death) and Chaac (Storm), and only those four can be watched. It needs the Minimap add-on, and the Quest Team must be on. If the Ultimus Spectator is on the overlay too, the Quest Team is the one shown.
+Where: Ahziael, Play, Overlay, Add-ons, Niduus's add-ons, Quest Team Spectator, Download. Then add it to your overlay.
+Test: Turn the Quest Team on, add the Quest Team Spectator to the overlay and start the game with Play. The map and quest box show Freya first, and Next member moves on to Terra, Anubis, Chaac, then Freya again.

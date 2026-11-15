@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Text.Json.Nodes;
 using Avalonia;
 using Avalonia.Controls;
@@ -58,6 +59,45 @@ internal static class OverlayUltimusData {
 
         internal bool Stale => DateTime.UtcNow - At > TimeSpan.FromSeconds(8);
 
+    }
+
+    /// <summary>The Quest Team's roles, in the team's order (the Quest Team Spectator cycles through them).</summary>
+    internal static readonly string[] TeamRoles = ["Ice", "Life", "Death", "Storm"];
+
+    private static volatile bool s_watchTeam;
+    private static int s_teamIndex;
+
+    /// <summary>Whether the overlay shows the Quest Team Spectator: the feed then is one Quest Team wizard, not Ultimus.</summary>
+    internal static bool WatchTeam {
+        get => s_watchTeam;
+        set {
+            if (s_watchTeam != value) {
+                s_watchTeam = value;
+                Forget();
+            }
+        }
+    }
+
+    /// <summary>Who the server is asked for: "" for Ultimus, else the Quest Team role watched now.</summary>
+    internal static string Who => s_watchTeam ? TeamRoles[Volatile.Read(ref s_teamIndex) % TeamRoles.Length] : "";
+
+    /// <summary>The Quest Team Spectator's button: the next member (only the four, in the team's order).</summary>
+    internal static string NextMember() {
+        var next = (Volatile.Read(ref s_teamIndex) + 1) % TeamRoles.Length;
+        Volatile.Write(ref s_teamIndex, next);
+        Forget();
+        // The new member's map is drawn fresh.
+        OverlayMinimapData.Heard(KEY, new JsonObject { ["ok"] = false, ["error"] = $"Switching to the Quest Team's {TeamRoles[next]} wizard..." });
+
+        return TeamRoles[next];
+    }
+
+    private static void Forget() {
+        lock (s_lock) {
+            s_info = null;
+            s_said = "";
+            s_version++;
+        }
     }
 
     private static readonly object s_lock = new();
@@ -112,7 +152,7 @@ internal static class OverlayUltimusData {
             }
 
             error = error.Length > 200 ? error[..200] : error;
-            info = new Info("Ultimus", 0, 0, 0, "", "", "", "", "", "", [], [], [], null, error, DateTime.UtcNow);
+            info = new Info(s_watchTeam ? $"Quest Team ({Who})" : "Ultimus", 0, 0, 0, "", "", "", "", "", "", [], [], [], null, error, DateTime.UtcNow);
             said = "error:" + error;
             OverlayQuestData.Follow(KEY, "");
         }
@@ -244,7 +284,7 @@ internal static class UltimusViews {
 
         var info = OverlayUltimusData.For(window);
         if (Waiting(info) is { } waiting) {
-            panel.Children.Add(Line("Ultimus", look.Size + 2, look.Gold, bold: true));
+            panel.Children.Add(Line(window != 0 && OverlayUltimusData.WatchTeam ? $"Quest Team: {OverlayUltimusData.Who}" : "Ultimus", look.Size + 2, look.Gold, bold: true));
             panel.Children.Add(Line(waiting, look.Size - 1, look.Faint, wrap: true));
 
             return panel;
@@ -416,10 +456,11 @@ internal static class UltimusViews {
 
     private static string? Waiting(OverlayUltimusData.Info? info) => info is null
         ? OverlayHost.Link.Connected
-            ? OverlayHost.Link.SendsUltimus ? "Looking for Ultimus..." : "This server's Imlight is too old to watch Ultimus. The host needs to update it."
+            ? OverlayHost.Link.SendsUltimus ? OverlayUltimusData.WatchTeam ? $"Looking for the Quest Team's {OverlayUltimusData.Who} wizard..." : "Looking for Ultimus..."
+                : "This server's Imlight is too old to watch Ultimus. The host needs to update it."
             : "Not linked to a server yet. Start the game with Play in Ahziael."
         : info.Note.Length > 0 ? info.Note
-        : info.Stale ? "Ultimus stopped answering for now..." : null;
+        : info.Stale ? OverlayUltimusData.WatchTeam ? "The Quest Team stopped answering for now..." : "Ultimus stopped answering for now..." : null;
 
     private static string Pips(OverlayUltimusData.Battle fight) {
         var words = $"Pips: {fight.Pips}";

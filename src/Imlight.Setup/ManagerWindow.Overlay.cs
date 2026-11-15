@@ -1956,6 +1956,10 @@ internal sealed partial class ManagerWindow {
                 case OverlayAction.OPEN_AHZIAEL:
                     panel.Children.Add(Sub("Brings Ahziael to the front (or starts it, when only the overlay is running)."));
                     break;
+                case OverlayAction.TEAM_NEXT:
+                    panel.Children.Add(Sub("Quest Team Spectator: switches to the next Quest Team wizard (Ice, Life, Death, Storm, then Ice again). " +
+                        "Works when the Quest Team Spectator's map or quest box is on the overlay."));
+                    break;
             }
 
             if (_ovServerPart) {

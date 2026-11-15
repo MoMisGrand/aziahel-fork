@@ -104,6 +104,19 @@ internal static class UltimusSpectate {
         };
     }
 
+    /// <summary>
+    /// The way of <paramref name="quest"/> for another bot (the Quest Team Spectator): the Quest Tracker's own route from
+    /// where it stands (the shared route finder), or null when it does not hold the quest or no spot is found here.
+    /// </summary>
+    internal static JsonObject RouteFor(Wizard wizard, IActorRef zone, string quest) {
+        if (string.IsNullOrEmpty(quest) || wizard.QuestBehavior?.CurrentQuestInstances?.Any(q => q is not null
+                && string.Equals(q.QuestName, quest, StringComparison.OrdinalIgnoreCase)) != true) {
+            return null;
+        }
+
+        return Tools.OverlayQuestRoute.Build(wizard, zone, quest) is { } route && route["points"] is JsonArray { Count: > 0 } ? route : null;
+    }
+
     private static int Round(float value) => float.IsFinite(value) ? (int) MathF.Round(value) : 0;
 
     private static readonly object s_lock = new();

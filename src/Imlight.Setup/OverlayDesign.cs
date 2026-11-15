@@ -521,6 +521,17 @@ internal sealed class OverlayElement {
     /// </summary>
     public string From { get; set; } = "";
 
+    /// <summary>
+    /// For an Ultimus Spectator piece: who it watches. Empty is Ultimus; <see cref="WATCH_TEAM"/> is the Quest Team
+    /// Spectator (Niduus, 2026-11-15), which shows one Quest Team wizard at a time, picked with the "Next Quest Team
+    /// member" button. One spectator feed at a time: with both on the overlay, the Quest Team's is shown.
+    /// </summary>
+    public string Watch { get; set; } = "";
+
+    internal const string WATCH_TEAM = "QuestTeam";
+
+    internal bool WatchesTeam => IsUltimus && Watch == WATCH_TEAM;
+
     /// <summary>A box, a picture or a minimap: no words (a button has words).</summary>
     internal bool IsBox => Kind is BOX or PICTURE or MINIMAP or QUEST_TRACKER or ULTIMUS_MAP or ULTIMUS_QUEST or ULTIMUS_SPELLS;
 
@@ -546,6 +557,7 @@ internal sealed class OverlayElement {
         Picture = Kind == PICTURE ? CleanPicture(Picture) : "";
         PictureFit = PICTURE_FITS.Contains(PictureFit) ? PictureFit : "Fit";
         Action = OverlayAction.KINDS.Contains(Action) ? Action : OverlayAction.COMMAND;
+        Watch = Kind is ULTIMUS_MAP or ULTIMUS_QUEST or ULTIMUS_SPELLS && Watch == WATCH_TEAM ? WATCH_TEAM : "";
         Command = Trim(Command, MAX_COMMAND).Replace("\n", " ").Trim();
         CheatHow = OverlayAction.HOWS.Contains(CheatHow) ? CheatHow : OverlayAction.USE;
         Name = Trim(Name, 40);
@@ -643,7 +655,10 @@ internal static class OverlayAction {
     /// <summary>Brings Ahziael's window to the front.</summary>
     internal const string OPEN_AHZIAEL = "OpenAhziael";
 
-    internal static readonly string[] KINDS = [COMMAND, CHEAT, MOB_CHEAT, DESIGNER, TOGGLE_MINE, OPEN_AHZIAEL];
+    /// <summary>The Quest Team Spectator: watch the next Quest Team wizard (Ice, Life, Death, Storm, then Ice again).</summary>
+    internal const string TEAM_NEXT = "TeamNext";
+
+    internal static readonly string[] KINDS = [COMMAND, CHEAT, MOB_CHEAT, DESIGNER, TOGGLE_MINE, OPEN_AHZIAEL, TEAM_NEXT];
 
     // The minimap's own buttons (not a choice in the designer): full screen or back, closer, farther.
     internal const string MAP_FULL = "MapFull";
@@ -661,6 +676,7 @@ internal static class OverlayAction {
     /// <summary>The words for each kind in the designer.</summary>
     internal static readonly string[] LABELS = [
         "Run an Imlight or Ahziael command", "Use one of my player cheats", "Set off a mob (creature) cheat", "Open the overlay designer", "Show or hide my own pieces", "Open Ahziael",
+        "Quest Team Spectator: next member",
     ];
 
     internal const string USE = "Use";

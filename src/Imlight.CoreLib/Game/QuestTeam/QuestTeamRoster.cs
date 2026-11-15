@@ -25,6 +25,7 @@ using Imcodec.ObjectProperty.TypeCache;
 using Imlight.Common;
 using Imlight.CoreLib.Game.BotPlayers;
 using Imlight.CoreLib.Game.Randomization;
+using Imlight.CoreLib.Game.World;
 using Imlight.CoreLib.Shared.Behaviors;
 using Imlight.CoreLib.Shared.Resources;
 using Imlight.CoreLib.WizardData;
@@ -65,6 +66,50 @@ internal static class QuestTeamRoster {
         _ => MagicSchool.Storm,
     };
 
+    /// <summary>
+    /// Each role's name and gender, locked (Niduus, 2026-11-15: "They are now locked to Name and Gender"): set on every
+    /// load, so wizards made before get renamed and, when needed, their gender and looks changed to match. Not a setting.
+    /// </summary>
+    internal static (string Name, eGender Gender) Locked(string role) => role switch {
+        "Ice" => ("Freya", eGender.Female),
+        "Life" => ("Terra", eGender.Female),
+        "Death" => ("Anubis", eGender.Male),
+        _ => ("Chaac", eGender.Male),
+    };
+
+    /// <summary>The wizard gets its role's locked name and gender (a custom name over its name keys, as Ultimus's).</summary>
+    internal static string LockNameAndGender(Wizard wizard, string role) {
+        var (name, gender) = Locked(role);
+        try {
+            if (wizard?.PlayerNameBehavior is not { } names) {
+                return name;
+            }
+
+            if (wizard.WizardAvatar is { } avatar && avatar.m_eGender != gender) {
+                // New looks for the other gender (hair, face and so on are per gender); still human.
+                avatar.m_eGender = gender;
+                if (MagicMirror.RandomLook(gender, new Random(RandomNumberGenerator.GetInt32(int.MaxValue))) is { } look) {
+                    MagicMirror.WriteToAvatar(avatar, look);
+                }
+
+                avatar.m_eRace = eRace.Human;
+                WizardCollection.UpdateCharacterRace(wizard);
+                Logger.Information("Quest Team: the {0} wizard is made {1}.", Logger.Args(role, gender));
+            }
+
+            if (names.NameOverride != name || names.Gender != gender) {
+                names.Gender = gender;
+                wizard.Rename(names.NameIndices, name);
+                Logger.Information("Quest Team: the {0} wizard is named {1}.", Logger.Args(role, name));
+            }
+        }
+        catch (Exception e) {
+            Logger.Warning("Quest Team: could not set the {0} wizard's name and gender: {1}", Logger.Args(role, e.Message));
+        }
+
+        return name;
+    }
+
     private const string USERNAME_PREFIX = "QuestTeam-";
 
     private static string FilePath => Path.Combine(QuestTeamWire.Folder, QuestTeamWire.TEAM_FILE);
@@ -77,7 +122,9 @@ internal static class QuestTeamRoster {
             var member = saved?.Members.FirstOrDefault(m => m.Role == role);
             if (member is not null && AccountCollection.GetAccountForCharacterList(member.AccountId) is { } known
                 && known.CharacterIds.Contains(member.CharId)) {
-                MakeHuman(known.Characters?.FirstOrDefault(c => c.CharId == member.CharId));
+                var wizard = known.Characters?.FirstOrDefault(c => c.CharId == member.CharId);
+                MakeHuman(wizard);
+                member.Name = LockNameAndGender(wizard, role);
             }
 
             if (member is null || AccountCollection.GetAccountForCharacterList(member.AccountId) is not { } account
@@ -226,11 +273,11 @@ internal static class QuestTeamRoster {
             if (existing is not null) {
                 MakeHuman(existing);
                 return new Member { Role = role, Username = username, AccountId = account.AccountId, CharId = existing.CharId,
-                    Name = existing.PlayerNameBehavior?.GetWizardName() ?? role };
+                    Name = LockNameAndGender(existing, role) };
             }
 
             var random = new Random(RandomNumberGenerator.GetInt32(int.MaxValue));
-            var gender = random.Next(2) == 0 ? eGender.Male : eGender.Female;
+            var gender = Locked(role).Gender;
             var (firsts, middles, lasts) = WizardNameBank.WizardNameListSizes(gender);
             var first = random.Next(Math.Clamp(firsts, 1, 256));
             var middle = middles > 1 ? random.Next(1, Math.Min(middles, 256)) : 0;
@@ -249,7 +296,7 @@ internal static class QuestTeamRoster {
                 return null;
             }
 
-            var name = wizard.PlayerNameBehavior?.GetWizardName() ?? role;
+            var name = LockNameAndGender(wizard, role);
             Logger.Information("Quest Team: made the {0} wizard {1} (account {2}).", Logger.Args(role, name, username));
 
             return new Member { Role = role, Username = username, AccountId = account.AccountId, CharId = wizard.CharId, Name = name };
