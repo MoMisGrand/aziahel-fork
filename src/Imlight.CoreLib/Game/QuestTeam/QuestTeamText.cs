@@ -38,7 +38,7 @@ internal static class QuestTeamText {
         return string.IsNullOrWhiteSpace(title) ? questName : $"\"{title}\"";
     }
 
-    internal static string Zone(string zone) => string.IsNullOrEmpty(zone) ? "?" : ZoneNames.Shown(zone);
+    internal static string Zone(string zone) => string.IsNullOrEmpty(zone) ? "?" : ZoneNames.ShownPlace(zone);
 
     internal static string SpellName(uint id) {
         if (CoreObjectFactory.GetCoreTemplate(id) is SpellTemplate spell) {

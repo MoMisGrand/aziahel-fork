@@ -335,6 +335,8 @@ internal static class UltimusPlanner {
     }
 
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> s_lastPick = new(StringComparer.OrdinalIgnoreCase);
+    // The area where the creatures of a "defeat" step were last seen ("quest|goal" to zone).
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> s_seenIn = new(StringComparer.OrdinalIgnoreCase);
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, DateTime> s_setAside = new(StringComparer.Ordinal);
 
     /// <summary>What the planner had picked, for picking up exactly there after a restart (UltimusDirector.Resume.cs).</summary>
@@ -465,6 +467,17 @@ internal static class UltimusPlanner {
                     .OrderBy(m => UltimusDrops.Score(questName, goalName, m.Template) < 0 ? 1 : 0)
                     .ThenBy(m => Far(leader.X, leader.Y, m.Object.m_location.X, m.Object.m_location.Y)).ToList();
                 var free = wanted.Where(m => !CombatDuelComponent.IsInBattle(m.Object.m_globalID.Full)).ToList();
+                // Where he saw them, for when he is somewhere else and the step names no area (his PC log, 2026-11-15: out of The
+                // Vault of Ice he searched the Entrance Hall for Keeper of the Fang, "the quest names no other area").
+                if (wanted.Count > 0) {
+                    s_seenIn[key] = zone;
+                }
+                else if (stepZone.Length == 0 && s_seenIn.TryGetValue(key, out var seenZone) && !OverlayQuestTracker.SameZone(seenZone, zone)) {
+                    stepZone = seenZone;
+                }
+                else if (stepZone.Length == 0 && arrowZones.Count > 0 && !arrowZones.Any(z => OverlayQuestTracker.SameZone(z, zone))) {
+                    stepZone = arrowZones[0];
+                }
 
                 // The Quest Team's creatures are left to it (Niduus, 2026-11-12: Ultimus "will never attempt to join QT and
                 // they will always attempt to avoid colliding"): a creature near a Quest Team wizard is not Ultimus's.
@@ -510,7 +523,7 @@ internal static class UltimusPlanner {
                 }
 
                 // None up right now: into the street area where they spawn, to meet the next one (MobSpawnAreas).
-                if (wanted.Count == 0 && Tools.RouteMobs.SeekFor(leader.ZoneActor, leader.X, leader.Y, adjectives) is { } area) {
+                if (wanted.Count == 0 && (stepZone.Length == 0 || OverlayQuestTracker.SameZone(stepZone, zone)) && Tools.RouteMobs.SeekFor(leader.ZoneActor, leader.X, leader.Y, adjectives) is { } area) {
                     var (ax, ay) = Tools.RouteMobs.Nearest(area, leader.X, leader.Y);
                     if (Far(leader.X, leader.Y, ax, ay) > 300) {
                         return new Target(SPOT, ax, ay, $"{step} (where they spawn)", questName, goalName, Key: key + "|spawns");

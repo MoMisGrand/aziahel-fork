@@ -152,7 +152,7 @@ internal sealed partial class UltimusDirectorActor {
             Announce(SAY_TOUGH, "This one's tough, healing up first.");
         }
 
-        if (bossNext) {
+        if (bossNext && !InDungeon(leader)) {
             Think($"I'm at {share:P0} health and my next fight is a boss. I don't start a boss under half health, so I heal first.",
                 "boss-heal|" + (target?.Key ?? ""));
         }
@@ -170,6 +170,17 @@ internal sealed partial class UltimusDirectorActor {
         if (onlyPrep && RemedyFor(target?.Key) != "full") {
             Think($"I'd like full health for this, but I have {stats.m_currentHitpoints * 100 / maxHealth}% and nothing to heal from right here, " +
                   "which is enough by my normal rule. I go on instead of travelling or waiting.", "prepgo|" + leader.Zone);
+            _hurtSince = DateTime.MaxValue;
+
+            return false;
+        }
+
+        // In a dungeon he never walks out to heal: leaving closes it, and the boss he came for is gone with it (his PC log,
+        // 2026-11-15: at 35% in The Vault of Ice he left for wisps before Keeper of the Fang, then searched the Entrance Hall
+        // for the boss). With no potion or wisp in here, he goes on as a player does; Dungeon Recall brings him back if he falls.
+        if (InDungeon(leader)) {
+            Think($"I'm at {share:P0} health in a dungeon with no potion or wisp in here. Walking out would close the dungeon, so I go on " +
+                  "and fight; if I fall, Dungeon Recall brings me back.", "dungeon-noheal|" + leader.Zone);
             _hurtSince = DateTime.MaxValue;
 
             return false;
