@@ -685,6 +685,12 @@ internal sealed partial class ManagerWindow {
 
             using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
             _teamIssueList = JsonSerializer.Deserialize<List<QuestTeamIssue>>(stream) ?? [];
+            // Old issues a fixed bug raised are not shown, even before the team's mini server takes them off the list on its
+            // next start (Niduus, 2026-11-15: "clear the 3 old Unicorn Way issues").
+            var fixedBefore = new DateTime(2026, 11, 15, 3, 0, 0, DateTimeKind.Utc);
+            _teamIssueList.RemoveAll(i => i.At < fixedBefore && (
+                (string.Equals(i.Quest, "WC-COMMONS-MAIN-001", StringComparison.OrdinalIgnoreCase) && (i.Text ?? "").Contains("offers nothing to click", StringComparison.Ordinal))
+                || (i.Text ?? "").Contains("while the others are on does not have it", StringComparison.Ordinal)));
             _teamIssuesWritten = written;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException) {

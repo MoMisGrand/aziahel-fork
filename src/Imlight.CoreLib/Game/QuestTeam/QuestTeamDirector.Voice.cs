@@ -71,6 +71,12 @@ internal sealed partial class QuestTeamDirectorActor {
         ["bye"] = ["Goodbye", "Bye", "See you", "Later"],
     };
 
+    // Words of a phrase that sends someone somewhere or after something: never a team line said on the way.
+    private static readonly string[] s_placeWords = [
+        "to", "look", "find", "MooShu", "Krokotopia", "Marleybone", "Dragonspyre", "Celestia", "Zafaria", "Avalon", "Azteca",
+        "Khrysalis", "Polaris", "Mirage", "Empyrea", "Karamelle", "Lemuria", "Ahmarra", "Wizard City", "Grizzleheim", "Wysteria",
+    ];
+
     // A player's phrase that asks something of them (they turn it down).
     private static readonly string[] s_asks = [
         "follow", "help", "come", "can you", "could you", "join", "trade", "friend", "group", "teleport", "go to", "let's",
@@ -83,7 +89,10 @@ internal sealed partial class QuestTeamDirectorActor {
             return;
         }
 
-        if (MenuChatBook.Find(_voiceRandom, s_moments.GetValueOrDefault(moment) ?? []) is not { } phrase) {
+        // The phrase that is just the words first: one that only starts with them names places the team is not going
+        // (Niduus's log, 2026-11-15: level 1 Freya in Unicorn Way said "Let's go to MooShu" and "Let's go to Ahmarra").
+        var words = s_moments.GetValueOrDefault(moment) ?? [];
+        if ((MenuChatBook.Exact(_voiceRandom, words) ?? MenuChatBook.Find(_voiceRandom, s_placeWords, words)) is not { } phrase) {
             return;
         }
 

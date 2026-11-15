@@ -139,8 +139,11 @@ internal sealed partial class UltimusDirectorActor {
             return step with { What = $"{step.What} (with {name}, my group)", Key = PARTY_KEY + "quest|" + step.Key };
         }
 
-        // Otherwise close by them, not on top of them.
-        return UltimusPlanner.Far(leader.X, leader.Y, at.X, at.Y) > 150
+        // Otherwise close by them, not on top of them. Once walking to them he keeps on until well inside, and once by them
+        // he stays until they are well away: one edge made him flip between the two every second (Niduus's log, 2026-11-14:
+        // "with Walter Blanco" and "going along with Walter Blanco" over and over while grouped).
+        var following = _target?.Key == PARTY_KEY + "follow|" + mate.CharId;
+        return UltimusPlanner.Far(leader.X, leader.Y, at.X, at.Y) > (following ? 90 : 220)
             ? new UltimusPlanner.Target(UltimusPlanner.SPOT, at.X + 40, at.Y + 40, $"going along with {name} (my group)", Key: PARTY_KEY + "follow|" + mate.CharId)
             : new UltimusPlanner.Target(UltimusPlanner.SPOT, leader.X, leader.Y, $"with {name} (my group)", Key: PARTY_KEY + "with|" + mate.CharId);
     }

@@ -360,12 +360,34 @@ public static class QuestTeamBrain {
             var issues = Path.Combine(QuestTeamWire.Folder, QuestTeamWire.ISSUES_FILE);
             if (File.Exists(issues)) {
                 s_issues = JsonSerializer.Deserialize<List<Issue>>(File.ReadAllText(issues)) ?? [];
+                if (DropFixedIssues() > 0) {
+                    WriteFile(issues, JsonSerializer.Serialize(s_issues, new JsonSerializerOptions { WriteIndented = true }));
+                }
             }
         }
         catch (Exception e) when (e is IOException or JsonException or UnauthorizedAccessException) {
             Logger.Warning("Quest Team could not read its issues ({0}); it starts a new list.", Logger.Args(e.Message));
             s_issues = [];
         }
+    }
+
+    // Issues a fixed bug raised, taken off the list once (Niduus, 2026-11-15: "clear the 3 old Unicorn Way issues"): the
+    // three left in their own copies of the Headmistress's house were reported as "offers nothing to click" and as "not on
+    // the same step", which was the team's own bug (now fixed), not the quests'.
+    private static readonly DateTime s_ownCopyFixed = new(2026, 11, 15, 3, 0, 0, DateTimeKind.Utc);
+
+    private static int DropFixedIssues() {
+        var before = s_issues.Count;
+        s_issues.RemoveAll(i => i.At < s_ownCopyFixed && (
+            (string.Equals(i.Quest, "WC-COMMONS-MAIN-001", StringComparison.OrdinalIgnoreCase)
+             && (i.Text ?? "").Contains("offers nothing to click", StringComparison.Ordinal))
+            || (i.Text ?? "").Contains("while the others are on does not have it", StringComparison.Ordinal)));
+        var dropped = before - s_issues.Count;
+        if (dropped > 0) {
+            Logger.Information("Quest Team: took {0} old issue(s) off the list that a fixed bug raised (the team left in its own copies).", Logger.Args(dropped));
+        }
+
+        return dropped;
     }
 
     private static void SaveTimesIfChanged() {

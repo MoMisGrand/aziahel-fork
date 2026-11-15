@@ -95,8 +95,13 @@ internal sealed partial class QuestTeamDirectorActor {
                 continue;
             }
 
-            Count("issues raised");
+            // Known for the stuck line either way; filed on the Issues page only the first time, not again after a restart.
             _readAheadFound[quest] = string.Join(" ", problems.Take(2));
+            if (!BotShared.ReadAheadFiled.FirstTime(QuestTeamWire.Folder, quest)) {
+                continue;
+            }
+
+            Count("issues raised");
             var text = $"READ-AHEAD ({UltimusDirectorActor.WorldName(world)}): {string.Join(" ", problems.Take(3))} Found by the quest check before the " +
                        "team got there; it still tries it as players would when it does.";
             QuestTeamLink.Issue("quest", quest, QuestTeamText.Title(quest), world, text, "Every story step can be done on this server.",
