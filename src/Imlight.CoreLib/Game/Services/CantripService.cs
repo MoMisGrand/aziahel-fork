@@ -44,6 +44,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using Akka.Actor;
 using Imcodec.CoreObject;
 using Imcodec.Cryptography;
@@ -56,6 +57,7 @@ using Imlight.CoreLib.Game.Spells;
 using Imlight.CoreLib.Shared.Character;
 using Imlight.CoreLib.Shared.Networking;
 using Imlight.CoreLib.Shared.Packets;
+using Imlight.CoreLib.Shared.Resources;
 using Imlight.CoreLib.WizardData.Models.Player;
 
 namespace Imlight.CoreLib.Game.Services;
@@ -150,8 +152,23 @@ internal class CantripService(SessionActor sessionActor) : MessageService(sessio
             return;
         }
 
-        // Cantrips the server cannot do yet (healing, mana and fishing luck radiances, Calescent Tracker, Second Mark
-        // and Second Recall) cost no energy and say so, instead of taking energy and doing nothing.
+        // Healing, mana and healing-and-mana radiances heal over time outside battle, as players use them between
+        // fights (Niduus, 2026-11-15: "slowly heals outside battle like players do").
+        if (cantrip.m_cantripsSpellEffect is CantripsSpellEffect.CSE_Beneficial && Radiance.Of(cantrip) is { } radiance) {
+            if (wizard.IsInDuel || !CastCantrip(message.SpellTemplateID)) {
+                return;
+            }
+
+            StartRadiance(wizard, radiance);
+            ZoneBroadcast(new CANTRIPSMESSAGES_57_PROTOCOL.MSG_CASTEFFECT {
+                GameObjectID = wizard.GameObject.m_globalID, SpellTemplateID = (int) message.SpellTemplateID,
+            }, isSelfless: false);
+
+            return;
+        }
+
+        // Cantrips the server cannot do yet (fishing luck radiances, Calescent Tracker, Second Mark and Second Recall)
+        // cost no energy and say so, instead of taking energy and doing nothing.
         if (cantrip.m_cantripsSpellEffect is CantripsSpellEffect.CSE_Beneficial or CantripsSpellEffect.CSE_HotCold
             or CantripsSpellEffect.CSE_Mark or CantripsSpellEffect.CSE_Recall) {
             SendToSocket(new CANTRIPSMESSAGES_57_PROTOCOL.MSG_CANTRIPSRESPONSE { EnergyUsed = 0, CooldownSeconds = 0, OutOfEnergy = 0 });
@@ -197,6 +214,96 @@ internal class CantripService(SessionActor sessionActor) : MessageService(sessio
         }
 
         ZoneBroadcast(castEffect, isSelfless: false);
+    }
+
+    // ---------------------------------------------------------------------
+    // Healing and mana radiances
+    // ---------------------------------------------------------------------
+
+    /// <summary>A healing or mana radiance: what it gives back, in all, over how long (the cantrip's level sets the share).</summary>
+    internal sealed record Radiance(bool Health, bool Mana, double Share, TimeSpan For) {
+
+        private static readonly TimeSpan s_tick = TimeSpan.FromSeconds(5);
+        internal static TimeSpan Tick => s_tick;
+
+        /// <summary>
+        /// The radiance a cantrip makes, or null for one that is not a healing or mana radiance. Its time comes from the
+        /// radiance's own game template when it has one (60 seconds otherwise); level I gives back 10% in all, II 20%, III 30%
+        /// and IV 40% ([Cantrips] RadianceShare, read live, is level I's share).
+        /// </summary>
+        internal static Radiance Of(CantripsSpellTemplate cantrip) {
+            var name = cantrip?.m_name.ToString() ?? "";
+            var health = name.Contains("Healing", StringComparison.OrdinalIgnoreCase);
+            var mana = name.Contains("Mana", StringComparison.OrdinalIgnoreCase);
+            if (!health && !mana) {
+                return null;
+            }
+
+            var level = name.EndsWith("_03", StringComparison.Ordinal) ? 4 : name.EndsWith("_02", StringComparison.Ordinal) ? 3
+                : name.EndsWith("_01", StringComparison.Ordinal) ? 2 : 1;
+            var seconds = 60.0;
+            try {
+                var param = cantrip.m_effectParameter.ToString() ?? "";
+                if (param.Length > 0 && CoreObjectFactory.TryGetCoreTemplateID(l => ((string) l?.m_filename) is { } f
+                        && f.EndsWith(param, StringComparison.OrdinalIgnoreCase), out var id)
+                    && CoreObjectFactory.GetCoreTemplate(id)?.m_behaviors?.OfType<BeneficialProximityBehaviorTemplate>().FirstOrDefault() is { m_duration: > 0 } behavior) {
+                    seconds = Math.Clamp(behavior.m_duration, 10, 600);
+                }
+            }
+            catch (Exception) {
+                // The template could not be read: the usual minute.
+            }
+
+            var share = Math.Clamp(ConfigurationManager.GetValue("Cantrips.RadianceShare", 0.10), 0.0, 1.0) * level;
+
+            return new Radiance(health, mana, share, TimeSpan.FromSeconds(seconds));
+        }
+
+    }
+
+    private const string RADIANCE_TIMER = "RadianceTick";
+    internal sealed record RadianceTick;
+    private Radiance _radiance;
+    private DateTime _radianceUntil = DateTime.MinValue;
+
+    private void StartRadiance(Wizard wizard, Radiance radiance) {
+        _radiance = radiance;
+        _radianceUntil = DateTime.UtcNow + radiance.For;
+        Timers.StartPeriodicTimer(RADIANCE_TIMER, new RadianceTick(), Radiance.Tick, Radiance.Tick);
+        Logger.Debug("Cantrips: {0} casts a radiance: {1:P0} back over {2} seconds.", Logger.Args(wizard.CharId, radiance.Share, (int) radiance.For.TotalSeconds));
+    }
+
+    // Each tick its share of the radiance, while out of battle; it ends when its time is up.
+    [InternalMessageHandler(typeof(RadianceTick))]
+    private void ReceiveRadianceTick(RadianceTick message) {
+        var wizard = GetActiveWizard();
+        if (wizard is null || _radiance is null || DateTime.UtcNow > _radianceUntil) {
+            Timers.Cancel(RADIANCE_TIMER);
+            _radiance = null;
+
+            return;
+        }
+
+        if (wizard.IsInDuel) {
+            return;
+        }
+
+        var part = _radiance.Share * Radiance.Tick.TotalSeconds / Math.Max(1, _radiance.For.TotalSeconds);
+        var stats = wizard.GameStats;
+        var client = stats.GetClientTypeAlternative();
+        if (_radiance.Health && stats.m_currentHitpoints < stats.m_baseHitpoints) {
+            var health = Math.Min(stats.m_baseHitpoints, stats.m_currentHitpoints + Math.Max(1, (int) (stats.m_baseHitpoints * part)));
+            wizard.UpdateHealth(health);
+            SendToSocket(new WIZARD_12_PROTOCOL.MSG_UPDATEHEALTH {
+                CharacterID = wizard.GameObjectID, NewHealth = health, NewHealthMax = client.m_baseHitpoints, DisplayDiff = 1,
+            });
+        }
+
+        if (_radiance.Mana && stats.m_currentMana < stats.m_baseMana) {
+            var mana = Math.Min(stats.m_baseMana, stats.m_currentMana + Math.Max(1, (int) (stats.m_baseMana * part)));
+            wizard.UpdateMana(mana);
+            SendToSocket(new WIZARD_12_PROTOCOL.MSG_UPDATEMANA { Mana = mana, MaxMana = client.m_baseMana, DisplayDiff = 1 });
+        }
     }
 
     [MessageHandler(typeof(CANTRIPSMESSAGES_57_PROTOCOL.MSG_CASTRITUAL))]

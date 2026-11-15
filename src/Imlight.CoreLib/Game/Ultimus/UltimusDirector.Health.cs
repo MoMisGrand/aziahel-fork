@@ -87,6 +87,7 @@ internal sealed partial class UltimusDirectorActor {
     private bool HealFirst(List<UltimusMember.Status> group, UltimusPlanner.Target target) {
         var leader = group[0];
         _healWaiting = false;
+        PotionsBeforeDungeon(leader, target);
         if (PotionRun(leader)) {
             return true;
         }
@@ -131,6 +132,11 @@ internal sealed partial class UltimusDirectorActor {
 
             return true;
         }
+
+        // 1b. A healing radiance from his Cantrips tab, as players heal between fights: his best one he has the energy for,
+        // once its last one is used up (Niduus, 2026-11-15: "slowly heals outside battle like players do"). It heals over a
+        // minute while he goes on, so it does not hold him here.
+        HealingCantrip(leader);
 
         // 2. A wisp in the area, one not among creatures.
         if (Wisp(leader, lowHealth, lowMana) is { } wisp) {
@@ -265,6 +271,59 @@ internal sealed partial class UltimusDirectorActor {
         return true;
     }
 
+    private DateTime _radianceUntil = DateTime.MinValue;
+    private string _potionPrepFor;
+    private bool _potionAsked;
+
+    // Before walking into a dungeon, potions filled at a potion shop in this area or the next one, as a player stocks up
+    // before a dungeon (Niduus, 2026-11-15, after he went into The Vault of Ice at 35% with no potions). Once per dungeon door;
+    // PotionRun takes him there and stops when they are full.
+    private void PotionsBeforeDungeon(UltimusMember.Status leader, UltimusPlanner.Target target) {
+        if (!IntoDungeon(leader, target) || leader.Wizard?.GameStats is not { } stats || stats.m_potionMax < 1
+            || stats.m_potionCharge >= stats.m_potionMax || DateTime.UtcNow < _potionRunUntil || _potionPrepFor == target.To) {
+            return;
+        }
+
+        _potionPrepFor = target.To;
+        if (PotionShopTarget(leader, out var hops) is null || hops > 1) {
+            return;
+        }
+
+        _potionRunUntil = DateTime.UtcNow.AddMinutes(5);
+        _potionAsked = false;
+        Think($"\"{target.What}\" takes me into a dungeon ({UltimusText.Zone(target.To)}). I have {stats.m_potionCharge:0.#} of {stats.m_potionMax:0} potions and a " +
+              $"potion shop is {(hops == 0 ? "right here" : "one area away")}, so I fill them first.", "dungeon-potions|" + target.To);
+        Note("Ultimus", $"{leader.Name} fills its potions before the dungeon {UltimusText.Zone(target.To)}.");
+    }
+
+    private void HealingCantrip(UltimusMember.Status leader) {
+        var wizard = leader.Wizard;
+        if (wizard?.SpellbookBehavior is null || DateTime.UtcNow < _radianceUntil || CombatDuelComponent.IsInBattle(leader.GlobalId)) {
+            return;
+        }
+
+        try {
+            var energy = wizard.PetOwnerBehavior?.Energy ?? 0;
+            var best = Imlight.CoreLib.Game.Cantrips.CantripFactory.PlayerCantrips()
+                .Select(c => (c.Id, c.Template, Radiance: Services.CantripService.Radiance.Of(c.Template)))
+                .Where(c => c.Radiance is { Health: true } && c.Template.m_energyCost <= energy && wizard.SpellbookBehavior.HasSpell(c.Id))
+                .OrderByDescending(c => c.Radiance.Share).ThenByDescending(c => c.Radiance.Mana).FirstOrDefault();
+            if (best.Radiance is null) {
+                return;
+            }
+
+            _radianceUntil = DateTime.UtcNow + best.Radiance.For;
+            Note("Ultimus", $"{leader.Name} casts a healing radiance from his Cantrips tab ({best.Template.m_energyCost} energy): " +
+                            $"{best.Radiance.Share:P0} health back over {(int) best.Radiance.For.TotalSeconds} seconds.");
+            Think($"I'm hurt and out of battle, so I cast a healing radiance, as players do between fights: it heals me while I go on.",
+                "radiance|" + (int) DateTime.UtcNow.TimeOfDay.TotalMinutes);
+            _actors[0].Tell(new UltimusMember.CastCantrip(best.Id));
+        }
+        catch (Exception ex) {
+            Imlight.Common.Logger.Debug("Ultimus: the healing cantrip could not be cast: {0}", Imlight.Common.Logger.Args(ex.Message));
+        }
+    }
+
     /// <summary>
     /// What healing comes to, from what there is (-1 = none of it): "potion", "wisp-here", "go-on" (only the extra care
     /// before a hard fight wants more, and nothing is right here), "wisp-area" or "shop" (fewer areas away wins; wisps win
@@ -371,7 +430,7 @@ internal sealed partial class UltimusDirectorActor {
 
         if (stats.m_potionCharge >= stats.m_potionMax) {
             _potionRunUntil = DateTime.MinValue;
-            Note("Ultimus", $"{leader.Name} has full potions again, as asked.");
+            Note("Ultimus", $"{leader.Name} has full potions again{(_potionAsked ? ", as asked" : "")}.");
             return false;
         }
 
@@ -379,7 +438,7 @@ internal sealed partial class UltimusDirectorActor {
             return false;
         }
 
-        _doing = "getting potions, as a player asked";
+        _doing = _potionPrepFor is not null && !_potionAsked ? "filling potions before a dungeon" : "getting potions, as a player asked";
         if (shop.Key?.StartsWith(HUB_KEY, StringComparison.Ordinal) == true) {
             PressHubButton(leader, shop.What);
         }
@@ -424,6 +483,7 @@ internal sealed partial class UltimusDirectorActor {
         }
 
         _potionRunUntil = DateTime.UtcNow.AddMinutes(10);
+        _potionAsked = true;
         Think("A player asked me to get potions. I can, so I go now: the nearest potion shop" + (hops > 0 ? $", {hops} area(s) away." : ", right here."), "potionrun");
 
         return (hops > 0 ? $"Good idea, heading to the potion shop now ({hops} area{(hops == 1 ? "" : "s")} away)!" : "Good idea, getting potions right here!", true);

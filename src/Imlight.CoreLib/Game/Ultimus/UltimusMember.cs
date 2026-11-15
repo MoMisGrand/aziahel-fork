@@ -64,6 +64,8 @@ internal sealed class UltimusMember : ReceiveActor, IWithTimers {
     internal sealed record Train(ulong TrainerGlobalId, int Index, string What);
 
     internal sealed record UsePotion;
+    /// <summary>Cast a cantrip from the Cantrips tab, as a player clicks it (a healing radiance between fights).</summary>
+    internal sealed record CastCantrip(uint SpellTemplateId);
     internal sealed record BuyPotions;
 
     /// <summary>Say a Menu Chat phrase by its chat ID, as a player picks it from the menu.</summary>
@@ -298,6 +300,7 @@ internal sealed class UltimusMember : ReceiveActor, IWithTimers {
             }
         });
         Receive<UsePotion>(_ => Send(new WIZARD_12_PROTOCOL.MSG_USEPOTION()));
+        Receive<CastCantrip>(m => Send(new CANTRIPSMESSAGES_57_PROTOCOL.MSG_CANTRIPSSPELLCAST { SpellTemplateID = m.SpellTemplateId }));
         // "Fill All" at a potion shop, as a player presses it in the shop's window.
         Receive<BuyPotions>(_ => Send(new WIZARD_12_PROTOCOL.MSG_POTIONBUYREQUEST { AmountEnum = 1 }));
         Receive<WorldTeleport>(m => Send(new WIZARD_12_PROTOCOL.MSG_WORLDTELEPORTREQUEST { TeleportID = m.DoorGlobalId, World = m.World }));
