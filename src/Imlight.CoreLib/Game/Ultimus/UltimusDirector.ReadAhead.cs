@@ -199,8 +199,13 @@ internal sealed partial class UltimusDirectorActor {
                 continue;
             }
 
-            Count("issues raised");
+            // Known for the stuck line either way; filed on the Issues page only the first time, not again after a restart.
             _readAheadFound[quest] = string.Join(" ", problems.Take(2));
+            if (!BotShared.ReadAheadFiled.FirstTime(UltimusWire.Folder, quest)) {
+                continue;
+            }
+
+            Count("issues raised");
             var text = $"READ-AHEAD ({WorldName(world)}): {string.Join(" ", problems.Take(3))} Found by the quest check before Ultimus got there; " +
                        "he still tries it as a player would when he does.";
             UltimusLink.Issue("quest", quest, UltimusText.Title(quest), world, text, "Every story step can be done on this server.", null, "",

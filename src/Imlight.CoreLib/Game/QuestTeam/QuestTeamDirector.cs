@@ -327,6 +327,7 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
             _stuck.Clear();
             _target = null;
             _currentQuest = null;
+            ForgetResume();
             StartTeam(restart: true);
 
             return;
@@ -345,6 +346,10 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
 
             return;
         }
+
+        // Where they left off before a restart, once; then saved every 20 seconds (QuestTeamDirector.Resume.cs).
+        ReadResume();
+        SaveResume();
 
         KeepGrouped();
         UsePotions();
@@ -879,11 +884,22 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
                 return (Member: m, Step: m.Wizard?.HasCompletedQuest(quest) == true ? "finished it (ahead)" : "does not have it");
             }
 
-            var goals = held.GoalProgress?.Where(g => g is not null && held.IsGoalActive(g.GoalName)).Select(g => (string) g.GoalName).OrderBy(g => g).ToList() ?? [];
+            // The step in plain words ("Talk to Lady Oriel"), not the game's goal code (Niduus's log, 2026-11-15: "it is on
+            // 1_WizardQuestGoals_00000007").
+            var template = QuestTemplateCollection.GetQuestByName(quest);
+            var goals = held.GoalProgress?.Where(g => g is not null && held.IsGoalActive(g.GoalName)).Select(g => (string) g.GoalName).OrderBy(g => g)
+                .Select(g => template?.m_goals?.FirstOrDefault(t => t is not null && (string) t.m_goalName == g) is { } gt
+                    ? $"\"{OverlayQuestTracker.StepTitle(gt)}\"" : g).ToList() ?? [];
 
             return (Member: m, Step: goals.Count == 0 ? "no step open" : string.Join(", ", goals));
         }).ToList();
-        var common = where.GroupBy(w => w.Step).OrderByDescending(g => g.Count()).First().Key;
+        // The leader's step is the one the others are brought level with, when it holds the quest: three left behind in their
+        // own copies are the ones off, not the leader who went on (Niduus's log, 2026-11-15: Freya was named off while "the
+        // others are on does not have it").
+        var leaderStep = where.FirstOrDefault(w => w.Member == _team[0]).Step;
+        var common = leaderStep is not null && leaderStep != "does not have it" && leaderStep != "finished it (ahead)"
+            ? leaderStep
+            : where.GroupBy(w => w.Step).OrderByDescending(g => g.Count()).First().Key;
         var off = where.Where(w => w.Step != common).ToList();
         var key = quest + "|" + string.Join(";", off.Select(o => o.Member.Role + "=" + o.Step));
         if (off.Count == 0) {
@@ -906,11 +922,15 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
 
         foreach (var (member, step) in off) {
             Issue("quest", quest, $"{member.Name} ({member.Role}) is not on the same step of {QuestTeamText.Title(quest)} as the others: " +
-                                  $"it {(step.Contains(' ') ? step : "is on " + step)}, while the others are on {common}. " +
+                                  $"it {Said(step)}, while {(common == leaderStep ? _team[0].Name : "the others")} {Said(common)}. " +
                                   "The step that would bring it level did not work for it.",
                 key: $"apart|{quest}|{member.Role}|{step}", skipStep: false);
         }
     }
+
+    // "does not have it", "finished it (ahead)" and "no step open" read as they are; a step reads "is on ...".
+    private static string Said(string step) => step is "does not have it" or "finished it (ahead)" ? step
+        : step == "no step open" ? "has no step open" : "is on " + step;
 
     private QuestTeamPlanner.Target TrainingTarget(List<QuestTeamMember.Status> group) {
         if (DateTime.UtcNow < _nextTraining) {
