@@ -67,6 +67,7 @@ internal sealed partial class QuestTeamDirectorActor {
 
             if (i == 0) {
                 RouteMemory.Track("Quest Team", member.CharId, member.Zone, member.X, member.Y);
+                CheckTeamTry(member);
             }
 
             if (_stuck.Look(i, member.Zone, member.X, member.Y, excused) is var tries and > 0) {
@@ -78,6 +79,38 @@ internal sealed partial class QuestTeamDirectorActor {
         var (sx, sy) = (_team.Sum(m => m.X), _team.Sum(m => m.Y));
         if (_stuck.Look(WHOLE_TEAM, leader.Zone, sx, sy, resting) is var teamTries and > 0) {
             Unstick(0, teamTries);
+        }
+    }
+
+    // The leader's last unstuck move, until it is known whether it got the team going (shared stuck memory, UltimusSolutions).
+    private sealed class TeamTry {
+        public Ultimus.UltimusSolutions.Solution Solution;
+        public string Zone;
+        public float X, Y;
+        public DateTime At;
+        public DateTime? AwaySince;
+    }
+
+    private TeamTry _teamTry;
+    private QuestTeamPlanner.Target _leaderLastTargetForStuck;
+
+    // Got going: well away for 45 seconds, or 5 minutes with no new alarm.
+    private void CheckTeamTry(QuestTeamMember.Status leader) {
+        if (_target is not null) {
+            _leaderLastTargetForStuck = _target;
+        }
+
+        if (_teamTry is not { } t || string.IsNullOrEmpty(leader.Zone)) {
+            return;
+        }
+
+        var away = !string.Equals(t.Zone, leader.Zone, StringComparison.OrdinalIgnoreCase)
+                   || MathF.Sqrt(((t.X - leader.X) * (t.X - leader.X)) + ((t.Y - leader.Y) * (t.Y - leader.Y))) > 800;
+        t.AwaySince = away ? t.AwaySince ?? DateTime.UtcNow : null;
+        if (t.AwaySince is { } since && DateTime.UtcNow - since >= TimeSpan.FromSeconds(45) || DateTime.UtcNow - t.At >= TimeSpan.FromMinutes(5)) {
+            _teamTry = null;
+            Ultimus.UltimusSolutions.Result(t.Solution, true);
+            Note(leader.Role, $"{leader.Name}: \"{Ultimus.UltimusReasonMoves.Words(t.Solution.Move)}\" got the team going; written down for Ultimus and the team.");
         }
     }
 
@@ -142,6 +175,24 @@ internal sealed partial class QuestTeamDirectorActor {
                               (lesson.Worked.Length > 0 ? $"what freed it: {lesson.Worked}." : "nothing has freed it yet.") +
                               (lesson.Reasoning.Length > 0 ? $" Its reasoning: {lesson.Reasoning}" : ""));
             goFar |= lesson.Worked.Length > 0 && lesson.Worked != "step aside" || lesson.Tried.Contains("step aside") && lesson.Worked.Length == 0;
+        }
+
+        // The team writes its own results into the shared stuck memory too (Niduus, 2026-11-15: idea 1): stuck again by the
+        // spot of its last move, that move failed; the move it makes now is written down and checked (CheckTeamTry).
+        if (index == 0) {
+            if (_teamTry is { } last && string.Equals(last.Zone, member.Zone ?? "", StringComparison.OrdinalIgnoreCase)
+                                     && MathF.Sqrt(((last.X - member.X) * (last.X - member.X)) + ((last.Y - member.Y) * (last.Y - member.Y))) <= 800) {
+                Ultimus.UltimusSolutions.Result(last.Solution, false);
+            }
+
+            var goal = _target ?? _leaderLastTargetForStuck;
+            var step = goal is not null ? $"{goal.Quest}|{goal.Goal}|{goal.What}" : _doing;
+            var move = goFar ? Ultimus.UltimusReasonMoves.AWAY : Ultimus.UltimusReasonMoves.ASIDE;
+            _teamTry = new TeamTry {
+                Solution = Ultimus.UltimusSolutions.Tried(quest ?? "", step ?? "", member.Zone, member.X, member.Y, "", move,
+                    goFar ? "stepping a little aside did not free the team here" : "", "Quest Team"),
+                Zone = member.Zone ?? "", X = member.X, Y = member.Y, At = DateTime.UtcNow,
+            };
         }
 
         var (near, far) = goFar ? (600f, 1600f) : (150f, 600f);

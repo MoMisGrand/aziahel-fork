@@ -339,6 +339,7 @@ internal sealed partial class ManagerWindow {
                 SwitchRow("Nightly auto-coach", _ultAutoCoach,
                     "On: each night (after 4 AM) Ultimus puts all his logs in a dated folder, logs\\ultimus\\coach, each file on its own plus one joint file, ready to hand to the coach. The last 14 nights are kept. Off by default.")),
             UltimusLocksFold(),
+            UltimusSolutionsFold(),
             Fold("users", ULTIMUS_TAB, "Friends he made",
                 "The players Ultimus has met: how often you talked, battles fought together, your school and world if you told him, " +
                 "and when he last saw you. Muted means he is not answering that player for a while (rude or spamming). Updates by itself.",
@@ -1130,6 +1131,10 @@ internal sealed partial class ManagerWindow {
 
         if (_ultFriends.IsEffectivelyVisible) {
             ShowUltimusFriends();
+        }
+
+        if (_ultSolutions.IsEffectivelyVisible || _ultSolutionsEmpty.IsEffectivelyVisible) {
+            ShowUltimusSolutions();
         }
 
         if (_ultState.IsEffectivelyVisible) {

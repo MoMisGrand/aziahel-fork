@@ -509,6 +509,11 @@ public static class OverlayLinks {
 
         times.Enqueue(DateTime.UtcNow);
 
+        // The Quest Team Spectator (Niduus, 2026-11-15): "who" names the team member watched (Ice, Life, Death or Storm).
+        if (((string) header["who"] ?? "") is { Length: > 0 } who) {
+            return await SpectateTeamAsync(who, header);
+        }
+
         if (!Ultimus.UltimusWire.Enabled) {
             return RemoteAdminWire.Error("Ultimus is off on this server. Turn him on in Ahziael (Ultimus page) to watch him.");
         }
@@ -590,5 +595,89 @@ public static class OverlayLinks {
 
         return answer;
     }
+
+
+    /// <summary>
+    /// One Quest Team wizard as the Quest Team Spectator shows it (Niduus, 2026-11-15: "Make a spectator plugin for them,
+    /// only able to cycle between each member"): its own map with the team's quest way, and the team's quest. Read only.
+    /// </summary>
+    private static async Task<JsonObject> SpectateTeamAsync(string who, JsonObject header) {
+        if (!QuestTeam.QuestTeamWire.Enabled) {
+            return RemoteAdminWire.Error("The Quest Team is off on this server. Turn it on in Ahziael (Quest Team page) to watch it.");
+        }
+
+        var members = QuestTeam.QuestTeamDirector.Members;
+        var member = members.FirstOrDefault(m => string.Equals(m.Role, who, StringComparison.OrdinalIgnoreCase));
+        if (member is null || member.State is "offline" or "logging in") {
+            return RemoteAdminWire.Error($"The Quest Team's {who} wizard isn't in the game yet. It shows here once it has logged in.");
+        }
+
+        var now = QuestTeam.QuestTeamDirector.SpectateNow;
+        var reply = new TaskCompletionSource<(JsonObject Map, JsonObject Quests, IActorRef Zone, string Error)>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var others = new ConcurrentQueue<(ulong CharId, IActorRef Zone, string Name, float X, float Y)>();
+        var reach = header["reach"] is JsonValue far && far.TryGetValue<double>(out var wanted) && double.IsFinite(wanted) ? (float) wanted : 0f;
+        var ask = new OverlaySpectateAsk(member.CharId, reply, others, reach, now.Quest, Team: true);
+        foreach (var service in AgentBridge.CommandServices) {
+            service.Tell(ask);
+        }
+
+        if (await Task.WhenAny(reply.Task, Task.Delay(2000)) != reply.Task) {
+            return RemoteAdminWire.Error(member.State is "zoning" or "arriving" ? "busy" : $"The Quest Team's {who} wizard isn't in the game right now.");
+        }
+
+        var (map, quests, zone, error) = reply.Task.Result;
+        if (map is null) {
+            return RemoteAdminWire.Error(error);
+        }
+
+        await Task.Delay(60);
+        OverlayMinimap.AddWizards(map, member.CharId, zone, others);
+        var zonePath = (string) map["zone"] ?? "";
+        var smoothing = OverlayMinimap.Smoothing;
+        var groundKey = zonePath + "#" + smoothing.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        if (OverlayMinimap.Streets && zonePath.Length > 0 && !string.Equals((string) header["groundKey"] ?? "", groundKey, StringComparison.OrdinalIgnoreCase)) {
+            var shapes = Zone.Core.ZoneGround.ShapesOf(zonePath, smoothing);
+            map["ground"] = shapes is null || shapes.IsEmpty
+                ? new JsonObject { ["zone"] = zonePath, ["key"] = groundKey }
+                : new JsonObject {
+                    ["zone"] = zonePath, ["key"] = groundKey, ["left"] = shapes.Left, ["bottom"] = shapes.Bottom, ["unit"] = shapes.Unit,
+                    ["shapes"] = shapes.Data,
+                };
+        }
+
+        var wizard = member.Wizard;
+        var stats = wizard?.GameStats;
+        var row = (quests?["quests"] as JsonArray)?.OfType<JsonObject>()
+            .FirstOrDefault(q => string.Equals((string) q["id"], now.Quest, StringComparison.OrdinalIgnoreCase));
+        var info = new JsonObject {
+            ["name"] = $"{member.Name} ({member.Role})",
+            ["level"] = wizard?.MagicSchoolBehavior?.Level ?? 0,
+            ["hp"] = stats?.m_currentHitpoints ?? 0,
+            ["max"] = stats is null ? 0 : stats.m_baseHitpoints + stats.m_bonusHitpoints,
+            ["place"] = (string) map["place"] ?? "",
+            ["doing"] = CombatDuelComponentInBattle(member) ? "in a battle" : now.Doing,
+            ["quest"] = now.Quest,
+            ["questTitle"] = now.Quest.Length == 0 ? "" : (string) row?["t"] ?? QuestTeam.QuestTeamText.Title(now.Quest),
+            ["step"] = now.Step,
+            ["steps"] = row?["steps"]?.DeepClone(),
+            ["way"] = row?["way"]?.DeepClone(),
+            ["kind"] = (string) row?["k"] ?? "",
+            ["questLevel"] = row?["l"]?.DeepClone(),
+            ["world"] = Ultimus.UltimusDirectorActor.WorldName((string) row?["w"] ?? ""),
+            ["role"] = member.Role,
+            ["team"] = new JsonArray([.. members.Select(m => (JsonNode) m.Role)]),
+            ["quests"] = new JsonArray([.. ((quests?["quests"] as JsonArray)?.OfType<JsonObject>() ?? [])
+                .Take(40).Select(q => (JsonNode) new JsonObject { ["id"] = q["id"]?.DeepClone(), ["t"] = q["t"]?.DeepClone(), ["k"] = q["k"]?.DeepClone() })]),
+        };
+
+        var answer = RemoteAdminWire.Ok();
+        answer["map"] = map;
+        answer["ultimus"] = info;
+
+        return answer;
+    }
+
+    private static bool CombatDuelComponentInBattle(QuestTeam.QuestTeamMember.Status member)
+        => member.Wizard is not null && Zone.Components.CombatDuelComponent.IsInBattle(member.GlobalId);
 
 }

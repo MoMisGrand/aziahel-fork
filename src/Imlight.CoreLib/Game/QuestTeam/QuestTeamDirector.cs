@@ -125,6 +125,16 @@ internal static class QuestTeamDirector {
     /// <summary>The team's four wizards as they are now (for .questteam tp), empty while the team is not playing.</summary>
     internal static IReadOnlyList<QuestTeamMember.Status> Members => s_members;
 
+    internal sealed record Spectated(string Quest, string Step, string Doing);
+
+    private static volatile Spectated s_spectateNow = new("", "", "");
+
+    /// <summary>The team's quest (its code), step and what it does now, for the Quest Team Spectator (read only).</summary>
+    internal static Spectated SpectateNow {
+        get => s_spectateNow;
+        set => s_spectateNow = value;
+    }
+
     /// <summary>The role (Ice, Life, Death, Storm) of a Quest Team wizard by its object id, or null for anyone else.</summary>
     internal static string RoleOf(ulong globalId) => s_roles.GetValueOrDefault(globalId);
 
@@ -1897,6 +1907,8 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
                 BotShared.BotSheet.Fill((JsonObject) members[^1], wizard, member.Role);
             }
 
+            // For the Quest Team Spectator (OverlayLinks): the team's quest, step and what it does now.
+            QuestTeamDirector.SpectateNow = new QuestTeamDirector.Spectated(_currentQuest ?? "", _target?.What ?? "", _doing ?? "");
             var run = _currentQuest is null ? null : _runs.GetValueOrDefault(_currentQuest);
             var status = new JsonObject {
                 ["state"] = state,

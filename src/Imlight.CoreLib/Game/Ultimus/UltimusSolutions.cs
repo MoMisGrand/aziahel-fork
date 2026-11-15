@@ -40,6 +40,7 @@ internal static class UltimusSolutions {
     private const float NEAR = 800f;
 
     internal sealed class Solution {
+        public string Id { get; set; } = "";
         public string Quest { get; set; } = "";
         public string Step { get; set; } = "";
         public string Zone { get; set; } = "";
@@ -65,7 +66,7 @@ internal static class UltimusSolutions {
             var all = All();
             var known = Find(all, quest, step, zone, x, y).FirstOrDefault(s => s.Move == move);
             if (known is null) {
-                all.Add(known = new Solution { Quest = quest ?? "", Step = step ?? "", Zone = zone ?? "", X = x, Y = y, Move = move });
+                all.Add(known = new Solution { Id = Guid.NewGuid().ToString("N")[..10], Quest = quest ?? "", Step = step ?? "", Zone = zone ?? "", X = x, Y = y, Move = move });
                 if (all.Count > MOST) {
                     all.Remove(all.OrderBy(s => s.Last).First());
                 }
@@ -158,8 +159,44 @@ internal static class UltimusSolutions {
                           && (string.IsNullOrEmpty(step) || string.Equals(s.Step, step, StringComparison.OrdinalIgnoreCase))
                           && string.Equals(s.Zone, zone ?? "", StringComparison.OrdinalIgnoreCase) && Far(s.X, s.Y, x, y) <= NEAR);
 
+    // Ahziael's "Forget" buttons (Niduus, 2026-11-15: see and clear what was learned): the ids to forget, one per line, or
+    // "all". Read by whichever bot uses the memory next (Ultimus or the Quest Team), so it works with either one running.
+    internal const string FORGET_REQUEST = "stuck-solutions-forget.txt";
+    private static DateTime s_forgetLook = DateTime.MinValue;
+
+    private static void ForgetIfAsked() {
+        if (DateTime.UtcNow < s_forgetLook) {
+            return;
+        }
+
+        s_forgetLook = DateTime.UtcNow.AddSeconds(5);
+        var request = Path.Combine(UltimusWire.Folder, FORGET_REQUEST);
+        if (!File.Exists(request)) {
+            return;
+        }
+
+        string[] ids;
+        try {
+            ids = File.ReadAllLines(request);
+            File.Delete(request);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
+            return;
+        }
+
+        var forget = new HashSet<string>(ids.Select(i => i.Trim()).Where(i => i.Length > 0), StringComparer.OrdinalIgnoreCase);
+        var removed = forget.Contains("all") ? s_all.Count : s_all.RemoveAll(sol => forget.Contains(sol.Id));
+        if (forget.Contains("all")) {
+            s_all.Clear();
+        }
+
+        Save();
+        Logger.Information("Ultimus: forgot {0} stuck solution(s), as asked in Ahziael.", Logger.Args(removed));
+    }
+
     private static List<Solution> All() {
         if (s_all is not null) {
+            ForgetIfAsked();
             return s_all;
         }
 
@@ -174,6 +211,10 @@ internal static class UltimusSolutions {
                     s.Cause ??= "";
                     s.Why ??= "";
                     s.By ??= "";
+                    if (string.IsNullOrEmpty(s.Id)) {
+                        s.Id = Guid.NewGuid().ToString("N")[..10];
+                    }
+
                     return s;
                 })];
             }
@@ -182,6 +223,7 @@ internal static class UltimusSolutions {
             Logger.Debug("Ultimus: {0} could not be read: {1}", Logger.Args(FILE, ex.Message));
         }
 
+        ForgetIfAsked();
         return s_all;
     }
 

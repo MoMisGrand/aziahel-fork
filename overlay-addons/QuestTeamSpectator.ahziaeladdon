@@ -1,0 +1,33 @@
+{
+  "Format": "Ahziael overlay add-on",
+  "Name": "Quest Team Spectator",
+  "Author": "Niduus",
+  "Description": "Watch the Quest Team, one wizard at a time: its own minimap follows that wizard and draws the team's quest way, a quest box shows the team's quest and step, and the Next member button switches between Freya (Ice), Terra (Life), Anubis (Death) and Chaac (Storm). Only the four team members can be watched. Needs the Minimap add-on downloaded and the Quest Team on.",
+  "Version": "1",
+  "Requires": [ "Minimap" ],
+  "Widgets": [
+    {
+      "Name": "Quest Team Spectator (map, quest and Next member)",
+      "Elements": [
+        {
+          "Kind": "UltimusMap", "Watch": "QuestTeam", "Name": "Quest Team Minimap", "Anchor": "TopRight", "X": 12, "Y": 70, "Width": 180, "Height": 180,
+          "Background": { "Kind": "Radial", "Color1": "#C8203040", "Color2": "#C80A141C" },
+          "BorderColor": "#D07CC8FF", "BorderWidth": 2, "CornerRadius": 16, "Shadow": true, "ShadowBlur": 8,
+          "Map": { "Zoom": 2500 }
+        },
+        {
+          "Kind": "UltimusQuest", "Watch": "QuestTeam", "Name": "Quest Team Quest", "Anchor": "TopRight", "X": 12, "Y": 296, "Width": 220, "Height": 0, "Size": 13,
+          "Fill": { "Kind": "Solid", "Color1": "#FFFFFFFF" },
+          "Background": { "Kind": "Solid", "Color1": "#B40C1622" }, "Padding": 10,
+          "BorderColor": "#A07CC8FF", "BorderWidth": 1, "CornerRadius": 12, "Shadow": true, "ShadowBlur": 8
+        },
+        {
+          "Kind": "Button", "Action": "TeamNext", "Name": "Quest Team: next member", "Text": "Next member", "Anchor": "TopRight", "X": 12, "Y": 258, "Width": 180, "Height": 30,
+          "Size": 13, "Fill": { "Kind": "Solid", "Color1": "#FFFFFFFF" },
+          "Background": { "Kind": "Solid", "Color1": "#D00C1622" },
+          "BorderColor": "#D07CC8FF", "BorderWidth": 1, "CornerRadius": 8
+        }
+      ]
+    }
+  ]
+}
