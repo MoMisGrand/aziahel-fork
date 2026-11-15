@@ -672,6 +672,11 @@ public static class OverlayLinks {
                 .Take(40).Select(q => (JsonNode) new JsonObject { ["id"] = q["id"]?.DeepClone(), ["t"] = q["t"]?.DeepClone(), ["k"] = q["k"]?.DeepClone() })]),
         };
 
+        // The team's stuck line and read-ahead warning, as Ultimus's tracker shows his (Niduus, 2026-11-15).
+        if (now.Stuck.Length > 0 || now.ReadAhead.Length > 0) {
+            info["detail"] = new JsonObject { ["stuck"] = now.Stuck, ["readAhead"] = now.ReadAhead };
+        }
+
         // Its battle, as Ultimus's (Niduus, 2026-11-15: a battle box for the Quest Team too).
         if (member.Wizard is not null && Ultimus.UltimusSpectate.Battle(member.GlobalId, member.Role) is { } battle) {
             battle["deck"] = wizard?.SpellbookBehavior?.SpellList is { } deck

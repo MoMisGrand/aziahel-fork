@@ -76,6 +76,8 @@ internal sealed partial class QuestTeamDirectorActor {
             return false;
         }
 
+        SetStuckLine($"stuck {count} times in {where} on \"{_target?.What ?? _doing}\": tries a new approach.");
+
         var foes = BotUseGuards.Near(leader.ZoneActor, leader.X, leader.Y)
             .Where(m => !CombatDuelComponent.IsInBattle(m.Object.m_globalID.Full)).ToList();
         if (foes.Count > 0) {
