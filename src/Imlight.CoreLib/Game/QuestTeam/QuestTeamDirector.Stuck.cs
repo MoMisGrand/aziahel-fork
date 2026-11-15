@@ -124,9 +124,18 @@ internal sealed partial class QuestTeamDirectorActor {
         _sent.Remove(index);
         OverlayQuestPath.Forget(member.CharId);
         if (index == 0) {
+            var goalNow = _target ?? _leaderLastTargetForStuck;
+            var stepNow = goalNow is not null ? $"{goalNow.Quest}|{goalNow.Goal}|{goalNow.What}" : _doing;
             _target = null;
             // Written down for every bot (RouteMemory): the way finder bends round this spot from now on.
             RouteMemory.Stuck(member.CharId, member.Zone, member.X, member.Y);
+            // Ten alarms on one step: a new approach, as Ultimus (QuestTeamDirector.Approach.cs).
+            if (TenAlarms(member, stepNow, where)) {
+                return;
+            }
+
+            // Stuck again on the step: thought through with the local AI in the background.
+            AskAboutStuck(member, quest, stepNow, where);
         }
 
         if (tries >= 3) {

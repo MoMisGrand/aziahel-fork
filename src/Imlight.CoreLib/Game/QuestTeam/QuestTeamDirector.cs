@@ -224,6 +224,7 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
             Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromSeconds(2), Self, PoisonPill.Instance, Self);
         });
         Receive<Loaded>(OnLoaded);
+        Receive<TeamStuckIdea>(OnTeamStuckIdea);
         Receive<Tick>(_ => {
             try {
                 OnTick();
@@ -349,6 +350,7 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
             var paused = File.Exists(Path.Combine(QuestTeamWire.Folder, QuestTeamWire.PAUSE_FILE));
             if (paused != _paused) {
                 _paused = paused;
+                _progressAt = DateTime.UtcNow;
                 Note("Team", paused ? "is paused in Ahziael: they stand still." : "is resumed in Ahziael.");
             }
         }
@@ -370,6 +372,11 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
 
         // A battle: the ones not in it join, in the team's order.
         if (HandleBattle()) {
+            return;
+        }
+
+        // A short break after ten alarms on one step (QuestTeamDirector.Approach.cs).
+        if (OnBreak()) {
             return;
         }
 
@@ -539,6 +546,8 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
         var target = PickTarget(group);
         // A quest thing that did not work with its boss or creatures still standing: they are fought first (BotUseGuards).
         target = GuardFight(leader, target) ?? target;
+        // Clearing the creatures round a spot where the team got stuck ten times (QuestTeamDirector.Approach.cs).
+        target = ClearAroundFight(leader) ?? target;
         if (target?.Kind == QuestTeamPlanner.FIGHT && !ReadyToFight(group)) {
             return;
         }
@@ -560,7 +569,12 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
             _target = target;
             if (!sameStep) {
                 _targetSince = DateTime.UtcNow;
-                Note("Team", $"next: {Describe(target)}.");
+                // Where they are and where it is, height and all (Niduus, 2026-11-15: floors).
+                var targetZ = TargetZ(leader, target);
+                var up = targetZ - leader.Z;
+                Note("Team", $"next: {Describe(target)}. Where: {leader.Name} at ({leader.X:0}, {leader.Y:0}, {leader.Z:0}), step at ({target.X:0}, {target.Y:0}, " +
+                             (float.IsNaN(targetZ) ? "height not known)" : $"{targetZ:0})") +
+                             (float.IsNaN(up) || MathF.Abs(up) <= 150f ? "." : $": {MathF.Abs(up):0} {(up > 0 ? "above" : "below")}, the team takes the stairs or ramp {(up > 0 ? "up" : "down")}."));
                 Speak(0, target.Kind == QuestTeamPlanner.FIGHT ? "fight" : "go", 0.3);
                 // A fight is next: each deck made ready for it.
                 if (target.Kind == QuestTeamPlanner.FIGHT) {
@@ -594,6 +608,11 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
         // door or a thing set into a wall can't be walked onto (the Frozen Forge, Niduus's log, 2026-11-14).
         if (distance > reach && distance <= 300 && target.GlobalId != 0 && leader.Options.ContainsKey(target.GlobalId)) {
             reach = distance;
+        }
+
+        // A thing to click with creatures walking about by it: the team waits out of reach for an opening (QuestTeamDirector.Grab.cs).
+        if (distance > reach && WaitForOpening(leader, target, distance)) {
+            return;
         }
 
         if (distance > reach) {
@@ -1320,6 +1339,12 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
         return OverlayQuestPath.FloorAt(member.Zone, target.X, target.Y, member.Z);
     }
 
+    // The parts of an exit walked in through, try by try (the same sweep as Ultimus's).
+    private static readonly (float Out, float Angle)[] s_exitSweep = [
+        (0, 0), (60, 0), (60, 180), (60, 90), (60, 270), (120, 45), (120, 225), (120, 135), (120, 315), (200, 0), (200, 180),
+        (200, 90), (200, 270),
+    ];
+
     private void IntoExit(QuestTeamMember.Status leader, QuestTeamPlanner.Target target) {
         if (_exitKey != target.Key) {
             (_exitKey, _exitSince, _exitTries) = (target.Key, DateTime.UtcNow, 0);
@@ -1368,9 +1393,20 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
             points.Add(outside);
         }
 
-        points.Add((target.X + 5, target.Y + 5));
-        _exitStood.Add($"try {_exitTries}: stood at ({leader.X:0}, {leader.Y:0}, height {leader.Z:0}), {near:0} from the middle; walks out to " +
-                       $"({outside.X:0}, {outside.Y:0}) {(OverlayQuestPath.OnFloor(leader.Zone, outside.X, outside.Y) ? "on floor" : "off the floor")} and in at the middle");
+        // In through another part of it each try, as Ultimus sweeps an exit (the middle first, then further out, from all
+        // sides), on the exit's own floor; through the spot and a little past it, so the game sees the team cross it.
+        var (far, angle) = s_exitSweep[(_exitTries - 1) % s_exitSweep.Length];
+        var spot = (X: target.X + (MathF.Cos(angle * MathF.PI / 180f) * far), Y: target.Y + (MathF.Sin(angle * MathF.PI / 180f) * far));
+        if (!OverlayQuestPath.OnFloor(leader.Zone, spot.X, spot.Y) || !OverlayQuestPath.FloorNear(leader.Zone, spot.X, spot.Y, exitZ)) {
+            spot = (target.X + 5, target.Y + 5);
+        }
+
+        points.Add(spot);
+        var (inX, inY) = (spot.X - outside.X, spot.Y - outside.Y);
+        var inLen = MathF.Max(1, MathF.Sqrt((inX * inX) + (inY * inY)));
+        points.Add((spot.X + (inX / inLen * 60), spot.Y + (inY / inLen * 60)));
+        _exitStood.Add($"try {_exitTries}: stood at ({leader.X:0}, {leader.Y:0}, height {leader.Z:0}), {near:0} from the middle (its floor at height {exitZ:0}); walks out to " +
+                       $"({outside.X:0}, {outside.Y:0}) {(OverlayQuestPath.OnFloor(leader.Zone, outside.X, outside.Y) ? "on floor" : "off the floor")} and in at ({spot.X:0}, {spot.Y:0}), {far:0} from the middle");
         Note(leader.Role, $"{leader.Name} is at the exit {target.What} and it does not take it on: walks out past its edge and in again (try {_exitTries}).");
         _sent[0] = (target, DateTime.UtcNow, leader.X, leader.Y);
         _actors[0].Tell(new QuestTeamMember.WalkTo(points, "walks out of the exit and in again"));
@@ -1407,6 +1443,36 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
     }
 
     // A wizard in another area than the leader goes where the leader left that area, and the same way.
+    /// <summary>
+    /// The same thing in this member's own copy of the area: the one with the same template (an NPC), else the one standing
+    /// nearest the same spot (a door, a Spiral Door), when the target's id is not in its copy. As it is when it is there or
+    /// nothing like it is.
+    /// </summary>
+    private static QuestTeamPlanner.Target InOwnCopy(QuestTeamMember.Status member, QuestTeamPlanner.Target target) {
+        if (target is null || target.GlobalId == 0 || member.ZoneActor is null) {
+            return target;
+        }
+
+        try {
+            var live = MinimapIndex.In(member.ZoneActor);
+            if (live.Any(m => m.Object.m_globalID.Full == target.GlobalId)) {
+                return target;
+            }
+
+            var same = (target.Template != 0 ? live.Where(m => m.Template == target.Template) : live.Where(m => m.Template != 0))
+                .Select(m => (Mark: m, Far: QuestTeamPlanner.Far(target.X, target.Y, m.Object.m_location.X, m.Object.m_location.Y)))
+                .Where(m => target.Template != 0 || m.Far <= 150)
+                .OrderBy(m => m.Far).Select(m => m.Mark).FirstOrDefault();
+
+            return same is null ? target : target with {
+                GlobalId = same.Object.m_globalID.Full, X = same.Object.m_location.X, Y = same.Object.m_location.Y, Z = same.Object.m_location.Z,
+            };
+        }
+        catch (Exception) {
+            return target;
+        }
+    }
+
     private void CatchUp(QuestTeamMember.Status member) {
         var index = _team.IndexOf(member);
         if (member.State != "playing") {
@@ -1414,6 +1480,12 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
         }
 
         var step = _trail.LastOrDefault(t => string.Equals(t.Zone, member.Zone, StringComparison.OrdinalIgnoreCase));
+        // Its own copy of the area (an instance: each new wizard has its own Headmistress's house): the NPC, door or Spiral
+        // Door the leader used there is another one here, with another id (Niduus, 2026-11-15: "QT seems stuck": the three
+        // stood in their copies of the Headmistress's house for ever, waiting for Ambrose's id from the leader's copy).
+        if (step.Zone is not null && step.How is not null) {
+            step.How = InOwnCopy(member, step.How);
+        }
 
         // The leader left this area by talking to someone (the NPC sent it on): this one talks to the same NPC, the same way.
         if (step.Zone is not null && step.How is { Kind: QuestTeamPlanner.OFFER or QuestTeamPlanner.TALK } said
@@ -1747,6 +1819,9 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
             _signature = signature;
             _lastProgress = DateTime.UtcNow;
         }
+
+        // Two hours with nothing done: the team pauses itself (QuestTeamDirector.Approach.cs).
+        TeamWatchdog(signature);
 
         // Nothing has changed for a long while: stuck.
         if (DateTime.UtcNow - _lastProgress > TimeSpan.FromMinutes(QuestTeamWire.StuckMinutes)) {
