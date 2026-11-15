@@ -140,11 +140,60 @@ internal static class UltimusLocalAI {
         }
     }
 
+    private static readonly HttpClient s_thinkHttp = new() { Timeout = TimeSpan.FromSeconds(60) };
+
+    /// <summary>
+    /// The local AI can be asked to think a stuck spot through ([Ultimus] StuckThinking): the address is on this PC or the
+    /// home network and it did not just fail. The chat switch (LocalAI) may be off; the same AI app and model are used.
+    /// </summary>
+    internal static bool CanThink => Local(Url) && DateTime.UtcNow >= s_downUntil;
+
+    /// <summary>
+    /// One plain question for the stuck thinking (UltimusDirector.Reason.cs): the model's raw answer, or null (failed, too
+    /// slow, empty). Longer than a chat line may take: a stuck spot is not in a hurry.
+    /// </summary>
+    internal static async Task<string> Think(string system, string question) {
+        if (!CanThink) {
+            return null;
+        }
+
+        var body = new JsonObject {
+            ["model"] = Model,
+            ["messages"] = new JsonArray {
+                new JsonObject { ["role"] = "system", ["content"] = system },
+                new JsonObject { ["role"] = "user", ["content"] = question },
+            },
+            ["temperature"] = 0.3, ["max_tokens"] = 300, ["stream"] = false,
+        };
+
+        try {
+            using var cancel = new CancellationTokenSource(TimeSpan.FromSeconds(50));
+            using var response = await s_thinkHttp.PostAsync(Url + "/chat/completions",
+                new StringContent(body.ToJsonString(), Encoding.UTF8, "application/json"), cancel.Token).ConfigureAwait(false);
+            var json = await response.Content.ReadAsStringAsync(cancel.Token).ConfigureAwait(false);
+            if (!response.IsSuccessStatusCode) {
+                Failed($"the local AI answered {(int) response.StatusCode} (is the model \"{Model}\" downloaded?)");
+                return null;
+            }
+
+            var text = JsonNode.Parse(json)?["choices"]?[0]?["message"]?["content"]?.GetValue<string>();
+            s_lastProblem = "";
+
+            return string.IsNullOrWhiteSpace(text)
+                ? null
+                : System.Text.RegularExpressions.Regex.Replace(text, @"<think>.*?</think>", "", System.Text.RegularExpressions.RegexOptions.Singleline).Trim();
+        }
+        catch (Exception ex) {
+            Failed($"the local AI at {Url} could not be reached ({ex.GetType().Name}); is Ollama or LM Studio running?");
+            return null;
+        }
+    }
+
     private static void Failed(string why) {
         // Down: the keyword chat answers alone for a minute before it is tried again.
         s_downUntil = DateTime.UtcNow.AddMinutes(1);
         if (why != s_lastProblem) {
-            Logger.Information("Ultimus: {0}. The keyword chat answers meanwhile.", Logger.Args(why));
+            Logger.Information("Ultimus: {0}. The keyword chat (and his own stuck fixes) carry on meanwhile.", Logger.Args(why));
         }
 
         s_lastProblem = why;

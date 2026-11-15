@@ -40,6 +40,7 @@ internal sealed partial class QuestTeamDirectorActor {
 
     private readonly BotStuck _stuck = new();
     private readonly HashSet<string> _tipsNoted = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _solutionsNoted = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<int, DateTime> _unstickUntil = [];
 
     // Stepping aside: the other orders wait a few seconds.
@@ -125,6 +126,17 @@ internal sealed partial class QuestTeamDirectorActor {
         // made and what to do to prevent them"): when stepping a little aside did not free him here, the team goes further.
         var lesson = BotMistakes.Near(BotMistakes.STUCK, member.Zone, member.X, member.Y);
         var goFar = tries >= 2;
+
+        // What Ultimus worked out when he was stuck on this quest, and what got him going (UltimusSolutions, shared like his
+        // drop memory and tips; Niduus, 2026-11-14): written in the team's log once per quest, and when going well away is
+        // what worked for him, the team goes further at once.
+        if (index == 0 && Ultimus.UltimusSolutions.ForTeam(quest, member.Zone, member.X, member.Y) is { } solved) {
+            if (_solutionsNoted.Add(quest)) {
+                Note(member.Role, $"{member.Name}: Ultimus was stuck on {QuestTeamText.Title(quest)} too. {solved.Line}", QuestTeamLink.NOTABLE);
+            }
+
+            goFar |= solved.GoFar;
+        }
         if (lesson is not null && index == 0) {
             Note(member.Role, $"{member.Name}: {lesson.Bot} was stuck here too ({lesson.Times} time(s)); " +
                               (lesson.Worked.Length > 0 ? $"what freed it: {lesson.Worked}." : "nothing has freed it yet.") +

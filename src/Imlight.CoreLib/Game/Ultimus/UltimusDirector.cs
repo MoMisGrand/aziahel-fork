@@ -224,6 +224,7 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
         });
         Receive<Loaded>(OnLoaded);
         Receive<AiWorded>(OnAiWorded);
+        Receive<StuckIdea>(OnStuckIdea);
         Receive<Tick>(_ => {
             try {
                 OnTick();
