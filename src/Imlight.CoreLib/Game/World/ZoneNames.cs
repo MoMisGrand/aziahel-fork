@@ -70,6 +70,29 @@ internal static class ZoneNames {
     internal static string Shown(string code)
         => All.FirstOrDefault(z => z.Code.Equals(code, StringComparison.OrdinalIgnoreCase)) is { Name.Length: > 0 } zone ? zone.Name : code;
 
+    /// <summary>
+    /// The name players know a zone by, and for a room that only carries its outside area's name, the room as well ("The
+    /// Commons, Headmistress House"), so a status never says a wizard is outside when it stands in a room (Niduus,
+    /// 2026-11-15: the Quest Team's status said "The Commons" while three stood in the Headmistress's house).
+    /// </summary>
+    internal static string ShownPlace(string code) {
+        var name = Shown(code);
+        if (string.IsNullOrEmpty(code) || !code.Contains("/Interiors/", StringComparison.OrdinalIgnoreCase)
+            || !All.Any(z => !z.Code.Contains("/Interiors/", StringComparison.OrdinalIgnoreCase) && z.Name.Equals(name, StringComparison.OrdinalIgnoreCase))) {
+            return name;
+        }
+
+        var room = code[(code.LastIndexOf('/') + 1)..];
+        var underscore = room.IndexOf('_');
+        if (underscore is > 0 and <= 3) {
+            room = room[(underscore + 1)..];
+        }
+
+        room = System.Text.RegularExpressions.Regex.Replace(room.Replace('_', ' '), "(?<=[a-z])(?=[A-Z])", " ").Trim();
+
+        return room.Length == 0 ? name : $"{name}, {room}";
+    }
+
     private static Dictionary<string, string[]> Read() {
         var details = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase);
         try {
