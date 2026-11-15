@@ -130,6 +130,13 @@ internal sealed partial class UltimusDirectorActor {
         }
 
         _readAheadDone.Add(world);
+        var leaderNow = _team.FirstOrDefault()?.Wizard;
+        if (PuzzlesAhead(world, q => leaderNow is null || !leaderNow.HasCompletedQuest(q), UltimusWire.Folder) is { Length: > 0 } puzzles) {
+            Note("Ultimus", $"READ-AHEAD: {WorldName(world)}: puzzle steps ahead: {puzzles}.");
+            Think($"Before {WorldName(world)} I read ahead for puzzles: {puzzles}. I listen to what the quest's people say there, " +
+                  "and work each one out as a player would.", "readahead-puzzles|" + world);
+        }
+
         var found = ReadAheadProblems(world);
         if (found is null) {
             return;
@@ -214,6 +221,39 @@ internal sealed partial class UltimusDirectorActor {
     }
 
     // The world's story quests (and quests the story needs) the check says have a problem, story order kept.
+    /// <summary>
+    /// The puzzle steps of a world's story quests not done yet (Niduus, 2026-11-15: "flag puzzle steps in read-ahead"), in
+    /// plain words ("The Right Combination: things to use in the right order, solved before"), also written to
+    /// puzzles-ahead.txt in <paramref name="folder"/>. "" when there are none.
+    /// </summary>
+    internal static string PuzzlesAhead(string world, Func<string, bool> notDone, string folder) {
+        try {
+            var quests = QuestTemplateCollection.GetAllQuests().Where(t => t is not null
+                && string.Equals(QuestStory.WorldOf(t), world, StringComparison.OrdinalIgnoreCase)
+                && BotShared.BotStory.Rank(t) > 0 && UltimusPlanner.IsMainStoryWorld(t) && notDone((string) t.m_questName));
+            var found = BotShared.BotPuzzle.Ahead(quests);
+            if (found.Count == 0) {
+                return "";
+            }
+
+            var lines = found.Select(f => $"{UltimusText.Title(f.Quest)}: {f.Kind}{(f.Known ? ", solved before" : "")}").ToList();
+            try {
+                Directory.CreateDirectory(folder);
+                File.WriteAllLines(Path.Combine(folder, "puzzles-ahead.txt"),
+                    [$"Puzzle steps ahead in {WorldName(world)} ({DateTime.Now:yyyy-MM-dd HH:mm}):", .. lines]);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
+                Logger.Debug("Read-ahead: puzzles-ahead.txt could not be written: {0}", Logger.Args(ex.Message));
+            }
+
+            return string.Join("; ", lines);
+        }
+        catch (Exception ex) {
+            Logger.Debug("Read-ahead: the puzzle steps of {0} could not be read: {1}", Logger.Args(world, ex.Message));
+            return "";
+        }
+    }
+
     internal static List<(string Quest, List<string> Problems)> ReadAheadProblems(string world) {
         try {
             using var doc = JsonDocument.Parse(File.ReadAllText(QuestCheckPath));

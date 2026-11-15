@@ -361,6 +361,23 @@ internal static class QuestTeamPlanner {
                         foe.Object.m_globalID.Full, Key: key);
                 }
 
+                var anyWanted = live.Any(m => m.Kind is MinimapIndex.MOB or MinimapIndex.BOSS
+                                              && (m.Adjectives.Any(a => adjectives.Contains(a, StringComparer.Ordinal))
+                                                  || Quests.BountyStandIns.Counts(adjectives, m.Template)));
+                // A creature that comes once a puzzle is solved (the Great Wurm of "Cavern of the Wurm" comes once the Sand
+                // Thumpers are used in the right order): the things the quest's people name are used in order, as a player
+                // works it out from what they said (BotPuzzle; Niduus, 2026-11-15).
+                if (!anyWanted && (stepZone.Length == 0 || OverlayQuestTracker.SameZone(stepZone, zone))) {
+                    var puzzleHolders = group.Where(m => m.Wizard?.QuestBehavior?.CurrentQuestInstances?.Any(q => q is not null
+                            && string.Equals(q.QuestName, questName, StringComparison.OrdinalIgnoreCase) && q.IsGoalActive(goalName)) == true)
+                        .Select(m => m.CharId).ToList();
+                    if (BotShared.BotPuzzle.ForCreatureStep(zone, quest, goal, puzzleHolders, leader.X, leader.Y,
+                            live.Where(m => m.Kind is MinimapIndex.MOB or MinimapIndex.BOSS or MinimapIndex.NPC or MinimapIndex.DOOR or MinimapIndex.SIGIL)
+                                .Select(m => m.Template)) is { } thing) {
+                        return new Target(USE, thing.X, thing.Y, $"{step} (works out the puzzle that brings them)", questName, goalName, Key: key + "|order");
+                    }
+                }
+
                 // None up right now: into the street area where they spawn, to meet the next one.
                 if (Tools.RouteMobs.SeekFor(leader.ZoneActor, leader.X, leader.Y, adjectives) is { } area) {
                     var (ax, ay) = Tools.RouteMobs.Nearest(area, leader.X, leader.Y);
@@ -388,6 +405,12 @@ internal static class QuestTeamPlanner {
                 .Select(m => m.CharId).ToList();
             var creatures = live.Where(m => m.Kind is MinimapIndex.MOB or MinimapIndex.BOSS && !CombatDuelComponent.IsInBattle(m.Object.m_globalID.Full))
                 .Select(m => (m.Object.m_location.X, m.Object.m_location.Y)).ToList();
+            // A puzzle (the quest's people speak of an order or a combination): the things in the order worked out for it,
+            // the next order when nothing happened (BotPuzzle; Niduus, 2026-11-15).
+            if (BotShared.BotPuzzle.Next(zone, quest, goal, spots.Select(p => (p.X, p.Y)).ToList(), holders, leader.X, leader.Y) is { } inOrder) {
+                return new Target(USE, inOrder.X, inOrder.Y, $"{step} (in the right order)", questName, goalName, Key: key + "|order");
+            }
+
             var next = BotShared.BotCollect.Order(spots.Select(p => (p.X, p.Y)).ToList(), holders, questName, goalName, leader.X, leader.Y, creatures)[0];
             return new Target(USE, next.X, next.Y, step, questName, goalName, Key: key);
         }

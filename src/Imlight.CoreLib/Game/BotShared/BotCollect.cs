@@ -47,6 +47,7 @@ internal static class BotCollect {
 
     /// <summary>The wizard used <paramref name="objectId"/> at (x, y) for this step.</summary>
     internal static void Used(ulong charId, string quest, string goal, ulong objectId, float x, float y) {
+        BotPuzzle.Clicked(charId, quest, goal, x, y);
         var step = Of(charId, quest, goal);
         lock (step) {
             step.Objects.Add(objectId);

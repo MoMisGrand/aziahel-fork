@@ -190,6 +190,8 @@ internal sealed class UltimusMember : ReceiveActor, IWithTimers {
 
         /// <summary>The options of every NPC or object in range (by global id), as the game was sent them.</summary>
         public readonly ConcurrentDictionary<ulong, List<(string Service, uint Index, string Display)>> Options = new();
+        /// <summary>When each thing's options came (in range of it): of two things in reach, the newest is the one walked up to.</summary>
+        public readonly ConcurrentDictionary<ulong, DateTime> OptionsAt = new();
 
         public ulong GlobalId => Wizard.GetGameObjectId(CharId);
 
@@ -769,6 +771,7 @@ internal sealed class UltimusMember : ReceiveActor, IWithTimers {
                 return;
             }
 
+            View.OptionsAt[message.MobileID] = DateTime.UtcNow;
             View.Options[message.MobileID] = [.. memento.m_serviceOptions.Where(o => o is not null)
                 .Select(o => ((string) o.m_serviceName ?? "", o.m_serviceIndex, (string) o.m_displayKey ?? ""))];
         }

@@ -31,7 +31,22 @@ internal static class BotOptions {
     // the Archeologist"). The first option was always clicked, so Danforth offered "Tool Time" over and over, Ultimus left it
     // every time and never got the story quest (v0.10.852 log: stuck 45 times in the Chamber of Fire). Now the option that
     // names the quest it wants is clicked; when none names it, each click tries the next option.
-    internal static (string Service, uint Index, string Display) Pick(List<(string Service, uint Index, string Display)> matching, string questName, int clicked) {
+    // A puzzle's answers (Niduus, 2026-11-15, "pick the right dialog answers"): when no option names the quest and the quest
+    // speaks of a puzzle, the answer that worked before goes first, then the ones sharing the most words with what the
+    // quest's people said, each click trying the next (BotPuzzle.RankAnswers). The answer picked is noted, and written down
+    // once the step finishes.
+    internal static (string Service, uint Index, string Display) Pick(List<(string Service, uint Index, string Display)> matching, string questName, int clicked,
+        string goalName = null, ulong charId = 0) {
+        var picked = PickOne(matching, questName, clicked, goalName);
+        if (matching.Count > 1 && picked.Service is not null) {
+            BotPuzzle.Chose(charId, questName, goalName, picked.Display);
+        }
+
+        return picked;
+    }
+
+    private static (string Service, uint Index, string Display) PickOne(List<(string Service, uint Index, string Display)> matching, string questName, int clicked,
+        string goalName) {
         if (matching.Count <= 1) {
             return matching.FirstOrDefault();
         }
@@ -54,6 +69,10 @@ internal static class BotOptions {
                     return option;
                 }
             }
+        }
+
+        if (BotPuzzle.RankAnswers(questName, goalName, matching, o => o.Display) is { Count: > 0 } ranked) {
+            return ranked[clicked % ranked.Count];
         }
 
         return matching[clicked % matching.Count];
