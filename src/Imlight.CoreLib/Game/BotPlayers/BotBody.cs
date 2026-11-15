@@ -366,7 +366,7 @@ internal sealed class BotBody : ReceiveActor, IWithTimers {
         _route.Clear();
         // Round the street's creature areas on the way (MobSpawnAreas), as a player strolling by would.
         var way = OverlayQuestPath.Walk(_wizard.CharId, _info.ZonePath, from.X, from.Y, destination.X, destination.Y, body: true,
-            avoid: RouteMobs.Avoid(_info.Zone, destination.X, destination.Y));
+            avoid: RouteMobs.Avoid(_info.Zone, destination.X, destination.Y), fromZ: from.Z, toZ: destination.Z);
         foreach (var (x, y) in way.Take(way.Count - 1)) {
             _route.Enqueue(new NVector3(x, y, QuestTeamGround.HeightAt(_info.ZonePath, x, y, from.Z)));
         }

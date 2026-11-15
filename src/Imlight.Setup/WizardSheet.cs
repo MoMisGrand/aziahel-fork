@@ -280,6 +280,10 @@ internal sealed class WizardSheet {
             text.Append($"\nDoing now: {target}" + (S(t, "area") is { Length: > 0 } area ? $" (in {area})" : ""));
         }
 
+        if (S(t, "position") is { Length: > 0 } position) {
+            text.Append($"\nWhere (X, Y, height): {position}");
+        }
+
         if (S(t, "why") is { Length: > 0 } why) {
             text.Append($"\nWhy: {why}");
         }

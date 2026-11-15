@@ -55,7 +55,7 @@ internal static class QuestTeamPlanner {
     /// game (no such NPC, no creature, no way there): the quest is broken there.
     /// </summary>
     internal sealed record Target(string Kind, float X, float Y, string What, string Quest = "", string Goal = "", ulong Template = 0,
-                                  ulong GlobalId = 0, string To = "", string Problem = "", string Key = "") {
+                                  ulong GlobalId = 0, string To = "", string Problem = "", string Key = "", float Z = float.NaN) {
 
         /// <summary>The same target as another (so a wizard on its way there is not sent again).</summary>
         internal bool Same(Target other) => other is not null && other.Kind == Kind && other.Key == Key
@@ -437,10 +437,10 @@ internal static class QuestTeamPlanner {
             .OrderBy(m => Far(exit.X, exit.Y, m.Object.m_location.X, m.Object.m_location.Y)).FirstOrDefault();
         if (door2 is not null && Far(exit.X, exit.Y, door2.Object.m_location.X, door2.Object.m_location.Y) < 50) {
             return new Target(DOOR, exit.X, exit.Y, $"to {QuestTeamText.Zone(exit.To)} ({why})", GlobalId: door2.Object.m_globalID.Full, To: exit.To,
-                Key: key + "|door|" + exit.To);
+                Key: key + "|door|" + exit.To, Z: exit.Z);
         }
 
-        return new Target(EXIT, exit.X, exit.Y, $"to {QuestTeamText.Zone(exit.To)} ({why})", To: exit.To, Key: key + "|exit|" + exit.To);
+        return new Target(EXIT, exit.X, exit.Y, $"to {QuestTeamText.Zone(exit.To)} ({why})", To: exit.To, Key: key + "|exit|" + exit.To, Z: exit.Z);
     }
 
     /// <summary>The giver of a quest: here, or the way to its area.</summary>

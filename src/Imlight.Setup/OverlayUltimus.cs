@@ -240,7 +240,10 @@ internal static class OverlayUltimusData {
             }
 
             tracker = new Tracker(Short((string?) detail["questWorld"], 40) is { Length: > 0 } w ? w : Short((string?) detail["world"], 40),
-                Short((string?) detail["why"], 160), Short((string?) detail["target"], 120), Short((string?) detail["next"], 120),
+                Short((string?) detail["why"], 160),
+                // His X, Y and height and his step's, after what he is doing (Niduus, 2026-11-15: floors).
+                Short((string?) detail["target"], 120) + (Short((string?) detail["position"], 140) is { Length: > 0 } position ? $" | {position}" : ""),
+                Short((string?) detail["next"], 120),
                 Texts(detail["parked"], 4, 320), Short((string?) detail["readAhead"], 160));
         }
 

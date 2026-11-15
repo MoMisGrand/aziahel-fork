@@ -587,7 +587,9 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
             _target = target;
             if (!sameStep) {
                 _targetSince = DateTime.UtcNow;
-                Note("Ultimus", $"next: {Describe(target)}.");
+                // Where he is and where it is, height and all, and which way between floors (UltimusDirector.Floors.cs).
+                Note("Ultimus", $"next: {Describe(target)}. Where: {FloorWords(leader, target)}.");
+                ThinkFloor(leader, target);
                 // His goals, how much he trusts this plan and what he expects (UltimusDirector.Plans.cs).
                 var (confidence, reasons) = Confidence(leader, target);
                 ThinkGoals(leader, target, confidence);
@@ -1345,7 +1347,10 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
 
         // The street's creature areas too, walked or not right now (MobSpawnAreas), except the step's own creatures.
         var walkAvoid = seek ? null : RouteMobs.Avoid(member.ZoneActor, toX, toY, target.Template == 0 ? null : [target.Template], avoid);
-        var points = SightWalk(member, toX, toY, what, target.Kind == UltimusPlanner.FIGHT ? null : avoid) ?? OverlayQuestPath.Walk(member.CharId, member.Zone, member.X, member.Y, toX, toY, body: true, avoid: walkAvoid);
+        // From the floor he stands on to the step's own floor, by the stairs or ramps between (UltimusDirector.Floors.cs).
+        var toZ = UltimusPlanner.Far(toX, toY, target.X, target.Y) < 60 ? TargetZ(member, target) : float.NaN;
+        var points = (MathF.Abs(toZ - member.Z) > OTHER_FLOOR ? null : SightWalk(member, toX, toY, what, target.Kind == UltimusPlanner.FIGHT ? null : avoid))
+                     ?? OverlayQuestPath.Walk(member.CharId, member.Zone, member.X, member.Y, toX, toY, body: true, avoid: walkAvoid, fromZ: member.Z, toZ: toZ);
         // A walk that goes nowhere while the step is far: said once per step, with the spots, so the log shows where the
         // map gives no way (Niduus's log, 2026-11-13: it stood at The Oasis's start for an hour with nothing said).
         if (UltimusPlanner.Far(member.X, member.Y, toX, toY) > 300
@@ -1875,9 +1880,13 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
                                  < OverlayQuestRoute.ExitReach(leader.Zone, target.X, target.Y) - 40f;
         }
 
-        if (UltimusPlanner.Far(leader.X, leader.Y, target.X, target.Y) > 260) {
+        // Not there yet: too far, or right over or under it on another floor (Niduus, 2026-11-15: he stood on the Entrance
+        // Hall's deck over the way into the Grand Arena, which is on the ground below).
+        var exitZ = TargetZ(leader, target);
+        if (UltimusPlanner.Far(leader.X, leader.Y, target.X, target.Y) > 260 || OtherFloor(leader, target)) {
             _exitWait = null;
-            WalkTo(0, target with { X = target.X + 5, Y = target.Y + 5 });
+            ThinkFloor(leader, target);
+            WalkTo(0, target with { X = target.X + 5, Y = target.Y + 5, Z = exitZ });
 
             return;
         }
@@ -1920,6 +1929,11 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
         var (far, angle) = s_exitSweep[(_exitTries + (_exitRounds * 3)) % s_exitSweep.Length];
         var turn = angle * MathF.PI / 180f;
         var spot = (X: target.X + (MathF.Cos(turn) * far), Y: target.Y + (MathF.Sin(turn) * far));
+        // Only on the exit's own floor: a part of it over a deck's edge or under a balcony is the middle instead.
+        if (!OverlayQuestPath.FloorNear(leader.Zone, spot.X, spot.Y, exitZ)) {
+            spot = (target.X, target.Y);
+        }
+
         var from = turn + MathF.PI + ((Random.Shared.NextSingle() - 0.5f) * 0.8f);
 
         // Out far enough to really leave the exit: the game only takes him on when he walks in from outside. A big exit
@@ -1929,10 +1943,11 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
         var reach = OverlayQuestRoute.ExitReach(leader.Zone, target.X, target.Y);
         var back = MathF.Max(300f, far + reach + 120f);
         var outside = (X: spot.X + (MathF.Cos(from) * back), Y: spot.Y + (MathF.Sin(from) * back));
-        for (var side = 1; side < 8 && reach > 0 && !OverlayQuestPath.OnFloor(leader.Zone, outside.X, outside.Y); side++) {
+        bool Fits(float x, float y) => OverlayQuestPath.OnFloor(leader.Zone, x, y) && OverlayQuestPath.FloorNear(leader.Zone, x, y, exitZ);
+        for (var side = 1; side < 8 && reach > 0 && !Fits(outside.X, outside.Y); side++) {
             var other = from + (side * MathF.PI / 4f);
             var tryOut = (X: spot.X + (MathF.Cos(other) * back), Y: spot.Y + (MathF.Sin(other) * back));
-            if (OverlayQuestPath.OnFloor(leader.Zone, tryOut.X, tryOut.Y)
+            if (Fits(tryOut.X, tryOut.Y)
                 && UltimusPlanner.Far(tryOut.X, tryOut.Y, target.X, target.Y) > reach + 40f) {
                 (from, outside) = (other, tryOut);
             }
@@ -1940,10 +1955,10 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
 
         _exitTries++;
         _exitStood.Add($"try {_exitTries}: stood at ({leader.X:0}, {leader.Y:0}, height {leader.Z:0}), " +
-                       $"{UltimusPlanner.Far(leader.X, leader.Y, target.X, target.Y):0} from the middle; walks out to ({outside.X:0}, {outside.Y:0}) " +
+                       $"{UltimusPlanner.Far(leader.X, leader.Y, target.X, target.Y):0} from the middle (its floor at height {exitZ:0}); walks out to ({outside.X:0}, {outside.Y:0}) " +
                        $"{(OverlayQuestPath.OnFloor(leader.Zone, outside.X, outside.Y) ? "on floor" : "off the floor")} and in at ({spot.X:0}, {spot.Y:0})");
 
-        var points = OverlayQuestPath.Walk(leader.CharId, leader.Zone, leader.X, leader.Y, outside.X, outside.Y, body: true);
+        var points = OverlayQuestPath.Walk(leader.CharId, leader.Zone, leader.X, leader.Y, outside.X, outside.Y, body: true, fromZ: leader.Z, toZ: exitZ);
         if (points.Count == 0) {
             points.Add(outside);
         }

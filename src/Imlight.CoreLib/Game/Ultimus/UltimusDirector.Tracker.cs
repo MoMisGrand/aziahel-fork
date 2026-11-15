@@ -51,6 +51,8 @@ internal sealed partial class UltimusDirectorActor {
         detail["area"] = UltimusText.Zone(leader?.Zone ?? "");
         detail["target"] = _target?.What ?? "";
         detail["why"] = _whyNow;
+        // His X, Y and height and his step's, and which way between floors (UltimusDirector.Floors.cs).
+        detail["position"] = FloorWords(leader, _target);
 
         var steps = new JsonArray();
         var next = "";
