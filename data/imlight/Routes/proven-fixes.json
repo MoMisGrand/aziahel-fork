@@ -1,0 +1,232 @@
+[
+ {
+  "Zone": "Krokotopia/KT_Pyramid/KT_Hall",
+  "X": 38314,
+  "Y": -26998.5,
+  "Step": "",
+  "Times": 0,
+  "Tried": [],
+  "Worked": "step aside",
+  "Last": "2026-11-14T01:07:28.4215669Z"
+ },
+ {
+  "Zone": "Krokotopia/KT_Pyramid/KT_Chamber",
+  "X": -29336.1,
+  "Y": -17997.8,
+  "Step": "",
+  "Times": 0,
+  "Tried": [],
+  "Worked": "step aside",
+  "Last": "2026-11-14T01:21:59.4239783Z"
+ },
+ {
+  "Zone": "Krokotopia/KT_Pyramid/KT_Chamber",
+  "X": -1108.6,
+  "Y": -831.2,
+  "Step": "",
+  "Times": 0,
+  "Tried": [],
+  "Worked": "step aside",
+  "Last": "2026-11-14T01:43:31.9247568Z"
+ },
+ {
+  "Zone": "Krokotopia/KT_Pyramid/KT_Chamber",
+  "X": -7528.7,
+  "Y": -7103.2,
+  "Step": "",
+  "Times": 0,
+  "Tried": [],
+  "Worked": "step aside",
+  "Last": "2026-11-14T02:08:50.9795422Z"
+ },
+ {
+  "Zone": "Krokotopia/KT_Pyramid/KT_PalaceOfFire",
+  "X": -4763.2,
+  "Y": -3094.0,
+  "Step": "",
+  "Times": 0,
+  "Tried": [],
+  "Worked": "step aside",
+  "Last": "2026-11-14T06:35:26.8633692Z"
+ },
+ {
+  "Zone": "Krokotopia/KT_Pyramid/KT_PalaceOfFire",
+  "X": -20339.2,
+  "Y": -9001.5,
+  "Step": "",
+  "Times": 0,
+  "Tried": [],
+  "Worked": "step aside",
+  "Last": "2026-11-14T06:58:34.5539609Z"
+ },
+ {
+  "Zone": "Krokotopia/KT_Pyramid/KT_PalaceOfFire",
+  "X": -12004.0,
+  "Y": -23348.0,
+  "Step": "",
+  "Times": 0,
+  "Tried": [],
+  "Worked": "step aside",
+  "Last": "2026-11-14T07:12:43.0021031Z"
+ },
+ {
+  "Zone": "Krokotopia/KT_Pyramid/KT_PalaceOfFire",
+  "X": 20369.2,
+  "Y": -9002.7,
+  "Step": "",
+  "Times": 0,
+  "Tried": [],
+  "Worked": "step aside",
+  "Last": "2026-11-14T07:17:33.0097668Z"
+ },
+ {
+  "Zone": "Krokotopia/KT_Pyramid/KT_PalaceOfFire",
+  "X": 11994.8,
+  "Y": -23347.7,
+  "Step": "",
+  "Times": 0,
+  "Tried": [],
+  "Worked": "step aside",
+  "Last": "2026-11-14T07:31:58.5105614Z"
+ },
+ {
+  "Zone": "Krokotopia/KT_Pyramid/KT_ThroneRoom",
+  "X": -7090.4,
+  "Y": 10858.6,
+  "Step": "",
+  "Times": 0,
+  "Tried": [],
+  "Worked": "step aside",
+  "Last": "2026-11-14T07:55:15.8879763Z"
+ },
+ {
+  "Zone": "Krokotopia/KT_Pyramid/KT_ThroneRoom",
+  "X": -10920.3,
+  "Y": 10804.2,
+  "Step": "",
+  "Times": 0,
+  "Tried": [],
+  "Worked": "step aside",
+  "Last": "2026-11-14T08:13:16.8858054Z"
+ },
+ {
+  "Zone": "Krokotopia/KT_Pyramid/KT_ThroneRoom",
+  "X": -18108.5,
+  "Y": 11391.4,
+  "Step": "",
+  "Times": 0,
+  "Tried": [],
+  "Worked": "step aside",
+  "Last": "2026-11-14T08:19:17.3781783Z"
+ },
+ {
+  "Zone": "Krokotopia/KT_Pyramid/KT_ThroneRoom",
+  "X": -11960.9,
+  "Y": 12791.8,
+  "Step": "",
+  "Times": 0,
+  "Tried": [],
+  "Worked": "step aside",
+  "Last": "2026-11-14T08:25:17.8744588Z"
+ },
+ {
+  "Zone": "Krokotopia/KT_Hub_Sphinx",
+  "X": 13846.3,
+  "Y": 2047.2,
+  "Step": "",
+  "Times": 0,
+  "Tried": [],
+  "Worked": "step aside",
+  "Last": "2026-11-14T09:04:37.6808746Z"
+ },
+ {
+  "Zone": "Krokotopia/KT_Krokosphinx/KT_EntranceHall",
+  "X": 3291.0,
+  "Y": -410.7,
+  "Step": "",
+  "Times": 0,
+  "Tried": [],
+  "Worked": "another way (a teleporter or a new route)",
+  "Last": "2026-11-15T03:46:35.8559562Z"
+ },
+ {
+  "Zone": "Krokotopia/KT_Krokosphinx/Interiors/KT_ChampHall_T3",
+  "X": -400.9,
+  "Y": 1839.7,
+  "Step": "",
+  "Times": 0,
+  "Tried": [],
+  "Worked": "walk well away and come back another way",
+  "Last": "2026-11-15T01:06:06.7852116Z"
+ },
+ {
+  "Zone": "Krokotopia/KT_Krokosphinx/KT_EntranceHall",
+  "X": 5824.3,
+  "Y": -1088.6,
+  "Step": "",
+  "Times": 0,
+  "Tried": [],
+  "Worked": "press the Commons button and walk back from there",
+  "Last": "2026-11-15T03:45:18.8963991Z"
+ },
+ {
+  "Zone": "Krokotopia/KT_Krokosphinx/KT_EntranceHall",
+  "X": 3934.6,
+  "Y": 8.9,
+  "Step": "",
+  "Times": 0,
+  "Tried": [],
+  "Worked": "another way (a teleporter or a new route)",
+  "Last": "2026-11-14T22:31:06.597758Z"
+ },
+ {
+  "Zone": "Krokotopia/KT_Krokosphinx/KT_EntranceHall",
+  "X": 5843.9,
+  "Y": 1069.2,
+  "Step": "",
+  "Times": 0,
+  "Tried": [],
+  "Worked": "press the Commons button and walk back from there",
+  "Last": "2026-11-14T22:16:05.5871996Z"
+ },
+ {
+  "Zone": "Krokotopia/KT_WorldTeleporter",
+  "X": -10.6,
+  "Y": -26.2,
+  "Step": "",
+  "Times": 0,
+  "Tried": [],
+  "Worked": "step aside",
+  "Last": "2026-11-14T18:46:45.5908028Z"
+ },
+ {
+  "Zone": "Krokotopia/KT_Krokosphinx/KT_EntranceHall",
+  "X": 6994.4,
+  "Y": 3042.2,
+  "Step": "",
+  "Times": 0,
+  "Tried": [],
+  "Worked": "another way (a teleporter or a new route)",
+  "Last": "2026-11-15T01:20:49.3166613Z"
+ },
+ {
+  "Zone": "Krokotopia/KT_Krokosphinx/KT_EntranceHall",
+  "X": 7392.9,
+  "Y": 50.2,
+  "Step": "",
+  "Times": 0,
+  "Tried": [],
+  "Worked": "press the Commons button and walk back from there",
+  "Last": "2026-11-15T01:49:05.3208941Z"
+ },
+ {
+  "Zone": "Krokotopia/KT_Hub_Sphinx",
+  "X": 11766.1,
+  "Y": -180.6,
+  "Step": "",
+  "Times": 0,
+  "Tried": [],
+  "Worked": "press the Commons button and walk back from there",
+  "Last": "2026-11-15T03:49:59.3580334Z"
+ }
+]

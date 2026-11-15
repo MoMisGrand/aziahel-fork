@@ -37,6 +37,9 @@ internal static class RouteMemory {
 
     private const string FOLDER = "logs/routes";
     private const string FILE = "learned-routes.json";
+    private const string SHIPPED_FILE = "proven-routes.json";
+
+    private static bool Near(float ax, float ay, float bx, float by) => MathF.Sqrt(((ax - bx) * (ax - bx)) + ((ay - by) * (ay - by))) < 150f;
 
     // A walk counts once it is this long; shorter ones the way finder gets right anyway.
     private const float MIN_LEG = 600f;
@@ -323,6 +326,27 @@ internal static class RouteMemory {
         }
         catch (Exception ex) {
             Logger.Debug("Route memory: {0} could not be read: {1}", Logger.Args(FILE, ex.Message));
+        }
+
+        // The walks Ultimus proved, shipped with Imlight (spiraldb-extra/Routes/proven-routes.json; Niduus, 2026-11-15: "I also
+        // want his correct route implemented for future Ultimus clones, Bots and QT"). Every wizard the server plays walks
+        // by this one book (OverlayQuestPath.Walk), so a fresh install starts with them; a walk the server learned itself
+        // at the same spots is kept instead.
+        try {
+            var shipped = Path.Combine(WizardData.SpiralDB.ExtraPath, "Routes", SHIPPED_FILE);
+            if (File.Exists(shipped) && JsonSerializer.Deserialize<Dictionary<string, Street>>(File.ReadAllText(shipped)) is { } known) {
+                foreach (var (zone, street) in known.Where(s => s.Value?.Legs is not null)) {
+                    var mine = s_streets.TryGetValue(zone, out var had) ? had : s_streets[zone] = new Street();
+                    foreach (var leg in street.Legs.Where(l => l?.Points is { Count: > 0 } && l.Points.All(p => p is { Length: >= 2 }))) {
+                        if (!mine.Legs.Any(l => Near(l.FromX, l.FromY, leg.FromX, leg.FromY) && Near(l.ToX, l.ToY, leg.ToX, leg.ToY))) {
+                            mine.Legs.Add(leg);
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex) {
+            Logger.Debug("Route memory: the shipped proven routes could not be read: {0}", Logger.Args(ex.Message));
         }
 
         return s_streets;
