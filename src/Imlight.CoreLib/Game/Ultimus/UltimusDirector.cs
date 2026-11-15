@@ -1063,7 +1063,7 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
             }
 
             var matching = services.SelectMany(s => options.Where(o => string.Equals(o.Service, s, StringComparison.OrdinalIgnoreCase))).ToList();
-            var option = BotOptions.Pick(matching, target.Quest, TimesClicked(key));
+            var option = BotOptions.Pick(matching, target.Quest, TimesClicked(key), target.Goal, member.CharId);
             if (option.Service is null) {
                 if (DateTime.UtcNow - _targetSince > TimeSpan.FromSeconds(40)) {
                     Issue("quest", target.Quest, $"{target.What}: the NPC only offers {string.Join(", ", options.Select(o => o.Service))} to {member.Name}, " +
@@ -1109,7 +1109,7 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
         }
 
         var option = BotOptions.Pick([.. services.SelectMany(s => options.Where(o => string.Equals(o.Service, s, StringComparison.OrdinalIgnoreCase)))],
-            target.Quest, TimesClicked(key));
+            target.Quest, TimesClicked(key), target.Goal, member.CharId);
         if (option.Service is null) {
             option = options.FirstOrDefault();
         }
@@ -1169,6 +1169,18 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
             if (everything.Count == 0 && index == 0 && far <= 300 && DateTime.UtcNow - _useNear.Since > TimeSpan.FromSeconds(10)
                 && UseNeedsFight(member, target, "the game offers nothing to click there yet")) {
                 return;
+            }
+
+            // A puzzle's things are used one by one, in order: only the one walked up to (the newest offered), from close by,
+            // never the one beside it (BotPuzzle).
+            if (target.Key.EndsWith("|order", StringComparison.Ordinal)) {
+                if (far > 160 || (far > 90 && usable.Count == 0)) {
+                    WalkTo(index, target);
+
+                    return;
+                }
+
+                usable = [.. usable.OrderByDescending(id => member.OptionsAt.TryGetValue(id, out var at) ? at : DateTime.MinValue).Take(1)];
             }
 
             if (!searching && far > 120 && (usable.Count == 0 || far > 300)) {
@@ -1607,6 +1619,7 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
             }
 
             parts.Add($"{member.Role}:{member.Zone}:{wizard.MagicSchoolBehavior?.Level}");
+            BotPuzzle.Settle(member.CharId, wizard);
             foreach (var quest in wizard.QuestBehavior.CurrentQuestInstances?.ToList() ?? []) {
                 if (quest is null) {
                     continue;
@@ -1616,6 +1629,7 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
                 parts.Add($"{quest.QuestName}={string.Join(',', active)}");
                 StartRun(quest.QuestName);
                 foreach (var done in (quest.GoalProgress ?? []).Where(g => g is not null && quest.IsGoalCompleted(g.GoalName))) {
+                    BotPuzzle.StepDone(member.CharId, quest.QuestName, done.GoalName);
                     if (_fightsFor.Remove(quest.QuestName + "|" + done.GoalName, out var fights) && _seenGoals.Add("fights|" + quest.QuestName + "|" + done.GoalName)) {
                         UltimusLink.Send(new UltimusRequest { Op = "quest", Event = "step", Quest = quest.QuestName, Title = UltimusText.Title(quest.QuestName),
                             Text = $"\"{done.GoalName}\" took {fights} battle(s) won" });
@@ -1636,6 +1650,11 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
         }
 
         // Levelling up for a quest (XP fights, and healing between them) is not the quest being slow.
+        // What the puzzles gave them to say (a wrong order tried again, an order or answer that worked).
+        foreach (var news in BotPuzzle.TakeNews(_team.Select(m => m.CharId))) {
+            Think(news.Text, news.Key);
+        }
+
         var sinceCheck = Math.Min(30, (DateTime.UtcNow - _runsCheckedAt).TotalSeconds);
         _runsCheckedAt = DateTime.UtcNow;
         var grinding = (_target ?? _leaderLastTarget)?.What?.StartsWith("a fight for XP", StringComparison.Ordinal) == true;

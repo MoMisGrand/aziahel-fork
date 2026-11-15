@@ -77,6 +77,11 @@ internal sealed partial class QuestTeamDirectorActor {
 
         (_readAheadWaiting, _readAheadAskedAt) = (null, DateTime.MinValue);
         _readAheadDone.Add(world);
+        if (UltimusDirectorActor.PuzzlesAhead(world, q => !_team.All(m => m.Wizard?.HasCompletedQuest(q) == true), QuestTeamWire.Folder) is { Length: > 0 } puzzles) {
+            Note("Team", $"READ-AHEAD: {UltimusDirectorActor.WorldName(world)}: puzzle steps ahead: {puzzles}. The team works each one out from what " +
+                         "the quest's people say there, as players would.");
+        }
+
         if (UltimusDirectorActor.ReadAheadProblems(world) is not { } found) {
             return;
         }
