@@ -125,6 +125,18 @@ internal static class OverlayQuestPath {
 
             var start = Cell(grid, fromX, fromY);
             var goal = Cell(grid, toX, toY);
+            // A step just past the edge of the area's floor map (a tomb's walk-in exit whose middle stands in the wall at
+            // the end of the room: the Djeserit Family Tomb's in the Well of Spirits, 300 past the map's edge): the way goes
+            // to the map's edge nearest it, round the corners, not in a straight line that walls cut (Niduus, 2026-11-15:
+            // "he and Minimap are not scoping around corners"). The exit takes him on from there, as it does a player.
+            var offMap = false;
+            if (goal < 0 && start >= 0 && Edge(grid, toX, toY) is { } edge) {
+                (toX, toY) = edge;
+                goal = Cell(grid, toX, toY);
+                straight = [(toX, toY)];
+                offMap = goal >= 0;
+            }
+
             if (start < 0 || goal < 0) {
                 return straight;
             }
@@ -172,7 +184,7 @@ internal static class OverlayQuestPath {
             if (body && cells is not null && cells.Count > 0) {
                 var reached = cells[^1];
                 var (cx, cy) = Center(grid, reached);
-                if (grid.Cost[goal] == BLOCKED && MathF.Sqrt(((cx - toX) * (cx - toX)) + ((cy - toY) * (cy - toY))) > grid.Cell * 2) {
+                if ((grid.Cost[goal] == BLOCKED || offMap) && MathF.Sqrt(((cx - toX) * (cx - toX)) + ((cy - toY) * (cy - toY))) > grid.Cell * 2) {
                     (endX, endY) = (cx, cy);
                 }
                 else if (reached != to && MathF.Sqrt(((cx - toX) * (cx - toX)) + ((cy - toY) * (cy - toY))) > 300) {
@@ -607,6 +619,19 @@ internal static class OverlayQuestPath {
                                       && !Void(ground, (ny * w) + nx);
 
         return (Floor(x - 1, y) && Floor(x + 1, y)) || (Floor(x, y - 1) && Floor(x, y + 1));
+    }
+
+    // The spot of the map nearest a spot past its edge, a cell inside (null when it is far past it: not this map's).
+    private const float EDGE_MOST = 1500f;
+
+    private static (float X, float Y)? Edge(Grid grid, float x, float y) {
+        var right = grid.Left + (grid.Width * grid.Cell);
+        var bottom = grid.Top - (grid.Height * grid.Cell);
+        var cx = Math.Clamp(x, grid.Left + (grid.Cell * 1.5f), right - (grid.Cell * 1.5f));
+        var cy = Math.Clamp(y, bottom + (grid.Cell * 1.5f), grid.Top - (grid.Cell * 1.5f));
+        var off = MathF.Sqrt(((cx - x) * (cx - x)) + ((cy - y) * (cy - y)));
+
+        return off > EDGE_MOST ? null : (cx, cy);
     }
 
     private static int Cell(Grid grid, float x, float y) {

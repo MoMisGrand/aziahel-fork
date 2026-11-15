@@ -156,6 +156,23 @@ internal static class UltimusFixes {
             Logger.Debug("Ultimus: {0} could not be read: {1}", Logger.Args(FILE, ex.Message));
         }
 
+        // The fixes Ultimus proved, shipped with Imlight (spiraldb-extra/Routes/proven-fixes.json; Niduus, 2026-11-15: "I also
+        // want his correct route implemented for future Ultimus clones, Bots and QT"): a new Ultimus knows them from the
+        // start, as long as his own book has nothing at that spot.
+        try {
+            var shipped = Path.Combine(WizardData.SpiralDB.ExtraPath, "Routes", "proven-fixes.json");
+            if (File.Exists(shipped) && JsonSerializer.Deserialize<List<Flag>>(File.ReadAllText(shipped)) is { } known) {
+                foreach (var f in known.Where(f => f is not null && !string.IsNullOrEmpty(f.Zone) && Order.Contains(f.Worked))) {
+                    if (!s_flags.Any(o => string.Equals(o.Zone, f.Zone, StringComparison.OrdinalIgnoreCase) && Far(o.X, o.Y, f.X, f.Y) <= ADJACENT)) {
+                        s_flags.Add(new Flag { Zone = f.Zone, X = f.X, Y = f.Y, Step = "", Worked = f.Worked, Last = f.Last });
+                    }
+                }
+            }
+        }
+        catch (Exception ex) {
+            Logger.Debug("Ultimus: the shipped proven fixes could not be read: {0}", Logger.Args(ex.Message));
+        }
+
         return s_flags;
     }
 
