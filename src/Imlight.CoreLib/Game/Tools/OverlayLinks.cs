@@ -666,9 +666,19 @@ public static class OverlayLinks {
             ["world"] = Ultimus.UltimusDirectorActor.WorldName((string) row?["w"] ?? ""),
             ["role"] = member.Role,
             ["team"] = new JsonArray([.. members.Select(m => (JsonNode) m.Role)]),
+            // Its school, for the Quest Team map's border colour (Niduus, 2026-11-15).
+            ["school"] = member.Role,
             ["quests"] = new JsonArray([.. ((quests?["quests"] as JsonArray)?.OfType<JsonObject>() ?? [])
                 .Take(40).Select(q => (JsonNode) new JsonObject { ["id"] = q["id"]?.DeepClone(), ["t"] = q["t"]?.DeepClone(), ["k"] = q["k"]?.DeepClone() })]),
         };
+
+        // Its battle, as Ultimus's (Niduus, 2026-11-15: a battle box for the Quest Team too).
+        if (member.Wizard is not null && Ultimus.UltimusSpectate.Battle(member.GlobalId, member.Role) is { } battle) {
+            battle["deck"] = wizard?.SpellbookBehavior?.SpellList is { } deck
+                ? BotShared.BotCards.Describe(deck.Where(d => d is not null).Select(d => ((uint) d.m_templateID, (int) d.m_quantity)))
+                : "";
+            info["battle"] = battle;
+        }
 
         var answer = RemoteAdminWire.Ok();
         answer["map"] = map;

@@ -223,6 +223,9 @@ internal sealed partial class CombatDuelComponent {
 
             _questTeamPicks[member.SlotIndex] = pick;
             QuestTeamLink.Note(role, $"round {Duel.m_roundNum}: {choice.Why}");
+            // What the overlay's Quest Team Spectator shows of this round (read only; Niduus, 2026-11-15).
+            Game.Ultimus.UltimusSpectate.NoteRound(role, Duel.m_duelID.Full, Duel.m_roundNum, member, circles, choice.Move == QuestTeamTactics.Move.Cast,
+                choice.Card, choice.Target, choice.Why, [.. moves.Where(m => m.Type == CombatMoveType.Discard).Select(m => m.Why)]);
             moves.Add(choice.Move == QuestTeamTactics.Move.Cast ? BotBattle.Move.Cast(choice.Card, choice.Target, choice.Why) : BotBattle.Move.Pass(choice.Why));
 
             // The clicks go through its own game, as a person's do, after a person's moment to read the hand.
