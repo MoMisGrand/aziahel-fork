@@ -331,7 +331,8 @@ internal sealed partial class QuestTeamDirectorActor {
     // The overnight watchdog: two hours with nothing done pauses the team (as it pauses Ultimus)
     // ---------------------------------------------------------------------
 
-    private static double WatchdogPauseMinutes => Math.Max(30, UltimusPlaybook.Value("Watchdog.PauseMinutes"));
+    // The same playbook rule as Ultimus's; 0 or less turns the pause off.
+    private static double WatchdogPauseMinutes => UltimusPlaybook.Value("Watchdog.PauseMinutes");
 
     private void TeamWatchdog(string signature) {
         if (signature != _progressSignature) {
@@ -342,7 +343,7 @@ internal sealed partial class QuestTeamDirectorActor {
         }
 
         var idle = DateTime.UtcNow - _progressAt;
-        if (_paused || idle < TimeSpan.FromMinutes(WatchdogPauseMinutes)) {
+        if (_paused || WatchdogPauseMinutes <= 0 || idle < TimeSpan.FromMinutes(Math.Max(30, WatchdogPauseMinutes))) {
             return;
         }
 
