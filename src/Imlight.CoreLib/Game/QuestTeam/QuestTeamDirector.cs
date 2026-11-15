@@ -125,7 +125,9 @@ internal static class QuestTeamDirector {
     /// <summary>The team's four wizards as they are now (for .questteam tp), empty while the team is not playing.</summary>
     internal static IReadOnlyList<QuestTeamMember.Status> Members => s_members;
 
-    internal sealed record Spectated(string Quest, string Step, string Doing);
+    /// <param name="Stuck">The team's stuck line, while it is stuck (Niduus, 2026-11-15: a "team stuck" line on the Spectator).</param>
+    /// <param name="ReadAhead">What reading the quest ahead warned of (QuestTeamDirector.ReadAhead.cs).</param>
+    internal sealed record Spectated(string Quest, string Step, string Doing, string Stuck = "", string ReadAhead = "");
 
     private static volatile Spectated s_spectateNow = new("", "", "");
 
@@ -256,6 +258,8 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
 
     private void OnLoaded(Loaded loaded) {
         _starting = false;
+        // The NPC location book Ultimus reads, shared: built or read once, whichever bot starts first.
+        Ultimus.UltimusNpcBook.BuildInBackground();
         if (loaded.Members is null) {
             Issue("team", null, "The Quest Team's wizards could not be made or loaded. The server log says why.");
             QuestTeamDirector.Failed(Self);
@@ -329,6 +333,8 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
         }
 
         TrackProgress();
+        ReadAheadTick();
+        RequestsTick();
         if (DateTime.UtcNow >= _nextStatus) {
             _nextStatus = DateTime.UtcNow.AddSeconds(4);
             WriteStatus("on", null);
@@ -422,8 +428,12 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
                 CatchUp(member);
             }
 
-            // The leader waits for them, unless the area takes one at a time (they stay apart a long while).
-            if (DateTime.UtcNow - _apartSince < TimeSpan.FromSeconds(90)) {
+            // The leader waits for them, unless the area takes one at a time (they stay apart a long while). Each in its own
+            // copy of the same area (a new wizard's Headmistress's house, a solo instance): they can't come to the leader, they
+            // do the same there and follow, so the leader waits only a moment (Niduus, 2026-11-15, idea approved).
+            var ownCopies = leader.Wizard?.ZoneIsInstance == true
+                            && behind.All(m => OverlayQuestTracker.SameZone(m.Zone ?? "", leader.Zone ?? ""));
+            if (DateTime.UtcNow - _apartSince < TimeSpan.FromSeconds(ownCopies ? 20 : 90)) {
                 _doing = "waiting for the team to catch up";
                 StopWalking(0);
 
@@ -818,6 +828,8 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
 
         Snapshot(world);
         _storyWorld = world;
+        // Read ahead in the new world (QuestTeamDirector.ReadAhead.cs).
+        ReadAhead(world);
     }
 
     private List<string> _usernames = [];
@@ -972,37 +984,39 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
     private void ClickEach(List<QuestTeamMember.Status> group, QuestTeamPlanner.Target target, string[] services,
                            Func<QuestTeamMember.Status, bool> needs) {
         foreach (var member in group) {
+            // Its own copy of the area (an instance): the same NPC there, with its own id (InOwnCopy).
+            var t = InOwnCopy(member, target);
             if (!needs(member)) {
                 continue;
             }
 
             var index = _team.IndexOf(member);
-            var key = $"{target.Key}|{index}";
-            if (QuestTeamPlanner.Far(member.X, member.Y, target.X, target.Y) > 200 && !member.Options.ContainsKey(target.GlobalId)) {
-                WalkTo(index, target with { X = target.X - 40 });
+            var key = $"{t.Key}|{index}";
+            if (QuestTeamPlanner.Far(member.X, member.Y, t.X, t.Y) > 200 && !member.Options.ContainsKey(t.GlobalId)) {
+                WalkTo(index, t with { X = t.X - 40 });
 
                 return;
             }
 
-            if (!member.Options.TryGetValue(target.GlobalId, out var options)) {
+            if (!member.Options.TryGetValue(t.GlobalId, out var options)) {
                 // Not sent its options yet: a step closer.
-                if (QuestTeamPlanner.Far(member.X, member.Y, target.X, target.Y) > 80) {
-                    WalkTo(index, target with { X = target.X - 30 });
+                if (QuestTeamPlanner.Far(member.X, member.Y, t.X, t.Y) > 80) {
+                    WalkTo(index, t with { X = t.X - 30 });
                 }
                 else if (TimesClicked(key) == 0 && DateTime.UtcNow - _targetSince > TimeSpan.FromSeconds(30)) {
-                    Issue("quest", target.Quest, $"{target.What}: {member.Name} stands next to the NPC, but it offers nothing to click.",
-                        key: key + "|nooptions");
+                    Issue("quest", t.Quest, $"{t.What}: {member.Name} stands next to the NPC, but it offers nothing to click.",
+                        key: key + "|nooptions", about: member);
                 }
 
                 return;
             }
 
             var option = BotOptions.Pick([.. services.SelectMany(s => options.Where(o => string.Equals(o.Service, s, StringComparison.OrdinalIgnoreCase)))],
-                target.Quest, TimesClicked(key));
+                t.Quest, TimesClicked(key));
             if (option.Service is null) {
                 if (DateTime.UtcNow - _targetSince > TimeSpan.FromSeconds(40)) {
-                    Issue("quest", target.Quest, $"{target.What}: the NPC only offers {string.Join(", ", options.Select(o => o.Service))} to {member.Name}, " +
-                                                 "not the quest.", key: key + "|wrongoptions");
+                    Issue("quest", t.Quest, $"{t.What}: the NPC only offers {string.Join(", ", options.Select(o => o.Service))} to {member.Name}, " +
+                                                 "not the quest.", key: key + "|wrongoptions", about: member);
                 }
 
                 continue;
@@ -1010,8 +1024,8 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
 
             if (!CanClick(key)) {
                 if (TimesClicked(key) >= 3) {
-                    Issue("quest", target.Quest, $"{target.What}: {member.Name} talked to the NPC {TimesClicked(key)} times and the step did not finish.",
-                        key: key + "|nofinish");
+                    Issue("quest", t.Quest, $"{t.What}: {member.Name} talked to the NPC {TimesClicked(key)} times and the step did not finish.",
+                        key: key + "|nofinish", about: member);
                 }
 
                 return;
@@ -1019,7 +1033,7 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
 
             Clicked(key);
             Note(member.Role, $"{member.Name} talks to them ({option.Service}).");
-            _actors[index].Tell(new QuestTeamMember.Interact(target.GlobalId, option.Service, option.Index, target.What));
+            _actors[index].Tell(new QuestTeamMember.Interact(t.GlobalId, option.Service, option.Index, t.What));
             // Talking can take the leader somewhere (Merle Ambrose sends a new wizard on to Unicorn Way): the others, left
             // behind, then talk to the same NPC to follow (Niduus, 2026-11-12: "they are stuck facing Merle").
             if (index == 0) {
@@ -1857,7 +1871,9 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
         });
     }
 
-    private void Issue(string kind, string quest, string text, string key = null, bool skipStep = true, string level = null) {
+    /// <param name="about">The one wizard the issue is about (it alone is checked and has the step finished), when it is one.</param>
+    private void Issue(string kind, string quest, string text, string key = null, bool skipStep = true, string level = null,
+                       QuestTeamMember.Status about = null) {
         // A quest issue from a target that carries no quest (a way out of an area): the quest the team is on, so the step
         // can still be skipped (found by the Ultimus thread: a door loop never moved on).
         if (kind == "quest" && string.IsNullOrEmpty(quest)) {
@@ -1876,11 +1892,17 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
         // A broken step is not a dead end (Niduus, 2026-11-12: "Never stuck forever ... skip it with Ahziael's help, and move
         // on"): after the tries that raised this issue, Ahziael finishes the step for each of them and the run goes on.
         level ??= kind switch { "slow" => QuestTeamLink.MINOR, "team" => QuestTeamLink.CRITICAL, _ => QuestTeamLink.NOTABLE };
-        var skipping = kind == "quest" && skipStep && !string.IsNullOrEmpty(quest);
+        // An issue about one wizard that does not hold the quest (it never got it, or it is in another copy of the area):
+        // nothing to finish for it, and the others' steps are left alone (Niduus, 2026-11-15: three critical "Unicorn Way"
+        // issues while the three stood in their own copies of the Headmistress's house).
+        var skipping = kind == "quest" && skipStep && !string.IsNullOrEmpty(quest) && (about is null || about.Wizard?.HasQuest(quest) == true);
         Note("Team", $"ISSUE{(string.IsNullOrEmpty(quest) ? "" : $" in {QuestTeamText.Title(quest)}")}: {text}", skipping ? QuestTeamLink.CRITICAL : level);
+        // Diagnosed before any step is finished for them: after, the quest reads as done and the diagnosis blamed a stale
+        // quest list (Niduus's Ahziael popup, 2026-11-15).
+        var diagnosis = Diagnose(quest, about);
         if (skipping) {
             for (var i = 0; i < _team.Count; i++) {
-                if (_team[i].Wizard?.HasQuest(quest) == true) {
+                if (_team[i].Wizard?.HasQuest(quest) == true && (about is null || _team[i] == about)) {
                     _actors[i].Tell(new QuestTeamMember.SkipStep(quest));
                 }
             }
@@ -1894,7 +1916,7 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
         // Why the step can't be done, checked against the quest data, the wizard and the live server (the shared diagnosis
         // Ultimus uses too): its verdict goes in the issue's words, its checks with what each wizard saw.
         var seen = Seen(quest);
-        if (Diagnose(quest) is { } diagnosis) {
+        if (diagnosis is not null) {
             text += " " + diagnosis.Summary;
             seen.Insert(0, $"Likely cause ({diagnosis.Confidence} confidence, {diagnosis.Category}): {diagnosis.LikelyCause}");
             seen.Insert(1, $"Can the step be done: {diagnosis.Completable}");
@@ -1913,14 +1935,15 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
     }
 
     /// <summary>The shared quest diagnosis (BotShared.BotQuestDiagnosis) for the one leading, on <paramref name="quest"/>; null when it can't.</summary>
-    private BotQuestDiagnosis.Result Diagnose(string quest) {
+    private BotQuestDiagnosis.Result Diagnose(string quest, QuestTeamMember.Status about = null) {
         if (string.IsNullOrEmpty(quest)) {
             return null;
         }
 
         try {
             // The leader, or the first one who holds the quest when the leader doesn't.
-            var me = _team.FirstOrDefault(m => m.Wizard?.HasQuest(quest) == true) ?? (_team.Count > 0 ? _team[0] : null);
+            // The one the issue is about, else the leader, or the first one who holds the quest when the leader doesn't.
+            var me = about ?? _team.FirstOrDefault(m => m.Wizard?.HasQuest(quest) == true) ?? (_team.Count > 0 ? _team[0] : null);
             if (me?.Wizard is null) {
                 return null;
             }
@@ -2015,7 +2038,8 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
             }
 
             // For the Quest Team Spectator (OverlayLinks): the team's quest, step and what it does now.
-            QuestTeamDirector.SpectateNow = new QuestTeamDirector.Spectated(_currentQuest ?? "", _target?.What ?? "", _doing ?? "");
+            QuestTeamDirector.SpectateNow = new QuestTeamDirector.Spectated(_currentQuest ?? "", _target?.What ?? "", _doing ?? "", StuckLine(),
+                ReadAheadLine());
             var run = _currentQuest is null ? null : _runs.GetValueOrDefault(_currentQuest);
             var status = new JsonObject {
                 ["state"] = state,

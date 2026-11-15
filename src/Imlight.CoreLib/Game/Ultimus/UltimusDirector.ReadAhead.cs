@@ -43,7 +43,7 @@ internal sealed partial class UltimusDirectorActor {
     private DateTime _readAheadNextLook = DateTime.MinValue;
     private DateTime _readAheadAskedAt = DateTime.MinValue;
 
-    private static string QuestCheckPath => Path.Combine(IdCatalog.OutputPath, QuestChecker.FILE_NAME);
+    internal static string QuestCheckPath => Path.Combine(IdCatalog.OutputPath, QuestChecker.FILE_NAME);
 
     /// <summary>A world's story starts: its story quests are read ahead (now, or once the check is written).</summary>
     private void ReadAhead(string world) {
@@ -209,7 +209,7 @@ internal sealed partial class UltimusDirectorActor {
     }
 
     // The world's story quests (and quests the story needs) the check says have a problem, story order kept.
-    private static List<(string Quest, List<string> Problems)> ReadAheadProblems(string world) {
+    internal static List<(string Quest, List<string> Problems)> ReadAheadProblems(string world) {
         try {
             using var doc = JsonDocument.Parse(File.ReadAllText(QuestCheckPath));
             if (!doc.RootElement.TryGetProperty("Quests", out var quests) || quests.ValueKind != JsonValueKind.Array) {

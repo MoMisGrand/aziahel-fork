@@ -133,6 +133,65 @@ internal sealed partial class ManagerWindow {
 
     private string QuestTeamFolder => Path.Combine(_manager.LogFolder, QUEST_TEAM_FOLDER);
 
+    // A red note when the watchdog stopped the team, as Ultimus's (Niduus, 2026-11-15, approved): two hours with nothing done.
+    // The server pauses the team (paused.txt starting "Watchdog:") and writes watchdog-stop.txt with where and what it was doing.
+    private readonly TextBlock _teamWatchdogText = new() {
+        TextWrapping = TextWrapping.Wrap, FontWeight = FontWeight.SemiBold, Foreground = new SolidColorBrush(Color.Parse("#E5484D")),
+    };
+    private StackPanel? _teamWatchdogNote;
+
+    private string TeamWatchdogStopped() {
+        try {
+            var pause = Path.Combine(QuestTeamFolder, "paused.txt");
+            if (File.Exists(pause) && File.ReadAllText(pause).StartsWith("Watchdog:", StringComparison.Ordinal)) {
+                var stop = Path.Combine(QuestTeamFolder, "watchdog-stop.txt");
+
+                return File.Exists(stop) ? File.ReadAllText(stop).Trim() : File.ReadAllText(pause).Trim();
+            }
+        }
+        catch (Exception) {
+            // Only a note: nothing shows when the files can't be read.
+        }
+
+        return "";
+    }
+
+    private Control TeamWatchdogNote() {
+        _teamWatchdogNote = new StackPanel { Spacing = 6, IsVisible = false, Margin = new Thickness(0, 4, 0, 4) };
+        _teamWatchdogNote.Children.Add(_teamWatchdogText);
+        _teamWatchdogNote.Children.Add(Row(
+            Action(Plain("Copy what they were doing"), () => CopyAsync(TeamWatchdogStopped(), "Copied. Paste it in the chat so the spot can be fixed.")),
+            Action(Plain("Resume them"), () => {
+                try {
+                    File.Delete(Path.Combine(QuestTeamFolder, "paused.txt"));
+                    Say("Resumed. The Quest Team goes on with its quest.");
+                }
+                catch (Exception) {
+                    Say("Could not resume them. Try the Pause or resume button.");
+                }
+
+                ShowTeamWatchdogNote();
+
+                return Task.CompletedTask;
+            })));
+
+        return _teamWatchdogNote;
+    }
+
+    private void ShowTeamWatchdogNote() {
+        if (_teamWatchdogNote is null) {
+            return;
+        }
+
+        var stopped = TeamWatchdogStopped();
+        _teamWatchdogNote.IsVisible = stopped.Length > 0;
+        if (stopped.Length > 0) {
+            _teamWatchdogText.Text = "The Quest Team stopped itself: it went two hours without finishing a step, gaining a level or reaching a new " +
+                                     "area, so it is paused and waits for you. " + stopped.Split('\n')[0] + " Press Copy what they were doing and " +
+                                     "paste it in the chat, then Resume them.";
+        }
+    }
+
     private void StartQuestTeamTimer() {
         if (_teamTimerStarted) {
             return;
@@ -176,6 +235,7 @@ internal sealed partial class ManagerWindow {
                 "quest takes much longer than it should, a banner at the top of Ahziael says so and Team Issues shows what happened. " +
                 "They run in a little program of their own next to the server; they never touch your own wizards. " + BOT_CONCEPT_SHOUT_OUT,
                 _teamState,
+                TeamWatchdogNote(),
                 SwitchRow("Quest Team", _teamEnabled, "On: the four wizards log in a few seconds later and start questing. Off: they log out."),
                 _teamDoing,
                 _teamToday,
@@ -336,6 +396,29 @@ internal sealed partial class ManagerWindow {
         return text.ToString();
     }
 
+    // "Fixed it" and "Retry now" on each quest issue, as Ultimus's (Niduus, 2026-11-15): Fixed it tells the team to try the quest
+    // again from a clean slate (fixed-request.txt); Retry now ends its wait and tries the step again at once (retry-request.txt).
+    private Control TeamIssueButtons(string quest, string title) {
+        if (string.IsNullOrEmpty(quest)) {
+            return new Panel { IsVisible = false };
+        }
+
+        var row = Row(
+            Action(Plain("Fixed it"), async () => {
+                Directory.CreateDirectory(QuestTeamFolder);
+                await File.AppendAllTextAsync(Path.Combine(QuestTeamFolder, "fixed-request.txt"), quest + Environment.NewLine);
+                Say($"Marked fixed: {(title.Length > 0 ? title : quest)}. The Quest Team tries it again within a few seconds, and files it again only if it still goes wrong.");
+            }),
+            Action(Plain("Retry now"), async () => {
+                Directory.CreateDirectory(QuestTeamFolder);
+                await File.WriteAllTextAsync(Path.Combine(QuestTeamFolder, "retry-request.txt"), DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture));
+                Say("The Quest Team stops waiting and tries its step again now.");
+            }));
+        ToolTip.SetTip(row, "Fixed it: you changed something, the team forgets what went wrong with this quest. Retry now: the team stops waiting and tries its step again.");
+
+        return row;
+    }
+
     private void ShowQuestTeamIssues() {
         if (_teamIssuesShown == (_teamIssueList.Count == 0 ? 0 : _teamIssueList.Max(i => i.Id))) {
             return;
@@ -370,7 +453,7 @@ internal sealed partial class ManagerWindow {
             var logFold = new Expander { Header = "What happened (the team's log)", Content = LogWell(log), HorizontalAlignment = HorizontalAlignment.Stretch };
             _teamIssues.Children.Add(new Border {
                 Background = ManagerTheme.SURFACE_HIGH_BRUSH, CornerRadius = new CornerRadius(ManagerTheme.RADIUS_SMALL), Padding = new Thickness(14, 10),
-                Child = new StackPanel { Spacing = 6, Children = { head, when, body, expected, seen, logFold } },
+                Child = new StackPanel { Spacing = 6, Children = { head, when, body, expected, seen, TeamIssueButtons(issue.Quest, issue.Title), logFold } },
             });
         }
     }
@@ -508,6 +591,7 @@ internal sealed partial class ManagerWindow {
 
         if (_teamState.IsEffectivelyVisible) {
             ShowQuestTeamStatus();
+            ShowTeamWatchdogNote();
         }
 
         if (_teamSheet.View.IsEffectivelyVisible) {

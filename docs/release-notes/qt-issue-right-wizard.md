@@ -1,0 +1,4 @@
+Fixed: Quest Team issues no longer blame an out-of-date quest list
+The three critical "Unicorn Way" issues came from Terra, Anubis and Chaac standing in their own copies of the Headmistress's house, where the Merle Ambrose they were looking for doesn't exist. The check then looked at Freya, who had already finished the quest, and wrongly said the quest list was out of date. Now each wizard looks for the NPC in its own copy. An issue about one wizard is checked on that wizard, before any step is finished for it. And a wizard that doesn't hold the quest no longer has steps finished for the others.
+Where: The Quest Team and Ahziael's Team Issues, no setting.
+Test: Press Restart on the Quest Team page. No "offers nothing to click" issues should show for Ambrose, and all four should reach Unicorn Way.

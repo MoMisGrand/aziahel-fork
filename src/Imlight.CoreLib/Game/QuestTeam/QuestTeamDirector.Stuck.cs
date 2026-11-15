@@ -211,6 +211,11 @@ internal sealed partial class QuestTeamDirectorActor {
             spot = (member.X + Random.Shared.Next(-200, 200), member.Y + Random.Shared.Next(-200, 200));
         }
 
+        if (index == 0) {
+            SetStuckLine($"{member.Name} stood still over {seconds} s in {where} (height {member.Z:0}) while {_doing}; " +
+                         $"{(goFar ? "walks well away and back" : "steps aside")} and finds the way again.");
+        }
+
         Note(member.Role, $"{member.Name} has stood still over {seconds} seconds in {where} while {_doing}: steps aside and finds the way again.",
             QuestTeamLink.ABNORMAL);
         var aside = OverlayQuestPath.Walk(member.CharId, member.Zone, member.X, member.Y, spot.Value.X, spot.Value.Y, body: true);

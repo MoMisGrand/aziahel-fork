@@ -43,7 +43,7 @@ internal static class OverlayUltimusData {
     internal sealed record Step(string Text, string Where, bool Here);
 
     /// <summary>His quest tracker's details (Niduus, 2026-11-14: "in detail"): world, why, what now, the step after, parked steps.</summary>
-    internal sealed record Tracker(string World, string Why, string Target, string Next, IReadOnlyList<string> Parked, string ReadAhead);
+    internal sealed record Tracker(string World, string Why, string Target, string Next, IReadOnlyList<string> Parked, string ReadAhead, string Stuck = "");
 
     internal sealed record Card(string Name, string School, int Rank, bool Castable, bool Picked);
 
@@ -244,7 +244,7 @@ internal static class OverlayUltimusData {
                 // His X, Y and height and his step's, after what he is doing (Niduus, 2026-11-15: floors).
                 Short((string?) detail["target"], 120) + (Short((string?) detail["position"], 140) is { Length: > 0 } position ? $" | {position}" : ""),
                 Short((string?) detail["next"], 120),
-                Texts(detail["parked"], 4, 320), Short((string?) detail["readAhead"], 160));
+                Texts(detail["parked"], 4, 320), Short((string?) detail["readAhead"], 160), Short((string?) detail["stuck"], 200));
         }
 
         var way = Texts(sent["way"], 12, 80);
@@ -386,6 +386,11 @@ internal static class UltimusViews {
             }
 
             if (info.Detail is { } d) {
+                // The Quest Team's stuck line (Niduus, 2026-11-15).
+                if (d.Stuck.Length > 0) {
+                    panel.Children.Add(Line("Team stuck: " + d.Stuck, look.Size - 2, look.Gold, bold: true, wrap: true));
+                }
+
                 if (d.Target.Length > 0) {
                     panel.Children.Add(Line("Now: " + d.Target, look.Size - 2, look.Text, wrap: true));
                 }

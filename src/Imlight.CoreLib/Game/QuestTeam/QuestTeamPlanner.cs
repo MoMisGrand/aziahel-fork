@@ -321,6 +321,25 @@ internal static class QuestTeamPlanner {
                         standing.Object.m_globalID.Full, Key: key);
                 }
 
+                // Not here and the step names no area: where this person stands, as Ultimus knows it (the NPC location book and
+                // the other quests' steps; Niduus, 2026-11-15: the team caught up on everything Ultimus can do).
+                if (stepZone.Length == 0 && spots.Count == 0) {
+                    var where = Ultimus.UltimusPlanner.NpcZone(persona.m_personaName, npc, zone, out var looking);
+                    if (looking) {
+                        return new Target(SPOT, leader.X, leader.Y, $"{step} (works out where they stand)", questName, goalName, Key: key + "|lookup");
+                    }
+
+                    if (where.Length > 0 && !OverlayQuestTracker.SameZone(where, zone)) {
+                        stepZone = where;
+                    }
+                }
+
+                // In this area by the book but not in sight yet: walk to their spot, as a player who knows the story does.
+                if (Ultimus.UltimusNpcBook.In(npc, zone) is { } booked && Far(leader.X, leader.Y, booked.X, booked.Y) > 150
+                    && (stepZone.Length == 0 || OverlayQuestTracker.SameZone(stepZone, zone))) {
+                    return new Target(SPOT, booked.X, booked.Y, step, questName, goalName, Key: key + "|book", Z: booked.Z);
+                }
+
                 break;
             }
 
