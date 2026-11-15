@@ -629,12 +629,13 @@ internal static class OverlayHost {
         // And the ones that show a Quest Tracker: the link asks the server for their quests.
         var wantsQuests = (ShowsMine(s_design) && OverlayRenderer.HasQuestTracker(s_design.Elements)) || OverlayRenderer.HasQuestTracker(ServerElements);
         OverlayQuestData.Wanted = wantsQuests ? [.. s_windows.Keys.Select(w => w.ToInt64())] : [];
-        // And whether any shows the Ultimus Spectator (it needs the Minimap too): the link asks the server for Ultimus.
-        var wantsUltimus = (ShowsMine(s_design) && OverlayRenderer.HasUltimus(s_design.Elements)) || OverlayRenderer.HasUltimus(ServerElements);
-        // It needs the Minimap add-on downloaded, not the player's Minimap on the overlay (Niduus, 2026-11-14).
-        OverlayUltimusData.Wanted = wantsUltimus && s_windows.Count > 0 && OverlayAddon.IsInstalled(s_installFolder, "Minimap");
-        // The Quest Team Spectator's pieces watch one Quest Team wizard instead of Ultimus (Niduus, 2026-11-15).
-        OverlayUltimusData.WatchTeam = ((ShowsMine(s_design) ? s_design.Elements : []).Concat(ServerElements)).Any(e => e.Visible && e.WatchesTeam);
+        // And whether any shows the Ultimus Spectator or the Quest Team Spectator (each needs the Minimap add-on downloaded,
+        // not the player's Minimap on the overlay; Niduus, 2026-11-14): the link asks the server for each one shown. They are
+        // separate feeds (Niduus, 2026-11-15): both can be on at once without touching each other.
+        var shown = (ShowsMine(s_design) ? s_design.Elements : []).Concat(ServerElements).Where(e => e.IsUltimus && e.Visible).ToList();
+        var canSpectate = s_windows.Count > 0 && OverlayAddon.IsInstalled(s_installFolder, "Minimap");
+        OverlayUltimusData.SetWanted(OverlayUltimusData.KEY, canSpectate && shown.Any(e => !e.WatchesTeam));
+        OverlayUltimusData.SetWanted(OverlayUltimusData.TEAM_KEY, canSpectate && shown.Any(e => e.WatchesTeam));
     }
 
     // The game's own moves, resizes, shows and hides reach the overlay as they happen, not only on the next tick.
@@ -893,7 +894,7 @@ internal static class OverlayHost {
         private int _drawnVersion = -1;
         private int _drawnMap = -1;
         private (int W, int H, double Scale) _drawnSize;
-        private ((bool Full, bool Note) Mine, (bool Full, bool Note) Ultimus) _drawnLayout;
+        private ((bool Full, bool Note) Mine, (bool Full, bool Note) Ultimus, (bool Full, bool Note) Team) _drawnLayout;
         private int _drawnQuests = -1;
         private int _drawnUltimus = -1;
         private Control? _picture;
@@ -1131,7 +1132,8 @@ internal static class OverlayHost {
 
             // Each Quest Tracker line (a quest picks it, a list's name folds it), under the full screen map's buttons
             // and not while the full screen map covers the game.
-            if (OverlayMinimapData.FullZoom(game.ToInt64()) is null && OverlayMinimapData.FullZoom(OverlayUltimusData.KEY) is null) {
+            if (OverlayMinimapData.FullZoom(game.ToInt64()) is null && OverlayMinimapData.FullZoom(OverlayUltimusData.KEY) is null
+                && OverlayMinimapData.FullZoom(OverlayUltimusData.TEAM_KEY) is null) {
                 foreach (var tracker in Avalonia.VisualTree.VisualExtensions.GetVisualDescendants(picture).OfType<QuestTrackerView>()) {
                     foreach (var (area, line) in tracker.Lines(picture)) {
                         found.Add((new OverlayElement { Kind = OverlayElement.BUTTON, Action = line.Action, Command = line.Value, Visible = true }, false, Pixels(area)));
@@ -1244,11 +1246,14 @@ internal static class OverlayHost {
             // A minimap's new map from the server, and its glide between maps, draw only the minimap's corner again;
             // the whole overlay is laid out again only when the design, the window or the minimap's size changes.
             // Ultimus's own minimap (Ultimus Spectator) is drawn again with the player's when either changes.
-            var map = OverlayMinimapData.VersionOf(game.ToInt64()) + OverlayMinimapData.VersionOf(OverlayUltimusData.KEY);
-            var moving = OverlayMinimapData.Moving(game.ToInt64()) || OverlayMinimapData.Moving(OverlayUltimusData.KEY);
+            var map = OverlayMinimapData.VersionOf(game.ToInt64()) + OverlayMinimapData.VersionOf(OverlayUltimusData.KEY)
+                      + OverlayMinimapData.VersionOf(OverlayUltimusData.TEAM_KEY);
+            var moving = OverlayMinimapData.Moving(game.ToInt64()) || OverlayMinimapData.Moving(OverlayUltimusData.KEY)
+                         || OverlayMinimapData.Moving(OverlayUltimusData.TEAM_KEY);
             // Ultimus's quest box and battle box changed: laid out again.
             var ultimus = OverlayUltimusData.Wanted ? OverlayUltimusData.Version : _drawnUltimus;
-            var layout = (OverlayMinimapData.LayoutOf(game.ToInt64()), OverlayMinimapData.LayoutOf(OverlayUltimusData.KEY));
+            var layout = (OverlayMinimapData.LayoutOf(game.ToInt64()), OverlayMinimapData.LayoutOf(OverlayUltimusData.KEY),
+                OverlayMinimapData.LayoutOf(OverlayUltimusData.TEAM_KEY));
             // A Quest Tracker's quests, pick or folding changed: laid out again too.
             var quests = OverlayQuestData.Wanted.Length > 0 ? OverlayQuestData.Version : _drawnQuests;
             if (version != _drawnVersion || layout != _drawnLayout || quests != _drawnQuests || ultimus != _drawnUltimus || _drawnSize != (width, height, scale)
@@ -1760,19 +1765,23 @@ internal static class OverlayHost {
         }
 
         // Ultimus for the Ultimus Spectator: his own map (streets once per area), quest and battle, once for every window.
+        // The Quest Team Spectator's feed is asked for the same way, on its own (Niduus, 2026-11-15: separate add-ons).
         private static async Task AskUltimusAsync(SslStream tls, CancellationToken stop) {
             s_nextUltimus = DateTime.UtcNow + s_ultimusEvery;
-            await RemoteAdminWire.WriteAsync(tls, new JsonObject {
-                ["op"] = "ultimus", ["have"] = s_have, ["groundKey"] = OverlayMinimapData.GroundKey(OverlayUltimusData.KEY), ["shapes"] = true,
-                // His full screen map reaches farther, like the player's.
-                ["reach"] = (OverlayMinimapData.FullZoom(OverlayUltimusData.KEY) ?? 0) * 2,
-                // The Quest Team Spectator: the team member watched now ("" is Ultimus).
-                ["who"] = OverlayUltimusData.Who,
-            }, null, stop);
-            using var answerWait = CancellationTokenSource.CreateLinkedTokenSource(stop);
-            answerWait.CancelAfter(TimeSpan.FromSeconds(10));
-            var (answer, _) = await RemoteAdminWire.ReadAsync(tls, 1 << 20, 0, answerWait.Token);
-            OverlayUltimusData.Heard(answer);
+            foreach (var key in OverlayUltimusData.WantedKeys) {
+                await RemoteAdminWire.WriteAsync(tls, new JsonObject {
+                    ["op"] = "ultimus", ["have"] = s_have, ["groundKey"] = OverlayMinimapData.GroundKey(key), ["shapes"] = true,
+                    // A full screen map reaches farther, like the player's.
+                    ["reach"] = (OverlayMinimapData.FullZoom(key) ?? 0) * 2,
+                    // "" is Ultimus; the Quest Team Spectator names the team member it watches now.
+                    ["who"] = OverlayUltimusData.Who(key),
+                }, null, stop);
+                using var answerWait = CancellationTokenSource.CreateLinkedTokenSource(stop);
+                answerWait.CancelAfter(TimeSpan.FromSeconds(10));
+                var (answer, _) = await RemoteAdminWire.ReadAsync(tls, 1 << 20, 0, answerWait.Token);
+                OverlayUltimusData.Heard(key, answer);
+            }
+
             s_nextUltimus = DateTime.UtcNow + s_ultimusEvery;
         }
 

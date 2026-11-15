@@ -524,7 +524,8 @@ internal sealed class OverlayElement {
     /// <summary>
     /// For an Ultimus Spectator piece: who it watches. Empty is Ultimus; <see cref="WATCH_TEAM"/> is the Quest Team
     /// Spectator (Niduus, 2026-11-15), which shows one Quest Team wizard at a time, picked with the "Next Quest Team
-    /// member" button. One spectator feed at a time: with both on the overlay, the Quest Team's is shown.
+    /// member" button. Its own feed, map and quest box (Niduus, 2026-11-15: separate add-ons), so it never changes what the
+    /// Ultimus Spectator shows, and both can be on the overlay at once.
     /// </summary>
     public string Watch { get; set; } = "";
 

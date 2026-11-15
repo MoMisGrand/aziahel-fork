@@ -1520,7 +1520,7 @@ internal sealed partial class ManagerWindow {
 
         private string ListName(OverlayElement e) {
             var i = _ovDesign.Elements.IndexOf(e);
-            var name = e.Name.Length > 0 ? e.Name : e.IsMinimap ? $"Minimap {i + 1}" : e.IsUltimus ? $"Ultimus {i + 1}" : e.IsQuestTracker ? $"Quest Tracker {i + 1}" : e.IsPicture ? $"Picture {i + 1}" : e.IsBox ? $"Box {i + 1}" : e.Text.Length > 0 ? e.Text.Split('\n')[0] : e.IsButton ? $"Button {i + 1}" : $"Text {i + 1}";
+            var name = e.Name.Length > 0 ? e.Name : e.IsMinimap ? $"Minimap {i + 1}" : e.IsUltimus ? e.WatchesTeam ? $"Quest Team {i + 1}" : $"Ultimus {i + 1}" : e.IsQuestTracker ? $"Quest Tracker {i + 1}" : e.IsPicture ? $"Picture {i + 1}" : e.IsBox ? $"Box {i + 1}" : e.Text.Length > 0 ? e.Text.Split('\n')[0] : e.IsButton ? $"Button {i + 1}" : $"Text {i + 1}";
 
             return name.Length > 34 ? name[..34] + "…" : name;
         }
@@ -2265,7 +2265,10 @@ internal sealed partial class ManagerWindow {
 
                 if (e.IsUltimus) {
                     // The Ultimus Spectator's pieces: their words' size and colour (Ultimus's map uses the Minimap's choices above).
-                    var help = Sub(e.IsUltimusMap
+                    var help = e.WatchesTeam ? Sub(e.IsUltimusMap
+                        ? "The Quest Team Spectator's own minimap: it follows the Quest Team wizard picked with Next member and draws the team's quest way. " +
+                          "It is separate from the Ultimus Spectator and your Minimap, and needs the Minimap add-on downloaded."
+                        : "The Quest Team's quest now, with its step and way, and the watched wizard's health and where it is.") : Sub(e.IsUltimusMap
                         ? "Ultimus's own minimap: it follows Ultimus wherever he is and always draws HIS quest's way, never yours. It never " +
                           "replaces your Minimap, and needs the Minimap add-on downloaded (your Minimap doesn't have to be on)."
                         : e.Kind == OverlayElement.ULTIMUS_SPELLS
@@ -2276,7 +2279,7 @@ internal sealed partial class ManagerWindow {
                         looks.Children.Add(OvField("Words size", OvNumber(e.Size, 8, 40, 1, v => { e.Size = v; Changed(); })));
                     }
 
-                    _ovEditor.Children.Add(OvGroup("Ultimus Spectator", new StackPanel { Spacing = 6, Children = { help, looks } }));
+                    _ovEditor.Children.Add(OvGroup(e.WatchesTeam ? "Quest Team Spectator" : "Ultimus Spectator", new StackPanel { Spacing = 6, Children = { help, looks } }));
                     if (!e.IsUltimusMap) {
                         _ovEditor.Children.Add(OvGroup("Letter colour", OvPaint(e.Fill, Changed, allowNone: false)));
                     }

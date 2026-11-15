@@ -61,89 +61,121 @@ internal static class OverlayUltimusData {
 
     }
 
-    /// <summary>The Quest Team's roles, in the team's order (the Quest Team Spectator cycles through them).</summary>
+    /// <summary>
+    /// Where the Quest Team Spectator's map and quest way are kept (Niduus, 2026-11-15: "They should be their own separate
+    /// plugins ... only to spectate their designation"): a feed of its own beside Ultimus's, so both add-ons can be on the
+    /// overlay at once without touching each other.
+    /// </summary>
+    internal const long TEAM_KEY = long.MinValue + 78;
+
+    /// <summary>Whether a map key is one of the spectators' (Ultimus's or the Quest Team's), not a game window.</summary>
+    internal static bool IsSpectator(long key) => key is KEY or TEAM_KEY;
+
+    /// <summary>The feed a spectator piece shows: the Quest Team Spectator's own, or Ultimus's.</summary>
+    internal static long KeyOf(OverlayElement e) => e.WatchesTeam ? TEAM_KEY : KEY;
+
+    /// <summary>The Quest Team's roles, in the team's order (the Quest Team Spectator cycles through them only).</summary>
     internal static readonly string[] TeamRoles = ["Ice", "Life", "Death", "Storm"];
 
-    private static volatile bool s_watchTeam;
     private static int s_teamIndex;
 
-    /// <summary>Whether the overlay shows the Quest Team Spectator: the feed then is one Quest Team wizard, not Ultimus.</summary>
-    internal static bool WatchTeam {
-        get => s_watchTeam;
-        set {
-            if (s_watchTeam != value) {
-                s_watchTeam = value;
-                Forget();
+    // One feed per spectator: what was last heard, and whether the overlay shows it.
+    private sealed class Feed {
+        public Info? Info;
+        public string Said = "";
+        public int Version;
+        public bool Wanted;
+    }
+
+    private static readonly object s_lock = new();
+    private static readonly Dictionary<long, Feed> s_feeds = new() { [KEY] = new Feed(), [TEAM_KEY] = new Feed() };
+
+    private static Feed FeedOf(long key) => s_feeds[key == TEAM_KEY ? TEAM_KEY : KEY];
+
+    /// <summary>The spectator feeds the overlay shows (with the Minimap they need): the link asks the server for each.</summary>
+    internal static long[] WantedKeys {
+        get {
+            lock (s_lock) {
+                return [.. s_feeds.Where(f => f.Value.Wanted).Select(f => f.Key)];
             }
         }
     }
 
-    /// <summary>Who the server is asked for: "" for Ultimus, else the Quest Team role watched now.</summary>
-    internal static string Who => s_watchTeam ? TeamRoles[Volatile.Read(ref s_teamIndex) % TeamRoles.Length] : "";
+    internal static bool Wanted => WantedKeys.Length > 0;
 
-    /// <summary>The Quest Team Spectator's button: the next member (only the four, in the team's order).</summary>
+    internal static void SetWanted(long key, bool wanted) {
+        lock (s_lock) {
+            FeedOf(key).Wanted = wanted;
+        }
+    }
+
+    internal static bool IsWanted(long key) {
+        lock (s_lock) {
+            return FeedOf(key).Wanted;
+        }
+    }
+
+    /// <summary>Who the server is asked for: "" for Ultimus (KEY), else the Quest Team role watched now (TEAM_KEY).</summary>
+    internal static string Who(long key) => key == TEAM_KEY ? TeamRoles[Volatile.Read(ref s_teamIndex) % TeamRoles.Length] : "";
+
+    /// <summary>A plain name of whom a feed watches, for its boxes' headings and notes.</summary>
+    internal static string Watched(long key) => key == TEAM_KEY ? $"Quest Team: {Who(key)}" : "Ultimus";
+
+    /// <summary>The Quest Team Spectator's button: the next member (only the four, in the team's order). Ultimus's feed is untouched.</summary>
     internal static string NextMember() {
         var next = (Volatile.Read(ref s_teamIndex) + 1) % TeamRoles.Length;
         Volatile.Write(ref s_teamIndex, next);
-        Forget();
+        lock (s_lock) {
+            var feed = FeedOf(TEAM_KEY);
+            feed.Info = null;
+            feed.Said = "";
+            feed.Version++;
+        }
+
         // The new member's map is drawn fresh.
-        OverlayMinimapData.Heard(KEY, new JsonObject { ["ok"] = false, ["error"] = $"Switching to the Quest Team's {TeamRoles[next]} wizard..." });
+        OverlayMinimapData.Heard(TEAM_KEY, new JsonObject { ["ok"] = false, ["error"] = $"Switching to the Quest Team's {TeamRoles[next]} wizard..." });
 
         return TeamRoles[next];
     }
 
-    private static void Forget() {
-        lock (s_lock) {
-            s_info = null;
-            s_said = "";
-            s_version++;
-        }
-    }
-
-    private static readonly object s_lock = new();
-    private static Info? s_info;
-    private static string s_said = "";
-    private static int s_version;
-    private static volatile bool s_wanted;
-
-    /// <summary>Whether this overlay shows any Ultimus Spectator piece (with the Minimap it needs): the link then asks for Ultimus.</summary>
-    internal static bool Wanted {
-        get => s_wanted;
-        set => s_wanted = value;
-    }
-
-    /// <summary>Changes when what the quest box or the spells panel shows changes (the overlay is laid out again then).</summary>
+    /// <summary>Changes when what any spectator's quest box or spells panel shows changes (the overlay is laid out again then).</summary>
     internal static int Version {
         get {
             lock (s_lock) {
-                return s_version;
+                return s_feeds.Values.Sum(f => f.Version);
             }
         }
     }
 
-    /// <summary>Ultimus as last heard, or (for the designers, window 0) a made-up Ultimus.</summary>
-    internal static Info? For(long window) {
+    /// <summary>The feed's wizard as last heard, or (for the designers, window 0) a made-up one.</summary>
+    internal static Info? For(long window, long key = KEY) {
         if (window == 0) {
-            return Sample;
+            return key == TEAM_KEY ? TeamSample : Sample;
         }
 
         lock (s_lock) {
-            return s_info;
+            return FeedOf(key).Info;
         }
     }
 
-    /// <summary>The server's answer to op "ultimus".</summary>
-    internal static void Heard(JsonObject answer) {
-        // His map (with his quest's way) goes where the minimap keeps maps, under his own key.
-        OverlayMinimapData.Heard(KEY, answer);
+    /// <summary>The server's answer to op "ultimus" for one feed.</summary>
+    internal static void Heard(long key, JsonObject answer) {
+        key = key == TEAM_KEY ? TEAM_KEY : KEY;
+        // The map (with the quest's way) goes where the minimap keeps maps, under the feed's own key.
+        OverlayMinimapData.Heard(key, answer);
         Info info;
         string said;
         if (answer["ok"]?.GetValue<bool>() == true && answer["ultimus"] is JsonObject sent) {
-            info = Read(sent);
+            // A Quest Team answer for a member no longer watched (Next member was pressed meanwhile) is dropped.
+            if (key == TEAM_KEY && !string.Equals((string?) sent["role"] ?? "", Who(key), StringComparison.OrdinalIgnoreCase)) {
+                return;
+            }
+
+            info = Read(sent, key);
             said = sent.ToJsonString();
-            // His quest is always the one drawn on his map (never a quest the player picked): the way the server sent with his map.
+            // Its quest is always the one drawn on its map (never a quest the player picked): the way the server sent with the map.
             var drawn = answer["map"] is JsonObject map && map["route"] is JsonObject route ? (string?) route["quest"] : null;
-            OverlayQuestData.Follow(KEY, string.IsNullOrEmpty(drawn) ? info.Quest : drawn);
+            OverlayQuestData.Follow(key, string.IsNullOrEmpty(drawn) ? info.Quest : drawn);
         }
         else {
             var error = ((string?) answer["error"] ?? "").Trim();
@@ -152,17 +184,18 @@ internal static class OverlayUltimusData {
             }
 
             error = error.Length > 200 ? error[..200] : error;
-            info = new Info(s_watchTeam ? $"Quest Team ({Who})" : "Ultimus", 0, 0, 0, "", "", "", "", "", "", [], [], [], null, error, DateTime.UtcNow);
+            info = new Info(Watched(key), 0, 0, 0, "", "", "", "", "", "", [], [], [], null, error, DateTime.UtcNow);
             said = "error:" + error;
-            OverlayQuestData.Follow(KEY, "");
+            OverlayQuestData.Follow(key, "");
         }
 
         lock (s_lock) {
-            var wasStale = s_info?.Stale ?? true;
-            s_info = info;
-            if (said != s_said || wasStale) {
-                s_said = said;
-                s_version++;
+            var feed = FeedOf(key);
+            var wasStale = feed.Info?.Stale ?? true;
+            feed.Info = info;
+            if (said != feed.Said || wasStale) {
+                feed.Said = said;
+                feed.Version++;
             }
         }
     }
@@ -170,21 +203,22 @@ internal static class OverlayUltimusData {
     /// <summary>Once a second: a feed that stopped coming is laid out again once, with a note.</summary>
     internal static void Tick() {
         lock (s_lock) {
-            if (!s_wanted) {
-                s_info = null;
-                s_said = "";
+            foreach (var feed in s_feeds.Values) {
+                if (!feed.Wanted) {
+                    feed.Info = null;
+                    feed.Said = "";
+                    continue;
+                }
 
-                return;
-            }
-
-            if (s_info is { Stale: true } && s_said != "stale") {
-                s_said = "stale";
-                s_version++;
+                if (feed.Info is { Stale: true } && feed.Said != "stale") {
+                    feed.Said = "stale";
+                    feed.Version++;
+                }
             }
         }
     }
 
-    private static Info Read(JsonObject sent) {
+    private static Info Read(JsonObject sent, long key) {
         var steps = (sent["steps"] as JsonArray ?? []).OfType<JsonObject>().Take(6)
             .Select(s => new Step(Short((string?) s["s"], 120), Short((string?) s["where"], 80), s["here"]?.GetValueKind() == System.Text.Json.JsonValueKind.True)).ToList();
         Tracker? tracker = null;
@@ -216,7 +250,7 @@ internal static class OverlayUltimusData {
                 Short((string?) fight["deck"], 400));
         }
 
-        return new Info(Short((string?) sent["name"], 40) is { Length: > 0 } name ? name : "Ultimus", (int) Number(sent["level"]), (int) Number(sent["hp"]),
+        return new Info(Short((string?) sent["name"], 40) is { Length: > 0 } name ? name : Watched(key), (int) Number(sent["level"]), (int) Number(sent["hp"]),
             (int) Number(sent["max"]), Short((string?) sent["place"], 80), Short((string?) sent["doing"], 120), Short((string?) sent["quest"], 120),
             Short((string?) sent["questTitle"], 120), Short((string?) sent["kind"], 10), Short((string?) sent["step"], 160), steps, way, others, battle, "",
             DateTime.UtcNow, (int) Number(sent["questLevel"]), Short((string?) sent["world"], 40), tracker);
@@ -258,6 +292,11 @@ internal static class OverlayUltimusData {
             [new Fighter("Lost Soul", 120, 300, true), new Fighter("Lost Soul", 300, 300, true)], [], "Scarab x4, Scorpion x3, Sandstorm x2"),
         "", DateTime.MaxValue, 5, "Wizard City");
 
+    // A made-up Quest Team wizard for the designers.
+    private static readonly Info TeamSample = Sample with {
+        Name = "Freya (Ice)", Doing = "walking to Lost Souls with the team", Fight = null,
+    };
+
 }
 
 /// <summary>
@@ -270,7 +309,7 @@ internal static class UltimusViews {
     /// The Ultimus Spectator needs the Minimap add-on downloaded (Niduus, 2026-11-14: required "for install, for Spectate
     /// to work"); the player's own Minimap does not have to be on the overlay. Without the add-on, each piece says so.
     /// </summary>
-    internal const string NEEDS_MINIMAP = "Ultimus Spectator needs the Minimap add-on downloaded. Get it in Ahziael: Play > Overlay > Add-ons > Niduus's add-ons.";
+    internal const string NEEDS_MINIMAP = "This spectator needs the Minimap add-on downloaded. Get it in Ahziael: Play > Overlay > Add-ons > Niduus's add-ons.";
 
     /// <summary>Ultimus's quest box: who he is, where, and his quest now with its step and way (never the player's quests).</summary>
     internal static Control Quest(OverlayElement e, long window, bool hasMap) {
@@ -282,9 +321,10 @@ internal static class UltimusViews {
             return panel;
         }
 
-        var info = OverlayUltimusData.For(window);
-        if (Waiting(info) is { } waiting) {
-            panel.Children.Add(Line(window != 0 && OverlayUltimusData.WatchTeam ? $"Quest Team: {OverlayUltimusData.Who}" : "Ultimus", look.Size + 2, look.Gold, bold: true));
+        var key = OverlayUltimusData.KeyOf(e);
+        var info = OverlayUltimusData.For(window, key);
+        if (Waiting(info, key) is { } waiting) {
+            panel.Children.Add(Line(OverlayUltimusData.Watched(key), look.Size + 2, look.Gold, bold: true));
             panel.Children.Add(Line(waiting, look.Size - 1, look.Faint, wrap: true));
 
             return panel;
@@ -389,7 +429,7 @@ internal static class UltimusViews {
             return panel;
         }
 
-        var info = OverlayUltimusData.For(window);
+        var info = OverlayUltimusData.For(window, OverlayUltimusData.KeyOf(e));
         if (info is null || info.Stale || info.Note.Length > 0 || info.Fight is not { } fight) {
             return null;
         }
@@ -454,13 +494,13 @@ internal static class UltimusViews {
         return new Looks(size, text, faint, new SolidColorBrush(Color.FromRgb(0xFF, 0xD2, 0x4A)));
     }
 
-    private static string? Waiting(OverlayUltimusData.Info? info) => info is null
+    private static string? Waiting(OverlayUltimusData.Info? info, long key) => info is null
         ? OverlayHost.Link.Connected
-            ? OverlayHost.Link.SendsUltimus ? OverlayUltimusData.WatchTeam ? $"Looking for the Quest Team's {OverlayUltimusData.Who} wizard..." : "Looking for Ultimus..."
+            ? OverlayHost.Link.SendsUltimus ? key == OverlayUltimusData.TEAM_KEY ? $"Looking for the Quest Team's {OverlayUltimusData.Who(key)} wizard..." : "Looking for Ultimus..."
                 : "This server's Imlight is too old to watch Ultimus. The host needs to update it."
             : "Not linked to a server yet. Start the game with Play in Ahziael."
         : info.Note.Length > 0 ? info.Note
-        : info.Stale ? OverlayUltimusData.WatchTeam ? "The Quest Team stopped answering for now..." : "Ultimus stopped answering for now..." : null;
+        : info.Stale ? key == OverlayUltimusData.TEAM_KEY ? "The Quest Team stopped answering for now..." : "Ultimus stopped answering for now..." : null;
 
     private static string Pips(OverlayUltimusData.Battle fight) {
         var words = $"Pips: {fight.Pips}";
