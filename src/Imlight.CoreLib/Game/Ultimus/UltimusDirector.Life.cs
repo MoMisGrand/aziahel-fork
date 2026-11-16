@@ -264,7 +264,10 @@ internal sealed partial class UltimusDirectorActor {
     private UltimusPlanner.Target BazaarSellTarget(List<UltimusMember.Status> group) {
         var leader = group[0];
         var atBazaar = OverlayQuestTracker.SameZone(leader.Zone ?? "", BAZAAR_ZONE);
-        if (DateTime.UtcNow < _nextBazaarSellLook || leader.Wizard is not { } wizard || wizard.ZoneIsInstance) {
+        // Just arrived on a sell trip: he looks at once and sells, instead of the story pulling him back out before the next
+        // look (his log, 2026-11-16 01:31: Olde Town and the Bazaar 13 times in 2 minutes, the trip and the story taking turns).
+        var arrivedOnTrip = atBazaar && DateTime.UtcNow < _bazaarSellTripUntil && _target?.Key.StartsWith("bazaarsell|", StringComparison.Ordinal) != true;
+        if ((DateTime.UtcNow < _nextBazaarSellLook && !arrivedOnTrip) || leader.Wizard is not { } wizard || wizard.ZoneIsInstance) {
             if (_target?.Key.StartsWith("bazaarsell|", StringComparison.Ordinal) == true) {
                 return _target;
             }
@@ -295,11 +298,17 @@ internal sealed partial class UltimusDirectorActor {
         var (items, pays, shopPays) = BazaarJunk(wizard, StyleOf(leader));
         var worth = UltimusPlaybook.Value("Gold.BazaarSellGain") * (atBazaar || inWizardCity ? 1 : BAZAAR_FAR_FACTOR);
         if (items.Count == 0 || pays - shopPays < worth) {
+            // Nothing (left) worth selling here: the trip is over, so it no longer pulls him back to the Bazaar.
+            _bazaarSellTripUntil = DateTime.MinValue;
             return null;
         }
 
         if (atBazaar) {
             var keeper = MinimapIndex.In(leader.ZoneActor).FirstOrDefault(m => m.Entity?.GetComponentOfType<InteractAuctionHouseComponent>() is not null);
+            if (keeper is null) {
+                _bazaarSellTripUntil = DateTime.MinValue;
+            }
+
             return keeper is null ? null
                 : new UltimusPlanner.Target(UltimusPlanner.SHOP, keeper.Object.m_location.X, keeper.Object.m_location.Y,
                     $"{leader.Name} sells {items.Count} pieces he won't wear at the Bazaar (about {pays:N0} gold)", Template: keeper.Template,
@@ -352,6 +361,8 @@ internal sealed partial class UltimusDirectorActor {
         Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromSeconds(1.5), _actors[0],
             new UltimusMember.SellAtBazaar(target.GlobalId, items, $"{items.Count} pieces, about {pays:N0} gold"), Self);
         Count("things sold at the Bazaar", items.Count);
+        // Sold: the trip is done (no pull back here from the story's next area).
+        _bazaarSellTripUntil = DateTime.MinValue;
         _bazaarSellTripUntil = DateTime.MinValue;
         Think($"At the Bazaar I sell {items.Count} pieces I will never wear, for about {pays:N0} gold. Quest items and what I wear stay.", "bazaar-sold");
         _nextBazaarSellLook = DateTime.UtcNow.AddMinutes(10);

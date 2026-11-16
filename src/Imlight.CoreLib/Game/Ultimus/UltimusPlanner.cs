@@ -374,6 +374,19 @@ internal static class UltimusPlanner {
 
     private static bool SetAsideNow(string key) => key is not null && s_setAside.TryGetValue(key, out var until) && DateTime.UtcNow < until;
 
+    /// <summary>Whether the step is set aside now, and until when (UltimusDirector.Aside.cs).</summary>
+    internal static bool IsSetAside(string key, out DateTime until) {
+        until = DateTime.MinValue;
+        return key is not null && s_setAside.TryGetValue(key, out until) && DateTime.UtcNow < until;
+    }
+
+    /// <summary>Ends a step's set-aside early (nothing else to do meanwhile, after a rest).</summary>
+    internal static void EndAside(string key) {
+        if (key is not null) {
+            s_setAside.TryRemove(key, out _);
+        }
+    }
+
     // How far a target is by the real way: the walk on the floor in this area, plus a large share for each area between.
     private const float AREA_COST = 4000f;
 

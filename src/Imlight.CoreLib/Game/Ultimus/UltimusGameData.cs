@@ -34,7 +34,7 @@ namespace Imlight.CoreLib.Game.Ultimus;
 /// </summary>
 internal static class UltimusGameData {
 
-    /// <summary>A creature by its template, in plain words ("Meowiarty: level 25, 2,960 health, Balance, a boss"), or empty.</summary>
+    /// <summary>A creature by its template, in plain words ("Meowiarty (template 12345): rank 6, 2,000 health, Myth, a boss"), or empty.</summary>
     internal static string Creature(ulong template) {
         try {
             if (template == 0 || CoreObjectFactory.GetCoreTemplate(template) is not GameObjectTemplate t
@@ -44,8 +44,12 @@ internal static class UltimusGameData {
 
             var name = MinimapIndex.NameOf(t);
             var parts = new List<string>();
+            // The game's m_nLevel is the creature's rank (as Monstrology reads it, and as the game shows "Rank 6 Boss"), not
+            // a wizard level (his log, 2026-11-16: "Meowiarty: level 6" for the rank 6 boss of Big Ben). Read by the exact
+            // template of the creature in front of him, never by its name: many creatures share a name and health but not
+            // their template (Niduus, 2026-11-16: "There are multiple mobs in the game with the same health, different ID's").
             if (npc.m_nLevel > 0) {
-                parts.Add($"level {npc.m_nLevel}");
+                parts.Add($"rank {npc.m_nLevel}");
             }
 
             if (npc.m_nStartingHealth > 0) {
@@ -66,7 +70,7 @@ internal static class UltimusGameData {
                 parts.Add($"up to {npc.m_maxShadowPips} shadow pip(s)");
             }
 
-            return parts.Count == 0 ? "" : $"{(name.Length > 0 ? name : "the creature")}: {string.Join(", ", parts)}";
+            return parts.Count == 0 ? "" : $"{(name.Length > 0 ? name : "the creature")} (template {template}): {string.Join(", ", parts)}";
         }
         catch (Exception) {
             return "";
