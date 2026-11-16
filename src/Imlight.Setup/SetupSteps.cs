@@ -441,7 +441,7 @@ internal sealed class SetupSteps : IDisposable {
         // The type dump: the person's own, else the newest game version's of the ones this repository ships
         // (data/typedump, read from each new Wizard101 program: the Ahmarra update of 2026-11-12 changed the layout
         // of players, creatures and battles, so a server built on an older dump can't talk to the patched game)
-        // and the one Imcodec ships for its tests.
+        // and, for an older Imcodec, the one it used to ship for its tests (gone since its 2026-10-27 update).
         var typeDump = _options.TypeDump
             ?? NewestTypeDump(Path.Combine(SourceFolder, "data", "typedump"), Path.Combine(ImcodecFolder, "test", "CodeGen", "Inputs"))
             ?? throw new SetupException("No type dump was found. Make one with wiztype and run setup again with --type-dump \"<file>\".");
@@ -513,9 +513,11 @@ internal sealed class SetupSteps : IDisposable {
         }
 
         SetupLog.Info("Building the server. The first build downloads its packages and can take several minutes.");
+        // Run from the source folder so its global.json picks the .NET 10 SDK even when a newer one is installed:
+        // Imcodec builds an MSBuild task against the running SDK's own MSBuild, which only compiles on .NET 10.
         var exitCode = await ProcessRunner.RunAsync(dotnet,
             ["publish", project, "-c", "Release", "-r", RuntimeIdentifier(), "--self-contained", "true", "-o", staging, "-nologo"],
-            showProgress: true);
+            showProgress: true, workingDirectory: SourceFolder);
         if (exitCode != 0) {
             throw new SetupException("The server could not be built. The errors are in the setup log.");
         }
