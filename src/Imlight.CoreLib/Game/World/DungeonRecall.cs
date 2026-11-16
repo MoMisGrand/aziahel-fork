@@ -66,6 +66,8 @@ internal static class DungeonRecall {
         public string DisplayName { get; init; }
         public IActorRef Session { get; set; }
         public uint ExpireTime { get; set; }
+        // They left with a quest step still in the dungeon: a boss beaten there later keeps their way back.
+        public bool QuestStillHere { get; init; }
     }
 
     private static readonly ConcurrentDictionary<ulong, Ticket> s_tickets = new();
@@ -100,12 +102,15 @@ internal static class DungeonRecall {
 
     /// <summary>Gives the wizard the button for the copy of <paramref name="zone"/> owned by <paramref name="ownerCharId"/>.</summary>
     /// <param name="session">The wizard's session, or null when they are logging out (the button comes at their next login).</param>
-    internal static void Offer(IActorRef session, ulong charId, ulong ownerCharId, string zone, string location, string displayName) {
+    /// <param name="questStillHere">The wizard still has a quest step in this dungeon: a boss beaten in it (a floor elite of
+    /// Big Ben) doesn't finish it for them, so leaving or fleeing still gives the recall.</param>
+    internal static void Offer(IActorRef session, ulong charId, ulong ownerCharId, string zone, string location, string displayName,
+                               bool questStillHere = false) {
         if (!Enabled || charId == 0 || string.IsNullOrEmpty(zone) || !IsOpen(ownerCharId, zone)) {
             return;
         }
 
-        if (IsCompleted(ownerCharId, zone)) {
+        if (IsCompleted(ownerCharId, zone) && !questStillHere) {
             Logger.Information("Dungeon Recall: none for {0}, the boss of {1} (copy of {2}) is beaten.",
                 Logger.Args(charId, zone, ownerCharId));
 
@@ -120,6 +125,7 @@ internal static class DungeonRecall {
             DisplayName = displayName ?? zone,
             Session = session,
             ExpireTime = FullExpireTime,
+            QuestStillHere = questStillHere,
         };
         s_tickets[charId] = ticket;
         Logger.Information("Dungeon Recall: {0} can go back to {1} (copy of {2}) for {3} minutes once it is empty.",
@@ -186,7 +192,8 @@ internal static class DungeonRecall {
         Logger.Information("Dungeon Recall: the boss of {0} (copy of {1}) is beaten, it gives no recall now.",
             Logger.Args(zone, ownerCharId));
         foreach (var ticket in s_tickets.Values) {
-            if (ticket.OwnerCharId == ownerCharId && string.Equals(ticket.Zone, zone, StringComparison.OrdinalIgnoreCase)) {
+            if (ticket.OwnerCharId == ownerCharId && string.Equals(ticket.Zone, zone, StringComparison.OrdinalIgnoreCase)
+                && !ticket.QuestStillHere) {
                 Remove(ticket, "its boss is beaten");
             }
         }
