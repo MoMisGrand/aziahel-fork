@@ -1713,6 +1713,17 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
         // No way, but a teleporter on his ground whose landing nobody knows yet: he walks into it to see where it goes, as
         // a player tries the next door (Big Ben's floors past the fifth; Niduus, 2026-11-15: "I think he's stuck in Big Ben").
         // Once it has moved him it is learned, and the way finder chains it with the rest.
+        // The teleporter on just past a floor door that is open now: the map still has the door shut, so it shows no way
+        // through, but a player walks straight through the open door onto it (Niduus, 2026-11-16, Big Ben: he stood 300
+        // short of "Level20 to Boss" past the open Door21 and never reached Meowiarty's room).
+        if (noWay && (target.Key ?? "").StartsWith("floor|through|", StringComparison.Ordinal)
+            && UltimusPlanner.Far(member.X, member.Y, toX, toY) <= 1500) {
+            points = [(member.X, member.Y), (toX, toY)];
+            noWay = false;
+            Think($"\"{what}\" is just past a door that is open now. The map still has the door shut, so I walk straight through it.",
+                "through-door|" + target.Key);
+        }
+
         if (noWay && index == 0 && FloorPadAhead(member, target, what)) {
             return;
         }

@@ -138,9 +138,17 @@ internal static class BotAsks {
         }
 
         var step = (row["steps"] as JsonArray ?? []).OfType<JsonObject>().FirstOrDefault();
-        return new QuestNow((string) row["id"] ?? "", (string) row["t"] ?? "", (string) step?["s"] ?? "", (string) step?["where"] ?? "",
-            (bool?) step?["here"] ?? (bool?) row["here"] ?? false, (string) row["way"] ?? "", (string) row["w"] ?? "");
+        // Read safely: a field the tracker sends as an object or list (not a plain value) made every chat line to Ultimus
+        // throw, so he heard nothing a player said, "come here" and teleport asks included (Niduus, 2026-11-16, Big Ben).
+        return new QuestNow(Text(row["id"]), Text(row["t"]), Text(step?["s"]), Text(step?["where"]),
+            Flag(step?["here"]) ?? Flag(row["here"]) ?? false, Text(row["way"]), Text(row["w"]));
     }
+
+    private static string Text(JsonNode node)
+        => node is JsonValue value && value.TryGetValue<string>(out var text) ? text ?? "" : "";
+
+    private static bool? Flag(JsonNode node)
+        => node is JsonValue value && value.TryGetValue<bool>(out var flag) ? flag : null;
 
     private static bool Same(string a, string b)
         => string.Equals(Squash(a), Squash(b), StringComparison.OrdinalIgnoreCase);
