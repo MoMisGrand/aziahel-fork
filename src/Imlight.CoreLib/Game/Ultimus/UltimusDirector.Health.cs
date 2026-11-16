@@ -319,7 +319,7 @@ internal sealed partial class UltimusDirectorActor {
 
     // The boss of the next fight, a potion in hand, and health or mana short of full: he drinks right before it.
     private bool PotionBeforeBoss(UltimusMember.Status leader, UltimusPlanner.Target target) {
-        if (target?.Kind != UltimusPlanner.FIGHT || !UltimusGameData.IsBoss(target.Template) || leader.Wizard?.GameStats is not { } stats
+        if (target?.Kind != UltimusPlanner.FIGHT || SideFight(target) || !UltimusGameData.IsBoss(target.Template) || leader.Wizard?.GameStats is not { } stats
             || stats.m_potionCharge < 1 || CombatDuelComponent.IsInBattle(leader.GlobalId)) {
             return false;
         }
@@ -347,6 +347,16 @@ internal sealed partial class UltimusDirectorActor {
 
         return true;
     }
+
+    /// <summary>
+    /// A fight that is not his quest step's own: one by the spot where he was stuck, a room's floor fight, one while a step
+    /// waits, or a group mate's. The game marks some room creatures a boss too (Big Ben's Gearhead), so a saved potion went
+    /// on one of those instead of Meowiarty (his log, 2026-11-16): it is kept for the boss his step names.
+    /// </summary>
+    private static bool SideFight(UltimusPlanner.Target target)
+        => target.Key is { Length: > 0 } key && (key.StartsWith("clear|", StringComparison.Ordinal) || key.StartsWith("floor|", StringComparison.Ordinal)
+                                                 || key.StartsWith("aside|", StringComparison.Ordinal) || key.StartsWith("help|", StringComparison.Ordinal)
+                                                 || key.StartsWith(PARTY_KEY, StringComparison.Ordinal));
 
     private void PotionsBeforeDungeon(UltimusMember.Status leader, UltimusPlanner.Target target) {
         if (!IntoDungeon(leader, target) || leader.Wizard?.GameStats is not { } stats || stats.m_potionMax < 1

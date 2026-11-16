@@ -147,7 +147,9 @@ internal sealed partial class UltimusDirectorActor {
         // starts its fight (Big Ben: each floor's door by the teleporter up opens once the floor's elite is beaten, and the
         // elite only comes out on the floor's battle circle; he stood at the sixth floor's south wall for hours, Niduus's
         // log 2026-11-16 00:25, "check him again").
+        // A door already open is not fought for again (he stepped back on the sixth floor's used circle after its door opened).
         if (UltimusAreaBook.OpensOnFight(member.Zone, member.X, member.Y, GATE_NEAR, sameGround: true) is { } gate
+            && !BotShared.BotFloors.Opens(Zone.Core.ZoneStates.Of(member.ZoneActor)?.GetObjectState(gate.Object) ?? "")
             && _gateFought.GetValueOrDefault(member.Zone + "|" + gate.Object) < DateTime.UtcNow - s_gateAgain) {
             if (BotShared.BotUseGuards.Near(member.ZoneActor, gate.X, gate.Y).Any(m => BotShared.DudCreatures.Fightable(m.Object.m_globalID.Full))) {
                 _gateFought[member.Zone + "|" + gate.Object] = DateTime.UtcNow;

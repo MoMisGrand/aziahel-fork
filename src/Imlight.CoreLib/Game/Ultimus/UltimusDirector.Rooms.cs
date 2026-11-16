@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Akka.Actor;
 using Imlight.CoreLib.Game.BotShared;
+using Imlight.CoreLib.Game.Tools;
 using Imlight.CoreLib.Game.Zone.Core;
 
 namespace Imlight.CoreLib.Game.Ultimus;
@@ -62,14 +63,24 @@ internal sealed partial class UltimusDirectorActor {
             name => state?.GetObjectState(name),
             trigger => state?.GetTriggerFires(trigger) ?? 0,
             trigger => state is null ? null : state.IsTriggerEnabled(trigger),
-            (x, y) => BotUseGuards.Near(leader.ZoneActor, x, y).Any(m => DudCreatures.Fightable(m.Object.m_globalID.Full)));
+            (x, y) => BotUseGuards.Near(leader.ZoneActor, x, y).Any(m => DudCreatures.Fightable(m.Object.m_globalID.Full)),
+            (x, y) => OverlayQuestPath.IslandOf(leader.Zone, leader.X, leader.Y) is var a && OverlayQuestPath.IslandOf(leader.Zone, x, y) is var b
+                      && (a < 0 || b < 0 || a == b));
         if (BotFloors.Next(book, live, leader.X, leader.Y, _floorTries) is not { } duty) {
             _floorOn = null;
             return null;
         }
 
+        // Through an opened door only when the step is not in this room.
+        if (duty.Key.StartsWith("through|", StringComparison.Ordinal) && target is not null
+            && BotFloors.Far(leader.X, leader.Y, target.X, target.Y) <= BotFloors.ROOM && live.SameGround(target.X, target.Y)) {
+            return null;
+        }
+
         var far = UltimusPlanner.Far(leader.X, leader.Y, duty.X, duty.Y);
-        Think($"This floor first, as a player plays it: {duty.What}, because {duty.Why}. The teleporter on can wait until the floor is done.",
+        Think(duty.Key.StartsWith("through|", StringComparison.Ordinal)
+                ? $"This floor is done: {duty.Why}. I go on to {duty.What}, not back toward my step from here."
+                : $"This floor first, as a player plays it: {duty.What}, because {duty.Why}. The teleporter on can wait until the floor is done.",
             "floor|" + duty.Key);
 
         switch (duty.Kind) {

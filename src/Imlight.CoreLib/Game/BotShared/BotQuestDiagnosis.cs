@@ -63,6 +63,11 @@ internal static class BotQuestDiagnosis {
     // Words in a server message that tell of a refusal.
     private static readonly string[] s_refusals = ["can't", "cannot", "not ", "full", "require", "must ", "need", "unable", "only ", "locked", "already"];
 
+    // Server messages that only tell what was won (drops, gold, pity, XP): never a refusal, however worded. "A drop that is
+    // not junk" read as a refusal, so a Big Ben step was flagged as a server fix for an hour (his log, 2026-11-16 03:15).
+    private static readonly string[] s_notices = ["Tamed Drops", "Pity:", "Pity paid", "loot", "experience", " XP", "you received",
+        "you gained", "you earned", "picked up", "leveled up"];
+
     /// <summary>
     /// Diagnoses <paramref name="goalName"/> of <paramref name="questName"/> for <paramref name="wizard"/>, standing in
     /// <paramref name="zone"/> at (<paramref name="x"/>, <paramref name="y"/>). <paramref name="options"/> are the options
@@ -253,7 +258,8 @@ internal static class BotQuestDiagnosis {
             // 6. The last thing the server said.
             if (!string.IsNullOrWhiteSpace(lastServerText)) {
                 var said = lastServerText.Trim();
-                var refusal = s_refusals.FirstOrDefault(r => said.Contains(r, StringComparison.OrdinalIgnoreCase));
+                var notice = s_notices.Any(n => said.Contains(n, StringComparison.OrdinalIgnoreCase));
+                var refusal = notice ? null : s_refusals.FirstOrDefault(r => said.Contains(r, StringComparison.OrdinalIgnoreCase));
                 if (refusal is not null) {
                     Bad(45, "server", $"the server last said \"{Short(said)}\" (sounds like a refusal)",
                         $"The server refused something: \"{Short(said)}\".");

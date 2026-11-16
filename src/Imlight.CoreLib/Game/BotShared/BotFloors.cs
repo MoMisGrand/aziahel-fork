@@ -54,7 +54,7 @@ internal static class BotFloors {
     /// and the object states a puzzle needs first.
     /// </summary>
     internal sealed record Gate(string Object, string Trigger, float X, float Y, Opener By, string Volume, float VX, float VY,
-        string Lever, float LX, float LY, List<(string Object, string State)> Needs);
+        string Lever, float LX, float LY, List<(string Object, string State)> Needs, string Through = "", float TX = float.NaN, float TY = float.NaN);
 
     /// <summary>What the area's files say about its floors.</summary>
     internal sealed record Book(List<Circle> Circles, List<Gate> Gates, List<Toggle> Toggles, Dictionary<string, string> Starts) {
@@ -75,6 +75,8 @@ internal static class BotFloors {
     private const float PUZZLE = 6500f;
     // Close enough to a spot to have stepped on it.
     internal const float ON_SPOT = 120f;
+    // How near a door its teleporter on may be (Big Ben: the pad up stands 190 past each floor's door).
+    private const float THROUGH = 900f;
     // Tries per spot or lever before it is left be.
     internal const int TRIES = 3;
 
@@ -241,6 +243,30 @@ internal static class BotFloors {
             }
         }
 
+        // The teleporter on just past each door (not one back or out): once the door is open, the way on is through it.
+        var pads = new List<(string Name, float X, float Y)>();
+        foreach (var t in triggers.Where(t => Results(t).Any(r => r is ResTeleport))) {
+            string name = (string) t.m_triggerName ?? "";
+            if (name.Contains("Exit", StringComparison.OrdinalIgnoreCase) || name.Contains("Out", StringComparison.OrdinalIgnoreCase)
+                || name.Contains("Back", StringComparison.OrdinalIgnoreCase) || name.Contains("Hub", StringComparison.OrdinalIgnoreCase)) {
+                continue;
+            }
+
+            foreach (var fire in Fires(t)) {
+                if (VolumeOf(fire) is { } v) {
+                    pads.Add(((string) v.m_volumeName ?? name, v.m_locationX, v.m_locationY));
+                }
+            }
+        }
+
+        for (var i = 0; i < gates.Count; i++) {
+            var g = gates[i];
+            var by = pads.Where(p => Far(p.X, p.Y, g.X, g.Y) <= THROUGH).OrderBy(p => Far(p.X, p.Y, g.X, g.Y)).ToList();
+            if (by.Count > 0) {
+                gates[i] = g with { Through = by[0].Name, TX = by[0].X, TY = by[0].Y };
+            }
+        }
+
         return new Book(circles.DistinctBy(c => c.Trigger + "|" + c.Volume).ToList(), gates.DistinctBy(g => g.Object + "|" + g.Trigger).ToList(),
             toggles.DistinctBy(g => g.Object + "|" + g.From + "|" + g.Volume).ToList(), starts);
     }
@@ -258,7 +284,8 @@ internal static class BotFloors {
     internal static float Far(float x1, float y1, float x2, float y2) => MathF.Sqrt(((x1 - x2) * (x1 - x2)) + ((y1 - y2) * (y1 - y2)));
 
     /// <summary>What the bot sees of the zone right now: object states, trigger fires and creatures (null when unknown).</summary>
-    internal sealed record Live(Func<string, string> StateOf, Func<string, int> FiresOf, Func<string, bool?> EnabledOf, Func<float, float, bool> FoesNear);
+    internal sealed record Live(Func<string, string> StateOf, Func<string, int> FiresOf, Func<string, bool?> EnabledOf, Func<float, float, bool> FoesNear,
+        Func<float, float, bool> SameGround = null);
 
     /// <summary>
     /// The next floor duty for a wizard at (x, y), or null when the floor is done: the room's battle circle not yet
@@ -339,7 +366,23 @@ internal static class BotFloors {
             }
         }
 
+        // 5. A door that opened in this copy of the area (it starts shut): through it to the teleporter on, as a player goes on
+        // once the room is done. He beat Big Ben's sixth floor and its door opened, then walked back to the south wall
+        // toward Meowiarty's spot for an hour, since the boss is on the same height (his log, 2026-11-16 03:14).
+        foreach (var gate in book.Gates.Where(g => g.Through.Length > 0 && !Closed(g) && !Opens(book.Starts.GetValueOrDefault(g.Object) ?? "")
+                                                   && Far(x, y, g.X, g.Y) <= ROOM && Before(g) && live?.SameGround?.Invoke(g.X, g.Y) != false)
+                     .OrderBy(g => Far(x, y, g.X, g.Y))) {
+            var key = "through|" + gate.Object;
+            if (Tried(key) < TRIES) {
+                return new Duty(STEP, gate.TX, gate.TY, $"the teleporter \"{gate.Through}\" past \"{gate.Object}\"", key,
+                    $"\"{gate.Object}\" is open now, so the way on is through it");
+            }
+        }
+
         return null;
+
+        // On the door's side of its teleporter, not already past it (the next room's landing is near the same door).
+        bool Before(Gate g) => ((x - g.TX) * (g.TX - g.X)) + ((y - g.TY) * (g.TY - g.Y)) < 0;
     }
 
 }
