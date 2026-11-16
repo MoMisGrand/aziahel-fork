@@ -23,6 +23,8 @@ using System.Linq;
 using System.Text;
 using Imlight.Common;
 using Imlight.CoreLib.Game.BotShared;
+using Imlight.CoreLib.Game.Services;
+using Imlight.CoreLib.WizardData;
 using Imlight.CoreLib.WizardData.Collections;
 
 namespace Imlight.CoreLib.Game.Ultimus;
@@ -106,8 +108,17 @@ internal static class UltimusReadiness {
                     Add(true, "no steps could be read from its quest file");
                 }
 
+                var template = QuestTemplateCollection.GetQuestByName(quest.Code);
                 foreach (var step in steps) {
                     var zone = step.RealZone.Length > 0 ? step.RealZone : step.StepZone;
+                    // No area in the quest file: the game's quest arrow, or the place the step names in words, is where he goes
+                    // (the planner uses both), so only a step with none of them lacks an area.
+                    var goal = template?.m_goals?.FirstOrDefault(g => g is not null && string.Equals((string) g.m_goalName, step.Goal, StringComparison.Ordinal));
+                    if (zone.Length == 0 && goal is not null) {
+                        zone = QuestArrowGoals.GetSpots(template, goal).Select(p => p.Zone).FirstOrDefault(z => !string.IsNullOrEmpty(z))
+                               ?? Tools.OverlayQuestTracker.PlaceZone(goal);
+                    }
+
                     if (zone.Length == 0 && step.PersonZones.Count == 0) {
                         Add(true, $"\"{step.Text}\": the game names no area for this step");
                     }
@@ -116,7 +127,9 @@ internal static class UltimusReadiness {
                         Add(true, $"\"{step.Text}\": {step.Person} is placed in no story area by the zone files");
                     }
 
-                    if (zone.Length > 0 && UltimusNpcBook.Ready && !UltimusNpcBook.Knows(zone)) {
+                    // The area's own file was never read (it holds the people and things the step needs). A dungeon with
+                    // no story person in it was flagged here before, though its file was read.
+                    if (zone.Length > 0 && UltimusNpcBook.Ready && !UltimusNpcBook.Knows(zone) && !HasZoneFile(zone)) {
                         Add(true, $"\"{step.Text}\": the people of {UltimusText.Zone(zone)} were never read (its zone file may be missing)");
                     }
 
@@ -144,6 +157,20 @@ internal static class UltimusReadiness {
         }
 
         return new Result(quests, worlds, ready, findings, gates);
+    }
+
+    private static HashSet<string> s_zoneFiles;
+
+    /// <summary>Whether the server has the area's own file (its people, objects and doors).</summary>
+    private static bool HasZoneFile(string zone) {
+        try {
+            s_zoneFiles ??= new HashSet<string>(SpiralDB.GetAllZoneData().Select(z => z?.ZoneName).Where(z => !string.IsNullOrWhiteSpace(z)),
+                StringComparer.OrdinalIgnoreCase);
+            return s_zoneFiles.Contains(zone.Trim());
+        }
+        catch (Exception) {
+            return false;
+        }
     }
 
     /// <summary>The result in plain words, world by world, for readiness.txt.</summary>

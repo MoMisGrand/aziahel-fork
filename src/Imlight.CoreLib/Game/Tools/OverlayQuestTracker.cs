@@ -129,10 +129,67 @@ internal static class OverlayQuestTracker {
     internal static string StepZone(GoalTemplate goal) {
         string zone = goal is WaypointGoalTemplate { m_zoneTag.IsEmpty: false } waypoint ? (string) waypoint.m_zoneTag : (string) goal.m_destinationZone;
         if (string.IsNullOrWhiteSpace(zone)) {
-            return "";
+            // A go-to step that names its place only in words is that place (other steps keep the game's quest arrow).
+            return goal is WaypointGoalTemplate ? PlaceZone(goal) : "";
         }
 
         return AccessPassManager.GetContainedZoneName(zone.Trim()) ?? zone.Trim();
+    }
+
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> s_places = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// The area a step names only by its place ("Go to MooShu,Tree of Life"), when the quest file gives no area code: the
+    /// one area of that world players know by that name, an outdoor one before the rooms and dungeon copies that share it
+    /// (Tree of Life: the Ancient Tree, not its four dungeon copies). Empty when the name is not one area's alone, so a
+    /// guess is never made (Niduus: accurate "as humanly possible, NO EXCEPTIONS"). 33 of MooShu's story steps had no area
+    /// before (his readiness check, 2026-11-16).
+    /// </summary>
+    internal static string PlaceZone(GoalTemplate goal) {
+        try {
+            var place = English((string) goal.m_locationName ?? "", "");
+            if (!place.Contains(',')) {
+                var title = StepTitle(goal);
+                place = title.StartsWith("Go to ", StringComparison.OrdinalIgnoreCase) ? title[6..] : "";
+            }
+
+            return PlaceZone(place);
+        }
+        catch (Exception) {
+            return "";
+        }
+    }
+
+    /// <summary>"World,Area" (as the game's quest helper words a place) to the area's code name, or empty (see above).</summary>
+    internal static string PlaceZone(string place) {
+        var comma = place?.IndexOf(',') ?? -1;
+        if (comma <= 0 || comma >= place.Length - 1) {
+            return "";
+        }
+
+        if (s_places.TryGetValue(place, out var known)) {
+            return known;
+        }
+
+        var world = place[..comma].Replace(" ", "").Trim();
+        var area = place[(comma + 1)..].Trim();
+        var named = ZoneNames.All.Where(z => !z.OldOrTest && z.Name.Equals(area, StringComparison.OrdinalIgnoreCase)
+                                             && z.Code.StartsWith(world + "/", StringComparison.OrdinalIgnoreCase)).ToList();
+        if (named.Count == 0) {
+            // A world whose folder is spelled otherwise: the name only, when one area in the whole game has it.
+            named = [.. ZoneNames.All.Where(z => !z.OldOrTest && z.Name.Equals(area, StringComparison.OrdinalIgnoreCase))];
+            if (named.Count != 1) {
+                return "";
+            }
+        }
+
+        var outdoor = named.Where(z => !z.Code.Contains("/Interiors/", StringComparison.OrdinalIgnoreCase)).ToList();
+        var zone = outdoor.Count == 1 ? outdoor[0].Code : named.Count == 1 ? named[0].Code : "";
+        if (zone.Length > 0) {
+            s_places[place] = zone;
+        }
+
+        return zone;
     }
 
     /// <summary>The step in plain words, with who or what ("Talk to Headmaster Ambrose", "Defeat 3 Rattlebones").</summary>

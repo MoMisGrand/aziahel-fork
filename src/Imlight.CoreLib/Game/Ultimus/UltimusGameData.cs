@@ -77,6 +77,17 @@ internal static class UltimusGameData {
         }
     }
 
+    /// <summary>The creature's starting health in the game's data, by its exact template (0 when not known).</summary>
+    internal static int Health(ulong template) {
+        try {
+            return template != 0 && CoreObjectFactory.GetCoreTemplate(template) is GameObjectTemplate t
+                   && t.m_behaviors?.OfType<NPCBehaviorTemplate>().FirstOrDefault() is { } npc ? Math.Max(0, npc.m_nStartingHealth) : 0;
+        }
+        catch (Exception) {
+            return 0;
+        }
+    }
+
     /// <summary>Whether the game's data marks the creature a boss.</summary>
     internal static bool IsBoss(ulong template) {
         try {

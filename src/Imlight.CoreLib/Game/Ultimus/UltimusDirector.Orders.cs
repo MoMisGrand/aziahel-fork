@@ -160,7 +160,12 @@ internal sealed partial class UltimusDirectorActor {
                     said.Add("Okay, I'll go on the attack");
                     break;
                 case UltimusOrders.Kind.EnterFight:
-                    if (fighting) {
+                    if (!fighting && _partyStrongWarned != 0 && CombatDuelComponent.IsInBattle(_partyStrongWarned)) {
+                        // Told again after he said a group mate's fight looked too strong: he goes in anyway.
+                        _partyStrongOkUntil = DateTime.UtcNow.AddMinutes(5);
+                        said.Add("Okay, I'm coming in, even though it looks too strong for me");
+                    }
+                    else if (fighting) {
                         said.Add("I'm already in the fight");
                     }
                     else if (EnterFightNow(me)) {

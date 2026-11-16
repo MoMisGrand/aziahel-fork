@@ -17,6 +17,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Akka.Actor;
 using Imlight.CoreLib.Game.Combat;
@@ -188,9 +189,27 @@ internal sealed partial class UltimusDirectorActor {
         if (fighting) {
             _partyEnterFightUntil = DateTime.MinValue;
         }
+        else {
+            _partyStrongWarned = 0;
+        }
 
-        // Their battle: he walks in, as a player joins a group mate's fight (when there is room).
+        // Their battle: he walks in, as a player joins a group mate's fight (when there is room). One far too strong for him
+        // he asks about first, and goes in only when told again (Niduus's log, 2026-11-16 02:16: he walked into Walter
+        // Blanco's fight with Malistaire the Undying at level 25 and lost).
         if (fighting) {
+            if (CombatDuelComponent.UltimusMayJoin(mateGid, out _) && DateTime.UtcNow >= _partyStrongOkUntil
+                && TooStrong(leader, CombatDuelComponent.UltimusFoesOf(mateGid), out var strong)) {
+                if (_partyStrongWarned != mateGid) {
+                    _partyStrongWarned = mateGid;
+                    Note("Ultimus", $"PARTY: {name}'s battle looks far too strong for him ({strong}): he asks before going in.", UltimusLink.NOTABLE);
+                    Think($"{name}'s fight looks far too strong for me ({strong}). I ask first instead of walking in and falling.", "party-strong|" + mateGid);
+                    SayLater(mate.CharId, true, $"That fight looks far too strong for me ({strong}). Say \"enter the fight\" and I'll come in anyway.", 0.5);
+                }
+
+                return new UltimusPlanner.Target(UltimusPlanner.SPOT, leader.X, leader.Y,
+                    $"watching {name}'s battle (it looks far too strong for me; I go in if they say so)", Key: PARTY_KEY + "watch|" + mate.CharId);
+            }
+
             return CombatDuelComponent.UltimusMayJoin(mateGid, out _)
                 ? new UltimusPlanner.Target(UltimusPlanner.SPOT, at.X, at.Y, $"joining {name}'s battle (my group)", Key: PARTY_KEY + "fight|" + mate.CharId)
                 : new UltimusPlanner.Target(UltimusPlanner.SPOT, leader.X, leader.Y, $"watching {name}'s battle (my group; it is full)", Key: PARTY_KEY + "watch|" + mate.CharId);
@@ -252,6 +271,44 @@ internal sealed partial class UltimusDirectorActor {
     }
 
     /// <summary>"Enter the fight", "go in first": he walks into the nearest enemy by his mate (for 2 minutes, or until a battle starts).</summary>
+    // A battle's strongest creature with this many times his own full health, or all of them together with this many
+    // times, is far too strong for him to walk into unasked.
+    private const int STRONG_ONE = 5;
+    private const int STRONG_ALL = 8;
+
+    // The group mate whose too-strong battle he asked about, and until when he was told to go in anyway.
+    private ulong _partyStrongWarned;
+    private DateTime _partyStrongOkUntil = DateTime.MinValue;
+
+    /// <summary>
+    /// Whether creatures (by exact template) are far too strong for him, by their health in the game's data against his own
+    /// full health; the words say who and how much.
+    /// </summary>
+    private static bool TooStrong(UltimusMember.Status me, IReadOnlyCollection<ulong> foes, out string words) {
+        words = "";
+        if (foes is not { Count: > 0 } || me.Wizard?.GameStats is not { } stats) {
+            return false;
+        }
+
+        var mine = Math.Max(1, stats.m_baseHitpoints + stats.m_bonusHitpoints);
+        var healths = foes.Select(t => (Template: t, Health: UltimusGameData.Health(t))).Where(f => f.Health > 0).ToList();
+        if (healths.Count == 0) {
+            return false;
+        }
+
+        var top = healths.MaxBy(f => f.Health);
+        var all = healths.Sum(f => (long) f.Health);
+        if (top.Health < (long) mine * STRONG_ONE && all < (long) mine * STRONG_ALL) {
+            return false;
+        }
+
+        var topName = UltimusGameData.Creature(top.Template) is { Length: > 0 } c && c.IndexOf(" (template", StringComparison.Ordinal) is > 0 and var cut
+            ? c[..cut] : "the strongest one";
+        words = $"{topName} has {top.Health:N0} health{(healths.Count > 1 ? $", {all:N0} all together" : "")}, and I have {mine:N0}";
+
+        return true;
+    }
+
     private bool EnterFightNow(UltimusMember.Status me) {
         if (_partyMate == 0 || me.Wizard is null || !OverlayQuestTracker.SameZone(PlayerCheats.LiveWizard(_partyMate)?.Zone ?? "", me.Zone ?? "")) {
             return false;
@@ -287,6 +344,8 @@ internal sealed partial class UltimusDirectorActor {
 
         UltimusOrders.Clear();
         _partyEnterFightUntil = DateTime.MinValue;
+        _partyStrongWarned = 0;
+        _partyStrongOkUntil = DateTime.MinValue;
         _partyOfflineSince = DateTime.MaxValue;
         Note("Ultimus", $"PARTY: no longer with {_partyMateName} ({why}): back to his own story.");
         if (why == "the group ended") {

@@ -97,6 +97,33 @@ internal sealed partial class CombatDuelComponent {
         }
     }
 
+    /// <summary>
+    /// The templates of the creatures fighting against <paramref name="globalId"/> in its battle (empty when it is in none),
+    /// so a bot can see how strong a group mate's fight is before it walks in.
+    /// </summary>
+    internal static List<ulong> UltimusFoesOf(ulong globalId) {
+        foreach (var battle in s_playerBattles.Values.Select(v => v.Battle).Distinct().ToList()) {
+            try {
+                if (!battle._isActive || battle.SubCircles is not { } circles) {
+                    continue;
+                }
+
+                var mine = circles.FirstOrDefault(c => c is { Occupied: true } && c.ParticipantObject?.m_globalID.Full == globalId);
+                if (mine is null) {
+                    continue;
+                }
+
+                return [.. circles.Where(c => c is { Occupied: true, IsSummonedMinion: false } && c.SlotType != mine.SlotType && c.ParticipantObject is not null)
+                    .Select(c => (ulong) c.ParticipantObject.m_templateID)];
+            }
+            catch (InvalidOperationException) {
+                // The circles changed mid-read: asked again next time.
+            }
+        }
+
+        return [];
+    }
+
     internal static bool UltimusMayJoin(ulong creatureGlobalId, out string who) {
         who = "";
         foreach (var battle in s_playerBattles.Values.Select(v => v.Battle).Distinct().ToList()) {
