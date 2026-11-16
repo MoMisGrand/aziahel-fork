@@ -1,0 +1,4 @@
+Fixed: Ultimus no longer starts a dungeon fight on his own while his group is still coming in
+When Walter Blanco took Ultimus into Big Ben as a group, Ultimus loaded in first, stepped onto the first room's battle circle by himself and started the O'Leary Conniver fight while Walter was still loading, so Walter had to join a fight that was already going. Now, while he is in a group, Ultimus goes along with his group mate: he waits for them, follows them and joins their battles, and his own floor fights, stuck fights and set-aside work wait until the group ends.
+Where: Ultimus in a group with a player, most of all when going into a dungeon together
+Test: Invite Ultimus to a group, step on Big Ben's sigil together, and check that he waits for you inside and does not step onto the first room's circle until you do.
