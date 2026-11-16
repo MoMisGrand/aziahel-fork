@@ -124,8 +124,8 @@ internal sealed partial class UltimusDirectorActor {
     // How near a door or stone of the way it presses it (a door's own reach is 140).
     private const float PRESS_REACH = 160f;
 
-    // How near a door that opens on a fight counts as his, and how long before that door is fought for again.
-    private const float GATE_NEAR = 900f;
+    // How near a door that opens on a fight (on his own ground) counts as his, about one tower floor, and how long before that door is fought for again.
+    private const float GATE_NEAR = 6500f;
     private static readonly TimeSpan s_gateAgain = TimeSpan.FromMinutes(10);
     private readonly Dictionary<string, DateTime> _gateFought = new(StringComparer.OrdinalIgnoreCase);
 
@@ -142,20 +142,35 @@ internal sealed partial class UltimusDirectorActor {
             return false;
         }
 
-        // A door by him that the area's files say opens on beating a creature, and creatures there: he beats them first, as
-        // a player clears the room to open its door (Big Ben: each floor's door by the teleporter up opens once the floor's
-        // elite is beaten).
-        if (UltimusAreaBook.OpensOnFight(member.Zone, member.X, member.Y, GATE_NEAR) is { } gate
-            && _gateFought.GetValueOrDefault(member.Zone + "|" + gate.Object) < DateTime.UtcNow - s_gateAgain
-            && BotShared.BotUseGuards.Near(member.ZoneActor, gate.X, gate.Y).Any(m => BotShared.DudCreatures.Fightable(m.Object.m_globalID.Full))) {
-            _gateFought[member.Zone + "|" + gate.Object] = DateTime.UtcNow;
-            _clearAround = (member.Zone ?? "", gate.X, gate.Y, DateTime.UtcNow.AddMinutes(10));
-            Note("Ultimus", $"{member.Name} is stuck on the way to \"{goal.What}\" by \"{gate.Object}\", which the area's files say opens on {gate.By}: " +
-                            "he beats the creatures there first.", UltimusLink.NOTABLE);
-            Think($"The door \"{gate.Object}\" here opens on {gate.By}. I beat the creatures by it first, as a player clears the room, then go on.",
-                "gate-fight|" + gate.Object);
+        // A door on his ground that the area's files say opens on beating a creature: he beats the creatures by it first, as
+        // a player clears the room to open its door. Where none stand yet, he steps on the room's battle circle, which
+        // starts its fight (Big Ben: each floor's door by the teleporter up opens once the floor's elite is beaten, and the
+        // elite only comes out on the floor's battle circle; he stood at the sixth floor's south wall for hours, Niduus's
+        // log 2026-11-16 00:25, "check him again").
+        if (UltimusAreaBook.OpensOnFight(member.Zone, member.X, member.Y, GATE_NEAR, sameGround: true) is { } gate
+            && _gateFought.GetValueOrDefault(member.Zone + "|" + gate.Object) < DateTime.UtcNow - s_gateAgain) {
+            if (BotShared.BotUseGuards.Near(member.ZoneActor, gate.X, gate.Y).Any(m => BotShared.DudCreatures.Fightable(m.Object.m_globalID.Full))) {
+                _gateFought[member.Zone + "|" + gate.Object] = DateTime.UtcNow;
+                _clearAround = (member.Zone ?? "", gate.X, gate.Y, DateTime.UtcNow.AddMinutes(10));
+                Note("Ultimus", $"{member.Name} is stuck on the way to \"{goal.What}\" by \"{gate.Object}\", which the area's files say opens on {gate.By}: " +
+                                "he beats the creatures there first.", UltimusLink.NOTABLE);
+                Think($"The door \"{gate.Object}\" here opens on {gate.By}. I beat the creatures by it first, as a player clears the room, then go on.",
+                    "gate-fight|" + gate.Object);
 
-            return true;
+                return true;
+            }
+
+            if (UltimusAreaBook.BattleStartNear(member.Zone, member.X, member.Y, GATE_NEAR) is { } circle) {
+                _gateFought[member.Zone + "|" + gate.Object] = DateTime.UtcNow;
+                Note("Ultimus", $"{member.Name} is stuck on the way to \"{goal.What}\": \"{gate.Object}\" opens on {gate.By}, and no creature is out yet, " +
+                                $"so he steps on the room's battle circle \"{circle.Name}\" at ({circle.X:0}, {circle.Y:0}) to start its fight.", UltimusLink.NOTABLE);
+                Think($"The door \"{gate.Object}\" opens on {gate.By}, but nobody is here to fight. The room's fight starts on its battle circle, " +
+                      "so I step on it, win, and the door opens.", "gate-circle|" + gate.Object);
+                var toCircle = OverlayQuestPath.Walk(member.CharId, member.Zone, member.X, member.Y, circle.X, circle.Y, body: true);
+                _actors[index].Tell(new UltimusMember.WalkTo(toCircle, $"steps on the battle circle that opens {gate.Object}"));
+
+                return true;
+            }
         }
 
         // The step on ground no known teleporter reaches: a teleporter he has not used yet, before one that goes back.

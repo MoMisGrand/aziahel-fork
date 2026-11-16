@@ -216,6 +216,13 @@ internal static class UltimusAreaBook {
                             $"goes {c.State} on {c.By}");
         }
 
+        var circles = BattleStartsIn(zonePath);
+        text.AppendLine();
+        text.AppendLine($"BATTLE CIRCLES that start a fight when stepped on ({circles.Count}; a room's creatures, and the door they open, wait for it):");
+        foreach (var b in circles) {
+            text.AppendLine($"  \"{b.Name}\" at ({b.X:0}, {b.Y:0}) on ground {Ground(zonePath, b.X, b.Y)}");
+        }
+
         text.AppendLine();
         text.AppendLine($"LIFTS AND MOVING FLOORS ({changes.Count(c => c.Lift)} stops):");
         foreach (var group in changes.Where(c => c.Lift).GroupBy(c => c.Object, StringComparer.OrdinalIgnoreCase)) {
@@ -274,6 +281,10 @@ internal static class UltimusAreaBook {
                 facts.Add($"Area book: {untried.Count} teleporter(s) he can reach have a landing nobody knows yet; walking into one shows where it goes.");
             }
 
+            if (BattleStartNear(zonePath, x, y, NEAR) is { } circle) {
+                facts.Add($"Area book: a battle circle \"{circle.Name}\" {UltimusPlanner.Far(x, y, circle.X, circle.Y):0} away starts this room's fight when stepped on.");
+            }
+
             foreach (var c in ChangesIn(zonePath).Where(c => c.HasSpot && UltimusPlanner.Far(x, y, c.X, c.Y) < NEAR).Take(4)) {
                 facts.Add($"Area book: {(c.Lift ? "a lift" : "a gate or door")} \"{c.Object}\" {UltimusPlanner.Far(x, y, c.X, c.Y):0} away goes {c.State} on {c.By}.");
             }
@@ -289,14 +300,74 @@ internal static class UltimusAreaBook {
     /// The nearest gate or door within <paramref name="most"/> of (x, y) that opens on beating a creature (Big Ben: each
     /// floor's door by the teleporter up opens once the floor's elite is beaten), or null.
     /// </summary>
-    internal static Change OpensOnFight(string zonePath, float x, float y, float most) {
+    internal static Change OpensOnFight(string zonePath, float x, float y, float most, bool sameGround = false) {
         try {
+            var here = sameGround ? OverlayQuestPath.IslandOf(zonePath, x, y) : -1;
             return ChangesIn(zonePath).Where(c => !c.Lift && c.HasSpot && c.By.StartsWith("beating", StringComparison.Ordinal))
+                .Where(c => here < 0 || OverlayQuestPath.IslandOf(zonePath, c.X, c.Y) == here)
                 .Select(c => (C: c, Far: UltimusPlanner.Far(x, y, c.X, c.Y)))
                 .Where(c => c.Far <= most)
                 .OrderBy(c => c.Far)
                 .Select(c => c.C)
                 .FirstOrDefault();
+        }
+        catch (Exception) {
+            return null;
+        }
+    }
+
+    /// <summary>A spot that starts a battle when stepped on (a room's battle circle), from the area's triggers.</summary>
+    internal sealed record BattleStart(string Name, float X, float Y);
+
+    private static readonly ConcurrentDictionary<string, List<BattleStart>> s_battleStarts = new(StringComparer.OrdinalIgnoreCase);
+
+    internal static List<BattleStart> BattleStartsIn(string zonePath) {
+        if (string.IsNullOrEmpty(zonePath)) {
+            return [];
+        }
+
+        return s_battleStarts.GetOrAdd(zonePath, path => {
+            try {
+                if (!ResourceManager.TryLoadArchive(path, out var wad)) {
+                    return [];
+                }
+
+                return BattleStarts(UltimusPads.Read<WizZoneTriggers>(wad.OpenFile("triggers.xml")?.ToArray()),
+                    UltimusPads.Read<WizZoneVolumes>(wad.OpenFile("volumes.xml")?.ToArray()));
+            }
+            catch (Exception) {
+                return [];
+            }
+        });
+    }
+
+    /// <summary>The triggers that start a battle (ResInitiateCombat) when a volume is stepped on, with the volume's spot.</summary>
+    internal static List<BattleStart> BattleStarts(WizZoneTriggers triggerFile, WizZoneVolumes volumeFile) {
+        var volumes = volumeFile?.m_volumes?.Where(v => v is not null).ToList() ?? [];
+        var found = new List<BattleStart>();
+        foreach (var trigger in triggerFile?.m_triggers?.Where(t => t is not null) ?? []) {
+            if (trigger.m_results?.m_results?.Any(r => r is ResInitiateCombat) != true) {
+                continue;
+            }
+
+            foreach (var fire in trigger.m_fireEvents?.Select(e => e.ToString()).Where(e => !string.IsNullOrEmpty(e)) ?? []) {
+                foreach (var v in volumes.Where(v => v.m_enterEvents?.Any(e => (string) e == fire) == true || "Enter_" + (string) v.m_volumeName == fire)) {
+                    found.Add(new BattleStart((string) v.m_volumeName ?? (string) trigger.m_triggerName ?? "a battle circle", v.m_locationX, v.m_locationY));
+                }
+            }
+        }
+
+        return [.. found.DistinctBy(b => ((int) (b.X / 100), (int) (b.Y / 100)))];
+    }
+
+    /// <summary>The nearest battle circle on the ground (x, y) stands on, within <paramref name="most"/>, or null.</summary>
+    internal static BattleStart BattleStartNear(string zonePath, float x, float y, float most) {
+        try {
+            var here = OverlayQuestPath.IslandOf(zonePath, x, y);
+            return BattleStartsIn(zonePath)
+                .Where(b => here < 0 || OverlayQuestPath.IslandOf(zonePath, b.X, b.Y) == here)
+                .Select(b => (B: b, Far: UltimusPlanner.Far(x, y, b.X, b.Y)))
+                .Where(b => b.Far <= most).OrderBy(b => b.Far).Select(b => b.B).FirstOrDefault();
         }
         catch (Exception) {
             return null;
