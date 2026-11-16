@@ -362,7 +362,9 @@ internal static class BotFloors {
             }
         }
 
-        foreach (var circle in book.Circles.Where(c => Far(x, y, c.X, c.Y) <= ROOM && Here(c.Z))) {
+        // Only a circle whose fight has started: before that its creatures are not out for a player (Niduus, 2026-11-16, Big
+        // Ben's twentieth floor: "didn't show mobs on my screen but Ultimus started the combat with them").
+        foreach (var circle in book.Circles.Where(c => Far(x, y, c.X, c.Y) <= ROOM && Here(c.Z) && (live?.FiresOf is null || live.FiresOf(c.Trigger) > 0))) {
             if (live?.FoesNear?.Invoke(circle.X, circle.Y) == true) {
                 return new Duty(FIGHT, circle.X, circle.Y, $"the creatures of the room's battle circle \"{circle.Volume}\"", "room|" + circle.Trigger,
                     "the room's creatures are beaten before going on");
