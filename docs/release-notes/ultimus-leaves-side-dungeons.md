@@ -1,0 +1,4 @@
+Fixed: Ultimus walks out of a dungeon his story is not in
+After a restart Ultimus logged back in inside Counterweight East and kept doing its quest, Metal Madness, instead of going back to Big Ben, until someone helped him finish it. Now, when he is in a dungeon his main story step is not in and the story does not need that dungeon's quest, he walks out and goes on with his story. A restart no longer brings back a side dungeon's quest as the one he was on, and he never uses Dungeon Recall to go back into a side dungeon.
+Where: Ultimus, in any dungeon that is not on his main story, for example Counterweight East while his step is in Big Ben
+Test: Have Ultimus on The Last Meow, put him in Counterweight East, and check that he walks out toward Big Ben and does not start on Metal Madness, also after a server restart.

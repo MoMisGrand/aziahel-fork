@@ -78,14 +78,19 @@ internal sealed partial class UltimusDirectorActor {
             return null;
         }
 
-        if (OverlayQuestRoute.OnStory(zone)) {
+        var side = IsSideDungeon(zone);
+        if (OverlayQuestRoute.OnStory(zone) && !side) {
             _lastStoryZone = zone;
             _offStory = null;
             return null;
         }
 
-        if (StepNamesZone(zone)) {
+        if (!side && StepNamesZone(zone)) {
             return null;
+        }
+
+        if (side) {
+            return LeaveSideDungeon(leader, zone);
         }
 
         if (_offStory is not { } off || !string.Equals(off.Zone, zone, StringComparison.OrdinalIgnoreCase)) {
@@ -117,6 +122,112 @@ internal sealed partial class UltimusDirectorActor {
         }
 
         return new UltimusPlanner.Target(UltimusPlanner.WAIT, leader.X, leader.Y, $"leaving {UltimusText.Zone(zone)}", Key: "offstory|wait");
+    }
+
+    // ---------------------------------------------------------------------
+    // Side dungeons: a dungeon his story step is not in is left (Niduus, 2026-11-16: "he didn't leave Counterweight. I had
+    // to help him finish it to get him to let go of it. This is a huge problem that MUST be addressed")
+    // ---------------------------------------------------------------------
+
+    private (string Zone, bool Side, DateTime At)? _sideCheck;
+    private string _sideNoted;
+
+    /// <summary>
+    /// Whether this dungeon is a side dungeon for him now: he holds a story quest whose step is in another area, no quest
+    /// of this dungeon is one the story needs, and he is not partway through a dungeon quest started where his story sent
+    /// him (a dungeon's next room). Such a dungeon's own quest (given on the way in) is not his to finish: he walks out.
+    /// </summary>
+    private bool IsSideDungeon(string zone) {
+        if (string.IsNullOrEmpty(zone) || !OverlayQuestRoute.IsDungeon(zone) || _team.Count == 0 || _team[0].Wizard is not { } wizard) {
+            return false;
+        }
+
+        if (_sideCheck is { } check && string.Equals(check.Zone, zone, StringComparison.OrdinalIgnoreCase)
+            && DateTime.UtcNow - check.At < TimeSpan.FromSeconds(20)) {
+            return check.Side;
+        }
+
+        var side = SideDungeonNow(zone, wizard);
+        _sideCheck = (zone, side, DateTime.UtcNow);
+
+        return side;
+    }
+
+    private bool SideDungeonNow(string zone, Imlight.CoreLib.WizardData.Models.Player.Wizard wizard) {
+        // A dungeon quest started in a room his story sent him to goes on in the dungeon's other rooms (Ironworks and
+        // Nail's Hideout, 2026-11-15).
+        if (_dungeonFirstQuest is { Length: > 0 } going && wizard.HasQuest(going)) {
+            return false;
+        }
+
+        var held = wizard.QuestBehavior?.CurrentQuestInstances?.Where(q => q is not null).Select(q => q.QuestName).ToList() ?? [];
+        // A quest of this dungeon the story needs done first: the dungeon is on the story.
+        var own = DungeonQuestIndex.GetQuestsForZones([zone]).Select(q => (string) q.m_questName).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        if (held.Any(name => own.Contains(name) && BotStory.NeededByStory(name))) {
+            return false;
+        }
+
+        var story = held.Where(name => !DungeonQuestIndex.IsDungeonQuest(name)
+            && QuestTemplateCollection.GetQuestByName(name) is { } t && QuestStory.IsStory(t)).ToList();
+        if (story.Count == 0) {
+            return false;
+        }
+
+        foreach (var name in story) {
+            var template = QuestTemplateCollection.GetQuestByName(name);
+            if ((template?.m_goals ?? []).Where(g => g is not null).Any(g => OverlayQuestTracker.StepZone(g) is { Length: > 0 } stepZone
+                    && (OverlayQuestTracker.SameZone(stepZone, zone) || OverlayQuestTracker.SameZone(zone, stepZone)))) {
+                return false;
+            }
+
+            // Where the step really is; when that can't be told, he stays (no leaving on a guess).
+            var step = UltimusPlanner.ForQuest(_team, name);
+            if (step is null || step.Problem.Length > 0 || string.IsNullOrEmpty(step.To) || OverlayQuestTracker.SameZone(step.To, zone)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>Out of a side dungeon: on foot toward his story step, as a player walks back out of the wrong dungeon.</summary>
+    private UltimusPlanner.Target LeaveSideDungeon(UltimusMember.Status leader, string zone) {
+        var quest = _team[0].Wizard?.QuestBehavior?.CurrentQuestInstances?.Where(q => q is not null).Select(q => q.QuestName)
+            .FirstOrDefault(name => !DungeonQuestIndex.IsDungeonQuest(name) && QuestTemplateCollection.GetQuestByName(name) is { } t && QuestStory.IsStory(t));
+        var step = quest is null ? null : UltimusPlanner.ForQuest(_team, quest);
+        var to = step?.To is { Length: > 0 } stepTo ? stepTo : _lastStoryZone ?? "WizardCity/WC_Hub";
+        _dungeonFirstQuest = null;
+
+        if (!string.Equals(_sideNoted, zone, StringComparison.OrdinalIgnoreCase)) {
+            _sideNoted = zone;
+            Note("Ultimus", $"ABNORMAL: is in {UltimusText.Zone(zone)}, a side dungeon: his story step " +
+                (step is null ? "" : $"(\"{step.What}\" in {UltimusText.Title(quest)}) ") + $"is in {UltimusText.Zone(to)}. He walks out; its own quest is left for later.",
+                UltimusLink.ABNORMAL);
+            Think($"I am in {UltimusText.Zone(zone)}, but my story step is in {UltimusText.Zone(to)}. This dungeon is a side trip, and its quest " +
+                  "is not mine to finish now, so I walk out and go on with my story. Leaving a dungeon my story is not in is not fleeing.", "sidedungeon|" + zone);
+            BotMistakes.Record(UltimusSeat.Current.Key, BotMistakes.OFF_STORY, zone, leader.X, leader.Y, quest ?? "",
+                $"Was in {UltimusText.Zone(zone)}, a side dungeon his story step is not in.", _lastReasoning,
+                "Never go into a dungeon the story step is not in (not for wisps, not for potions).", "walk out");
+        }
+
+        if (UltimusPlanner.Travel(leader, to, $"leaving {UltimusText.Zone(zone)}: a side dungeon, my story is in {UltimusText.Zone(to)}", "sidedungeon") is { } walk) {
+            return walk;
+        }
+
+        if (to != (_lastStoryZone ?? "") && _lastStoryZone is { Length: > 0 } last
+            && UltimusPlanner.Travel(leader, last, $"leaving {UltimusText.Zone(zone)}: a side dungeon", "sidedungeon") is { } back) {
+            return back;
+        }
+
+        if (DateTime.UtcNow - _offStoryCarried > TimeSpan.FromSeconds(60) && !Unsticking(0)) {
+            _offStoryCarried = DateTime.UtcNow;
+            Note("Ultimus", $"ABNORMAL: found no way out of {UltimusText.Zone(zone)} on foot: presses the Commons button, as a player does.", UltimusLink.ABNORMAL);
+            if (!PressHubButton(leader, $"to get out of {UltimusText.Zone(zone)}")) {
+                Aside(0, leader, 600f, 1600f, "looks around the area for a way out");
+            }
+        }
+
+        return new UltimusPlanner.Target(UltimusPlanner.WAIT, leader.X, leader.Y, $"leaving {UltimusText.Zone(zone)}", Key: "sidedungeon|wait");
     }
 
     // ---------------------------------------------------------------------

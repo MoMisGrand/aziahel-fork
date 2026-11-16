@@ -1,0 +1,4 @@
+Fixed: Ultimus and the other bots no longer cast the wrong card on themselves after a discard
+Ultimus planned a shield on himself, but a discard he made that round moved his cards over by one, so the card that went off was Scarab, on himself, and the next round Hex. Now every card pick is matched to where the card really sits in the hand after the discards, and when Ultimus throws a card away to make room for a treasure card he waits until it is gone before he picks. This goes for Ultimus, TCO7, the Quest Team and the Bot Players.
+Where: Battles with Ultimus, TCO7, the Quest Team or Bot Players, most of all tough fights where they discard to draw a treasure card
+Test: Watch Ultimus in a tough fight with a full hand, and check that after he discards to draw a treasure card the card he casts is the one his log says he picked, and no attack or trap lands on himself.

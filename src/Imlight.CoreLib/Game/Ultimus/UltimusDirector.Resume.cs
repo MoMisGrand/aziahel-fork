@@ -23,6 +23,8 @@ using System.Linq;
 using System.Text.Json;
 using Imlight.Common;
 using Imlight.CoreLib.Game.BotShared;
+using Imlight.CoreLib.Game.Tools;
+using Imlight.CoreLib.WizardData.Collections;
 
 namespace Imlight.CoreLib.Game.Ultimus;
 
@@ -103,6 +105,17 @@ internal sealed partial class UltimusDirectorActor {
             return;
         }
 
+        var dropped = false;
+        // A dungeon's own quest the story does not need is not picked up again when he holds a story quest: a restart left
+        // him in Counterweight East and he went on with "Metal Madness" instead of Big Ben (Niduus, 2026-11-16).
+        if (state.Quest is { Length: > 0 } was && DungeonQuestIndex.IsDungeonQuest(was) && !BotShared.BotStory.NeededByStory(was)
+            && (_team[0].Wizard.QuestBehavior?.CurrentQuestInstances?.Any(q => q is not null && !DungeonQuestIndex.IsDungeonQuest(q.QuestName)
+                && QuestTemplateCollection.GetQuestByName(q.QuestName) is { } t && QuestStory.IsStory(t)) ?? false)) {
+            Note("Ultimus", $"after the restart: was on {UltimusText.Title(was)}, a dungeon's own quest the story does not need, so he goes back to his story quest instead.");
+            state.Quest = null;
+            dropped = true;
+        }
+
         UltimusPlanner.Restore(state.Quest, state.Picks, state.Asides);
         foreach (var (key, at) in state.Parked ?? []) {
             _parkedAt.TryAdd(key, at);
@@ -114,10 +127,13 @@ internal sealed partial class UltimusDirectorActor {
 
         BotCollect.RestoreSpots(_team[0].CharId, state.CollectSpots);
         var held = state.Quest is not null && _team[0].Wizard.HasQuest(state.Quest);
-        Note("Ultimus", held
-            ? $"picks up where he was before the restart: {UltimusText.Title(state.Quest)}" +
-              (string.IsNullOrEmpty(state.Doing) ? "." : $" ({state.Doing}).")
-            : "picks up after the restart: the quest he was on is done or gone, so he plans fresh.");
+        if (!dropped) {
+            Note("Ultimus", held
+                ? $"picks up where he was before the restart: {UltimusText.Title(state.Quest)}" +
+                  (string.IsNullOrEmpty(state.Doing) ? "." : $" ({state.Doing}).")
+                : "picks up after the restart: the quest he was on is done or gone, so he plans fresh.");
+        }
+
         if (held) {
             Think($"The server restarted. I was on {UltimusText.Title(state.Quest)}" +
                   (string.IsNullOrEmpty(state.Doing) ? "" : $", doing \"{state.Doing}\"") + ", so I pick up right there.", "resume");

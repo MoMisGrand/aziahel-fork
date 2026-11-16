@@ -43,7 +43,14 @@ internal sealed partial class QuestTeamDirectorActor {
     private readonly HashSet<string> _floorSaid = new(StringComparer.Ordinal);
 
     private QuestTeamPlanner.Target FloorDuty(QuestTeamMember.Status leader, QuestTeamPlanner.Target target) {
-        if (target?.Kind == QuestTeamPlanner.FIGHT || string.IsNullOrEmpty(leader?.Zone) || !(leader.Wizard?.ZoneIsInstance == true || OverlayQuestRoute.IsDungeon(leader.Zone))) {
+        if (string.IsNullOrEmpty(leader?.Zone) || !(leader.Wizard?.ZoneIsInstance == true || OverlayQuestRoute.IsDungeon(leader.Zone))) {
+            return null;
+        }
+
+        // A quest fight in this room goes first; one on another floor or further on waits until this floor is done (the
+        // floor's creatures, its lever, then up: Niduus, 2026-11-16, Counterweight East).
+        if (target?.Kind == QuestTeamPlanner.FIGHT && QuestTeamPlanner.Far(leader.X, leader.Y, target.X, target.Y) <= BotFloors.ROOM
+            && BotFloors.OnFloor(leader.Z, FightZ(leader, target))) {
             return null;
         }
 
@@ -65,10 +72,11 @@ internal sealed partial class QuestTeamDirectorActor {
             name => state?.GetObjectState(name),
             trigger => state?.GetTriggerFires(trigger) ?? 0,
             trigger => state is null ? null : state.IsTriggerEnabled(trigger),
-            (x, y) => BotUseGuards.Near(leader.ZoneActor, x, y).Any(m => DudCreatures.Fightable(m.Object.m_globalID.Full)),
+            (x, y) => BotUseGuards.Near(leader.ZoneActor, x, y).Any(m => DudCreatures.Fightable(m.Object.m_globalID.Full)
+                                                                    && BotFloors.OnFloor(leader.Z, m.Object.m_location.Z)),
             (x, y) => OverlayQuestPath.IslandOf(leader.Zone, leader.X, leader.Y) is var a && OverlayQuestPath.IslandOf(leader.Zone, x, y) is var b
                       && (a < 0 || b < 0 || a == b));
-        if (BotFloors.Next(book, live, leader.X, leader.Y, _floorTries) is not { } duty) {
+        if (BotFloors.Next(book, live, leader.X, leader.Y, _floorTries, leader.Z) is not { } duty) {
             _floorOn = null;
             return null;
         }
@@ -141,6 +149,22 @@ internal sealed partial class QuestTeamDirectorActor {
         }
 
         return new QuestTeamPlanner.Target(QuestTeamPlanner.SPOT, duty.X, duty.Y, $"onto {duty.What}", Key: "floor|" + duty.Key);
+    }
+
+    /// <summary>The height of a fight's creature (its target's own, else the creature's on the map), NaN when unknown.</summary>
+    private static float FightZ(QuestTeamMember.Status leader, QuestTeamPlanner.Target target) {
+        if (!float.IsNaN(target.Z)) {
+            return target.Z;
+        }
+
+        try {
+            return target.GlobalId != 0 && MinimapIndex.In(leader.ZoneActor).FirstOrDefault(m => m.Object.m_globalID.Full == target.GlobalId) is { } mark
+                ? mark.Object.m_location.Z
+                : float.NaN;
+        }
+        catch (Exception) {
+            return float.NaN;
+        }
     }
 
 }
