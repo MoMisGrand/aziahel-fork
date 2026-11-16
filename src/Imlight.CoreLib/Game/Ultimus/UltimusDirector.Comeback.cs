@@ -51,7 +51,9 @@ internal sealed partial class UltimusDirectorActor {
 
         if (leader?.Wizard is not { } wizard || wizard.ZoneIsInstance || _partyMate != 0 || CombatDuelComponent.IsInBattle(leader.GlobalId)
             || leader.Talking || _fellIn is not { } fell || DateTime.UtcNow - fell.At > s_comebackWithin
-            || !World.DungeonRecall.TryGet(leader.CharId, out var ticket) || !OverlayQuestTracker.SameZone(ticket.Zone ?? "", fell.Zone)) {
+            || !World.DungeonRecall.TryGet(leader.CharId, out var ticket) || !OverlayQuestTracker.SameZone(ticket.Zone ?? "", fell.Zone)
+            // Never back into a side dungeon his story step is not in (Counterweight East, 2026-11-16).
+            || IsSideDungeon(fell.Zone)) {
             _comebackTries = 0;
             return false;
         }

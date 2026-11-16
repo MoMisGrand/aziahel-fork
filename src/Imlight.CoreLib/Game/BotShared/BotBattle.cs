@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Akka.Actor;
 using Imcodec.MessageLayer.Generated;
 using Imlight.CoreLib.Game.Combat;
@@ -63,12 +64,41 @@ internal static class BotBattle {
 
         var budget = Math.Max(0.3, secondsLeft - 2);
         var at = Math.Min(budget * 0.6, 1.5 + (handSize * 0.3) + (random.NextDouble() * 1.5));
-        foreach (var move in moves) {
+        foreach (var move in InHandOrder(moves)) {
             clicks.Add(new Click(move, Math.Min(at, budget)));
             at += move.Type == CombatMoveType.Discard ? 0.6 + (random.NextDouble() * 0.6) : 0.8 + (random.NextDouble() * 0.8);
         }
 
         return clicks;
+    }
+
+    /// <summary>
+    /// The moves with each card's place in the hand as it is when its click lands. Every pick is made on the hand as dealt,
+    /// but a discard takes its card out of the hand at once and the cards after it move up one place, so a later click on
+    /// the old place picked the next card (Niduus, 2026-11-16: "Ultimus just hit himself": he meant Elemental Shield on
+    /// himself, a discard landed first, and Scarab went off on him; then Hex). A discard of the card that is then cast is
+    /// left out.
+    /// </summary>
+    internal static List<Move> InHandOrder(IReadOnlyList<Move> moves) {
+        var cast = moves.Where(m => m.Type != CombatMoveType.Discard && m.Type is not (CombatMoveType.Pass or CombatMoveType.Flee))
+            .Select(m => m.Card).ToHashSet();
+        var thrown = new List<int>();
+        var result = new List<Move>(moves.Count);
+        foreach (var move in moves) {
+            if (move.Type == CombatMoveType.Discard && (cast.Contains(move.Card) || thrown.Contains(move.Card))) {
+                continue;
+            }
+
+            var shifted = move.Type is CombatMoveType.Pass or CombatMoveType.Flee || thrown.Count == 0
+                ? move
+                : move with { Card = move.Card - thrown.Count(t => t < move.Card) };
+            result.Add(shifted);
+            if (move.Type == CombatMoveType.Discard) {
+                thrown.Add(move.Card);
+            }
+        }
+
+        return result;
     }
 
     /// <summary>The target as the game sends it: the circle's bit, or "no target".</summary>

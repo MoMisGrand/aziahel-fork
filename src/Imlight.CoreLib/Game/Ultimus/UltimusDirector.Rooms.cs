@@ -85,7 +85,14 @@ internal sealed partial class UltimusDirectorActor {
     }
 
     private UltimusPlanner.Target FloorDuty(UltimusMember.Status leader, UltimusPlanner.Target target) {
-        if (target?.Kind == UltimusPlanner.FIGHT || string.IsNullOrEmpty(leader?.Zone) || !InDungeon(leader)) {
+        if (string.IsNullOrEmpty(leader?.Zone) || !InDungeon(leader) || IsSideDungeon(leader.Zone)) {
+            return null;
+        }
+
+        // A quest fight in this room goes first; one on another floor or further on waits until this floor is done: its
+        // creatures, its lever, then up (Niduus, 2026-11-16: he beat Counterweight East's boss a floor up first).
+        if (target?.Kind == UltimusPlanner.FIGHT && UltimusPlanner.Far(leader.X, leader.Y, target.X, target.Y) <= BotFloors.ROOM
+            && BotFloors.OnFloor(leader.Z, TargetZ(leader, target))) {
             return null;
         }
 
@@ -106,10 +113,11 @@ internal sealed partial class UltimusDirectorActor {
             name => state?.GetObjectState(name),
             trigger => state?.GetTriggerFires(trigger) ?? 0,
             trigger => state is null ? null : state.IsTriggerEnabled(trigger),
-            (x, y) => BotUseGuards.Near(leader.ZoneActor, x, y).Any(m => DudCreatures.Fightable(m.Object.m_globalID.Full)),
+            (x, y) => BotUseGuards.Near(leader.ZoneActor, x, y).Any(m => DudCreatures.Fightable(m.Object.m_globalID.Full)
+                                                                    && BotFloors.OnFloor(leader.Z, m.Object.m_location.Z)),
             (x, y) => OverlayQuestPath.IslandOf(leader.Zone, leader.X, leader.Y) is var a && OverlayQuestPath.IslandOf(leader.Zone, x, y) is var b
                       && (a < 0 || b < 0 || a == b));
-        if (BotFloors.Next(book, live, leader.X, leader.Y, _floorTries) is not { } duty) {
+        if (BotFloors.Next(book, live, leader.X, leader.Y, _floorTries, leader.Z) is not { } duty) {
             _floorOn = null;
             return null;
         }

@@ -1,0 +1,4 @@
+Fixed: Ultimus and the Quest Team do a dungeon floor in the right order
+In Counterweight East Ultimus beat the boss on the floor above first, then went back down to fight the room's creatures and then pulled the lever. The floors stand one over another, and he mixed up things right above or below him with things on his own floor. Now only the things on his own floor count: he fights the room's creatures, pulls the lever, and then goes up to the next floor and the boss. This works the same in every dungeon.
+Where: Ultimus and the Quest Team, in dungeons with floors, levers and battle circles, such as Counterweight East and Big Ben
+Test: Send Ultimus through Counterweight East and check that on each floor he fights the creatures first, then pulls the lever, and only then goes up to the boss.

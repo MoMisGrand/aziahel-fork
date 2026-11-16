@@ -41,10 +41,10 @@ namespace Imlight.CoreLib.Game.BotShared;
 internal static class BotFloors {
 
     /// <summary>A room's battle circle: the trigger that starts its fight and the spot to step on.</summary>
-    internal sealed record Circle(string Trigger, string Volume, float X, float Y);
+    internal sealed record Circle(string Trigger, string Volume, float X, float Y, float Z = float.NaN);
 
     /// <summary>A puzzle plate: stepping on <see cref="Volume"/> turns <see cref="Object"/> from one state to another.</summary>
-    internal sealed record Toggle(string Object, string From, string To, string Volume, float X, float Y);
+    internal sealed record Toggle(string Object, string From, string To, string Volume, float X, float Y, float Z = float.NaN);
 
     /// <summary>How a gate opens.</summary>
     internal enum Opener { Beat, Step, Click, Other }
@@ -54,7 +54,8 @@ internal static class BotFloors {
     /// and the object states a puzzle needs first.
     /// </summary>
     internal sealed record Gate(string Object, string Trigger, float X, float Y, Opener By, string Volume, float VX, float VY,
-        string Lever, float LX, float LY, List<(string Object, string State)> Needs, string Through = "", float TX = float.NaN, float TY = float.NaN);
+        string Lever, float LX, float LY, List<(string Object, string State)> Needs, string Through = "", float TX = float.NaN, float TY = float.NaN,
+        float Z = float.NaN, float VZ = float.NaN, float LZ = float.NaN);
 
     /// <summary>What the area's files say about its floors.</summary>
     internal sealed record Book(List<Circle> Circles, List<Gate> Gates, List<Toggle> Toggles, Dictionary<string, string> Starts) {
@@ -124,7 +125,7 @@ internal static class BotFloors {
 
         // Start states: the trigger objects, then the area's object list.
         var starts = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        var spots = new Dictionary<string, (float X, float Y)>(StringComparer.OrdinalIgnoreCase);
+        var spots = new Dictionary<string, (float X, float Y, float Z)>(StringComparer.OrdinalIgnoreCase);
         foreach (var t in triggers) {
             if (t.m_triggerObjInfo is { } info && info.m_templateID != 0) {
                 foreach (string name in new[] { (string) info.m_zoneTag, (string) info.m_triggerObjName }) {
@@ -133,7 +134,7 @@ internal static class BotFloors {
                             starts.TryAdd(name, info.m_startState);
                         }
 
-                        spots.TryAdd(name, (info.m_location.X, info.m_location.Y));
+                        spots.TryAdd(name, (info.m_location.X, info.m_location.Y, info.m_location.Z));
                     }
                 }
             }
@@ -149,7 +150,7 @@ internal static class BotFloors {
                 starts.TryAdd(tag, o.m_startState);
             }
 
-            spots.TryAdd(tag, (o.m_location.X, o.m_location.Y));
+            spots.TryAdd(tag, (o.m_location.X, o.m_location.Y, o.m_location.Z));
         }
 
         // Battle circles.
@@ -157,7 +158,7 @@ internal static class BotFloors {
         foreach (var t in triggers.Where(t => Results(t).Any(r => r is ResInitiateCombat))) {
             foreach (var fire in Fires(t)) {
                 if (VolumeOf(fire) is { } v) {
-                    circles.Add(new Circle((string) t.m_triggerName ?? "", (string) v.m_volumeName ?? "", v.m_locationX, v.m_locationY));
+                    circles.Add(new Circle((string) t.m_triggerName ?? "", (string) v.m_volumeName ?? "", v.m_locationX, v.m_locationY, v.m_locationZ));
                 }
             }
         }
@@ -175,7 +176,7 @@ internal static class BotFloors {
 
                 foreach (var fire in Fires(t)) {
                     if (VolumeOf(fire) is { } v) {
-                        toggles.Add(new Toggle(obj, from.m_triggerObjState, set.m_triggerObjState, (string) v.m_volumeName ?? "", v.m_locationX, v.m_locationY));
+                        toggles.Add(new Toggle(obj, from.m_triggerObjState, set.m_triggerObjState, (string) v.m_volumeName ?? "", v.m_locationX, v.m_locationY, v.m_locationZ));
                     }
                 }
             }
@@ -195,7 +196,7 @@ internal static class BotFloors {
                     continue;
                 }
 
-                var gate = new Gate(obj, (string) t.m_triggerName ?? "", at.X, at.Y, Opener.Other, "", float.NaN, float.NaN, "", float.NaN, float.NaN, []);
+                var gate = new Gate(obj, (string) t.m_triggerName ?? "", at.X, at.Y, Opener.Other, "", float.NaN, float.NaN, "", float.NaN, float.NaN, [], Z: at.Z);
                 foreach (var fire in Fires(t)) {
                     if (string.Equals(fire, "Monster_Killed", StringComparison.OrdinalIgnoreCase)) {
                         gate = gate with { By = Opener.Beat };
@@ -203,14 +204,14 @@ internal static class BotFloors {
                     }
 
                     if (VolumeOf(fire) is { } v) {
-                        gate = gate with { By = Opener.Step, Volume = (string) v.m_volumeName ?? "", VX = v.m_locationX, VY = v.m_locationY };
+                        gate = gate with { By = Opener.Step, Volume = (string) v.m_volumeName ?? "", VX = v.m_locationX, VY = v.m_locationY, VZ = v.m_locationZ };
                         break;
                     }
 
                     // "Lever.Down.EnterState": the lever itself turned.
                     var bits = fire.Split('.');
                     if (bits.Length == 3 && bits[2].Equals("EnterState", StringComparison.OrdinalIgnoreCase) && spots.TryGetValue(bits[0], out var lever)) {
-                        gate = gate with { By = Opener.Click, Lever = bits[0], LX = lever.X, LY = lever.Y };
+                        gate = gate with { By = Opener.Click, Lever = bits[0], LX = lever.X, LY = lever.Y, LZ = lever.Z };
                         break;
                     }
 
@@ -218,7 +219,7 @@ internal static class BotFloors {
                     if (fire.StartsWith("ActivateFrom_", StringComparison.OrdinalIgnoreCase)
                         && triggers.FirstOrDefault(x => string.Equals((string) x.m_triggerName, fire["ActivateFrom_".Length..], StringComparison.OrdinalIgnoreCase)) is { } from) {
                         if (Fires(from).Select(VolumeOf).FirstOrDefault(v => v is not null) is { } step) {
-                            gate = gate with { By = Opener.Step, Volume = (string) step.m_volumeName ?? "", VX = step.m_locationX, VY = step.m_locationY };
+                            gate = gate with { By = Opener.Step, Volume = (string) step.m_volumeName ?? "", VX = step.m_locationX, VY = step.m_locationY, VZ = step.m_locationZ };
                             break;
                         }
 
@@ -234,7 +235,7 @@ internal static class BotFloors {
                         if (leverName is not null && Far(spots[leverName].X, spots[leverName].Y, at.X, at.Y) <= PUZZLE) {
                             gate = gate with {
                                 By = Opener.Click, Lever = leverName,
-                                LX = spots[leverName].X, LY = spots[leverName].Y, Needs = needs,
+                                LX = spots[leverName].X, LY = spots[leverName].Y, LZ = spots[leverName].Z, Needs = needs,
                             };
                         }
 
@@ -308,6 +309,12 @@ internal static class BotFloors {
         return null;
     }
 
+    // How far up or down a thing may be and still be on the wizard's floor (Counterweight East's floors are 900 apart).
+    internal const float FLOOR = 300f;
+
+    /// <summary>Whether a thing at height <paramref name="oz"/> is on the floor of a wizard at height <paramref name="z"/> (unknown: yes).</summary>
+    internal static bool OnFloor(float z, float oz) => float.IsNaN(z) || float.IsNaN(oz) || MathF.Abs(z - oz) <= FLOOR;
+
     internal static float Far(float x1, float y1, float x2, float y2) => MathF.Sqrt(((x1 - x2) * (x1 - x2)) + ((y1 - y2) * (y1 - y2)));
 
     /// <summary>What the bot sees of the zone right now: object states, trigger fires and creatures (null when unknown).</summary>
@@ -319,10 +326,15 @@ internal static class BotFloors {
     /// started, then creatures by a fight-gate or a started circle, then a gate's spot to step on, then a puzzle's plates
     /// and its lever. <paramref name="tries"/> counts the steps and clicks already made, by key (kept by the bot per zone copy).
     /// </summary>
-    internal static Duty Next(Book book, Live live, float x, float y, IReadOnlyDictionary<string, int> tries) {
+    internal static Duty Next(Book book, Live live, float x, float y, IReadOnlyDictionary<string, int> tries, float z = float.NaN) {
         if (book is null || book.IsEmpty) {
             return null;
         }
+
+        // Only this floor's things (Niduus, 2026-11-16, Counterweight East: "He killed the boss, then decided to fight the
+        // mobs a floor down, then hit the lever. He should: Fight the mobs, Flip the lever, Ascend a floor/Fight the boss").
+        // The floors stand one over another, so a circle or lever right above or below is not this room's.
+        bool Here(float oz) => OnFloor(z, oz);
 
         int Tried(string key) => tries?.GetValueOrDefault(key) ?? 0;
         string StateOf(string obj) => live?.StateOf?.Invoke(obj) is { Length: > 0 } s ? s : book.Starts.GetValueOrDefault(obj) ?? "";
@@ -330,7 +342,7 @@ internal static class BotFloors {
         bool Off(string trigger) => live?.EnabledOf?.Invoke(trigger) == false;
 
         // 1. The room's battle circle, when it has not started its fight in this copy of the area.
-        foreach (var circle in book.Circles.Where(c => Far(x, y, c.X, c.Y) <= ROOM).OrderBy(c => Far(x, y, c.X, c.Y))) {
+        foreach (var circle in book.Circles.Where(c => Far(x, y, c.X, c.Y) <= ROOM && Here(c.Z)).OrderBy(c => Far(x, y, c.X, c.Y))) {
             var key = "circle|" + circle.Trigger;
             if ((live?.FiresOf?.Invoke(circle.Trigger) ?? 0) > 0 || Tried(key) >= 1 || Off(circle.Trigger)) {
                 continue;
@@ -340,7 +352,7 @@ internal static class BotFloors {
                 "each room's fight starts on its battle circle, and the way on opens once it is won");
         }
 
-        var near = book.Gates.Where(g => Closed(g) && Far(x, y, g.X, g.Y) <= ROOM).OrderBy(g => Far(x, y, g.X, g.Y)).ToList();
+        var near = book.Gates.Where(g => Closed(g) && Far(x, y, g.X, g.Y) <= ROOM && Here(g.Z)).OrderBy(g => Far(x, y, g.X, g.Y)).ToList();
 
         // 2. Creatures by a closed door that opens on a fight, or by the room's circle once its fight started.
         foreach (var gate in near.Where(g => g.By == Opener.Beat)) {
@@ -350,7 +362,7 @@ internal static class BotFloors {
             }
         }
 
-        foreach (var circle in book.Circles.Where(c => Far(x, y, c.X, c.Y) <= ROOM)) {
+        foreach (var circle in book.Circles.Where(c => Far(x, y, c.X, c.Y) <= ROOM && Here(c.Z))) {
             if (live?.FoesNear?.Invoke(circle.X, circle.Y) == true) {
                 return new Duty(FIGHT, circle.X, circle.Y, $"the creatures of the room's battle circle \"{circle.Volume}\"", "room|" + circle.Trigger,
                     "the room's creatures are beaten before going on");
@@ -358,7 +370,7 @@ internal static class BotFloors {
         }
 
         // 3. A spot that opens a door here.
-        foreach (var gate in near.Where(g => g.By == Opener.Step && !Off(g.Trigger))) {
+        foreach (var gate in near.Where(g => g.By == Opener.Step && !Off(g.Trigger) && Here(g.VZ))) {
             var key = "step|" + gate.Volume;
             if (Tried(key) < TRIES) {
                 return new Duty(STEP, gate.VX, gate.VY, $"\"{gate.Volume}\", which opens \"{gate.Object}\"", key,
@@ -368,7 +380,7 @@ internal static class BotFloors {
 
         // 4. A puzzle: the plates that are wrong, one at a time, then the lever.
         foreach (var gate in book.Gates.Where(g => g.By == Opener.Click && Closed(g) && !Off(g.Trigger)
-                                                   && Far(x, y, g.LX, g.LY) <= PUZZLE)
+                                                   && Far(x, y, g.LX, g.LY) <= PUZZLE && Here(g.LZ))
                      .OrderBy(g => Far(x, y, g.LX, g.LY))) {
             var wrong = gate.Needs.Where(n => !string.Equals(StateOf(n.Object), n.State, StringComparison.OrdinalIgnoreCase)).ToList();
             foreach (var (obj, state) in wrong) {
@@ -397,7 +409,7 @@ internal static class BotFloors {
         // once the room is done. He beat Big Ben's sixth floor and its door opened, then walked back to the south wall
         // toward Meowiarty's spot for an hour, since the boss is on the same height (his log, 2026-11-16 03:14).
         foreach (var gate in book.Gates.Where(g => g.Through.Length > 0 && !Closed(g) && !Opens(book.Starts.GetValueOrDefault(g.Object) ?? "")
-                                                   && Far(x, y, g.X, g.Y) <= ROOM && Before(g) && live?.SameGround?.Invoke(g.X, g.Y) != false)
+                                                   && Far(x, y, g.X, g.Y) <= ROOM && Here(g.Z) && Before(g) && live?.SameGround?.Invoke(g.X, g.Y) != false)
                      .OrderBy(g => Far(x, y, g.X, g.Y))) {
             var key = "through|" + gate.Object;
             if (Tried(key) < TRIES) {

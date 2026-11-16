@@ -372,6 +372,15 @@ internal sealed partial class CombatDuelComponent {
                 continue;
             }
 
+            // The card thrown away to make room for a treasure card is not out of his hand yet: he picks once it is, on the
+            // hand as it really is (Niduus, 2026-11-16: "Ultimus just hit himself": he looked again before the discard
+            // landed, and his pick's place in the hand then held another card, cast on himself).
+            if (!message.Deadline && _ultimusRoomMade.Contains((Duel.m_roundNum, member.SlotIndex)) && member.HandCount >= 7
+                && !_ultimusDrew.Contains((Duel.m_roundNum, member.SlotIndex))) {
+                Timers.StartSingleTimer(ULTIMUS_THINK_KEY, new UltimusThink(Duel.m_roundNum, false), TimeSpan.FromSeconds(1));
+                continue;
+            }
+
             // A tough fight, treasure cards waiting and a full hand: the Draw button does nothing with seven cards in hand, so
             // he had never drawn one (Niduus, 2026-11-16: "if he's not using Treasure cards in battle, have him use them";
             // his logs: no draw in any fight). As a player does, he throws away his least useful card first, then draws.
