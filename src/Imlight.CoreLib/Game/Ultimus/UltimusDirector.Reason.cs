@@ -160,6 +160,9 @@ internal sealed partial class UltimusDirectorActor {
         q.AppendLine(offered.Count > 0 ? $"Offered to click next to him: {string.Join(", ", offered)}." : "Nothing offered to click next to him.");
         var foes = BotUseGuards.Near(member.ZoneActor, member.X, member.Y).Select(f => f.Name).Distinct().Take(5).ToList();
         q.AppendLine(foes.Count > 0 ? $"Creatures near him: {string.Join(", ", foes)}." : "No creatures near him.");
+        foreach (var fact in UltimusGameData.Facts(goal?.Template ?? 0, BotUseGuards.Near(member.ZoneActor, member.X, member.Y).Select(f => (ulong) f.Template))) {
+            q.AppendLine(fact);
+        }
         if (!string.IsNullOrEmpty(quest) && Diagnose(quest) is { } d) {
             q.AppendLine(d.Summary);
             foreach (var check in d.Checks.Take(4)) {

@@ -218,6 +218,9 @@ internal sealed partial class QuestTeamDirectorActor {
         q.AppendLine(offered.Count > 0 ? $"Offered to click next to the leader: {string.Join(", ", offered)}." : "Nothing offered to click next to the leader.");
         var foes = BotUseGuards.Near(leader.ZoneActor, leader.X, leader.Y).Select(f => f.Name).Distinct().Take(5).ToList();
         q.AppendLine(foes.Count > 0 ? $"Creatures near: {string.Join(", ", foes)}." : "No creatures near.");
+        foreach (var fact in Ultimus.UltimusGameData.Facts(_target?.Template ?? 0, BotUseGuards.Near(leader.ZoneActor, leader.X, leader.Y).Select(f => (ulong) f.Template))) {
+            q.AppendLine(fact);
+        }
         foreach (var known in UltimusSolutions.Known(quest, step, leader.Zone, leader.X, leader.Y)) {
             q.AppendLine($"Tried for this step before: {known.Move} ({known.Worked} worked, {known.Failed} failed){(known.Cause.Length > 0 ? $", thought: {known.Cause}" : "")}.");
         }

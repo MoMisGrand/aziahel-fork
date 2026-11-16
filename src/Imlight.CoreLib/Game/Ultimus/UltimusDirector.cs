@@ -613,6 +613,10 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
                     // Its deck read first, as a player who knows the creature (UltimusScout): shields for what it hits with.
                     UltimusScout.Expect(target.Template);
                     Note("Ultimus", $"knows what it is about to fight: {UltimusScout.OfCreature(target.Template).Describe()}.");
+                    // What the game's own data says about it (UltimusGameData, read only).
+                    if (UltimusGameData.Creature(target.Template) is { Length: > 0 } data) {
+                        Note("Ultimus", $"looks it up in the game's data: {data}.");
+                    }
                     ThinkAboutFight(target);
                     ThinkAboutRival(target);
                     PrepareDecks(UltimusScout.SituationOf(target.Template));

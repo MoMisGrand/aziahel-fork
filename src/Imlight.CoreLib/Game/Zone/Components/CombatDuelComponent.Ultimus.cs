@@ -45,6 +45,8 @@ internal sealed partial class CombatDuelComponent {
     private readonly Dictionary<int, string> _ultimusPicks = [];
     private readonly HashSet<(int Round, int Slot)> _ultimusDiscarded = [];
     private readonly HashSet<(int Round, int Slot)> _ultimusDrew = [];
+    // Rounds he threw a card away to make room for a treasure card (once a round).
+    private readonly HashSet<(int Round, int Slot)> _ultimusRoomMade = [];
     // The Ultimus circles that have read this battle's enemy decks (said once a battle).
     private readonly HashSet<int> _ultimusScouted = [];
     private int _ultimusDeadlineRound = -1;
@@ -173,11 +175,32 @@ internal sealed partial class CombatDuelComponent {
                || BotCore.Incoming(enemies, Duel.m_roundNum, c => "").Share >= 0.4;
     }
 
+    // The card he throws away to make room for a treasure card: one his solo play would discard anyway, else the least
+    // useful (no hit, no heal, then the lowest rank).
+    private static (int Index, string Why)? UltimusRoomForTreasure(CombatDuelSubCircle me, IReadOnlyList<CombatDuelSubCircle> circles) {
+        var threat = UltimusScout.InBattle(circles.Where(c => c.OccupiedTeam != me.OccupiedTeam));
+        var cards = new List<(int Index, RewrittenAI.Card Card)>();
+        for (byte i = 0; i < 24; i++) {
+            if (me.GetSpellFromLastHand(i) is { } spell && !spell.m_treasureCard && RewrittenAI.Read(spell) is { } card) {
+                cards.Add((i, card));
+            }
+        }
+
+        var useless = BotCards.Discards(me, circles, BotStyle.Backup, c => UltimusTactics.UselessShield(c, threat))
+            .Where(i => cards.Any(c => c.Index == i)).ToList();
+        var pick = useless.Count > 0
+            ? cards.First(c => c.Index == useless[0])
+            : cards.OrderBy(c => c.Card.Hit ? 1 : 0).ThenBy(c => c.Card.Heal ? 1 : 0).ThenBy(c => c.Card.Rank).FirstOrDefault();
+
+        return pick.Card is null ? null : (pick.Index, $"discards {pick.Card.Shown}");
+    }
+
     private void UltimusPlanningBegins() {
         _ultimusPicks.Clear();
         if (Duel.m_roundNum <= 1) {
             _ultimusScouted.Clear();
             _ultimusDrew.Clear();
+            _ultimusRoomMade.Clear();
             _ultimusDownSince.Clear();
         }
 
@@ -292,6 +315,21 @@ internal sealed partial class CombatDuelComponent {
 
             // An ordered flee or treasure card draw comes before anything else.
             if (UltimusOrderedFleeOrDraw(member, message.Deadline)) {
+                continue;
+            }
+
+            // A tough fight, treasure cards waiting and a full hand: the Draw button does nothing with seven cards in hand, so
+            // he had never drawn one (Niduus, 2026-11-16: "if he's not using Treasure cards in battle, have him use them";
+            // his logs: no draw in any fight). As a player does, he throws away his least useful card first, then draws.
+            if (!message.Deadline && UltimusToughFight(member, circles) && member.VaultRemainingCount > 0 && member.TreasureCardsInHand == 0
+                && member.HandCount >= 7 && !_ultimusDrew.Contains((Duel.m_roundNum, member.SlotIndex))
+                && UltimusRoomForTreasure(member, circles) is { } room && _ultimusRoomMade.Add((Duel.m_roundNum, member.SlotIndex))
+                && UltimusDirector.ActorOf(UltimusRole(member)) is { } maker) {
+                UltimusLink.Note(UltimusRoster.NAME, $"round {Duel.m_roundNum}: a tough fight with a full hand: {room.Why} to make room for a treasure card.");
+                var roomLeft = PlanningSeconds - (DateTime.UtcNow - _planningStartedAt).TotalSeconds;
+                maker.Tell(new UltimusMember.Clicks(BotBattle.Timed([BotBattle.Move.Discard(room.Index, room.Why)], 7, roomLeft)),
+                    Akka.Actor.ActorRefs.NoSender);
+                Timers.StartSingleTimer(ULTIMUS_THINK_KEY, new UltimusThink(Duel.m_roundNum, false), TimeSpan.FromSeconds(4));
                 continue;
             }
 
