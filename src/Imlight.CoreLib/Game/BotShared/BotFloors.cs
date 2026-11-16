@@ -60,6 +60,9 @@ internal static class BotFloors {
     internal sealed record Book(List<Circle> Circles, List<Gate> Gates, List<Toggle> Toggles, Dictionary<string, string> Starts) {
         internal static readonly Book Empty = new([], [], [], new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase));
         internal bool IsEmpty => Circles.Count == 0 && Gates.Count == 0;
+
+        /// <summary>Every teleporter on (not one back or out), by its volume's name and spot.</summary>
+        internal List<(string Name, float X, float Y)> Ahead { get; init; } = [];
     }
 
     /// <summary>One floor duty: step on a spot, fight by a spot, or click the lever there.</summary>
@@ -268,7 +271,7 @@ internal static class BotFloors {
         }
 
         return new Book(circles.DistinctBy(c => c.Trigger + "|" + c.Volume).ToList(), gates.DistinctBy(g => g.Object + "|" + g.Trigger).ToList(),
-            toggles.DistinctBy(g => g.Object + "|" + g.From + "|" + g.Volume).ToList(), starts);
+            toggles.DistinctBy(g => g.Object + "|" + g.From + "|" + g.Volume).ToList(), starts) { Ahead = pads };
     }
 
     // A thing a player pulls or presses.
@@ -280,6 +283,30 @@ internal static class BotFloors {
     internal static bool Opens(string state)
         => !string.IsNullOrEmpty(state)
            && (state.Contains("Open", StringComparison.OrdinalIgnoreCase) || state.Contains("Unlock", StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>
+    /// The nearest teleporter on from (x, y) on the same ground, not behind a door still shut (the floor's duty opens that
+    /// one first), or null. With no way on the map to a step on a later floor, this is the way a player goes: the floor's
+    /// own teleporter up.
+    /// </summary>
+    internal static (string Name, float X, float Y)? PadAhead(Book book, Live live, float x, float y) {
+        if (book is null || book.Ahead.Count == 0) {
+            return null;
+        }
+
+        string StateOf(string obj) => live?.StateOf?.Invoke(obj) is { Length: > 0 } st ? st : book.Starts.GetValueOrDefault(obj) ?? "";
+        // Behind a shut door, or a door's pad he is already past (the room before's way up lands by this room's start).
+        var skip = book.Gates.Where(g => g.Through.Length > 0
+                                         && (!Opens(StateOf(g.Object)) || ((x - g.TX) * (g.TX - g.X)) + ((y - g.TY) * (g.TY - g.Y)) >= 0))
+            .Select(g => g.Through).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        foreach (var pad in book.Ahead.Where(p => Far(x, y, p.X, p.Y) <= ROOM * 2 && !skip.Contains(p.Name)).OrderBy(p => Far(x, y, p.X, p.Y))) {
+            if (live?.SameGround?.Invoke(pad.X, pad.Y) != false) {
+                return pad;
+            }
+        }
+
+        return null;
+    }
 
     internal static float Far(float x1, float y1, float x2, float y2) => MathF.Sqrt(((x1 - x2) * (x1 - x2)) + ((y1 - y2) * (y1 - y2)));
 

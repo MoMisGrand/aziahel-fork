@@ -438,6 +438,8 @@ internal sealed partial class UltimusDirectorActor {
     // He may wake a sleeping Bazaar bot once per world (it reads the game files for a minute when it wakes); later looks
     // in the same world only ask while it is awake anyway.
     private bool _bazaarWakeAllowed = true;
+    // The area the Bazaar trip's way was planned from.
+    private string _bazaarTripZone;
 
     /// <summary>Each new world: he looks his gear over (shops of the world at once, the Bazaar when it is worth the trip).</summary>
     private void NewWorldGearCheck(UltimusMember.Status leader, string world) {
@@ -454,13 +456,18 @@ internal sealed partial class UltimusDirectorActor {
 
     /// <summary>A clear upgrade the Bazaar has in stock that he can pay for, past his reserve: the way there, or the buy.</summary>
     private UltimusPlanner.Target BazaarTarget(List<UltimusMember.Status> group) {
-        if (DateTime.UtcNow < _nextBazaarLook) {
+        // The way there is planned from the area he stands in (its exit there): in the next area it is looked at again at
+        // once. The Regent's Square exit kept being walked to in Wolfminster Abbey, which is that area's way back, so he went
+        // in and out of Regent's Square 8 times in 90 seconds (his log, 2026-11-16 05:00).
+        var tripElsewhere = _bazaarTrip is not null && !string.Equals(_bazaarTripZone, group[0].Zone, StringComparison.OrdinalIgnoreCase);
+        if (DateTime.UtcNow < _nextBazaarLook && !tripElsewhere) {
             return _bazaarTrip;
         }
 
         _nextBazaarLook = DateTime.UtcNow.AddMinutes(10);
         _bazaarTrip = null;
         var leader = group[0];
+        _bazaarTripZone = leader.Zone;
         if (leader.Wizard is not { } wizard || wizard.ZoneIsInstance) {
             return null;
         }

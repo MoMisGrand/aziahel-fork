@@ -211,8 +211,8 @@ internal sealed partial class UltimusDirectorActor {
         }
 
         if (InDungeon(leader)) {
-            Think($"I'm at {share:P0} health in a dungeon with no potion or wisp in here. Walking out would close the dungeon, so I go on " +
-                  "and fight; if I fall, Dungeon Recall brings me back.", "dungeon-noheal|" + leader.Zone);
+            Think($"I'm at {share:P0} health in a dungeon with no potion or wisp in here. Walking out would cost the floors done, so I go on " +
+                  "and fight; if I fall, I heal and Dungeon Recall brings me back to this same copy.", "dungeon-noheal|" + leader.Zone);
             _hurtSince = DateTime.MaxValue;
 
             return false;
