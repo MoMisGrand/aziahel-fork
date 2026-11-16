@@ -646,14 +646,20 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
 
         // Every new move checked against his mission, with its "because" (UltimusDirector.Guard.cs).
         var target = MissionCheck(leader, PickTarget(group));
-        // A quest thing that did not work with its boss or creatures still standing: they are fought first (BotUseGuards).
-        target = GuardFight(leader, target) ?? target;
-        // Ten stuck alarms at one spot: the creatures around it first (UltimusDirector.Approach.cs).
-        target = ClearAroundFight(leader) ?? target;
-        // A step set aside with no other step open: a fight here or a short rest, not the same moves (UltimusDirector.Aside.cs).
-        target = AsideWork(leader, target) ?? target;
-        // In a dungeon: each floor's battle circle, fight, door spot and puzzle first (UltimusDirector.Rooms.cs).
-        target = FloorDuty(leader, target) ?? target;
+        // In a group he goes along with his group mate: their pace, their battles. His own floor duties, stuck fights and
+        // set-aside work wait (Niduus, 2026-11-16: in Big Ben he stepped on the first room's circle alone while Walter was
+        // still loading in, so the fight started without him).
+        var withGroup = target?.Key?.StartsWith(PARTY_KEY, StringComparison.Ordinal) == true;
+        if (!withGroup) {
+            // A quest thing that did not work with its boss or creatures still standing: they are fought first (BotUseGuards).
+            target = GuardFight(leader, target) ?? target;
+            // Ten stuck alarms at one spot: the creatures around it first (UltimusDirector.Approach.cs).
+            target = ClearAroundFight(leader) ?? target;
+            // A step set aside with no other step open: a fight here or a short rest, not the same moves (UltimusDirector.Aside.cs).
+            target = AsideWork(leader, target) ?? target;
+            // In a dungeon: each floor's battle circle, fight, door spot and puzzle first (UltimusDirector.Rooms.cs).
+            target = FloorDuty(leader, target) ?? target;
+        }
         // Healing first, above all before a fight (UltimusDirector.Health.cs).
         if (HealFirst(group, target)) {
             _healingAt = DateTime.UtcNow;
