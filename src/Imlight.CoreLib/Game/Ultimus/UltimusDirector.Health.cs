@@ -91,6 +91,12 @@ internal sealed partial class UltimusDirectorActor {
         if (PotionRun(leader)) {
             return true;
         }
+        // Potions are kept for right before a boss (Niduus, 2026-11-16: "he will always use them RIGHT BEFORE the boss fight
+        // ... conserve potions for when he needs it most"): the boss is next and he is not full, so he drinks now.
+        if (PotionBeforeBoss(leader, target)) {
+            return true;
+        }
+
         // Before walking into a dungeon he wants more (UltimusDirector.Sense.cs: a dungeon is done in one go).
         var hurt = Hurt(leader, out var lowHealth, out var lowMana, ToughFoeNow(target));
         if (!hurt && DungeonPrep(leader, target, out var dungeonHealth, out var dungeonMana)) {
@@ -120,8 +126,10 @@ internal sealed partial class UltimusDirectorActor {
 
         _lastProgress = DateTime.UtcNow;
 
-        // 1. A potion.
-        if (stats.m_potionCharge >= 1) {
+        // 1. A potion: only right before a boss (above) or when he is close to falling; otherwise he saves it and heals the
+        // other ways (Niduus, 2026-11-16).
+        var healthShare = stats.m_currentHitpoints / (double) maxHealth;
+        if (stats.m_potionCharge >= 1 && healthShare < POTION_ONLY_BELOW) {
             if (CanClick("potion|heal")) {
                 Clicked("potion|heal");
                 Note("Ultimus", $"{leader.Name} drinks a potion to heal.");
@@ -300,6 +308,41 @@ internal sealed partial class UltimusDirectorActor {
     // Before walking into a dungeon, potions filled at a potion shop in this area or the next one, as a player stocks up
     // before a dungeon (Niduus, 2026-11-15, after he went into The Vault of Ice at 35% with no potions). Once per dungeon door;
     // PotionRun takes him there and stops when they are full.
+    // Below this share of health a potion is drunk even away from a boss: falling costs more than the potion.
+    private const double POTION_ONLY_BELOW = 0.25;
+    private ulong _potionBossDrank;
+
+    // The boss of the next fight, a potion in hand, and health or mana short of full: he drinks right before it.
+    private bool PotionBeforeBoss(UltimusMember.Status leader, UltimusPlanner.Target target) {
+        if (target?.Kind != UltimusPlanner.FIGHT || !UltimusGameData.IsBoss(target.Template) || leader.Wizard?.GameStats is not { } stats
+            || stats.m_potionCharge < 1 || CombatDuelComponent.IsInBattle(leader.GlobalId)) {
+            return false;
+        }
+
+        var maxHealth = Math.Max(1, stats.m_baseHitpoints + stats.m_bonusHitpoints);
+        var maxMana = Math.Max(1, stats.m_baseMana + stats.m_bonusMana);
+        // Nearly full (a potion would be wasted), or already drunk for this boss and the second one would be too.
+        if (stats.m_currentHitpoints >= maxHealth * 0.9 && stats.m_currentMana >= maxMana * 0.8
+            || _potionBossDrank == target.Template && stats.m_currentHitpoints >= maxHealth * 0.6) {
+            return false;
+        }
+
+        if (CanClick("potion|boss")) {
+            Clicked("potion|boss");
+            _potionBossDrank = target.Template;
+            Note("Ultimus", $"{leader.Name} drinks a potion right before the boss fight ({target.What}): {stats.m_currentHitpoints} of {maxHealth} health, " +
+                            $"{stats.m_currentMana} of {maxMana} mana.");
+            Think($"The boss is next ({target.What}), so this is when a potion counts: I drink it now and go in full. I saved it for this.",
+                "potion-boss|" + target.Template);
+            _actors[0].Tell(new UltimusMember.UsePotion());
+            UltimusEffort.Note(UltimusEffort.Kind.PotionUsedWell, $"drank a saved potion right before {target.What}");
+        }
+
+        _doing = "drinking a potion before the boss";
+
+        return true;
+    }
+
     private void PotionsBeforeDungeon(UltimusMember.Status leader, UltimusPlanner.Target target) {
         if (!IntoDungeon(leader, target) || leader.Wizard?.GameStats is not { } stats || stats.m_potionMax < 1
             || stats.m_potionCharge >= stats.m_potionMax || DateTime.UtcNow < _potionRunUntil || _potionPrepFor == target.To) {

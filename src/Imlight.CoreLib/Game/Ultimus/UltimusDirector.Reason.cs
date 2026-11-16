@@ -163,6 +163,11 @@ internal sealed partial class UltimusDirectorActor {
         foreach (var fact in UltimusGameData.Facts(goal?.Template ?? 0, BotUseGuards.Near(member.ZoneActor, member.X, member.Y).Select(f => (ulong) f.Template))) {
             q.AppendLine(fact);
         }
+
+        // His own effort today, the bad as well as the good (UltimusEffort).
+        foreach (var fact in UltimusEffort.Facts()) {
+            q.AppendLine(fact);
+        }
         if (!string.IsNullOrEmpty(quest) && Diagnose(quest) is { } d) {
             q.AppendLine(d.Summary);
             foreach (var check in d.Checks.Take(4)) {

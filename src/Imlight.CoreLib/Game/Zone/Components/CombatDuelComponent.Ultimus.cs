@@ -256,8 +256,21 @@ internal sealed partial class CombatDuelComponent {
                 continue;
             }
 
+            // In a dungeon or instance a flee loses the whole run, so he never presses it there: he stays down and waits for a
+            // revive or the battle's end (Niduus, 2026-11-16: "see fleeing a Dungeon/Instance as a punishment").
+            if (Duel.m_roundNum - since >= ULTIMUS_DOWN_ROUNDS && circle._wizard is { } downed && Imlight.CoreLib.Game.World.DungeonRecall.IsInDungeon(downed.CharId)) {
+                if (Duel.m_roundNum - since == ULTIMUS_DOWN_ROUNDS) {
+                    wizard.Tell(new UltimusMember.SayText("I won't flee: in here that would lose the whole dungeon. I'll wait for a revive or the end of the fight."),
+                        Akka.Actor.ActorRefs.NoSender);
+                    UltimusLink.Note(UltimusRoster.NAME, $"round {Duel.m_roundNum}: down {ULTIMUS_DOWN_ROUNDS} rounds in a dungeon: does not flee (that loses the run); waits.");
+                }
+
+                continue;
+            }
+
             if (Duel.m_roundNum - since >= ULTIMUS_DOWN_ROUNDS) {
                 _ultimusDownSince.Remove(circle.SlotIndex);
+                UltimusEffort.Note(UltimusEffort.Kind.Fled, "down 4 rounds with no revive, so he fled the battle");
                 wizard.Tell(new UltimusMember.SayText("Nobody could revive me, so I'm leaving the battle. Good luck!"), Akka.Actor.ActorRefs.NoSender);
                 UltimusLink.Note(UltimusRoster.NAME, $"round {Duel.m_roundNum}: down for {ULTIMUS_DOWN_ROUNDS} rounds with no revive: presses Flee.");
                 wizard.Tell(new UltimusMember.Flee(), Akka.Actor.ActorRefs.NoSender);

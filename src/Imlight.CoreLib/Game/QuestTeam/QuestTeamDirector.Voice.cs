@@ -162,6 +162,14 @@ internal sealed partial class QuestTeamDirectorActor {
                 : null;
             var how = (whisperTo != 0 ? "whispered" : "said") + (heard.Typed ? "" : " in Menu Chat");
 
+            // "How do I train X?", "where do I get X?": the same real-game lookup Ultimus answers from (UltimusLookup).
+            if (heard.Typed && UltimusLookup.Answer(heard.SpeakerCharId, text) is { Length: > 0 } looked) {
+                _answeredAt[heard.SpeakerCharId] = DateTime.UtcNow;
+                Note("Team", $"{heard.SpeakerName} {how}: \"{QuestTeamText.Short(text, 80)}\"; answered from the real game's data.");
+                SayTyped(speaker, heard, looked, "game data");
+                continue;
+            }
+
             // Typed or whispered talk with [QuestTeam] AIChat: that wizard's own AI words a typed answer (an ask still gets a no,
             // in the wizard's own words; nothing said changes the plan).
             if (talk && heard.Typed && AiChatOn && AskTeamAi(speaker, heard, moment, how)) {

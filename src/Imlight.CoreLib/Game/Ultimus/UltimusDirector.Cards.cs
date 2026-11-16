@@ -79,7 +79,7 @@ internal sealed partial class UltimusDirectorActor {
             return;
         }
 
-        var ids = owned.Where(id => CoreObjectFactory.GetCoreTemplate(id) is SpellTemplate).Take(Math.Min(room, TREASURE_CARDS_KEPT)).ToList();
+        var ids = owned.Where(id => CoreObjectFactory.GetCoreTemplate(id) is SpellTemplate && !BrokenCards.Skip(id)).Take(Math.Min(room, TREASURE_CARDS_KEPT)).ToList();
         if (ids.Count == 0) {
             return;
         }
@@ -104,7 +104,7 @@ internal sealed partial class UltimusDirectorActor {
                 || CoreObjectFactory.GetCoreTemplate(spell.m_templateID) is not SpellTemplate template
                 || !string.Equals((string) template.m_sMagicSchoolName, school, StringComparison.OrdinalIgnoreCase) || template.m_levelRestriction > level
                 || _cardSkipped.Contains(spell.m_templateID) || RewrittenAI.Read(spell) is not { } card || BotCards.NotVanilla(card)
-                || BotCards.IsDevSpell(spell.m_templateID) || !(card.Hit || card.Heal)) {
+                || BotCards.IsDevSpell(spell.m_templateID) || BrokenCards.Skip(spell.m_templateID) || !(card.Hit || card.Heal)) {
                 continue;
             }
 

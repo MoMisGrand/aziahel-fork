@@ -390,6 +390,10 @@ internal sealed partial class UltimusDirectorActor {
         // Old self-made rules fade back toward their start, and the day's health check (UltimusDirector.Safety.cs).
         FadeOldTunes(limits, lines);
         HealthCheck(won, lost, lines);
+        // The good and the bad of his own efforts (UltimusEffort): what to keep doing and what cost him time.
+        if (UltimusEffort.Today() is { Length: > 0 } effort) {
+            lines.Add(effort);
+        }
 
         var text = new StringBuilder();
         text.AppendLine($"=== {DateTime.Now:yyyy-MM-dd HH:mm}: today I learned ===");

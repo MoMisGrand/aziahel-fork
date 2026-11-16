@@ -144,6 +144,7 @@ internal sealed partial class UltimusDirectorActor {
         }
 
         StartBreak(what);
+        UltimusEffort.Note(UltimusEffort.Kind.StuckStep, $"could not get past \"{what}\" at {where} after every fix, twice over");
         var folder = times == 1 || times == 3
             ? SaveNeedsHelp($"Ultimus needs help: \"{what}\" for {UltimusText.Title(quest)} in {where}. He tried every way he knows, twice over." +
                             $"\nSuggested fix: {fix}")

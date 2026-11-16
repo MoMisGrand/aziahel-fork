@@ -73,6 +73,17 @@ internal static class UltimusGameData {
         }
     }
 
+    /// <summary>Whether the game's data marks the creature a boss.</summary>
+    internal static bool IsBoss(ulong template) {
+        try {
+            return template != 0 && CoreObjectFactory.GetCoreTemplate(template) is GameObjectTemplate t
+                   && t.m_behaviors?.OfType<NPCBehaviorTemplate>().FirstOrDefault() is { m_bossMob: true };
+        }
+        catch (Exception) {
+            return false;
+        }
+    }
+
     /// <summary>A card by its spell template, in plain words ("Fire Elf: Fire, 1 pip, a hit"), or empty.</summary>
     internal static string Card(uint spellId) {
         try {

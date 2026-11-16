@@ -153,6 +153,14 @@ internal static class ItemSources {
     internal static IReadOnlyList<uint> VendorsOf(uint templateId)
         => Current().Vendors.TryGetValue(templateId, out var vendors) ? vendors : [];
 
+    /// <summary>The bosses (by template) that drop an item; empty when none does.</summary>
+    internal static IReadOnlyList<uint> BossesDropping(uint templateId)
+        => Current().Bosses.TryGetValue(templateId, out var bosses) ? bosses : [];
+
+    /// <summary>The quests that give an item at their end; empty when none does.</summary>
+    internal static IReadOnlyList<QuestTemplate> QuestsGiving(uint templateId)
+        => Current().Quests.TryGetValue(templateId, out var quests) ? quests : [];
+
     /// <summary>Whether a shop sells it, a quest gives it, a boss drops it.</summary>
     internal static (bool Shop, bool Quest, bool Drop) KindsOf(uint templateId) {
         var index = Current();

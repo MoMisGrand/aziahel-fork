@@ -241,6 +241,8 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
     protected override void PreStart() {
         // His self-tuning limits written once, so they can be opened and set before his first daily review.
         _ = Limits();
+        // The real game's trainers, vendors and recipes, read in the background for "how do I train / get" answers.
+        UltimusLookup.Warm();
         StartTeam(restart: false);
         base.PreStart();
     }
