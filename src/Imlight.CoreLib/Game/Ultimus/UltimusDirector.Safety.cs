@@ -95,7 +95,7 @@ internal sealed partial class UltimusDirectorActor {
         Note("Ultimus", $"LOOP: {said} in {(int) s_loopWindow.TotalMinutes} minutes with no story progress: breaks out with a new plan.", UltimusLink.ABNORMAL);
         Think($"I {said} in the last {(int) s_loopWindow.TotalMinutes} minutes and my story did not move. That is a loop, so I stop " +
               "doing the same thing: I set that move aside for a while, forget the ways I tried and plan again from here.", "loop|" + what);
-        BotMistakes.Record("Ultimus", BotMistakes.STUCK, leader.Zone, leader.X, leader.Y, _currentQuest ?? "",
+        BotMistakes.Record(UltimusSeat.Current.Key, BotMistakes.STUCK, leader.Zone, leader.X, leader.Y, _currentQuest ?? "",
             $"Went in a loop: {said} with no story progress ({where}).", _lastReasoning,
             "The loop guard sets the move aside and plans again; the route or the step there needs a look.", "loop broken");
         Issue("team", _currentQuest, $"Ultimus went in a loop: he {said} with no story progress ({where}). He broke out with a new plan.",
@@ -322,7 +322,7 @@ internal sealed partial class UltimusDirectorActor {
     private DateTime _playSaved = DateTime.MinValue;
     private bool _restSaid;
 
-    private static double MaxHoursPerDay => Math.Clamp(ConfigurationManager.GetValue("Ultimus.MaxHoursPerDay", 0.0), 0, 24);
+    private static double MaxHoursPerDay => Math.Clamp(UltimusSeat.Current.Setting("MaxHoursPerDay", 0.0), 0, 24);
 
     /// <summary>Each plan: his play time today counted; past [Ultimus] MaxHoursPerDay he rests (true) until tomorrow.</summary>
     private bool RestingForTheDay(UltimusMember.Status leader) {

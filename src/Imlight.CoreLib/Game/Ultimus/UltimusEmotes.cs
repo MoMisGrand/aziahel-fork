@@ -35,8 +35,12 @@ internal static class UltimusEmotes {
     internal const string WAVE = "wave", CHEER = "cheer", SIT = "sit";
     private const string FILE = "emotes-seen.txt";
 
-    private static readonly ConcurrentDictionary<string, DateTime> s_seen = new(StringComparer.OrdinalIgnoreCase);
-    private static bool s_read;
+    // Kept per seat (Ultimus and each TCO7 member has its own; UltimusSeat).
+    private static readonly SeatLocal<ConcurrentDictionary<string, DateTime>> s_seenSeat = new(() => new ConcurrentDictionary<string, DateTime>(StringComparer.OrdinalIgnoreCase));
+    private static ConcurrentDictionary<string, DateTime> s_seen { get => s_seenSeat.Value; set => s_seenSeat.Value = value; }
+    // Kept per seat (Ultimus and each TCO7 member has its own; UltimusSeat).
+    private static readonly SeatLocal<bool> s_readSeat = new();
+    private static bool s_read { get => s_readSeat.Value; set => s_readSeat.Value = value; }
 
     /// <summary>A real player played an emote from their wheel: its animation name is remembered.</summary>
     internal static void Seen(ulong charId, string animation) {
@@ -48,8 +52,8 @@ internal static class UltimusEmotes {
         Read();
         if (s_seen.TryAdd(animation.Trim(), DateTime.UtcNow)) {
             try {
-                Directory.CreateDirectory(UltimusWire.Folder);
-                File.AppendAllLines(Path.Combine(UltimusWire.Folder, FILE), [animation.Trim()]);
+                Directory.CreateDirectory(UltimusWire.SharedFolder);
+                File.AppendAllLines(Path.Combine(UltimusWire.SharedFolder, FILE), [animation.Trim()]);
             }
             catch (Exception e) {
                 Logger.Debug("Ultimus: could not write {0}: {1}", Logger.Args(FILE, e.Message));
@@ -88,7 +92,7 @@ internal static class UltimusEmotes {
 
         s_read = true;
         try {
-            var path = Path.Combine(UltimusWire.Folder, FILE);
+            var path = Path.Combine(UltimusWire.SharedFolder, FILE);
             if (File.Exists(path)) {
                 foreach (var line in File.ReadAllLines(path).Where(l => !string.IsNullOrWhiteSpace(l))) {
                     s_seen.TryAdd(line.Trim(), DateTime.MinValue);

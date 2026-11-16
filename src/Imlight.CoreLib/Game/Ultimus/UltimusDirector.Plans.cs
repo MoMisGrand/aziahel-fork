@@ -267,9 +267,9 @@ internal sealed partial class UltimusDirectorActor {
     private void Surprise(UltimusMember.Status leader, Prediction expected, string what, string lesson) {
         UltimusMood.Saw(UltimusMood.SURPRISE);
         Think($"That surprised me. {what} I write it down as a lesson: {lesson}", "surprise|" + expected.Key);
-        BotMistakes.Record("Ultimus", BotMistakes.SURPRISE, expected.AtZone, expected.X, expected.Y, _target?.What ?? "", what,
+        BotMistakes.Record(UltimusSeat.Current.Key, BotMistakes.SURPRISE, expected.AtZone, expected.X, expected.Y, _target?.What ?? "", what,
             $"Before acting I expected that {expected.Expect}.", lesson);
-        BotKnowledge.Learn("Ultimus", "surprise", $"{what} Lesson: {lesson}");
+        BotKnowledge.Learn(UltimusSeat.Current.Key, "surprise", $"{what} Lesson: {lesson}");
     }
 
     // ---------------------------------------------------------------------
@@ -412,7 +412,7 @@ internal sealed partial class UltimusDirectorActor {
         }
 
         Think("Today I learned: " + string.Join(" ", lines), "review|" + DateTime.Now.Date.ToString("yyyyMMdd", CultureInfo.InvariantCulture));
-        BotKnowledge.Learn("Ultimus", "today I learned", string.Join(" ", lines));
+        BotKnowledge.Learn(UltimusSeat.Current.Key, "today I learned", string.Join(" ", lines));
         _dayFights.Clear();
         _dayStuck = 0;
     }
@@ -449,7 +449,9 @@ internal sealed partial class UltimusDirectorActor {
     }
 
     // Rules locked in Ahziael ("Locked = a, b" in self-tuning.txt): his daily review leaves them alone.
-    private static HashSet<string> s_locked = new(StringComparer.OrdinalIgnoreCase);
+    // Kept per seat (Ultimus and each TCO7 member has its own; UltimusSeat).
+    private static readonly SeatLocal<HashSet<string>> s_lockedSeat = new(() => new HashSet<string>(StringComparer.OrdinalIgnoreCase));
+    private static HashSet<string> s_locked { get => s_lockedSeat.Value; set => s_lockedSeat.Value = value; }
 
     // The limits Niduus sets for the numbers Ultimus may change himself: written with safe ones the first time.
     private static (bool Auto, Dictionary<string, (double Low, double High)> Ranges) Limits() {

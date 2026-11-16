@@ -207,10 +207,18 @@ internal static class UltimusPlaybook {
     ];
 
     private static readonly object s_lock = new();
-    private static Dictionary<string, Rule> s_rules;
-    private static DateTime s_read = DateTime.MinValue;
-    private static DateTime s_written = DateTime.MinValue;
-    private static bool s_upgraded;
+    // Kept per seat (Ultimus and each TCO7 member has its own; UltimusSeat).
+    private static readonly SeatLocal<Dictionary<string, Rule>> s_rulesSeat = new();
+    private static Dictionary<string, Rule> s_rules { get => s_rulesSeat.Value; set => s_rulesSeat.Value = value; }
+    // Kept per seat (Ultimus and each TCO7 member has its own; UltimusSeat).
+    private static readonly SeatLocal<DateTime> s_readSeat = new(() => DateTime.MinValue);
+    private static DateTime s_read { get => s_readSeat.Value; set => s_readSeat.Value = value; }
+    // Kept per seat (Ultimus and each TCO7 member has its own; UltimusSeat).
+    private static readonly SeatLocal<DateTime> s_writtenSeat = new(() => DateTime.MinValue);
+    private static DateTime s_written { get => s_writtenSeat.Value; set => s_writtenSeat.Value = value; }
+    // Kept per seat (Ultimus and each TCO7 member has its own; UltimusSeat).
+    private static readonly SeatLocal<bool> s_upgradedSeat = new();
+    private static bool s_upgraded { get => s_upgradedSeat.Value; set => s_upgradedSeat.Value = value; }
 
     /// <summary>A rule by "Section.Name": the number in the file, or its starting value.</summary>
     internal static Rule Get(string name) {
@@ -294,7 +302,16 @@ internal static class UltimusPlaybook {
         try {
             if (!File.Exists(path)) {
                 Directory.CreateDirectory(UltimusWire.Folder);
-                File.WriteAllText(path, DefaultText());
+                // A TCO7 member starts from Ultimus's own playbook (what Niduus set for him, and what he tuned himself):
+                // they do what he does, then tune their own copy (Niduus, 2026-11-16: "Anything he does, everything under
+                // him is expected to do the same, if not better").
+                var his = Path.Combine(UltimusWire.SharedFolder, FILE);
+                if (UltimusSeat.Current.IsTco7 && File.Exists(his)) {
+                    File.Copy(his, path);
+                }
+                else {
+                    File.WriteAllText(path, DefaultText());
+                }
             }
 
             if (!s_upgraded) {

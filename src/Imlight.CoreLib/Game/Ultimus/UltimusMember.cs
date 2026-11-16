@@ -270,7 +270,7 @@ internal sealed class UltimusMember : ReceiveActor, IWithTimers {
             if (cut && DateTime.UtcNow - _cutSaid > TimeSpan.FromSeconds(30)) {
                 _cutSaid = DateTime.UtcNow;
                 Note($"keeps to the walkable ground: a walk ({m.Why}) went over a wall or out of bounds in {UltimusText.Zone(View.Zone)}, so it stops where the floor ends.");
-                BotMistakes.Record("Ultimus", BotMistakes.NO_WAY, View.Zone, View.X, View.Y, m.Why,
+                BotMistakes.Record(UltimusSeat.Current.Key, BotMistakes.NO_WAY, View.Zone, View.X, View.Y, m.Why,
                     "A planned walk went over a wall or off the walkable map; it was cut where the floor ends.",
                     "Every walk is checked against the area's floor before it is walked.", "The way finder or the step's spot needs a look here.");
             }
@@ -331,7 +331,9 @@ internal sealed class UltimusMember : ReceiveActor, IWithTimers {
         Receive<GAME_5_PROTOCOL.MSG_PARTYREQUESTJOIN>(m => {
             var inviter = (ulong) m.CharacterID;
             var real = inviter != 0 && !UltimusRoster.IsMember(inviter) && !QuestTeam.QuestTeamRoster.IsMember(inviter);
-            if (UltimusWire.PartyMode && real && !Groups.GroupRegistry.TryGetGroup(_member.CharId, out _)) {
+            // A TCO7 member's invitation is taken when this TCO7 member just said yes to teaming up with them (UltimusTco7).
+            var friend = inviter != 0 && UltimusTco7.MayAcceptInvite(inviter);
+            if (((UltimusWire.PartyMode && real) || friend) && !Groups.GroupRegistry.TryGetGroup(_member.CharId, out _)) {
                 Note($"accepts a group invitation from {m.PlayerNameBlob} (party mode): he goes along with them.");
                 Send(new GAME_5_PROTOCOL.MSG_PARTYREQUESTACCEPT { SourceCharacterID = _member.CharId, PartyID = m.PartyID });
                 return;
@@ -563,8 +565,34 @@ internal sealed class UltimusMember : ReceiveActor, IWithTimers {
     // Words in a server message that mean something went wrong (pink in the log).
     private static readonly string[] s_oddWords = ["error", "failed", "could not", "couldn't", "cannot", "can't", "broken", "invalid", "missing"];
 
-    internal static Props Props(UltimusRoster.Member member, Status view)
-        => Akka.Actor.Props.Create(() => new UltimusMember(member, view));
+    internal static Props Props(UltimusRoster.Member member, Status view) {
+        var seat = UltimusSeat.Current;
+
+        return Akka.Actor.Props.Create(() => new UltimusMember(member, view, seat));
+    }
+
+    // The seat this wizard is (Ultimus or a TCO7 member): every message is handled as it (UltimusSeat.Current).
+    private readonly UltimusSeat _seat = UltimusSeat.Ultimus;
+
+    protected override bool AroundReceive(Receive receive, object message) {
+        using (UltimusSeat.Use(_seat)) {
+            return base.AroundReceive(receive, message);
+        }
+    }
+
+    public override void AroundPreStart() {
+        using (UltimusSeat.Use(_seat)) {
+            base.AroundPreStart();
+        }
+    }
+
+    public override void AroundPostStop() {
+        using (UltimusSeat.Use(_seat)) {
+            base.AroundPostStop();
+        }
+    }
+
+    public UltimusMember(UltimusRoster.Member member, Status view, UltimusSeat seat) : this(member, view) => _seat = seat ?? UltimusSeat.Ultimus;
 
     protected override void PostStop() {
         try {
