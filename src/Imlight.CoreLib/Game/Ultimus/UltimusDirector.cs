@@ -655,6 +655,8 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
         // set-aside work wait (Niduus, 2026-11-16: in Big Ben he stepped on the first room's circle alone while Walter was
         // still loading in, so the fight started without him).
         var withGroup = target?.Key?.StartsWith(PARTY_KEY, StringComparison.Ordinal) == true;
+        // The way a group mate leads him through a dungeon is kept, to retrace alone later (UltimusDirector.Guided.cs).
+        RecordGuided(leader, target);
         if (!withGroup) {
             // A quest thing that did not work with its boss or creatures still standing: they are fought first (BotUseGuards).
             target = GuardFight(leader, target) ?? target;
@@ -1727,6 +1729,12 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
             noWay = false;
             Think($"\"{what}\" is just past a door that is open now. The map still has the door shut, so I walk straight through it.",
                 "through-door|" + target.Key);
+        }
+
+        // No way, but a player guided him through this dungeon before: the way they went (UltimusDirector.Guided.cs).
+        if (noWay && index == 0 && GuidedWalk(member, toX, toY, toZ, what) is { } guided) {
+            points = guided;
+            noWay = false;
         }
 
         if (noWay && index == 0 && FloorPadAhead(member, target, what)) {
