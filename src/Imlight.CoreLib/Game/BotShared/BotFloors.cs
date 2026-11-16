@@ -1,0 +1,345 @@
+/*
+ * Imlight
+ * Copyright (C) 2025 Revive101
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
+using Imcodec.ObjectProperty.TypeCache;
+using Imlight.Common;
+using Imlight.CoreLib.Game.Tools;
+using Imlight.CoreLib.Game.Ultimus;
+using Imlight.CoreLib.Shared.Resources;
+
+namespace Imlight.CoreLib.Game.BotShared;
+
+/// <summary>
+/// A dungeon's floors, the way a player plays them (Niduus, 2026-11-16: "Ultimus is not respecting floors. In order to TP
+/// he has to complete the battles for that floor for the zone TP to unlock. This also has a puzzle in the dungeon ... he's
+/// not doing any of the battles at all is the issue"). Read from the area's own files, shared by Ultimus and the Quest Team:
+/// each room's battle circle (stepping on it starts the room's fight), each gate or door that opens later and what opens
+/// it (a creature beaten, a spot stepped on, a lever pulled once a puzzle is right), and each puzzle plate with the state
+/// it flips. <see cref="Next"/> gives the next floor duty near the wizard: the room's battle circle first, then the
+/// creatures, then the spots and the puzzle, never a skip. Big Ben: every room's circle brings out the floor's elite whose
+/// defeat opens the door by the teleporter up, and the plate room (Ice, Skull, Moon and Bird down) unlocks the lever.
+/// </summary>
+internal static class BotFloors {
+
+    /// <summary>A room's battle circle: the trigger that starts its fight and the spot to step on.</summary>
+    internal sealed record Circle(string Trigger, string Volume, float X, float Y);
+
+    /// <summary>A puzzle plate: stepping on <see cref="Volume"/> turns <see cref="Object"/> from one state to another.</summary>
+    internal sealed record Toggle(string Object, string From, string To, string Volume, float X, float Y);
+
+    /// <summary>How a gate opens.</summary>
+    internal enum Opener { Beat, Step, Click, Other }
+
+    /// <summary>
+    /// A gate or door that opens later: its trigger, its spot, what opens it, the spot to step on or the thing to click,
+    /// and the object states a puzzle needs first.
+    /// </summary>
+    internal sealed record Gate(string Object, string Trigger, float X, float Y, Opener By, string Volume, float VX, float VY,
+        string Lever, float LX, float LY, List<(string Object, string State)> Needs);
+
+    /// <summary>What the area's files say about its floors.</summary>
+    internal sealed record Book(List<Circle> Circles, List<Gate> Gates, List<Toggle> Toggles, Dictionary<string, string> Starts) {
+        internal static readonly Book Empty = new([], [], [], new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase));
+        internal bool IsEmpty => Circles.Count == 0 && Gates.Count == 0;
+    }
+
+    /// <summary>One floor duty: step on a spot, fight by a spot, or click the lever there.</summary>
+    internal sealed record Duty(string Kind, float X, float Y, string What, string Key, string Why);
+
+    internal const string STEP = "step";
+    internal const string FIGHT = "fight";
+    internal const string CLICK = "click";
+
+    // How near a room's things count as "this room" (Big Ben rooms are 6000 across with the circle in the middle).
+    internal const float ROOM = 3200f;
+    // How far a puzzle gate may be from the plates and lever that open it.
+    private const float PUZZLE = 6500f;
+    // Close enough to a spot to have stepped on it.
+    internal const float ON_SPOT = 120f;
+    // Tries per spot or lever before it is left be.
+    internal const int TRIES = 3;
+
+    private static readonly ConcurrentDictionary<string, Book> s_books = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>The area's floor book (empty for an area without battle circles or gates).</summary>
+    internal static Book BookOf(string zonePath) {
+        if (string.IsNullOrEmpty(zonePath)) {
+            return Book.Empty;
+        }
+
+        return s_books.GetOrAdd(zonePath, path => {
+            try {
+                if (!ResourceManager.TryLoadArchive(path, out var wad)) {
+                    return Book.Empty;
+                }
+
+                return Build(UltimusPads.Read<WizZoneTriggers>(wad.OpenFile("triggers.xml")?.ToArray()),
+                    UltimusPads.Read<WizZoneVolumes>(wad.OpenFile("volumes.xml")?.ToArray()),
+                    UltimusPads.Read<WizZoneData>(ResourceManager.OpenZoneData(wad)?.ToArray()));
+            }
+            catch (Exception ex) {
+                Logger.Debug("Bot floors: {0} could not be read: {1}", Logger.Args(path, ex.Message));
+                return Book.Empty;
+            }
+        });
+    }
+
+    /// <summary>Reads the floors from an area's triggers, volumes and objects.</summary>
+    internal static Book Build(WizZoneTriggers triggerFile, WizZoneVolumes volumeFile, WizZoneData zoneData) {
+        var triggers = triggerFile?.m_triggers?.Where(t => t is not null).ToList() ?? [];
+        var volumes = volumeFile?.m_volumes?.Where(v => v is not null).ToList() ?? [];
+
+        Volume VolumeOf(string fire)
+            => volumes.FirstOrDefault(v => v.m_enterEvents?.Any(e => (string) e == fire) == true || "Enter_" + (string) v.m_volumeName == fire);
+
+        List<string> Fires(Trigger t) => [.. t.m_fireEvents?.Select(e => e.ToString()).Where(e => !string.IsNullOrEmpty(e)) ?? []];
+
+        List<Result> Results(Trigger t) => [.. t.m_results?.m_results?.Where(r => r is not null) ?? []];
+
+        List<Requirement> Needs(Trigger t) => [.. t.m_requirements?.m_requirements?.Where(r => r is not null) ?? []];
+
+        // Start states: the trigger objects, then the area's object list.
+        var starts = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var spots = new Dictionary<string, (float X, float Y)>(StringComparer.OrdinalIgnoreCase);
+        foreach (var t in triggers) {
+            if (t.m_triggerObjInfo is { } info && info.m_templateID != 0) {
+                foreach (string name in new[] { (string) info.m_zoneTag, (string) info.m_triggerObjName }) {
+                    if (!string.IsNullOrEmpty(name)) {
+                        if (!string.IsNullOrEmpty(info.m_startState)) {
+                            starts.TryAdd(name, info.m_startState);
+                        }
+
+                        spots.TryAdd(name, (info.m_location.X, info.m_location.Y));
+                    }
+                }
+            }
+        }
+
+        foreach (var o in zoneData?.m_objectList?.Where(o => o is not null) ?? []) {
+            string tag = o.m_zoneTag;
+            if (string.IsNullOrEmpty(tag)) {
+                continue;
+            }
+
+            if (!string.IsNullOrEmpty(o.m_startState)) {
+                starts.TryAdd(tag, o.m_startState);
+            }
+
+            spots.TryAdd(tag, (o.m_location.X, o.m_location.Y));
+        }
+
+        // Battle circles.
+        var circles = new List<Circle>();
+        foreach (var t in triggers.Where(t => Results(t).Any(r => r is ResInitiateCombat))) {
+            foreach (var fire in Fires(t)) {
+                if (VolumeOf(fire) is { } v) {
+                    circles.Add(new Circle((string) t.m_triggerName ?? "", (string) v.m_volumeName ?? "", v.m_locationX, v.m_locationY));
+                }
+            }
+        }
+
+        // Puzzle plates: a volume that flips an object it needs in a state to another state.
+        var toggles = new List<Toggle>();
+        foreach (var t in triggers) {
+            var needs = Needs(t).OfType<ReqTriggerObjectState>().ToList();
+            foreach (var set in Results(t).OfType<ResModifyTriggerObject>()) {
+                string obj = set.m_triggerObjName;
+                var from = needs.FirstOrDefault(n => string.Equals((string) n.m_triggerObjName, obj, StringComparison.OrdinalIgnoreCase));
+                if (from is null || from.m_applyNOT || string.IsNullOrEmpty(obj)) {
+                    continue;
+                }
+
+                foreach (var fire in Fires(t)) {
+                    if (VolumeOf(fire) is { } v) {
+                        toggles.Add(new Toggle(obj, from.m_triggerObjState, set.m_triggerObjState, (string) v.m_volumeName ?? "", v.m_locationX, v.m_locationY));
+                    }
+                }
+            }
+        }
+
+        // Gates and doors that open later, and what opens them.
+        var gates = new List<Gate>();
+        foreach (var t in triggers) {
+            foreach (var set in Results(t).OfType<ResModifyTriggerObject>()) {
+                string obj = set.m_triggerObjName;
+                if (string.IsNullOrEmpty(obj) || !Opens(set.m_triggerObjState) || OverlayQuestPath.IsLiftState(set.m_triggerObjState)
+) {
+                    continue;
+                }
+
+                if (!spots.TryGetValue(obj, out var at)) {
+                    continue;
+                }
+
+                var gate = new Gate(obj, (string) t.m_triggerName ?? "", at.X, at.Y, Opener.Other, "", float.NaN, float.NaN, "", float.NaN, float.NaN, []);
+                foreach (var fire in Fires(t)) {
+                    if (string.Equals(fire, "Monster_Killed", StringComparison.OrdinalIgnoreCase)) {
+                        gate = gate with { By = Opener.Beat };
+                        break;
+                    }
+
+                    if (VolumeOf(fire) is { } v) {
+                        gate = gate with { By = Opener.Step, Volume = (string) v.m_volumeName ?? "", VX = v.m_locationX, VY = v.m_locationY };
+                        break;
+                    }
+
+                    // "Lever.Down.EnterState": the lever itself turned.
+                    var bits = fire.Split('.');
+                    if (bits.Length == 3 && bits[2].Equals("EnterState", StringComparison.OrdinalIgnoreCase) && spots.TryGetValue(bits[0], out var lever)) {
+                        gate = gate with { By = Opener.Click, Lever = bits[0], LX = lever.X, LY = lever.Y };
+                        break;
+                    }
+
+                    // "ActivateFrom_X": another trigger X, fired by a click on a lever, enabled once its puzzle is right.
+                    if (fire.StartsWith("ActivateFrom_", StringComparison.OrdinalIgnoreCase)
+                        && triggers.FirstOrDefault(x => string.Equals((string) x.m_triggerName, fire["ActivateFrom_".Length..], StringComparison.OrdinalIgnoreCase)) is { } from) {
+                        if (Fires(from).Select(VolumeOf).FirstOrDefault(v => v is not null) is { } step) {
+                            gate = gate with { By = Opener.Step, Volume = (string) step.m_volumeName ?? "", VX = step.m_locationX, VY = step.m_locationY };
+                            break;
+                        }
+
+                        var enabler = triggers.FirstOrDefault(p => Results(p).OfType<ResPostEvent>()
+                            .Any(r => string.Equals((string) r.m_eventName, "Enable_" + (string) from.m_triggerName, StringComparison.OrdinalIgnoreCase)));
+                        var needs = enabler is null
+                            ? []
+                            : Needs(enabler).OfType<ReqTriggerObjectState>().Where(n => !n.m_applyNOT)
+                                .Select(n => ((string) n.m_triggerObjName, (string) n.m_triggerObjState)).ToList();
+                        var near = needs.Count > 0 && toggles.FirstOrDefault(g => needs.Any(n => n.Item1 == g.Object)) is { } plate ? (plate.X, plate.Y) : (at.X, at.Y);
+                        var leverName = spots.Keys.Where(k => IsLever(k))
+                            .OrderBy(k => Far(spots[k].X, spots[k].Y, near.Item1, near.Item2)).FirstOrDefault();
+                        if (leverName is not null && Far(spots[leverName].X, spots[leverName].Y, at.X, at.Y) <= PUZZLE) {
+                            gate = gate with {
+                                By = Opener.Click, Lever = leverName,
+                                LX = spots[leverName].X, LY = spots[leverName].Y, Needs = needs,
+                            };
+                        }
+
+                        break;
+                    }
+                }
+
+                gates.Add(gate);
+            }
+        }
+
+        return new Book(circles.DistinctBy(c => c.Trigger + "|" + c.Volume).ToList(), gates.DistinctBy(g => g.Object + "|" + g.Trigger).ToList(),
+            toggles.DistinctBy(g => g.Object + "|" + g.From + "|" + g.Volume).ToList(), starts);
+    }
+
+    // A thing a player pulls or presses.
+    private static bool IsLever(string name)
+        => name.Contains("Lever", StringComparison.OrdinalIgnoreCase) || name.Contains("Switch", StringComparison.OrdinalIgnoreCase)
+           || name.Contains("Crank", StringComparison.OrdinalIgnoreCase) || name.Contains("Button", StringComparison.OrdinalIgnoreCase);
+
+    // A gate or door that opens (Open, OpenIdle, Opening, Unlock ...).
+    internal static bool Opens(string state)
+        => !string.IsNullOrEmpty(state)
+           && (state.Contains("Open", StringComparison.OrdinalIgnoreCase) || state.Contains("Unlock", StringComparison.OrdinalIgnoreCase));
+
+    internal static float Far(float x1, float y1, float x2, float y2) => MathF.Sqrt(((x1 - x2) * (x1 - x2)) + ((y1 - y2) * (y1 - y2)));
+
+    /// <summary>What the bot sees of the zone right now: object states, trigger fires and creatures (null when unknown).</summary>
+    internal sealed record Live(Func<string, string> StateOf, Func<string, int> FiresOf, Func<string, bool?> EnabledOf, Func<float, float, bool> FoesNear);
+
+    /// <summary>
+    /// The next floor duty for a wizard at (x, y), or null when the floor is done: the room's battle circle not yet
+    /// started, then creatures by a fight-gate or a started circle, then a gate's spot to step on, then a puzzle's plates
+    /// and its lever. <paramref name="tries"/> counts the steps and clicks already made, by key (kept by the bot per zone copy).
+    /// </summary>
+    internal static Duty Next(Book book, Live live, float x, float y, IReadOnlyDictionary<string, int> tries) {
+        if (book is null || book.IsEmpty) {
+            return null;
+        }
+
+        int Tried(string key) => tries?.GetValueOrDefault(key) ?? 0;
+        string StateOf(string obj) => live?.StateOf?.Invoke(obj) is { Length: > 0 } s ? s : book.Starts.GetValueOrDefault(obj) ?? "";
+        bool Closed(Gate g) => !Opens(StateOf(g.Object));
+        bool Off(string trigger) => live?.EnabledOf?.Invoke(trigger) == false;
+
+        // 1. The room's battle circle, when it has not started its fight in this copy of the area.
+        foreach (var circle in book.Circles.Where(c => Far(x, y, c.X, c.Y) <= ROOM).OrderBy(c => Far(x, y, c.X, c.Y))) {
+            var key = "circle|" + circle.Trigger;
+            if ((live?.FiresOf?.Invoke(circle.Trigger) ?? 0) > 0 || Tried(key) >= 1 || Off(circle.Trigger)) {
+                continue;
+            }
+
+            return new Duty(STEP, circle.X, circle.Y, $"the room's battle circle \"{circle.Volume}\"", key,
+                "each room's fight starts on its battle circle, and the way on opens once it is won");
+        }
+
+        var near = book.Gates.Where(g => Closed(g) && Far(x, y, g.X, g.Y) <= ROOM).OrderBy(g => Far(x, y, g.X, g.Y)).ToList();
+
+        // 2. Creatures by a closed door that opens on a fight, or by the room's circle once its fight started.
+        foreach (var gate in near.Where(g => g.By == Opener.Beat)) {
+            if (live?.FoesNear?.Invoke(gate.X, gate.Y) == true) {
+                return new Duty(FIGHT, gate.X, gate.Y, $"the creatures by \"{gate.Object}\"", "beat|" + gate.Object,
+                    $"\"{gate.Object}\" opens once the room's creatures are beaten");
+            }
+        }
+
+        foreach (var circle in book.Circles.Where(c => Far(x, y, c.X, c.Y) <= ROOM)) {
+            if (live?.FoesNear?.Invoke(circle.X, circle.Y) == true) {
+                return new Duty(FIGHT, circle.X, circle.Y, $"the creatures of the room's battle circle \"{circle.Volume}\"", "room|" + circle.Trigger,
+                    "the room's creatures are beaten before going on");
+            }
+        }
+
+        // 3. A spot that opens a door here.
+        foreach (var gate in near.Where(g => g.By == Opener.Step && !Off(g.Trigger))) {
+            var key = "step|" + gate.Volume;
+            if (Tried(key) < TRIES) {
+                return new Duty(STEP, gate.VX, gate.VY, $"\"{gate.Volume}\", which opens \"{gate.Object}\"", key,
+                    $"stepping on it opens \"{gate.Object}\"");
+            }
+        }
+
+        // 4. A puzzle: the plates that are wrong, one at a time, then the lever.
+        foreach (var gate in book.Gates.Where(g => g.By == Opener.Click && Closed(g) && !Off(g.Trigger)
+                                                   && Far(x, y, g.LX, g.LY) <= PUZZLE)
+                     .OrderBy(g => Far(x, y, g.LX, g.LY))) {
+            var wrong = gate.Needs.Where(n => !string.Equals(StateOf(n.Object), n.State, StringComparison.OrdinalIgnoreCase)).ToList();
+            foreach (var (obj, state) in wrong) {
+                var now = StateOf(obj);
+                var plate = book.Toggles.FirstOrDefault(t => t.Object == obj && string.Equals(t.From, now, StringComparison.OrdinalIgnoreCase)
+                                                             && string.Equals(t.To, state, StringComparison.OrdinalIgnoreCase))
+                            ?? book.Toggles.FirstOrDefault(t => t.Object == obj && string.Equals(t.From, now, StringComparison.OrdinalIgnoreCase));
+                if (plate is null) {
+                    continue;
+                }
+
+                var key = $"plate|{obj}|{now}";
+                if (Tried(key) < TRIES) {
+                    return new Duty(STEP, plate.X, plate.Y, $"the puzzle plate \"{obj}\" (now {now}, needs {state})", key,
+                        $"the lever that opens \"{gate.Object}\" works once {string.Join(", ", gate.Needs.Select(n => $"{n.Object} is {n.State}"))}");
+                }
+            }
+
+            if (wrong.Count == 0 && Tried("lever|" + gate.Lever) < TRIES + 2) {
+                return new Duty(CLICK, gate.LX, gate.LY, $"the lever \"{gate.Lever}\", which opens \"{gate.Object}\"", "lever|" + gate.Lever,
+                    gate.Needs.Count > 0 ? "the puzzle is right, so the lever now opens the door" : $"pulling it opens \"{gate.Object}\"");
+            }
+        }
+
+        return null;
+    }
+
+}

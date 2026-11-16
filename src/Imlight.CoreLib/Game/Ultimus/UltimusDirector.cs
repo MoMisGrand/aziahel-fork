@@ -557,6 +557,8 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
         target = GuardFight(leader, target) ?? target;
         // Ten stuck alarms at one spot: the creatures around it first (UltimusDirector.Approach.cs).
         target = ClearAroundFight(leader) ?? target;
+        // In a dungeon: each floor's battle circle, fight, door spot and puzzle first (UltimusDirector.Rooms.cs).
+        target = FloorDuty(leader, target) ?? target;
         // Healing first, above all before a fight (UltimusDirector.Health.cs).
         if (HealFirst(group, target)) {
             _healingAt = DateTime.UtcNow;

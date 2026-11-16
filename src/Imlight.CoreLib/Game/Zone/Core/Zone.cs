@@ -299,6 +299,7 @@ public partial class Zone : ReceiveProtocolDispatcher, IWithTimers {
 
     protected override void PostStop() {
         ZoneObjects.Unregister(Self);
+        ZoneStates.Unregister(Self);
         foreach (var charId in _instancedCharIds.Values) {
             World.InstancedPlayers.Leave(charId, this);
             World.DungeonRecall.Left(ContainerOwnerId, charId);
@@ -413,6 +414,8 @@ public partial class Zone : ReceiveProtocolDispatcher, IWithTimers {
         Extras = ZoneObjects.AddTo(ZonePath, message.Variant, message);
         // A change to those files (the Customs tab moving an object) reaches this copy while it runs.
         ZoneObjects.Register(Self, ZonePath, message.Variant);
+        // Its live state, for the bots' floor and puzzle duties (BotShared/BotFloors).
+        ZoneStates.Register(Self, ScriptState);
         ZoneData = message.ZoneData;
         HasBattles = ZoneData?.m_objectList?.Any(o => o is CombatSigilObjectInfo) == true;
         SetUpRaid(message.TriggerData);

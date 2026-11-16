@@ -1,0 +1,4 @@
+Fixed: Ultimus and the Quest Team skip the floor battles in dungeons
+In dungeons like Big Ben, Ultimus kept taking teleporters past every floor and never stepped on the battle circles, so the floor doors never opened and he ended up stuck. Now, in any dungeon or instance, he steps on each room's battle circle and wins its fight first, beats the creatures by a door that opens on a fight, and steps on the spots that open doors before going on. Puzzles are solved from the dungeon's own files the way a player does it: in Big Ben's plate room he steps on the Ice, Skull, Moon and Bird plates and then pulls the lever. The Quest Team follows the same rule.
+Where: Ultimus and the Quest Team in dungeons and instances, starting with Big Ben.
+Test: Send Ultimus into Big Ben and watch him step on each room's battle circle and win it before using the teleporter up, and solve the plate room before pulling the lever.
