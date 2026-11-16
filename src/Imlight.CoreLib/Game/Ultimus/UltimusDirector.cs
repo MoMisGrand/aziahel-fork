@@ -2017,8 +2017,14 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
         _losses[key] = _losses.GetValueOrDefault(key) + 1;
         Note("Ultimus", $"lost the battle ({_losses[key]} time(s) at this step).", UltimusLink.MINOR);
         // Fallen in a dungeon copy: Dungeon Recall takes him back to it (UltimusDirector.Comeback.cs).
+        // The loss can come in after the game has already put him out (his log, 2026-11-16 16:35: the recall was given at
+        // :19, he was in Marleybone's hub at :20 and the loss came at :24, so nothing was noted and he walked in at floor
+        // one again): the dungeon is then the one his fresh Dungeon Recall holds.
         if (member.Wizard?.ZoneIsInstance == true) {
             _fellIn = (member.Zone ?? "", DateTime.UtcNow);
+        }
+        else if (World.DungeonRecall.TryGet(member.CharId, out var recall) && !string.IsNullOrEmpty(recall.Zone)) {
+            _fellIn = (recall.Zone, DateTime.UtcNow);
         }
 
         // Learning from it (Niduus, 2026-11-12: "Both documenting mistakes for future learning").

@@ -658,11 +658,18 @@ internal sealed partial class UltimusDirectorActor {
                 .Select(z => z.Zone).FirstOrDefault());
         }
 
-        if (s_farPotionZone is not { } zone || leader.Zone?.StartsWith("WizardCity/", StringComparison.OrdinalIgnoreCase) == true) {
+        if (s_farPotionZone is not { } zone) {
             return null;
         }
 
         var why = "to fill potions at the potion shop in Wizard City";
+        // Already in Wizard City on the way (The World Tree, Ravenwood, the Commons): on to the shop, no new mark. It gave
+        // nothing here before, so at The World Tree his story sent him back through the Spiral Door to Wolfminster Abbey and
+        // the trip there sent him to The World Tree again, 20 times in 3 minutes (his log, 2026-11-16 17:17).
+        if (leader.Zone?.StartsWith("WizardCity/", StringComparison.OrdinalIgnoreCase) == true) {
+            return OverlayQuestTracker.SameZone(zone, leader.Zone) ? null : UltimusPlanner.Travel(leader, zone, why, "potionshop|" + zone);
+        }
+
         if (_markedZone is null && leader.Wizard?.ZoneIsInstance != true && (stats.m_currentMana >= 10)) {
             _markedZone = leader.Zone;
             _markLeft = false;

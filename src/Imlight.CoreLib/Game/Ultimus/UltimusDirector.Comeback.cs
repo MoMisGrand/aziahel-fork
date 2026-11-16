@@ -76,7 +76,9 @@ internal sealed partial class UltimusDirectorActor {
         // at Travis Pawman). The recall is never worse than that, so he takes it now, once over a quarter of his health
         // (under it his healing comes first, as before).
         var walkingIn = _target is { } next && !string.IsNullOrEmpty(next.To) && OverlayQuestTracker.SameZone(next.To, fell.Zone);
-        if (share < COMEBACK_HEALTH && !((walkingIn || runningOut) && share >= 0.25)) {
+        // Walking in at any health is never better than the recall (16:38, same day: under a quarter of his health he
+        // walked in at floor one again), so then he always takes it.
+        if (share < COMEBACK_HEALTH && !walkingIn && !(runningOut && share >= 0.25)) {
             return false;
         }
 
