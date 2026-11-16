@@ -84,6 +84,20 @@ internal sealed partial class UltimusDirectorActor {
         return true;
     }
 
+    /// <summary>
+    /// Whether the step (not a fight) is cut off on a floor before this one: the teleporter toward it is not one of the
+    /// area's teleporters on, so it goes back.
+    /// </summary>
+    private bool StepBehind(UltimusMember.Status leader, UltimusPlanner.Target target, BotFloors.Book book) {
+        if (target is null || target.Kind == UltimusPlanner.FIGHT || (target.Key ?? "").StartsWith("floor|", StringComparison.Ordinal)
+            || !OverlayQuestPath.Apart(leader.Zone, leader.X, leader.Y, target.X, target.Y)) {
+            return false;
+        }
+
+        var pad = UltimusPads.Toward(leader.Zone, leader.X, leader.Y, target.X, target.Y, PadsLeft());
+        return pad is not null && !book.Ahead.Any(a => BotFloors.Far(a.X, a.Y, pad.X, pad.Y) <= 300);
+    }
+
     private UltimusPlanner.Target FloorDuty(UltimusMember.Status leader, UltimusPlanner.Target target) {
         if (string.IsNullOrEmpty(leader?.Zone) || !InDungeon(leader) || IsSideDungeon(leader.Zone)) {
             return null;
@@ -125,6 +139,14 @@ internal sealed partial class UltimusDirectorActor {
         // Through an opened door only when the step is not in this room.
         if (duty.Key.StartsWith("through|", StringComparison.Ordinal) && target is not null
             && BotFloors.Far(leader.X, leader.Y, target.X, target.Y) <= BotFloors.ROOM && live.SameGround(target.X, target.Y)) {
+            return null;
+        }
+
+        // Nor when the step is on a floor before this one (a talk back at the dungeon's start): the way there is a teleporter
+        // back, not this floor's way on. His log, 2026-11-16 14:28: after a restart reset "Stealthy Stuff", Travis Pawman
+        // stood in Big Ben's first room; he walked back by the Level 14 teleporter down, then floor duty sent him on up past
+        // Door35, and so on for 4 minutes, 7 times a minute.
+        if (duty.Key.StartsWith("through|", StringComparison.Ordinal) && StepBehind(leader, target, book)) {
             return null;
         }
 
