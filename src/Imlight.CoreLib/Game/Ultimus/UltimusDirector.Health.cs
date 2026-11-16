@@ -312,6 +312,8 @@ internal sealed partial class UltimusDirectorActor {
     private DateTime _radianceUntil = DateTime.MinValue;
     private string _potionPrepFor;
     private bool _potionAsked;
+    // The potion run before a dungeon goes to Wizard City's shop (none near in this world).
+    private bool _potionFar;
 
     // Before walking into a dungeon, potions filled at a potion shop in this area or the next one, as a player stocks up
     // before a dungeon (Niduus, 2026-11-15, after he went into The Vault of Ice at 35% with no potions). Once per dungeon door;
@@ -368,12 +370,31 @@ internal sealed partial class UltimusDirectorActor {
         }
 
         _potionPrepFor = target.To;
-        if (PotionShopTarget(leader, out var hops) is null || hops > 1) {
+        // No potion shop near (Marleybone has none he can reach): Wizard City's, as for a heal. A long dungeon done without
+        // potions cost him fights on every floor (his log, 2026-11-16: Big Ben's floors at 32% and 15% health with "no potion
+        // or wisp in here", lost to Gearhead, Filcher and O'Leary Rowdy).
+        _potionFar = PotionShopTarget(leader, out var hops) is null || hops > 1;
+        if (_potionFar && stats.m_potionCharge >= 1) {
+            _potionFar = false;
             return;
         }
 
-        _potionRunUntil = DateTime.UtcNow.AddMinutes(5);
+        if (_potionFar && FarPotionShop(leader) is null) {
+            // Not known yet (the way is found in the background) or no gold: looked at again next time.
+            _potionFar = false;
+            _potionPrepFor = null;
+            return;
+        }
+
+        _potionRunUntil = DateTime.UtcNow.AddMinutes(_potionFar ? 15 : 5);
         _potionAsked = false;
+        if (_potionFar) {
+            Think($"\"{target.What}\" takes me into a dungeon ({UltimusText.Zone(target.To)}) and I have no potions. This world has no potion shop " +
+                  "I can reach, so I fill them in Wizard City first and Recall back: a dungeon is done in one go.", "dungeon-potions-far|" + target.To);
+            Note("Ultimus", $"{leader.Name} fills its potions in Wizard City before the dungeon {UltimusText.Zone(target.To)}.");
+            return;
+        }
+
         Think($"\"{target.What}\" takes me into a dungeon ({UltimusText.Zone(target.To)}). I have {stats.m_potionCharge:0.#} of {stats.m_potionMax:0} potions and a " +
               $"potion shop is {(hops == 0 ? "right here" : "one area away")}, so I fill them first.", "dungeon-potions|" + target.To);
         Note("Ultimus", $"{leader.Name} fills its potions before the dungeon {UltimusText.Zone(target.To)}.");
@@ -552,11 +573,13 @@ internal sealed partial class UltimusDirectorActor {
 
         if (stats.m_potionCharge >= stats.m_potionMax) {
             _potionRunUntil = DateTime.MinValue;
+            _potionFar = false;
             Note("Ultimus", $"{leader.Name} has full potions again{(_potionAsked ? ", as asked" : "")}.");
             return false;
         }
 
-        if (PotionShopTarget(leader, out _) is not { } shop) {
+        if ((PotionShopTarget(leader, out var near) is { } nearShop && (!_potionFar || near <= 1) ? nearShop : _potionFar ? FarPotionShop(leader) : null)
+            is not { } shop) {
             return false;
         }
 

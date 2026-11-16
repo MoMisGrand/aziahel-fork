@@ -139,7 +139,11 @@ internal static class OnlineList {
             var inBattle = Zone.Components.CombatDuelComponent.PlayersInBattle;
             // People = players who are not the server's own bots; Ahziael waits for it to be 0 before an update restart.
             var people = s_rows.Keys.Count(account => !s_botAccounts.Contains(account));
-            var json = JsonSerializer.Serialize(new { Players = players, People = people, InBattle = inBattle });
+            // The server's own bots (Ultimus, the TCO7) inside a dungeon: a restart closes every dungeon copy and they start
+            // it over (Ultimus redid Big Ben's floors after six update restarts in one night, 2026-11-16), so Ahziael's
+            // "when nobody is playing" restart waits for them to come out too, for a while.
+            var botsInDungeon = s_rows.Where(r => s_botAccounts.Contains(r.Key)).Count(r => OverlayQuestRoute.IsDungeon(r.Value.Row.Zone));
+            var json = JsonSerializer.Serialize(new { Players = players, People = people, InBattle = inBattle, BotsInDungeon = botsInDungeon });
             if (json == s_written) {
                 return;
             }
