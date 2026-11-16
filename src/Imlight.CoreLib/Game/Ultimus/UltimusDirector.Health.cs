@@ -240,6 +240,9 @@ internal sealed partial class UltimusDirectorActor {
         // Nothing in this world: the potion shop of Wizard City, however far (Niduus, 2026-11-14: "he should hunt for them
         // and if he can't find any safely then he just goes to a potion vendor"). He marks his spot and Recalls back after.
         pick ??= FarPotionShop(leader);
+        // No gold (or no bottles) for potions: the hub areas' wisps, this world's hub first, then Wizard City's (Niduus,
+        // 2026-11-16: "If he doesn't have gold, he searches the hub areas for wisps instead").
+        pick ??= HubWisps(leader, lowHealth, lowMana);
         if (pick is not null) {
             // The trip is not cut short by the Recall back to his marked spot until he is healed.
             HoldRecall(20);
@@ -689,6 +692,46 @@ internal sealed partial class UltimusDirectorActor {
         Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromSeconds(1.5), _actors[0], new UltimusMember.PressCommons(), Self);
 
         return true;
+    }
+
+    // How far from a hub an area still counts as one of the hub areas (the hub and the areas next to it).
+    private const int HUB_AREA_HOPS = 1;
+
+    /// <summary>
+    /// Wisps in the hub areas (a world's hub and the areas next to it), for when he can't buy potions: this world's hub
+    /// first, then Wizard City's. Never a dungeon (NearestZonesWith). Null when none is known yet, or every one was
+    /// searched a little while ago.
+    /// </summary>
+    private UltimusPlanner.Target HubWisps(UltimusMember.Status leader, bool health, bool mana) {
+        if (string.IsNullOrEmpty(leader.Zone)) {
+            return null;
+        }
+
+        ZoneService.ResolveWorldHub(leader.Zone, out var hub, out _);
+        var hubs = new List<string>();
+        if (!string.IsNullOrEmpty(hub)) {
+            hubs.Add(hub);
+        }
+
+        hubs.Add("WizardCity/WC_Hub");
+        foreach (var from in hubs) {
+            var areas = HealZones("hub" + WispKey(from, health, mana), from, name => name.Contains("Wisp", StringComparison.OrdinalIgnoreCase)
+                && (health && name.Contains("Health", StringComparison.OrdinalIgnoreCase) || mana && name.Contains("Mana", StringComparison.OrdinalIgnoreCase)));
+            foreach (var (zone, away, _) in areas ?? []) {
+                if (away > HUB_AREA_HOPS || OverlayQuestTracker.SameZone(zone, leader.Zone)
+                    || _wispsTaken.TryGetValue(zone, out var until) && DateTime.UtcNow < until) {
+                    continue;
+                }
+
+                var why = $"to pick up {(health ? "health" : "mana")} wisps in the hub areas (no gold for potions)";
+                Think($"I can't buy potions (no gold or no bottles) and found no wisps nearby, so I search the hub areas for wisps: " +
+                      $"{UltimusText.Zone(zone)}.", "hubwisp|" + zone);
+
+                return UltimusPlanner.Travel(leader, zone, why, "wispzone|" + zone) ?? HubButton(leader, zone, why);
+            }
+        }
+
+        return null;
     }
 
     private static string WispKey(string zone, bool health, bool mana) => $"wisp|{(health ? "h" : "")}{(mana ? "m" : "")}|{zone}";
