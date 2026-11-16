@@ -21,6 +21,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using Akka.Actor;
+using Imlight.Common;
 using Imcodec.ObjectProperty.TypeCache;
 using Imlight.CoreLib.Game.BotShared;
 using Imlight.CoreLib.Game.Groups;
@@ -210,7 +211,13 @@ internal sealed partial class UltimusDirectorActor {
             // Players he met are kept in players.json too (UltimusDirector.Life.cs).
             var cameBack = Remember(heard.SpeakerCharId, heard.SpeakerName, heard.Whisper);
             // What they are working on, and where they left off when they come back (UltimusDirector.People.cs).
-            NotePerson(heard, cameBack);
+            try {
+                NotePerson(heard, cameBack);
+            }
+            catch (Exception ex) {
+                // Never the reason a player's words go unheard (his log, 2026-11-16: every line threw here).
+                Logger.Debug("Ultimus: could not note what {0} is working on: {1}", Logger.Args(heard.SpeakerName, ex.Message));
+            }
             // "Stop" / "got it", "help me fight", "walk me through this quest", "do you remember me?"
             // (UltimusDirector.Teach.cs, UltimusDirector.Helper.cs, UltimusDirector.People.cs).
             if (!heard.OrdersChecked && (StopAsk(heard) || HelpAsk(heard, me) || TeachAsk(heard) || RememberMeAsk(heard)

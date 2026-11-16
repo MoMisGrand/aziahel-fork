@@ -47,7 +47,13 @@ internal sealed partial class UltimusDirectorActor {
     private bool Unsticking(int index) => _unstickUntil.TryGetValue(index, out var until) && DateTime.UtcNow < until;
 
     private void LookForStuck() {
-        var resting = _healWaiting || _asideWaiting;
+        // Standing with his group mate (or waiting for them, or watching their battle) is not being stuck: he pressed the
+        // Commons button and left Walter standing in Regent's Square (his log, 2026-11-16 12:07).
+        var partyIdle = _target?.Key is { } partyKey && partyKey.StartsWith(PARTY_KEY, StringComparison.Ordinal)
+                        && (partyKey.StartsWith(PARTY_KEY + "with|", StringComparison.Ordinal) || partyKey.StartsWith(PARTY_KEY + "away|", StringComparison.Ordinal)
+                            || partyKey.StartsWith(PARTY_KEY + "loading|", StringComparison.Ordinal) || partyKey.StartsWith(PARTY_KEY + "watch|", StringComparison.Ordinal)
+                            || partyKey.StartsWith(PARTY_KEY + "stay|", StringComparison.Ordinal));
+        var resting = _healWaiting || _asideWaiting || partyIdle;
         for (var i = 0; i < _team.Count; i++) {
             var member = _team[i];
             RouteMemory.Track("Ultimus", member.CharId, member.Zone, member.X, member.Y);
