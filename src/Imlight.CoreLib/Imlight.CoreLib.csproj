@@ -18,6 +18,11 @@
     </ItemGroup>
 
     <ItemGroup>
+        <!-- The Manager's BROKEN / PARTLY check of spell cards, so the bots skip the same broken cards Ahziael marks. -->
+        <Compile Include="..\Imlight.Setup\SpellSupport.cs" Link="Shared\SpellSupport.cs" />
+    </ItemGroup>
+
+    <ItemGroup>
         <ProjectReference Include="..\Imlight.Common\Imlight.Common.csproj" />
         <ProjectReference Include="..\..\submodule\Imcodec\src\Imcodec.IO\Imcodec.IO.csproj" />
         <ProjectReference Include="..\..\submodule\Imcodec\src\Imcodec.Cryptography\Imcodec.Cryptography.csproj" />

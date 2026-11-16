@@ -71,7 +71,15 @@ internal sealed partial class UltimusDirectorActor {
             return;
         }
 
-        var ids = owned.Where(id => CoreObjectFactory.GetCoreTemplate(id) is SpellTemplate).Take(TREASURE_CARDS_KEPT).ToList();
+        // The deck's treasure card slots already full: nothing goes in (his log said "puts 3 treasure cards in his deck" every
+        // hour while the server refused each one, the deck being full of the ones from before).
+        var inDeck = (book.SpellList ?? []).Where(s => s is not null && IsTreasure(s.m_templateID)).Sum(s => (int) s.m_quantity);
+        var room = book.MaxTreasureCards > 0 ? book.MaxTreasureCards - inDeck : TREASURE_CARDS_KEPT;
+        if (room <= 0) {
+            return;
+        }
+
+        var ids = owned.Where(id => CoreObjectFactory.GetCoreTemplate(id) is SpellTemplate && !BrokenCards.Skip(id)).Take(Math.Min(room, TREASURE_CARDS_KEPT)).ToList();
         if (ids.Count == 0) {
             return;
         }
@@ -96,7 +104,7 @@ internal sealed partial class UltimusDirectorActor {
                 || CoreObjectFactory.GetCoreTemplate(spell.m_templateID) is not SpellTemplate template
                 || !string.Equals((string) template.m_sMagicSchoolName, school, StringComparison.OrdinalIgnoreCase) || template.m_levelRestriction > level
                 || _cardSkipped.Contains(spell.m_templateID) || RewrittenAI.Read(spell) is not { } card || BotCards.NotVanilla(card)
-                || BotCards.IsDevSpell(spell.m_templateID) || !(card.Hit || card.Heal)) {
+                || BotCards.IsDevSpell(spell.m_templateID) || BrokenCards.Skip(spell.m_templateID) || !(card.Hit || card.Heal)) {
                 continue;
             }
 

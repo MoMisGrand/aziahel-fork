@@ -71,6 +71,10 @@ internal sealed partial class CombatDuelComponent {
                     UltimusOrders.Done(pending);
                     UltimusLink.Note(UltimusRoster.NAME, $"round {Duel.m_roundNum}: {pending.ByName} (group leader) said to flee: presses Flee.");
                     UltimusSays(member, "Okay!");
+                    // The leader's call, so he obeys; a flee in a dungeon still counts against the run (UltimusEffort).
+                    var inDungeon = member._wizard is { } fleeing && Imlight.CoreLib.Game.World.DungeonRecall.IsInDungeon(fleeing.CharId);
+                    UltimusEffort.Note(inDungeon ? UltimusEffort.Kind.DungeonLost : UltimusEffort.Kind.Fled,
+                        $"{pending.ByName} (group leader) said to flee{(inDungeon ? " in a dungeon: the run starts over" : "")}");
                     UltimusDirector.ActorOf(UltimusRole(member))?.Tell(new UltimusMember.Flee(), Akka.Actor.ActorRefs.NoSender);
                     return true;
                 case UltimusOrders.Kind.Draw when !deadline:

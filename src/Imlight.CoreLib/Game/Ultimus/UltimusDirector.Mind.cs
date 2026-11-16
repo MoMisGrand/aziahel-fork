@@ -174,6 +174,9 @@ internal sealed partial class UltimusDirectorActor {
         }
 
         SaveFight(me, fight.Template, fight.Name, won, fight.Health, lostShare, seconds, battle, picked, style);
+        // The good and the bad of it, for his own awareness (UltimusEffort).
+        UltimusEffort.Note(won ? UltimusEffort.Kind.FightWon : UltimusEffort.Kind.FightLost,
+            $"{(won ? "beat" : "lost to")} {(fight.Name.Length > 0 ? fight.Name : "a creature")} in {battle?.Round ?? 0} round(s), {lostShare:P0} health lost", seconds);
         NoteDayFight(fight.Name.Length > 0 ? fight.Name : "a creature", won, lostShare);
         if (fight.Template == 0) {
             return;

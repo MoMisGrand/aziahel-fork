@@ -54,32 +54,7 @@ internal static class VendorGuide {
     /// <summary>Works the list out and writes it (IdCatalog runs it after the server's start).</summary>
     internal static void Write(string folder) {
         try {
-            var (zoneNames, zonesOf) = LoadZones();
-            var files = CoreObjectFactory.TemplateManifest.m_serializedTemplates.Where(t => t is not null)
-                .GroupBy(t => (uint) t.m_id).ToDictionary(g => g.Key, g => (string) g.First().m_filename);
-
-            // Every NPC that may sell or teach: the placed ones (their template says whether they keep a shop) and the
-            // ones some list names.
-            var candidates = new HashSet<uint>(zonesOf.Keys);
-            candidates.UnionWith(SpiralDB.NpcInventories.Keys.Select(id => (uint) id));
-            candidates.UnionWith(SpiralDB.NpcSpellInventories.Keys.Select(id => (uint) id));
-            candidates.UnionWith(SpiralDB.TreasureCardInventories.Keys.Select(id => (uint) id));
-
-            var npcs = new List<Npc>();
-            foreach (var id in candidates.Order()) {
-                try {
-                    if (!files.TryGetValue(id, out var file) || CoreObjectFactory.LoadTemplateFile(file) is not GameObjectTemplate template
-                        || Describe(id, template, zonesOf, zoneNames) is not { } npc) {
-                        continue;
-                    }
-
-                    npcs.Add(npc);
-                }
-                catch (Exception e) {
-                    Logger.Debug("Vendors and trainers: skipped {0}: {1}", Logger.Args(id, e.Message));
-                }
-            }
-
+            var npcs = Build();
             Directory.CreateDirectory(folder);
             var path = Path.Combine(folder, FILE);
             File.WriteAllText(path + ".saving", JsonSerializer.Serialize(npcs, s_write));
@@ -90,6 +65,53 @@ internal static class VendorGuide {
         catch (Exception e) {
             Logger.Warning("Vendors and trainers for the Manager could not be written: {0}", Logger.Args(e.Message));
         }
+    }
+
+    private static readonly object s_builtLock = new();
+    private static List<Npc> s_built;
+
+    /// <summary>
+    /// Every vendor and trainer, as the Manager's Vendors &amp; Trainers search shows them (worked out once, then kept):
+    /// Ultimus answers "where do I get it" from the same list (Niduus, 2026-11-16).
+    /// </summary>
+    internal static IReadOnlyList<Npc> All() {
+        lock (s_builtLock) {
+            return s_built ??= Build();
+        }
+    }
+
+    private static List<Npc> Build() {
+        var (zoneNames, zonesOf) = LoadZones();
+        var files = CoreObjectFactory.TemplateManifest.m_serializedTemplates.Where(t => t is not null)
+            .GroupBy(t => (uint) t.m_id).ToDictionary(g => g.Key, g => (string) g.First().m_filename);
+
+        // Every NPC that may sell or teach: the placed ones (their template says whether they keep a shop) and the
+        // ones some list names.
+        var candidates = new HashSet<uint>(zonesOf.Keys);
+        candidates.UnionWith(SpiralDB.NpcInventories.Keys.Select(id => (uint) id));
+        candidates.UnionWith(SpiralDB.NpcSpellInventories.Keys.Select(id => (uint) id));
+        candidates.UnionWith(SpiralDB.TreasureCardInventories.Keys.Select(id => (uint) id));
+
+        var npcs = new List<Npc>();
+        foreach (var id in candidates.Order()) {
+            try {
+                if (!files.TryGetValue(id, out var file) || CoreObjectFactory.LoadTemplateFile(file) is not GameObjectTemplate template
+                    || Describe(id, template, zonesOf, zoneNames) is not { } npc) {
+                    continue;
+                }
+
+                npcs.Add(npc);
+            }
+            catch (Exception e) {
+                Logger.Debug("Vendors and trainers: skipped {0}: {1}", Logger.Args(id, e.Message));
+            }
+        }
+
+        lock (s_builtLock) {
+            s_built = npcs;
+        }
+
+        return npcs;
     }
 
     // One NPC, or null when it neither sells nor teaches.

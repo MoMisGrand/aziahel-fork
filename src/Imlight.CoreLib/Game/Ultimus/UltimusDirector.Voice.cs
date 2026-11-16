@@ -202,6 +202,16 @@ internal sealed partial class UltimusDirectorActor {
                 continue;
             }
 
+            // "How do I train Tower Shield?", "where do I get this hat?": from the real game's data, never the AI's guess
+            // (Niduus, 2026-11-16: "He will answer what he finds in the game's VANILLA files").
+            if (heard.Typed && UltimusLookup.Answer(heard.SpeakerCharId, heard.Text) is { Length: > 0 } looked) {
+                Think($"{heard.SpeakerName} asked \"{UltimusText.Short(heard.Text, 80)}\", so I look it up in the real game's data.",
+                    "lookup|" + heard.SpeakerCharId + "|" + heard.Text);
+                _answeredAt[heard.SpeakerCharId] = DateTime.UtcNow;
+                SendReply(heard, looked, "game data");
+                continue;
+            }
+
             var how = (heard.Whisper ? "whispered" : "said") + (heard.Typed ? "" : " in Menu Chat");
             var reply = BotSocial.Answer(SocialSelf(me), heard.SpeakerCharId, heard.SpeakerName, heard.Text, heard.Typed, heard.Whisper);
             if (reply is null) {
