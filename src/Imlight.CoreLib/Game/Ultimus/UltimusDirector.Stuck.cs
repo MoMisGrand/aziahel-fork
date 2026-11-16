@@ -47,7 +47,7 @@ internal sealed partial class UltimusDirectorActor {
     private bool Unsticking(int index) => _unstickUntil.TryGetValue(index, out var until) && DateTime.UtcNow < until;
 
     private void LookForStuck() {
-        var resting = _healWaiting;
+        var resting = _healWaiting || _asideWaiting;
         for (var i = 0; i < _team.Count; i++) {
             var member = _team[i];
             RouteMemory.Track("Ultimus", member.CharId, member.Zone, member.X, member.Y);

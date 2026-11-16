@@ -557,6 +557,8 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
         target = GuardFight(leader, target) ?? target;
         // Ten stuck alarms at one spot: the creatures around it first (UltimusDirector.Approach.cs).
         target = ClearAroundFight(leader) ?? target;
+        // A step set aside with no other step open: a fight here or a short rest, not the same moves (UltimusDirector.Aside.cs).
+        target = AsideWork(leader, target) ?? target;
         // In a dungeon: each floor's battle circle, fight, door spot and puzzle first (UltimusDirector.Rooms.cs).
         target = FloorDuty(leader, target) ?? target;
         // Healing first, above all before a fight (UltimusDirector.Health.cs).
@@ -625,7 +627,14 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
                     }
                     ThinkAboutFight(target);
                     ThinkAboutRival(target);
-                    PrepareDecks(UltimusScout.SituationOf(target.Template));
+                    // A rival (it beat him twice or more, in a quarter of their fights or more; by its exact template): more
+                    // shields and heals.
+                    var situation = UltimusScout.SituationOf(target.Template);
+                    if (UltimusFoes.Of((uint) Math.Min(target.Template, uint.MaxValue)) is { Lost: >= 2 } rival && rival.Lost * 4 >= rival.Fought) {
+                        situation = situation with { Rival = true };
+                    }
+
+                    PrepareDecks(situation);
                     // A creature with cheats: its playbook read and his gear for it (UltimusDirector.BossPrep.cs).
                     BossPrep(target);
                 }
@@ -2510,14 +2519,23 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
             facts.Insert(0, $"Likely cause ({diagnosis.Confidence} confidence, {diagnosis.Category}): {diagnosis.LikelyCause}");
             facts.Insert(1, $"Can the step be done: {diagnosis.Completable}");
             facts.AddRange(diagnosis.Checks.Select(c => "Check " + c));
-            Note("Ultimus", $"DIAGNOSIS: {diagnosis.LikelyCause} ({diagnosis.Confidence} confidence)",
-                diagnosis.Confidence == "High" ? UltimusLink.ABNORMAL : UltimusLink.NOTABLE);
+            // Once per quest and cause (his log, 2026-11-16: the same "every check passed" 5 times in 10 minutes at one spot);
+            // again only when the cause changes or an hour went by. The issue below still carries it each time.
+            var said = $"{diagnosis.Category}|{UltimusText.Short(diagnosis.LikelyCause, 80)}";
+            if (!_diagnosisSaid.TryGetValue(quest ?? "", out var last) || last.Cause != said || DateTime.UtcNow - last.At > TimeSpan.FromHours(1)) {
+                _diagnosisSaid[quest ?? ""] = (said, DateTime.UtcNow);
+                Note("Ultimus", $"DIAGNOSIS: {diagnosis.LikelyCause} ({diagnosis.Confidence} confidence)",
+                    diagnosis.Confidence == "High" ? UltimusLink.ABNORMAL : UltimusLink.NOTABLE);
+            }
         }
 
         UltimusLink.Issue(kind, quest ?? "", string.IsNullOrEmpty(quest) ? "" : UltimusText.Title(quest),
             template is null ? "" : QuestStory.WorldOf(template), text, Expected(kind, _target), Seen(quest),
             _target?.Goal ?? "", facts);
     }
+
+    // The diagnosis last written per quest: its cause and when.
+    private readonly Dictionary<string, (string Cause, DateTime At)> _diagnosisSaid = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>Runs the shared quest diagnosis (BotShared.BotQuestDiagnosis) for Ultimus on <paramref name="quest"/>; null when it can't.</summary>
     private BotShared.BotQuestDiagnosis.Result Diagnose(string quest) {

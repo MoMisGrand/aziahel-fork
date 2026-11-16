@@ -62,6 +62,9 @@ internal static class BotCards {
         /// <summary>Its name, when its cheats change the deck (for the words).</summary>
         internal string CheaterName { get; init; } = "";
 
+        /// <summary>A creature that keeps beating this wizard (his own results): more shields and heals in the deck.</summary>
+        internal bool Rival { get; init; }
+
         /// <summary>Two or more enemies now, or (not counted yet) most of its recent fights had that many.</summary>
         internal bool CrowdLikely => Enemies >= 2 || (Enemies == 0 && CrowdShare >= CROWD_MOSTLY);
 
@@ -72,6 +75,10 @@ internal static class BotCards {
             var foe = HitSchools.Count > 0 ? $"{DescribeFoe()}, hitting with {string.Join(", ", HitSchools.Take(3))}" : DescribeFoe();
             if (Punished.Count > 0) {
                 foe += $"; its cheats punish {string.Join(", ", Punished.Select(p => p.ToLowerInvariant() + "s"))}, so fewer of those";
+            }
+
+            if (Rival) {
+                foe += "; a rival that keeps beating me, so more shields and heals";
             }
 
             return Enemies == 0 && CrowdShare >= CROWD_SOMETIMES
@@ -175,6 +182,15 @@ internal static class BotCards {
                 shares[Kind.Shield] += 0.05;
                 shares[Kind.Hit] = Math.Max(0.1, shares[Kind.Hit] - 0.1);
             }
+        }
+
+        // A rival, a creature that beat this wizard at least as often as it lost to him (UltimusFoes, by its exact template):
+        // the deck stands up longer, as a player brings more shields and heals to a fight they keep losing (Niduus,
+        // 2026-11-16, "all" to the pitch: Clockwork Warrior won 3 of 5, Desert Golem 5 of 17).
+        if (situation.Rival && style != BotStyle.Hitter) {
+            shares[Kind.Shield] += 0.05;
+            shares[Kind.Heal] += 0.05;
+            shares[Kind.Hit] = Math.Max(0.1, shares[Kind.Hit] - 0.1);
         }
 
         // Its cheats punish some kinds of cards: those get few places (never none for heals, which can save a life), and the

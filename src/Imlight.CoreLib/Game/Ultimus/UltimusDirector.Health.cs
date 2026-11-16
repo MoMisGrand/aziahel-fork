@@ -56,6 +56,7 @@ internal sealed partial class UltimusDirectorActor {
 
     private DateTime _hurtSince = DateTime.MaxValue;
     private DateTime _hurtNoted = DateTime.MinValue;
+    private int _hurtNotedAt = -1;
     private bool _toldNoHeal;
 
     // Standing still on purpose until it can heal: not "stuck".
@@ -117,10 +118,14 @@ internal sealed partial class UltimusDirectorActor {
         if (_hurtSince == DateTime.MaxValue) {
             _hurtSince = DateTime.UtcNow;
             // Once a minute at most (his PC log, 2026-11-14: the same line twice a second for minutes while he walked on hurt).
-            if (DateTime.UtcNow - _hurtNoted > TimeSpan.FromMinutes(1)) {
+            // Said again only when his health changed or 5 minutes went by, and without "heals before going on": with nothing to
+            // heal from he goes on (the rules below), and the line said it every minute at the same 934 health for half an
+            // hour while he went on (his log, 2026-11-16, Big Ben).
+            if (stats.m_currentHitpoints != _hurtNotedAt || DateTime.UtcNow - _hurtNoted > TimeSpan.FromMinutes(5)) {
                 _hurtNoted = DateTime.UtcNow;
+                _hurtNotedAt = stats.m_currentHitpoints;
                 Note("Ultimus", $"{leader.Name} {(onlyPrep ? "wants more before a hard fight" : "is hurt")} ({stats.m_currentHitpoints} of {maxHealth} health, " +
-                                $"{stats.m_currentMana} of {stats.m_baseMana + stats.m_bonusMana} mana): heals before going on.");
+                                $"{stats.m_currentMana} of {stats.m_baseMana + stats.m_bonusMana} mana): looks for a way to heal, or goes on if there is none.");
             }
         }
 
