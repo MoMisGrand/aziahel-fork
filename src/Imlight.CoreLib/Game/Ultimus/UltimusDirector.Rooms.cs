@@ -41,6 +41,49 @@ internal sealed partial class UltimusDirectorActor {
     // The spot he stands on now (stepped on once); he steps off before stepping on it again.
     private string _floorOn;
 
+    // Floor teleporters walked to for a step with no way on the map, and when (each one tried again only after a while).
+    private readonly Dictionary<string, DateTime> _padAheadAt = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// No way on the map to a step on a later floor of a dungeon: at once to the floor's own teleporter on, instead of
+    /// standing about until he counts as stuck (his log, 2026-11-16 05:21: 43 seconds at Big Ben's fifth floor before the
+    /// stuck fix sent him up).
+    /// </summary>
+    private bool FloorPadAhead(UltimusMember.Status leader, UltimusPlanner.Target target, string what) {
+        if (!InDungeon(leader) || string.IsNullOrEmpty(leader.Zone) || target is null
+            || BotFloors.Far(leader.X, leader.Y, target.X, target.Y) <= BotFloors.ROOM) {
+            return false;
+        }
+
+        var book = BotFloors.BookOf(leader.Zone);
+        var state = ZoneStates.Of(leader.ZoneActor);
+        var live = new BotFloors.Live(name => state?.GetObjectState(name), _ => 0, _ => null, (_, _) => false,
+            (x, y) => OverlayQuestPath.IslandOf(leader.Zone, leader.X, leader.Y) is var a && OverlayQuestPath.IslandOf(leader.Zone, x, y) is var b
+                      && (a < 0 || b < 0 || a == b));
+        if (BotFloors.PadAhead(book, live, leader.X, leader.Y) is not { } pad) {
+            return false;
+        }
+
+        var key = leader.Zone + "|" + pad.Name;
+        if (_padAheadAt.TryGetValue(key, out var at) && DateTime.UtcNow - at > TimeSpan.FromSeconds(60) && DateTime.UtcNow - at < TimeSpan.FromMinutes(5)) {
+            // Walked to it a minute ago and still here with no way: the other fixes get their turn.
+            return false;
+        }
+
+        if (!_padAheadAt.ContainsKey(key) || DateTime.UtcNow - at >= TimeSpan.FromMinutes(5)) {
+            _padAheadAt[key] = DateTime.UtcNow;
+            Think($"There is no way on the map from here to \"{what}\", which is on a later floor. The way a player goes is this floor's " +
+                  $"teleporter on, \"{pad.Name}\", so I take it now.", "padahead|" + key);
+        }
+
+        var points = OverlayQuestPath.Walk(leader.CharId, leader.Zone, leader.X, leader.Y, pad.X, pad.Y, body: true);
+        _sent[0] = (target, DateTime.UtcNow, leader.X, leader.Y);
+        _actors[0].Tell(new UltimusMember.WalkTo(points, $"the floor's teleporter on, toward {what}"));
+        _leaderLastTarget = target;
+
+        return true;
+    }
+
     private UltimusPlanner.Target FloorDuty(UltimusMember.Status leader, UltimusPlanner.Target target) {
         if (target?.Kind == UltimusPlanner.FIGHT || string.IsNullOrEmpty(leader?.Zone) || !InDungeon(leader)) {
             return null;

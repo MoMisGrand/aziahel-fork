@@ -551,6 +551,12 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
             return;
         }
 
+        // Put out of a dungeon copy that still waits for him: back in by Dungeon Recall (UltimusDirector.Comeback.cs).
+        if (DungeonComeback(leader)) {
+            StopWalking(0);
+            return;
+        }
+
         // Every new move checked against his mission, with its "because" (UltimusDirector.Guard.cs).
         var target = MissionCheck(leader, PickTarget(group));
         // A quest thing that did not work with its boss or creatures still standing: they are fought first (BotUseGuards).
@@ -1609,6 +1615,10 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
         // No way, but a teleporter on his ground whose landing nobody knows yet: he walks into it to see where it goes, as
         // a player tries the next door (Big Ben's floors past the fifth; Niduus, 2026-11-15: "I think he's stuck in Big Ben").
         // Once it has moved him it is learned, and the way finder chains it with the rest.
+        if (noWay && index == 0 && FloorPadAhead(member, target, what)) {
+            return;
+        }
+
         if (noWay && TryUntried(index, member, target, what)) {
             return;
         }
@@ -1884,6 +1894,11 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
         var key = _target?.Key ?? member.Zone;
         _losses[key] = _losses.GetValueOrDefault(key) + 1;
         Note("Ultimus", $"lost the battle ({_losses[key]} time(s) at this step).", UltimusLink.MINOR);
+        // Fallen in a dungeon copy: Dungeon Recall takes him back to it (UltimusDirector.Comeback.cs).
+        if (member.Wizard?.ZoneIsInstance == true) {
+            _fellIn = (member.Zone ?? "", DateTime.UtcNow);
+        }
+
         // Learning from it (Niduus, 2026-11-12: "Both documenting mistakes for future learning").
         var level = member.Wizard?.MagicSchoolBehavior?.Level ?? 0;
         UltimusLink.Learned("lost-fight", _target?.Quest ?? "", _target?.Goal ?? "", member.Zone ?? "",
