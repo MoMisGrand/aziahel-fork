@@ -1,0 +1,4 @@
+Fixed: Ultimus waiting forever at a Big Ben floor door that needs a fight
+Each Big Ben floor has a door by its teleporter up that only opens after you beat the floor's elite creature, and the elite only comes out when you step on the floor's battle circle. Ultimus saw no creatures, so he never started the fight and stood by the wall for hours. Now, when he is stuck and a door on his floor opens after a fight that has not started, he walks onto the room's battle circle to start it, wins, and goes on through the open door. The area book now lists every battle circle too.
+Where: Ultimus, in Big Ben and any area whose doors open after a room's fight.
+Test: Let Ultimus carry on with "The Last Meow" on the sixth floor of Big Ben and watch him step on the floor's battle circle, win the fight, and take the teleporter up.
