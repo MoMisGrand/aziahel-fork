@@ -492,7 +492,43 @@ internal class ZoneService(SessionActor sessionActor) : MessageService(sessionAc
         }
 
         DungeonRecall.Offer(message is null ? null : SessionActor.ActorRef, wizard.CharId, owner, wizard.Zone,
-            _instanceArrival, wizard.ZoneDisplayName);
+            _instanceArrival, wizard.ZoneDisplayName, QuestStillHere(wizard, wizard.Zone));
+    }
+
+    /// <summary>
+    /// Whether the wizard still has a quest to do in this dungeon: one of its own quests, or a step of a quest that is in
+    /// it. Then leaving it gives the recall even after a boss in it was beaten (Niduus, 2026-11-16, Big Ben: a floor
+    /// elite counted as "the boss", so fleeing Meowiarty gave him and Ultimus no recall).
+    /// </summary>
+    private static bool QuestStillHere(Wizard wizard, string zone) {
+        try {
+            var own = DungeonQuestIndex.GetQuestsForZones([zone]).Select(q => (string) q.m_questName)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            foreach (var quest in wizard.QuestBehavior?.CurrentQuestInstances ?? []) {
+                if (quest is null) {
+                    continue;
+                }
+
+                if (own.Contains(quest.QuestName)) {
+                    return true;
+                }
+
+                var template = QuestTemplateCollection.GetQuestByName(quest.QuestName);
+                foreach (var goal in template?.m_goals ?? []) {
+                    if (goal is not null && quest.IsGoalActive(goal.m_goalName)
+                        && Imlight.CoreLib.Game.Tools.OverlayQuestTracker.StepZone(goal) is { Length: > 0 } stepZone
+                        && (Imlight.CoreLib.Game.Tools.OverlayQuestTracker.SameZone(stepZone, zone)
+                            || Imlight.CoreLib.Game.Tools.OverlayQuestTracker.SameZone(zone, stepZone))) {
+                        return true;
+                    }
+                }
+            }
+        }
+        catch (Exception e) {
+            Logger.Debug("Dungeon Recall: could not read the quests of {0}: {1}", Logger.Args(wizard.CharId, e.Message));
+        }
+
+        return false;
     }
 
     /// <summary>
