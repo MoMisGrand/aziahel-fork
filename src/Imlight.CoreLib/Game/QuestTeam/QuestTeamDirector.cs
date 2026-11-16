@@ -625,6 +625,8 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
         target = GuardFight(leader, target) ?? target;
         // Clearing the creatures round a spot where the team got stuck ten times (QuestTeamDirector.Approach.cs).
         target = ClearAroundFight(leader) ?? target;
+        // In a dungeon: each floor's battle circle, fight, door spot and puzzle first, as Ultimus does (QuestTeamDirector.Rooms.cs).
+        target = FloorDuty(leader, target) ?? target;
         if (target?.Kind == QuestTeamPlanner.FIGHT && !ReadyToFight(group)) {
             return;
         }

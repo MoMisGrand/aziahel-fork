@@ -557,6 +557,8 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
         target = GuardFight(leader, target) ?? target;
         // Ten stuck alarms at one spot: the creatures around it first (UltimusDirector.Approach.cs).
         target = ClearAroundFight(leader) ?? target;
+        // In a dungeon: each floor's battle circle, fight, door spot and puzzle first (UltimusDirector.Rooms.cs).
+        target = FloorDuty(leader, target) ?? target;
         // Healing first, above all before a fight (UltimusDirector.Health.cs).
         if (HealFirst(group, target)) {
             _healingAt = DateTime.UtcNow;
@@ -601,7 +603,7 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
             _target = target;
             if (!sameStep) {
                 _targetSince = DateTime.UtcNow;
-                // Where he is and where it is, height and all, and which way between floors (UltimusDirector.Floors.cs).
+                // Where he is and where it is, height and all, and which way between floors (UltimusDirector.Rooms.cs).
                 Note("Ultimus", $"next: {Describe(target)}. Where: {FloorWords(leader, target)}.");
                 ThinkFloor(leader, target);
                 // His goals, how much he trusts this plan and what he expects (UltimusDirector.Plans.cs).
@@ -1572,7 +1574,7 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
         if (!string.IsNullOrEmpty(target.To) && target.Kind != UltimusPlanner.SPIRAL) {
             walkAvoid = RouteMobs.OtherExits(member.ZoneActor, member.Zone, target.To, member.X, member.Y, toX, toY, walkAvoid);
         }
-        // From the floor he stands on to the step's own floor, by the stairs or ramps between (UltimusDirector.Floors.cs).
+        // From the floor he stands on to the step's own floor, by the stairs or ramps between (UltimusDirector.Rooms.cs).
         var toZ = UltimusPlanner.Far(toX, toY, target.X, target.Y) < 60 ? TargetZ(member, target) : float.NaN;
         // A walk he already knows works from about here (RouteMemory) is taken first, before a way by sight or the map's
         // (Niduus, 2026-11-15: "our boy doesn't seem to remember his successful path and assume it immediately").
