@@ -69,7 +69,12 @@ internal sealed partial class UltimusDirectorActor {
         var share = stats is null ? 1.0 : stats.m_currentHitpoints / (double) Math.Max(1, stats.m_baseHitpoints + stats.m_bonusHitpoints);
         var now = (uint) DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         var runningOut = ticket.ExpireTime > now && ticket.ExpireTime - now <= COMEBACK_LAST_SECONDS;
-        if (share < COMEBACK_HEALTH && !(runningOut && share >= 0.25)) {
+        // About to walk in through the door again: that makes a new copy at the same health, with every floor to do over
+        // (his log, 2026-11-16 06:46: fell on Big Ben's first floor, then at about half health walked in again and started
+        // at Travis Pawman). The recall is never worse than that, so he takes it now, once over a quarter of his health
+        // (under it his healing comes first, as before).
+        var walkingIn = _target is { } next && !string.IsNullOrEmpty(next.To) && OverlayQuestTracker.SameZone(next.To, fell.Zone);
+        if (share < COMEBACK_HEALTH && !((walkingIn || runningOut) && share >= 0.25)) {
             return false;
         }
 

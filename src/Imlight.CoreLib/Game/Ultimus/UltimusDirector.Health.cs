@@ -761,6 +761,14 @@ internal sealed partial class UltimusDirectorActor {
                     continue;
                 }
 
+                // Never a dungeon for a heal: going in starts its own quest and floors, holds him there (he never walks
+                // out of a dungeon) and takes the place of the copy his Dungeon Recall held. His log, 2026-11-16 07:01: at
+                // 2% health after falling in Big Ben he went into Counterweight East for its health wisps, its quest
+                // "Metal Madness" started, and he stayed in there for three hours instead of going back to Big Ben.
+                if (OverlayQuestRoute.IsDungeon(zone)) {
+                    continue;
+                }
+
                 // The story's own ways only (stays in bounds: no side areas just for a heal).
                 var hops = OverlayQuestRoute.Way(from, zone, false, storyOnly: true).Count;
                 var viaHub = hubHere ? 0
