@@ -45,6 +45,11 @@ internal sealed partial class ManagerWindow {
     // When the countdown tells everyone playing how long is left.
     private static readonly int[] s_countdownWarnings = [60, 30, 10];
 
+    // How long a "when nobody is playing" restart waits, once nobody is playing, for Ultimus or a TCO7 member to come out
+    // of a dungeon (a restart closes the dungeon and he does every floor over).
+    private static readonly TimeSpan s_longestWaitForDungeon = TimeSpan.FromHours(2);
+    private DateTime? _dungeonWaitSince;
+
     private ServerRestartPlan _restartPlan;
     private DateTime _restartAt;
     private int _nextWarning;
@@ -139,11 +144,23 @@ internal sealed partial class ManagerWindow {
             return;
         }
 
-        var (players, inBattle) = ReadPlayersAndBattles();
+        var (players, inBattle, botsInDungeon) = ReadPlayersAndBattles();
         switch (_restartPlan) {
             case ServerRestartPlan.WhenNobodyPlays:
                 // Two checks in a row, so someone changing zones (gone from the list for a moment) isn't missed.
                 _emptyChecks = players == 0 ? _emptyChecks + 1 : 0;
+                // Nobody playing, but Ultimus (or a TCO7 member) is inside a dungeon: wait for him to come out, up to 2 hours.
+                if (_emptyChecks >= 2 && botsInDungeon > 0) {
+                    _dungeonWaitSince ??= DateTime.Now;
+                    if (DateTime.Now - _dungeonWaitSince < s_longestWaitForDungeon) {
+                        _updateButton.Content = "Waiting for Ultimus to leave a dungeon";
+                        break;
+                    }
+                }
+                else if (botsInDungeon == 0) {
+                    _dungeonWaitSince = null;
+                }
+
                 if (_emptyChecks >= 2) {
                     _ = Guard(RestartForUpdateAsync);
                 }
@@ -261,11 +278,11 @@ internal sealed partial class ManagerWindow {
 
     // Who is online and how many are in a battle, from online-players.json (OnlineList). A server too old to say counts
     // nobody in a battle, and an unreadable list counts as somebody playing.
-    private (int Players, int InBattle) ReadPlayersAndBattles() {
+    private (int Players, int InBattle, int BotsInDungeon) ReadPlayersAndBattles() {
         try {
             var file = Path.Combine(_manager.ServerFolder, ONLINE_FILE);
             if (!File.Exists(file)) {
-                return (1, 0);
+                return (1, 0, 0);
             }
 
             using var document = JsonDocument.Parse(File.ReadAllText(file));
@@ -274,11 +291,13 @@ internal sealed partial class ManagerWindow {
             var players = root.TryGetProperty("People", out var people) && people.TryGetInt32(out var peopleCount) ? peopleCount
                 : root.TryGetProperty("Players", out var list) && list.ValueKind == JsonValueKind.Array ? list.GetArrayLength() : 1;
             var inBattle = root.TryGetProperty("InBattle", out var battles) && battles.TryGetInt32(out var count) ? count : 0;
+            // An older server doesn't say: nobody waits on a dungeon.
+            var botsInDungeon = root.TryGetProperty("BotsInDungeon", out var inDungeon) && inDungeon.TryGetInt32(out var dungeonCount) ? dungeonCount : 0;
 
-            return (players, inBattle);
+            return (players, inBattle, botsInDungeon);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException) {
-            return (1, 0);
+            return (1, 0, 0);
         }
     }
 
