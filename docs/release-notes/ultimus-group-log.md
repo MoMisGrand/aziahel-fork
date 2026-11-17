@@ -1,0 +1,5 @@
+Fixed: A close record of what Ultimus does in a group, and of the way you lead him
+
+While Ultimus is in a group, he now writes a line every two seconds to a group log for that day. Each line says whether he is FOLLOWING you or making his OWN DECISION and what that is, where he is, where you are, how far apart you are, and who is in a battle. Key moments get their own lines, from your Point A on: every zone transfer with where you left and came in, every teleporter, every door that opens, each battle start and end with the creatures, and each NPC you stop by with where they stand. Checks speak up in his main log if he falls behind, ends up in another area, or does his own thing while you walk off. In a dungeon, the guided run he keeps is now your own path, not his, so taking the wheel teaches him the true way.
+Where: Ultimus, any group. The file is group-YYYYMMDD.txt in the Ultimus logs folder; the main log shows GROUP:, GROUP KEY: and GROUP CHECK: lines.
+Test: Group with Ultimus, lead him through a few areas and a dungeon floor, then open the day's group file and check it shows your path, the zone changes, teleporters, doors, battles and NPC stops in order.

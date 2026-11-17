@@ -21,8 +21,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Imlight.Common;
+using Imlight.CoreLib.Game.Combat;
 using Imlight.CoreLib.Game.Tools;
 using Imlight.CoreLib.Game.Zone.Components;
+using Imlight.CoreLib.WizardData.Models.Player;
 
 namespace Imlight.CoreLib.Game.Ultimus;
 
@@ -105,6 +107,13 @@ internal static class UltimusGuided {
             if (now - s_savedAt > TimeSpan.FromMinutes(1)) {
                 Keep(false);
             }
+        }
+    }
+
+    /// <summary>The run being written down now: its area, spots and teleporters (0 when none).</summary>
+    internal static (string Zone, int Spots, int Jumps) Now() {
+        lock (s_lock) {
+            return (s_zone, s_now.Count, s_now.Count(p => p.Jump));
         }
     }
 
@@ -246,23 +255,30 @@ internal sealed partial class UltimusDirectorActor {
 
     private DateTime _guidedSaidAt = DateTime.MinValue;
 
-    /// <summary>With a group mate in a dungeon: the way is written down as a guided run. Written by Ultimus himself; every
-    /// seat (TCO7 too) follows it.</summary>
+    /// <summary>
+    /// With a group mate in a dungeon: the way is written down as a guided run. The group mate's own steps, not his: a
+    /// player who takes the wheel walks the true way, and Ultimus trails a little behind it and cuts corners (Niduus,
+    /// 2026-11-17: "I want to take the wheel so badly and have him follow me"). While the mate is in a battle nothing is
+    /// written (they stand on the circle). Written by Ultimus himself; every seat (TCO7 too) follows it.
+    /// </summary>
     private void RecordGuided(UltimusMember.Status leader, UltimusPlanner.Target target) {
         if (!UltimusSeat.Current.IsUltimus) {
             return;
         }
 
-        if (leader is null || !InDungeon(leader) || target?.Key?.StartsWith(PARTY_KEY, StringComparison.Ordinal) != true
-            || CombatDuelComponent.IsInBattle(leader.GlobalId)) {
-            if (leader is not null && !InDungeon(leader)) {
+        if (leader is null || !InDungeon(leader) || _partyMate == 0) {
+            if (leader is not null && (!InDungeon(leader) || _partyMate == 0)) {
                 UltimusGuided.Stop();
             }
 
             return;
         }
 
-        UltimusGuided.Record(leader.Zone, PartyMateName, leader.X, leader.Y, leader.Z);
+        // The group mate in the same copy of this dungeon, out of battle: their step is the run's.
+        if (PlayerCheats.LiveWizard(_partyMate) is { } mate && OverlayQuestTracker.SameZone(mate.Zone ?? "", leader.Zone ?? "")
+            && !CombatDuelComponent.IsInBattle(Wizard.GetGameObjectId(_partyMate))) {
+            UltimusGuided.Record(leader.Zone, PartyMateName, mate.Location.X, mate.Location.Y, mate.Location.Z);
+        }
     }
 
     /// <summary>
