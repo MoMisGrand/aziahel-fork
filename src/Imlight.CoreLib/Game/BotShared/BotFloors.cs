@@ -75,6 +75,9 @@ internal static class BotFloors {
 
     // How near a room's things count as "this room" (Big Ben rooms are 6000 across with the circle in the middle).
     internal const float ROOM = 3200f;
+
+    // How far back from a door, toward the wizard, its own side is looked at (OurSide).
+    private const float DOOR_SIDE = 400f;
     // How far a puzzle gate may be from the plates and lever that open it.
     private const float PUZZLE = 6500f;
     // Close enough to a spot to have stepped on it.
@@ -304,9 +307,33 @@ internal static class BotFloors {
             if (live?.SameGround?.Invoke(pad.X, pad.Y) != false) {
                 return pad;
             }
+
+            // The pad past a door opened in this copy, the door on his side.
+            if (book.Gates.FirstOrDefault(g => string.Equals(g.Through, pad.Name, StringComparison.OrdinalIgnoreCase)) is { } gate
+                && Opens(StateOf(gate.Object)) && Far(x, y, gate.X, gate.Y) <= ROOM && OurSide(live, gate, x, y)) {
+                return pad;
+            }
         }
 
         return null;
+    }
+
+    // The door is on his ground, or just this side of it is: our ground map is drawn with every door shut, so a door's own
+    // spot (and the teleporter past it) can read as the next room's ground. Big Ben's fifteenth floor: Door31 opened after
+    // Gear Spinner and Shrieker were beaten, but its spot read as the ground past it, so floor duty had nothing left and he
+    // walked toward Meowiarty's spot far away for an hour (Niduus, 2026-11-17: "why does he get stuck here?").
+    private static bool OurSide(Live live, Gate g, float x, float y) {
+        if (live?.SameGround is null || live.SameGround(g.X, g.Y)) {
+            return true;
+        }
+
+        var far = Far(x, y, g.X, g.Y);
+        if (far <= 1) {
+            return true;
+        }
+
+        var back = MathF.Min(DOOR_SIDE, far);
+        return live.SameGround(g.X + ((x - g.X) / far * back), g.Y + ((y - g.Y) / far * back));
     }
 
     // How far up or down a thing may be and still be on the wizard's floor (Counterweight East's floors are 900 apart).
@@ -411,7 +438,7 @@ internal static class BotFloors {
         // once the room is done. He beat Big Ben's sixth floor and its door opened, then walked back to the south wall
         // toward Meowiarty's spot for an hour, since the boss is on the same height (his log, 2026-11-16 03:14).
         foreach (var gate in book.Gates.Where(g => g.Through.Length > 0 && !Closed(g) && !Opens(book.Starts.GetValueOrDefault(g.Object) ?? "")
-                                                   && Far(x, y, g.X, g.Y) <= ROOM && Here(g.Z) && Before(g) && live?.SameGround?.Invoke(g.X, g.Y) != false)
+                                                   && Far(x, y, g.X, g.Y) <= ROOM && Here(g.Z) && Before(g) && OurSide(live, g, x, y))
                      .OrderBy(g => Far(x, y, g.X, g.Y))) {
             var key = "through|" + gate.Object;
             if (Tried(key) < TRIES) {
