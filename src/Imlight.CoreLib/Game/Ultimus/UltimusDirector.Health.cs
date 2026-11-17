@@ -322,6 +322,8 @@ internal sealed partial class UltimusDirectorActor {
     private const double POTION_ONLY_BELOW = 0.25;
     // In a dungeon the last potion is drunk away from the boss only under this share: nearly down.
     private const double POTION_LAST_BELOW = 0.1;
+    // How near the boss he must be for his "right before the boss" potion.
+    private const float POTION_BOSS_NEAR = 1500f;
     // Before a dungeon with no shop near, a trip to Wizard City's shop when he has under this share of his potions.
     private const double POTION_FAR_BELOW = 0.5;
     private ulong _potionBossDrank;
@@ -330,6 +332,13 @@ internal sealed partial class UltimusDirectorActor {
     private bool PotionBeforeBoss(UltimusMember.Status leader, UltimusPlanner.Target target) {
         if (target?.Kind != UltimusPlanner.FIGHT || SideFight(target) || !UltimusGameData.IsBoss(target.Template) || leader.Wizard?.GameStats is not { } stats
             || stats.m_potionCharge < 1 || CombatDuelComponent.IsInBattle(leader.GlobalId)) {
+            return false;
+        }
+
+        // Right before means at the boss: the quest's fight step stays his target the whole way up a dungeon, so on Big
+        // Ben's floor 9 he drank his saved potion by Gearhead, ten floors short of Meowiarty (his log, 2026-11-17 17:10).
+        if (UltimusPlanner.Far(leader.X, leader.Y, target.X, target.Y) > POTION_BOSS_NEAR
+            || (!float.IsNaN(target.Z) && Math.Abs(leader.Z - target.Z) > 300)) {
             return false;
         }
 
