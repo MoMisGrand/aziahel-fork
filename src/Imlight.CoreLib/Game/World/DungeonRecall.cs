@@ -271,6 +271,18 @@ internal static class DungeonRecall {
     internal static bool AnyoneInside(ulong ownerCharId)
         => ownerCharId != 0 && s_inside.TryGetValue(ownerCharId, out var chars) && !chars.IsEmpty;
 
+    /// <summary>Whether the copy of this area that the character was last in still stands: their own, or the group
+    /// copy they were put into. A server restart closes every copy, so after one this is false.</summary>
+    internal static bool CopyStands(ulong charId, string zone) {
+        if (zone is null) {
+            return false;
+        }
+
+        var owner = ZoneInstanceOwners.TryGetOwner(charId, zone, out var assigned) && assigned != 0 ? assigned : charId;
+
+        return IsOpen(owner, zone);
+    }
+
     private static bool IsOpen(ulong ownerCharId, string zone)
         => zone is not null && s_openZones.ContainsKey((ownerCharId, zone));
 
