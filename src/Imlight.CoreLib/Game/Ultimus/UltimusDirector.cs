@@ -1685,6 +1685,12 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
         // Round the creatures it does not need to fight, not into a battle (Niduus, 2026-11-13: "avoid battles as much as
         // possible"), and by the area's teleporters when walls or water cut the step off (UltimusDirector.Routes.cs).
         var (toX, toY, what) = WayTo(member, target);
+        // Stopped short of a dungeon teleporter: straight in, deep into its elevator (UltimusDirector.DeepPad.cs).
+        var deepPad = index == 0 ? DeepIntoPad(member, toX, toY) : null;
+        if (deepPad is { } deepSpot) {
+            (toX, toY) = (deepSpot.X, deepSpot.Y);
+            what = $"deep into the teleporter \"{deepSpot.Pad}\", toward {target.What}";
+        }
         // By a door or street teleporter stone of the way: pressed, as a player presses X (standing by it does nothing).
         if (PadToPress(member) is { } press && UltimusPlanner.Far(member.X, member.Y, press.X, press.Y) <= PRESS_REACH
             && member.Options.ContainsKey(press.Click)) {
@@ -1715,6 +1721,9 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
         var sightAvoid = seek ? null : (walkAvoid ?? []).Concat(target.Kind == UltimusPlanner.FIGHT ? [] : avoid ?? []).ToList();
         var points = (known || MathF.Abs(toZ - member.Z) > OTHER_FLOOR ? null : SightWalk(member, toX, toY, what, sightAvoid))
                      ?? OverlayQuestPath.Walk(member.CharId, member.Zone, member.X, member.Y, toX, toY, body: true, avoid: walkAvoid, fromZ: member.Z, toZ: toZ);
+        if (deepPad is not null) {
+            points = [(member.X, member.Y), (toX, toY)];
+        }
         // A walk that goes nowhere while the step is far: said once per step, with the spots, so the log shows where the
         // map gives no way (Niduus's log, 2026-11-13: it stood at The Oasis's start for an hour with nothing said).
         // No way: the walk goes nowhere, or the step is on ground walls or water cut off and no known teleporter leads
