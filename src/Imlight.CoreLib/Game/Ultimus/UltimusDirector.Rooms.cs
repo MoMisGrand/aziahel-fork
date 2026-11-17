@@ -57,10 +57,7 @@ internal sealed partial class UltimusDirectorActor {
         }
 
         var book = BotFloors.BookOf(leader.Zone);
-        var state = ZoneStates.Of(leader.ZoneActor);
-        var live = new BotFloors.Live(name => state?.GetObjectState(name), _ => 0, _ => null, (_, _) => false,
-            (x, y) => OverlayQuestPath.IslandOf(leader.Zone, leader.X, leader.Y) is var a && OverlayQuestPath.IslandOf(leader.Zone, x, y) is var b
-                      && (a < 0 || b < 0 || a == b));
+        var live = FloorLive(leader);
         if (BotFloors.PadAhead(book, live, leader.X, leader.Y) is not { } pad) {
             return false;
         }
@@ -78,11 +75,33 @@ internal sealed partial class UltimusDirectorActor {
         }
 
         var points = OverlayQuestPath.Walk(leader.CharId, leader.Zone, leader.X, leader.Y, pad.X, pad.Y, body: true);
+        // The teleporter is just past a door open now: the map still has the door shut, so the walk ends at the door. He
+        // goes on straight through it onto the teleporter, as a player does. In a group he walked to the open Door21 behind
+        // Walter, stopped 300 short of "Level20 to Boss" and never went into Meowiarty's room (Niduus, 2026-11-17: "he
+        // didn't go in the final room").
+        if (BotFloors.OpenDoorBefore(book, live, pad.Name) is { } door
+            && (points.Count == 0 || BotFloors.Far(points[^1].X, points[^1].Y, pad.X, pad.Y) > 150)) {
+            points = points.Count == 0 ? [(leader.X, leader.Y)] : points;
+            points.Add((door.X, door.Y));
+            points.Add((pad.X, pad.Y));
+            Think($"\"{pad.Name}\" is just past \"{door.Object}\", which is open now. The map still has the door shut, so I walk " +
+                  "straight through it.", "padahead-door|" + key);
+        }
+
         _sent[0] = (target, DateTime.UtcNow, leader.X, leader.Y);
         _actors[0].Tell(new UltimusMember.WalkTo(points, $"the floor's teleporter on, toward {what}"));
         _leaderLastTarget = target;
 
         return true;
+    }
+
+    // What the floor rules read live: the doors' states in his copy and his own ground.
+    private static BotFloors.Live FloorLive(UltimusMember.Status leader) {
+        var state = ZoneStates.Of(leader.ZoneActor);
+
+        return new BotFloors.Live(name => state?.GetObjectState(name), _ => 0, _ => null, (_, _) => false,
+            (x, y) => OverlayQuestPath.IslandOf(leader.Zone, leader.X, leader.Y) is var a && OverlayQuestPath.IslandOf(leader.Zone, x, y) is var b
+                      && (a < 0 || b < 0 || a == b));
     }
 
     /// <summary>
