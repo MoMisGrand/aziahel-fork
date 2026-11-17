@@ -44,10 +44,15 @@ namespace Imlight.CoreLib.Game.Ultimus;
 /// </summary>
 internal sealed partial class UltimusDirectorActor {
 
-    private const int TREASURE_CARDS_KEPT = 3;
+    // How many treasure cards he keeps (stacked: up to COPIES of one card), as a player keeps a stack in the deck's treasure
+    // card slots (Niduus, 2026-11-17: "He is to adapt to his battles ahead. Able to purchase, stack and use Treasure Cards").
+    private const int TREASURE_CARDS_KEPT = 8;
+    private const int COPIES = 3;
     private DateTime _nextCardLook = DateTime.MinValue;
     private UltimusPlanner.Target _cardTrip;
-    private readonly HashSet<uint> _cardSkipped = [];
+    // Cards just bought (or that would not buy), left alone for a while: he restocks them later, once used.
+    private readonly Dictionary<uint, DateTime> _cardSkipped = [];
+    private static readonly TimeSpan s_cardSkip = TimeSpan.FromMinutes(20);
 
     // How many treasure cards he has: in his deck plus in his book.
     private static int TreasureCardsOwned(Wizard wizard) {
@@ -92,19 +97,45 @@ internal sealed partial class UltimusDirectorActor {
     private static string CardName(uint id)
         => CoreObjectFactory.GetCoreTemplate(id) is SpellTemplate t ? Locale.GetEnglishName((string) t.m_displayName) is { Length: > 0 } e ? e : (string) t.m_name : id.ToString();
 
-    // The few he wants from this vendor's own list: of his school, castable at his level, never a test card; two hits (the
-    // hardest) and a heal (the biggest), each one he can pay for past his reserve.
+    // The ones he wants from this vendor's own list, for the fights ahead (FoeSchools): hits of his school or of the school
+    // those creatures are weak to, a shield against what they hit with, and a heal; castable at his level, never a test
+    // card, each paid for past his reserve. Stacked: the best of each kind bought more than once, up to COPIES of it owned.
     private List<(uint Id, uint Hash, string Name, int Price)> CardsToBuy(Wizard wizard, InteractTreasureVendorComponent vendor,
-                                                                          NpcTreasureCardInventory sold, int need, long spend) {
+                                                                          NpcTreasureCardInventory sold, int need, long spend,
+                                                                          IReadOnlyCollection<string> foes) {
         var school = BotGear.SchoolOf(wizard);
         var level = BotGear.LevelOf(wizard);
-        var picks = new List<(uint Id, uint Hash, string Name, int Price, bool Heal, int Score)>();
+        var weakTo = foes.Select(RewrittenAI.Opposite).Where(x => x.Length > 0).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var picks = new List<(uint Id, uint Hash, string Name, int Price, string Kind, int Score)>();
         foreach (var entry in sold.TreasureCards ?? []) {
             if (string.IsNullOrEmpty(entry.SpellName) || SpellFactory.GetSpell(entry.SpellName) is not { } spell
-                || CoreObjectFactory.GetCoreTemplate(spell.m_templateID) is not SpellTemplate template
-                || !string.Equals((string) template.m_sMagicSchoolName, school, StringComparison.OrdinalIgnoreCase) || template.m_levelRestriction > level
-                || _cardSkipped.Contains(spell.m_templateID) || RewrittenAI.Read(spell) is not { } card || BotCards.NotVanilla(card)
-                || BotCards.IsDevSpell(spell.m_templateID) || BrokenCards.Skip(spell.m_templateID) || !(card.Hit || card.Heal)) {
+                || CoreObjectFactory.GetCoreTemplate(spell.m_templateID) is not SpellTemplate template || template.m_levelRestriction > level
+                || (_cardSkipped.TryGetValue(spell.m_templateID, out var skipped) && DateTime.UtcNow - skipped < s_cardSkip)
+                || RewrittenAI.Read(spell) is not { } card || BotCards.NotVanilla(card)
+                || BotCards.IsDevSpell(spell.m_templateID) || BrokenCards.Skip(spell.m_templateID)) {
+                continue;
+            }
+
+            var cardSchool = (string) template.m_sMagicSchoolName ?? "";
+            var own = string.Equals(cardSchool, school, StringComparison.OrdinalIgnoreCase);
+            string kind;
+            int score;
+            if (card.Hit && (own || weakTo.Contains(card.DamageSchool) || weakTo.Contains(cardSchool))) {
+                kind = "hit";
+                // What the creatures ahead are weak to hits them harder.
+                score = card.BaseDamage * (weakTo.Contains(card.DamageSchool) || weakTo.Contains(cardSchool) ? 2 : 1);
+            }
+            else if (card.Shield && !card.ShieldForTeammate && foes.Count > 0
+                     && (card.ShieldSchools.Length == 0 ? foes.Any(f => string.Equals(f, card.ShieldSchool, StringComparison.OrdinalIgnoreCase))
+                         : card.ShieldSchools.Any(x => x == "All" || foes.Contains(x, StringComparer.OrdinalIgnoreCase)))) {
+                kind = "shield";
+                score = 100;
+            }
+            else if (card.Heal && !card.Hit) {
+                kind = "heal";
+                score = card.HealAmount;
+            }
+            else {
                 continue;
             }
 
@@ -113,25 +144,69 @@ internal sealed partial class UltimusDirectorActor {
                 continue;
             }
 
-            picks.Add((spell.m_templateID, hash, card.Shown, vendor.GetSpellPrice(hash), card.Heal && !card.Hit, card.Hit ? card.BaseDamage : card.HealAmount));
+            picks.Add((spell.m_templateID, hash, card.Shown, vendor.GetSpellPrice(hash), kind, score));
         }
 
-        var wanted = picks.Where(p => !p.Heal).OrderByDescending(p => p.Score).Take(2)
-            .Concat(picks.Where(p => p.Heal).OrderByDescending(p => p.Score).Take(1)).ToList();
+        var best = picks.Where(p => p.Kind == "hit").OrderByDescending(p => p.Score).Take(2)
+            .Concat(picks.Where(p => p.Kind == "shield").OrderByDescending(p => p.Score).Take(1))
+            .Concat(picks.Where(p => p.Kind == "heal").OrderByDescending(p => p.Score).Take(1)).ToList();
+        var owned = OwnedCopies(wizard);
         var chosen = new List<(uint Id, uint Hash, string Name, int Price)>();
-        foreach (var pick in wanted) {
-            if (chosen.Count >= need) {
-                break;
-            }
+        // One of each first, then more copies of each, round by round, while he needs more and can pay.
+        for (var round = 0; round < COPIES && chosen.Count < need; round++) {
+            foreach (var pick in best) {
+                if (chosen.Count >= need || owned.GetValueOrDefault(pick.Id) + chosen.Count(c => c.Id == pick.Id) >= COPIES) {
+                    continue;
+                }
 
-            if (pick.Price <= 0 || pick.Price > spend - chosen.Sum(c => c.Price)) {
-                continue;
-            }
+                if (pick.Price <= 0 || pick.Price > spend - chosen.Sum(c => c.Price)) {
+                    continue;
+                }
 
-            chosen.Add((pick.Id, pick.Hash, pick.Name, pick.Price));
+                chosen.Add((pick.Id, pick.Hash, pick.Name, pick.Price));
+            }
         }
 
         return chosen;
+    }
+
+    // Copies of each treasure card he has (deck and book).
+    private static Dictionary<uint, int> OwnedCopies(Wizard wizard) {
+        var book = wizard.SpellbookBehavior;
+        var owned = new Dictionary<uint, int>();
+        foreach (var s in (book?.SpellList ?? []).Where(s => s is not null && IsTreasure(s.m_templateID))) {
+            owned[s.m_templateID] = owned.GetValueOrDefault(s.m_templateID) + (int) s.m_quantity;
+        }
+
+        foreach (var id in book?.TreasureCardTemplateIds ?? []) {
+            owned[id] = owned.GetValueOrDefault(id) + 1;
+        }
+
+        return owned;
+    }
+
+    /// <summary>
+    /// The schools of the creatures ahead, to buy for: his next fight, the boss his story step names, and the creatures that
+    /// beat him or hurt him most lately (UltimusFoes). Empty when none is known.
+    /// </summary>
+    private List<string> FoeSchools() {
+        var templates = new List<ulong>();
+        if (_target is { Kind: UltimusPlanner.FIGHT, Template: not 0 } fight) {
+            templates.Add(fight.Template);
+        }
+
+        templates.AddRange(UltimusFoes.All().Where(f => f.Tough && DateTime.UtcNow - f.Last < TimeSpan.FromDays(1))
+            .OrderByDescending(f => f.Last).Take(4).Select(f => (ulong) f.Template));
+        var schools = new List<string>();
+        foreach (var t in templates.Distinct()) {
+            if (CoreObjectFactory.GetCoreTemplate(t) is GameObjectTemplate g
+                && g.m_behaviors?.OfType<NPCBehaviorTemplate>().FirstOrDefault()?.m_schoolOfFocus is { } focus
+                && ((string) focus) is { Length: > 0 } school && !schools.Contains(school, StringComparer.OrdinalIgnoreCase)) {
+                schools.Add(school);
+            }
+        }
+
+        return schools;
     }
 
     /// <summary>
@@ -167,12 +242,14 @@ internal sealed partial class UltimusDirectorActor {
                 continue;
             }
 
-            var cards = CardsToBuy(wizard, vendor, sold, need, spend);
+            var foes = FoeSchools();
+            var cards = CardsToBuy(wizard, vendor, sold, need, spend, foes);
             if (cards.Count == 0) {
                 continue;
             }
 
-            Think($"A treasure card vendor is right here: I pick up a few treasure cards for tough fights ({string.Join(", ", cards.Select(c => c.Name))}, " +
+            Think($"A treasure card vendor is right here: I stock up on treasure cards for the fights ahead" +
+                  (foes.Count > 0 ? $" (creatures of {string.Join(", ", foes)})" : "") + $" ({string.Join(", ", cards.Select(c => c.Name))}, " +
                   $"{cards.Sum(c => c.Price):N0} gold in all). My gold reserve stays.", "tc-buy|" + string.Join(",", cards.Select(c => c.Id)));
             _cardTrip = new UltimusPlanner.Target(UltimusPlanner.SHOP, npc.Object.m_location.X, npc.Object.m_location.Y,
                 $"{leader.Name} buys treasure cards", Template: npc.Template, GlobalId: npc.Object.m_globalID.Full,
@@ -218,7 +295,7 @@ internal sealed partial class UltimusDirectorActor {
         Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromSeconds(1.5), _actors[0],
             new UltimusMember.BuyTreasureCards(target.GlobalId, [.. list.Select(c => c.Hash)], string.Join(", ", list.Select(c => CardName(c.Id)))), Self);
         foreach (var (id, _) in list) {
-            _cardSkipped.Add(id);
+            _cardSkipped[id] = DateTime.UtcNow;
         }
 
         Count("treasure cards bought", list.Count);
