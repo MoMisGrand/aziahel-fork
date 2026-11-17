@@ -84,7 +84,9 @@ internal sealed partial class UltimusDirectorActor {
             return;
         }
 
-        var ids = owned.Where(id => CoreObjectFactory.GetCoreTemplate(id) is SpellTemplate && !BrokenCards.Skip(id)).Take(Math.Min(room, TREASURE_CARDS_KEPT)).ToList();
+        // The best for the fights ahead first; the ones that can't help him stay in his book (UltimusDirector.CardKnow.cs).
+        var ids = CardsForDeck(wizard, owned.Where(id => CoreObjectFactory.GetCoreTemplate(id) is SpellTemplate && !BrokenCards.Skip(id)))
+            .Take(Math.Min(room, TREASURE_CARDS_KEPT)).ToList();
         if (ids.Count == 0) {
             return;
         }
@@ -228,6 +230,7 @@ internal sealed partial class UltimusDirectorActor {
 
         // Cards in his book first go in his deck (no trip for it).
         TreasureCardsIntoDeck(leader);
+        WriteCardBook(leader);
         var need = TREASURE_CARDS_KEPT - TreasureCardsOwned(wizard);
         var spend = (wizard.GameStats?.m_currentGold ?? 0) - GoldReserve(leader);
         if (need <= 0 || spend <= 0) {
@@ -254,6 +257,14 @@ internal sealed partial class UltimusDirectorActor {
             _cardTrip = new UltimusPlanner.Target(UltimusPlanner.SHOP, npc.Object.m_location.X, npc.Object.m_location.Y,
                 $"{leader.Name} buys treasure cards", Template: npc.Template, GlobalId: npc.Object.m_globalID.Full,
                 Key: $"tcvendor|{leader.Role}|{string.Join(",", cards.Select(c => $"{c.Id}:{c.Hash}"))}");
+            _nextCardLook = DateTime.UtcNow.AddSeconds(10);
+            _tcTripZone = null;
+            return _cardTrip;
+        }
+
+        // None here: with few cards left and a hard fight ahead, the nearest vendor of this world that sells cards he can use.
+        if (RestockTrip(leader, TreasureCardsOwned(wizard), spend) is { } restock) {
+            _cardTrip = restock;
             _nextCardLook = DateTime.UtcNow.AddSeconds(10);
             return _cardTrip;
         }
