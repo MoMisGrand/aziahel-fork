@@ -55,6 +55,10 @@ internal sealed partial class UltimusDirectorActor {
     private string _loopZone = "";
     private DateTime _loopBrokeAt = DateTime.MinValue;
     private int _dayLoops;
+    private string _loopJumpZone = "";
+    private (float X, float Y) _loopJumpAt;
+    // Farther than a wizard walks between two plans (about half a second): a teleporter moved him.
+    private const float FLOOR_JUMP = 1200f;
     private int _dayParked;
 
     /// <summary>Each plan: a new area or a new move goes on the trail, and a loop on it is broken.</summary>
@@ -65,6 +69,15 @@ internal sealed partial class UltimusDirectorActor {
             _loopTrail.Add((DateTime.UtcNow, "area|" + zone));
         }
 
+        // A dungeon floor's teleporter that took him on (a jump on the same map) is progress up the floors: the floor moves
+        // before it are not a loop. Big Ben, 2026-11-17 07:55: Dungeon Recall put him back on floor 11 of a copy he had
+        // climbed before, the Level11 to Level12 teleporter took him up at once, and the loop guard, counting that floor's
+        // earlier tries, sat him down for 5 minutes on floor 12; the same on floors 5 and 8.
+        if (zone == _loopJumpZone && InDungeon(leader) && UltimusPlanner.Far(leader.X, leader.Y, _loopJumpAt.X, _loopJumpAt.Y) > FLOOR_JUMP) {
+            _loopTrail.RemoveAll(t => t.What.StartsWith("move|floor|", StringComparison.Ordinal));
+        }
+
+        (_loopJumpZone, _loopJumpAt) = (zone, (leader.X, leader.Y));
         if (newMove && target is not null && !string.IsNullOrEmpty(target.Key) && !target.Key.StartsWith(PARTY_KEY, StringComparison.Ordinal)) {
             _loopTrail.Add((DateTime.UtcNow, "move|" + target.Key));
         }
