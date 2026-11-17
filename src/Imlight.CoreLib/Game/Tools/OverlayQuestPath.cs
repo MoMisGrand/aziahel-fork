@@ -137,6 +137,7 @@ internal static class OverlayQuestPath {
                 return straight;
             }
 
+            var heightGrid = grid;
             var start = Cell(grid, fromX, fromY);
             var goal = Cell(grid, toX, toY);
             // A step just past the edge of the area's floor map (a tomb's walk-in exit whose middle stands in the wall at
@@ -190,6 +191,28 @@ internal static class OverlayQuestPath {
                     to = looseTo;
                     cells = looseCells;
                 }
+            }
+
+            // The step is on another floor and our floor map's way ends on a floor nowhere near the step's (it only knows
+            // the ground under a raised door, so the way ends right under it): the game's own walk map, from his floor to the
+            // step's, by its stairs (Niduus's log, 2026-11-17: the TCO7 stood at 202 under the Oasis's door to the Altar of
+            // Kings at 523 for over an hour; the walk map has the stairs up to it).
+            if (body && cells is { Count: > 0 } && !float.IsNaN(fromZ) && !float.IsNaN(toZ) && MathF.Abs(toZ - fromZ) > FLOOR_GAP
+                && !OnFloorOf(heightGrid, cells[^1], toZ)
+                && Imlight.CoreLib.Game.Zone.Core.ZoneNav.RouteOnFloors(zonePath, new System.Numerics.Vector3(fromX, fromY, fromZ),
+                    new System.Numerics.Vector3(toX, toY, toZ)) is { Count: > 1 } climb) {
+                var climbPoints = climb.Select(p => (p.X, p.Y)).ToList();
+                if (s_navTold.TryAdd($"{zonePath}|{goal}|climb", 0)) {
+                    Imlight.Common.Logger.Debug("Way finder: in {0}, from ({1:0}, {2:0}, {3:0}) to ({4:0}, {5:0}, {6:0}) on another floor: the game's own walk map climbs there ({7} points).",
+                        Imlight.Common.Logger.Args(zonePath, fromX, fromY, fromZ, toX, toY, toZ, climbPoints.Count));
+                }
+
+                t_found = true;
+                if (remember) {
+                    s_walks[charId] = (zonePath, goal, start, FloorKey(fromZ, toZ), DateTime.UtcNow, climbPoints);
+                }
+
+                return climbPoints;
             }
 
             // Still no way on our own floor map: the game's own walk map of the area (zone.nav, the points and links the
@@ -1018,6 +1041,15 @@ internal static class OverlayQuestPath {
     private static bool TwoFloors(Grid grid, int cell)
         => grid.Heights is { } heights && grid.Lows is { } lows && !float.IsNaN(heights[cell]) && !float.IsNaN(lows[cell])
            && heights[cell] - lows[cell] > FLOOR_GAP;
+
+    // Whether a cell has a floor about as high as z (its top floor or the one under it); true when its heights are not known.
+    private static bool OnFloorOf(Grid grid, int cell, float z) {
+        if (grid.Heights is null || cell < 0 || cell >= grid.Heights.Length || float.IsNaN(grid.Heights[cell])) {
+            return true;
+        }
+
+        return MathF.Abs(grid.Heights[cell] - z) <= FLOOR_GAP || (TwoFloors(grid, cell) && MathF.Abs(grid.Lows[cell] - z) <= FLOOR_GAP);
+    }
 
     // The height of a cell's floor: 0 is its top floor, 1 the floor under it (NaN when it has only one, or none known).
     private static float FloorOf(Grid grid, int cell, int floor)
