@@ -36,9 +36,12 @@ namespace Imlight.CoreLib.Game.BotShared;
 internal static class BotBattle {
 
     /// <summary>One click in the battle window: a card cast at a circle (-1: no target), a discard, a pass or a flee.</summary>
-    internal readonly record struct Move(CombatMoveType Type, int Card, int Target, string Why) {
+    internal readonly record struct Move(CombatMoveType Type, int Card, int Target, string Why, bool OnCard = false) {
 
         internal static Move Cast(int card, int target, string why) => new(CombatMoveType.Attack, card, target, why);
+
+        /// <summary>An enchantment card played onto another card in the hand (its place in the hand): the turn is not used up.</summary>
+        internal static Move Enchant(int enchantment, int onCard, string why) => new(CombatMoveType.Attack, enchantment, onCard, why, true);
 
         internal static Move Discard(int card, string why) => new(CombatMoveType.Discard, card, -1, why);
 
@@ -91,9 +94,13 @@ internal static class BotBattle {
 
             var shifted = move.Type is CombatMoveType.Pass or CombatMoveType.Flee || thrown.Count == 0
                 ? move
-                : move with { Card = move.Card - thrown.Count(t => t < move.Card) };
+                : move with {
+                    Card = move.Card - thrown.Count(t => t < move.Card),
+                    Target = move.OnCard ? move.Target - thrown.Count(t => t < move.Target) : move.Target,
+                };
             result.Add(shifted);
-            if (move.Type == CombatMoveType.Discard) {
+            // An enchantment is used up as it is played: the cards after it move up one place, as after a discard.
+            if (move.Type == CombatMoveType.Discard || move.OnCard) {
                 thrown.Add(move.Card);
             }
         }
@@ -108,7 +115,8 @@ internal static class BotBattle {
     internal static DOODLEDOUG_MESSAGES_51_PROTOCOL.MSG_COMBATMOVE ToGameMessage(Move move) => new() {
         MoveType = (byte) move.Type,
         SpellSelection = (byte) Math.Clamp(move.Card, 0, 255),
-        SpellTarget = RawTarget(move.Target),
+        // An enchantment names the card it goes on by its plain place in the hand (CombatDuelComponent.TryEnchantMove).
+        SpellTarget = move.OnCard ? (uint) Math.Max(0, move.Target) : RawTarget(move.Target),
         TimeLeft = 0,
         ShadowPactTarget = -1,
         SelectedTieredSpellID = 0,
@@ -123,7 +131,7 @@ internal static class BotBattle {
         MoveType = (byte) move.Type,
         SpellSelection = (byte) Math.Clamp(move.Card, 0, 255),
         SpellTarget = move.Target < 0 ? uint.MaxValue : (uint) move.Target,
-        RawSpellTarget = RawTarget(move.Target),
+        RawSpellTarget = move.OnCard ? (uint) Math.Max(0, move.Target) : RawTarget(move.Target),
         TimeLeft = 0,
         ShadowPactTarget = -1,
         SelectedTieredSpellID = 0,

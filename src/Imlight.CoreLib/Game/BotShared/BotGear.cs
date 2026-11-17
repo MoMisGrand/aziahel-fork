@@ -436,6 +436,16 @@ internal static class BotGear {
             share = own ? Math.Max(0.5, mix) : Math.Max(share, mix);
         }
 
+        // Resist protects against the schools that hit him, not his own (Niduus, 2026-11-17: "Universal resist will help
+        // more with ALL mobs vs his current robe for SELECTIVE mobs", unless one school, such as Balance, is his real
+        // problem). Alone: a resist to every school counts in full; one school's resist counts by the share of the hits he
+        // meets of that school (SoloResistMix), his own school's no more than any other.
+        if (style == BotStyle.Solo && stat.Kind.Contains("ReduceDamage", StringComparison.Ordinal)) {
+            share = all ? 1.0
+                : SoloResistMix.TryGetValue(stat.School, out var metShare) ? Math.Clamp(metShare, 0.15, 0.9)
+                : 0.3;
+        }
+
         return share;
     }
 

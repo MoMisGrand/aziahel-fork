@@ -49,10 +49,24 @@ internal sealed partial class UltimusDirectorActor {
     /// <summary>What a treasure card is for and how much he wants it now; null when it can't help him (too high a level, broken).</summary>
     internal sealed record TcUseOf(string Kind, int Score, string When);
 
+    // The kind of an enchantment card: "enchant-damage", "enchant-accuracy" and so on.
+    internal const string ENCHANT_KIND = "enchant-";
+
     internal static TcUseOf TcUse(uint templateId, string school, int level, IReadOnlyCollection<string> foes) {
         if (CoreObjectFactory.GetCoreTemplate(templateId) is not SpellTemplate template || template.m_levelRestriction > level
-            || BotCards.IsDevSpell(templateId) || BrokenCards.Skip(templateId) || SpellFactory.GetSpell(templateId) is not { } spell
-            || RewrittenAI.Read(spell) is not { } card || BotCards.NotVanilla(card)) {
+            || BotCards.IsDevSpell(templateId) || BrokenCards.Skip(templateId) || SpellFactory.GetSpell(templateId) is not { } spell) {
+            return null;
+        }
+
+        // An enchantment (Giant, Gargantuan, Sniper, Tough...): played on another card in battle (UltimusTactics.EnchantFor).
+        // Damage ones come first and the strongest wins (Niduus, 2026-11-17: "use/buy the strongest, being Vanilla Gargantuan").
+        if (BotEnchants.Of(template) is { } enchant) {
+            return enchant.Kind == BotEnchants.OTHER ? null
+                : new TcUseOf(ENCHANT_KIND + enchant.Kind, enchant.Worth, $"an enchantment: {enchant.Plain}" + (enchant.Kind == BotEnchants.DAMAGE
+                    ? "; I play it on my biggest hit, best on one that strikes every enemy" : ""));
+        }
+
+        if (RewrittenAI.Read(spell) is not { } card || BotCards.NotVanilla(card)) {
             return null;
         }
 
@@ -78,7 +92,8 @@ internal sealed partial class UltimusDirectorActor {
                 "when I am under half health and a big hit is coming, before it lands; it keeps my own heals for later");
         }
 
-        if (card.Shield && !card.ShieldForTeammate) {
+        // A shield he can cast on a friend can be cast on himself too (Myth Shield, Fire Shield): it was read as "no use".
+        if (card.Shield) {
             var matches = foes.Count == 0 ? 0
                 : card.ShieldSchools.Length == 0 ? foes.Count(f => string.Equals(f, card.ShieldSchool, StringComparison.OrdinalIgnoreCase))
                 : card.ShieldSchools.Count(x => x == "All" || foes.Contains(x, StringComparer.OrdinalIgnoreCase));
@@ -114,8 +129,13 @@ internal sealed partial class UltimusDirectorActor {
         var level = BotGear.LevelOf(wizard);
         var foes = FoeSchools();
 
-        return owned.Select(id => (Id: id, Use: TcUse(id, school, level, foes)))
-            .Where(c => c.Use is { Score: > 10 })
+        var cards = owned.Select(id => (Id: id, Use: TcUse(id, school, level, foes)))
+            .Where(c => c.Use is { Score: > 10 }).ToList();
+        // Of the enchantments, only the strongest of each kind goes in (Giant before Strong, Sniper before Keen Eyes).
+        var strongest = cards.Where(c => c.Use.Kind.StartsWith(ENCHANT_KIND, StringComparison.Ordinal))
+            .GroupBy(c => c.Use.Kind).ToDictionary(g => g.Key, g => g.OrderByDescending(c => c.Use.Score).First().Id);
+
+        return cards.Where(c => !strongest.TryGetValue(c.Use.Kind, out var best) || best == c.Id)
             .OrderByDescending(c => c.Use.Score)
             .Select(c => c.Id).ToList();
     }

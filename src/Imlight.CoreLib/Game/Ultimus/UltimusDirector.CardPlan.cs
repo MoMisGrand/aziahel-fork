@@ -99,7 +99,7 @@ internal sealed partial class UltimusDirectorActor {
 
     // How many different cards of each kind the plan holds, and how many copies of each, in the order slots are filled.
     private static readonly (string Kind, int Cards, int Copies)[] s_planShape = [
-        ("hit", 2, 3), ("blade", 1, 2), ("heal", 1, 2), ("shield", 1, 2), ("trap", 1, 2), ("control", 1, 1),
+        ("hit", 2, 3), (ENCHANT_KIND + BotEnchants.DAMAGE, 1, 4), ("blade", 1, 2), ("heal", 1, 2), ("shield", 1, 2), ("trap", 1, 2), ("control", 1, 1),
     ];
 
     /// <summary>
@@ -120,7 +120,7 @@ internal sealed partial class UltimusDirectorActor {
 
         var counts = new Dictionary<uint, int>();
         var total = 0;
-        for (var round = 0; round < COPIES && total < room; round++) {
+        for (var round = 0; round < s_planShape.Max(x => x.Copies) && total < room; round++) {
             foreach (var p in picks) {
                 if (total >= room || counts.GetValueOrDefault(p.Id) >= p.Copies || round >= p.Copies) {
                     continue;
