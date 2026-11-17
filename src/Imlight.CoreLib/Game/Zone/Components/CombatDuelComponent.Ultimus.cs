@@ -17,6 +17,8 @@
  */
 
 using System;
+using Imlight.CoreLib.Shared.Resources;
+using Imcodec.ObjectProperty.TypeCache;
 using System.Collections.Generic;
 using System.Linq;
 using Imlight.Common;
@@ -47,6 +49,10 @@ internal sealed partial class CombatDuelComponent {
     private readonly HashSet<(int Round, int Slot)> _ultimusDrew = [];
     // Rounds he threw a card away to make room for a treasure card (once a round).
     private readonly HashSet<(int Round, int Slot)> _ultimusRoomMade = [];
+    // Treasure card draws made to dig for an enchantment this fight, by slot (at most ULTIMUS_DIGS, so he does not
+    // throw away too much of his hand for it).
+    private readonly Dictionary<int, int> _ultimusDigs = [];
+    private const int ULTIMUS_DIGS = 3;
     // The Ultimus circles that have read this battle's enemy decks (said once a battle).
     private readonly HashSet<int> _ultimusScouted = [];
     private int _ultimusDeadlineRound = -1;
@@ -219,6 +225,27 @@ internal sealed partial class CombatDuelComponent {
                || BotCore.Incoming(enemies, Duel.m_roundNum, c => "").Share >= 0.4;
     }
 
+    /// <summary>
+    /// Digging for an enchantment (Niduus, 2026-11-17: "If he has a enchant in his TC, he discard cards to dig for it, while
+    /// also still planning his next stage plan, careful not to discard too much"): his treasure cards hold a damage
+    /// enchantment, none is in his hand, he holds a hit to put it on, the fight is not nearly won, and he has dug fewer than
+    /// ULTIMUS_DIGS times this fight. One draw a round; with a full hand only his least useful card goes, never a hit he
+    /// plans to cast (UltimusRoomForTreasure).
+    /// </summary>
+    private bool UltimusDigForEnchant(CombatDuelSubCircle me, IReadOnlyList<CombatDuelSubCircle> circles) {
+        var enemies = circles.Where(c => c.OccupiedTeam != me.OccupiedTeam && c.IsAlive).ToList();
+        if (enemies.Count == 0 || _ultimusDigs.GetValueOrDefault(me.SlotIndex) >= ULTIMUS_DIGS || me.VaultRemainingCount <= 0
+            || UltimusTactics.HoldsHitEnchant(me)
+            || (!enemies.Any(RewrittenAI.IsBoss) && enemies.All(e => RewrittenAI.HealthShare(e) < 0.25f))
+            || !UltimusTactics.Hand(me).Any(h => h.Card.Hit && !h.Card.Natural)) {
+            return false;
+        }
+
+        return me._wizard?.SpellbookBehavior?.SpellList is { } deck
+               && deck.Any(s => s is not null && CoreObjectFactory.GetCoreTemplate(s.m_templateID) is SpellTemplate t && t.m_Treasure
+                                && BotEnchants.Of(t) is { Kind: BotEnchants.DAMAGE or BotEnchants.PIERCE });
+    }
+
     // The card he throws away to make room for a treasure card: one his solo play would discard anyway, else the least
     // useful (no hit, no heal, then the lowest rank).
     private static (int Index, string Why)? UltimusRoomForTreasure(CombatDuelSubCircle me, IReadOnlyList<CombatDuelSubCircle> circles) {
@@ -246,6 +273,7 @@ internal sealed partial class CombatDuelComponent {
             _ultimusDrew.Clear();
             _ultimusRoomMade.Clear();
             _ultimusDownSince.Clear();
+            _ultimusDigs.Clear();
         }
 
         UltimusDownedRound();
@@ -390,11 +418,14 @@ internal sealed partial class CombatDuelComponent {
             // A tough fight, treasure cards waiting and a full hand: the Draw button does nothing with seven cards in hand, so
             // he had never drawn one (Niduus, 2026-11-16: "if he's not using Treasure cards in battle, have him use them";
             // his logs: no draw in any fight). As a player does, he throws away his least useful card first, then draws.
-            if (!message.Deadline && UltimusToughFight(member, circles) && member.VaultRemainingCount > 0 && member.TreasureCardsInHand == 0
+            var digging = UltimusDigForEnchant(member, circles);
+            if (!message.Deadline && ((UltimusToughFight(member, circles) && member.VaultRemainingCount > 0 && member.TreasureCardsInHand == 0) || digging)
                 && member.HandCount >= 7 && !_ultimusDrew.Contains((Duel.m_roundNum, member.SlotIndex))
                 && UltimusRoomForTreasure(member, circles) is { } room && _ultimusRoomMade.Add((Duel.m_roundNum, member.SlotIndex))
                 && UltimusDirector.ActorOf(UltimusRole(member)) is { } maker) {
-                UltimusLink.Note(UltimusRoster.NAME, $"round {Duel.m_roundNum}: a tough fight with a full hand: {room.Why} to make room for a treasure card.");
+                UltimusLink.Note(UltimusRoster.NAME, $"round {Duel.m_roundNum}: " + (digging
+                    ? $"digging for an enchantment in my treasure cards with a full hand: {room.Why} to make room."
+                    : $"a tough fight with a full hand: {room.Why} to make room for a treasure card."));
                 var roomLeft = PlanningSeconds - (DateTime.UtcNow - _planningStartedAt).TotalSeconds;
                 maker.Tell(new UltimusMember.Clicks(BotBattle.Timed([BotBattle.Move.Discard(room.Index, room.Why)], 7, roomLeft)),
                     Akka.Actor.ActorRefs.NoSender);
@@ -405,10 +436,16 @@ internal sealed partial class CombatDuelComponent {
             // Niduus, 2026-11-15: "Let him buy a few treasure cards and play them in tough fights". In a tough fight, with
             // treasure cards in his deck, none in hand and room for one, he presses Draw (his own game's button, once a
             // round) and looks at the hand again a moment later, when the card is in it.
-            if (!message.Deadline && UltimusToughFight(member, circles) && member.VaultRemainingCount > 0 && member.TreasureCardsInHand == 0
+            if (!message.Deadline && ((UltimusToughFight(member, circles) && member.VaultRemainingCount > 0 && member.TreasureCardsInHand == 0) || digging)
                 && member.HandCount < 7 && _ultimusDrew.Add((Duel.m_roundNum, member.SlotIndex))
                 && UltimusDirector.ActorOf(UltimusRole(member)) is { } drawer) {
-                UltimusLink.Note(UltimusRoster.NAME, $"round {Duel.m_roundNum}: a tough fight: draws a treasure card.");
+                if (digging) {
+                    _ultimusDigs[member.SlotIndex] = _ultimusDigs.GetValueOrDefault(member.SlotIndex) + 1;
+                }
+
+                UltimusLink.Note(UltimusRoster.NAME, $"round {Duel.m_roundNum}: " + (digging
+                    ? $"digs for an enchantment for my next big hit: draws a treasure card ({_ultimusDigs[member.SlotIndex]} of {ULTIMUS_DIGS} this fight)."
+                    : "a tough fight: draws a treasure card."));
                 drawer.Tell(new UltimusMember.DrawTreasure(), Akka.Actor.ActorRefs.NoSender);
                 Timers.StartSingleTimer(ULTIMUS_THINK_KEY, new UltimusThink(Duel.m_roundNum, false), TimeSpan.FromSeconds(1.5));
                 continue;
@@ -456,6 +493,14 @@ internal sealed partial class CombatDuelComponent {
             // What the overlay's Ultimus Spectator shows of this round (read only).
             UltimusSpectate.NoteRound(Duel.m_duelID.Full, Duel.m_roundNum, member, circles, choice,
                 [.. moves.Where(m => m.Type == CombatMoveType.Discard).Select(m => m.Why)]);
+            // The best enchantment in his hand goes on the card first, as a player drags it on (the turn is not used up).
+            if (choice.Move == UltimusTactics.Move.Cast && !moves.Any(m => m.Type == CombatMoveType.Discard && m.Card == choice.Card)
+                && UltimusTactics.EnchantFor(member, choice.Card, circles.Count(c => c.OccupiedTeam != member.OccupiedTeam && c.IsAlive)) is { } enchant
+                && !moves.Any(m => m.Type == CombatMoveType.Discard && m.Card == enchant.Index)) {
+                UltimusLink.Note(UltimusRoster.NAME, $"round {Duel.m_roundNum}: {enchant.Why}.");
+                moves.Add(BotBattle.Move.Enchant(enchant.Index, choice.Card, enchant.Why));
+            }
+
             moves.Add(choice.Move == UltimusTactics.Move.Cast ? BotBattle.Move.Cast(choice.Card, choice.Target, choice.Why) : BotBattle.Move.Pass(choice.Why));
 
             // The clicks go through its own game, as a person's do, after a person's moment to read the hand.

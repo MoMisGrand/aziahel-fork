@@ -219,6 +219,7 @@ internal static class UltimusTactics {
                ?? (style == UltimusFightStyles.HIT_NOW
                    ? Hit(me, hand, focus, enemies, $"hits at once (\"{UltimusFightStyles.HIT_NOW}\" wins this kind of fight for me){focusWhy}")
                    : null)
+               ?? HitAll(me, hand, focus, enemies)
                ?? TwoRounds(me, hand, whole, focus, enemies, round, mine - incoming < HURT, focusWhy)
                ?? Pass("saves its pips for a bigger hit");
     }
@@ -321,6 +322,86 @@ internal static class UltimusTactics {
         return best.Hand.Card.HitsAll
             ? new(Move.Cast, best.Hand.Index, -1, $"{why}: every enemy with {best.Hand.Card.Shown} (about {best.Damage}){reason}")
             : new(Move.Cast, best.Hand.Index, focus.SlotIndex, $"{why}: {Name(focus)} with {best.Hand.Card.Shown} (about {best.Damage}){reason}");
+    }
+
+    // How much of the best single hit's damage a hit on every enemy must bring to be picked first, with two or more enemies up.
+    private const double AOE_LEAN = 0.75;
+
+    /// <summary>
+    /// Two or more enemies up and the pips for a hit on all of them: he leans to it (Niduus, 2026-11-17: "While in battles
+    /// that he's fighting 2 or more enemies and he has the pips to cast a AoE, he is more inclined to do so"). It is picked
+    /// when its damage over every enemy (each counted up to its health left) is at least three quarters of his best hit
+    /// on one; every enemy hurt at once shortens the fight.
+    /// </summary>
+    private static Choice HitAll(CombatDuelSubCircle me, List<InHand> hand, CombatDuelSubCircle focus, List<CombatDuelSubCircle> enemies) {
+        if (enemies.Count < 2) {
+            return null;
+        }
+
+        var aoe = hand.Where(h => h.Card.Hit && h.Card.HitsAll && !h.Card.Natural)
+            .Select(h => (Hand: h, Damage: enemies.Sum(e => Math.Min(RewrittenAI.Health(e), Estimate(h.Card, me, e)))))
+            .OrderByDescending(x => x.Damage).FirstOrDefault();
+        if (aoe.Hand is null || aoe.Damage <= 0) {
+            return null;
+        }
+
+        var single = hand.Where(h => h.Card.Hit && !h.Card.HitsAll && !h.Card.Natural)
+            .Select(h => Math.Min(RewrittenAI.Health(focus), Estimate(h.Card, me, focus))).DefaultIfEmpty(0).Max();
+        if (aoe.Damage < single * AOE_LEAN) {
+            return null;
+        }
+
+        var reason = BalanceResistReason(me, aoe.Hand.Card, enemies);
+
+        return new(Move.Cast, aoe.Hand.Index, -1, $"hits all {enemies.Count} enemies with {aoe.Hand.Card.Shown} (about {aoe.Damage} in all" +
+                                                   (single > 0 ? $", against {single} for my best hit on one" : "") + $"): two or more up, so a hit on all of them comes first{reason}");
+    }
+
+    /// <summary>
+    /// The enchantment from his hand to play on the card he is about to cast, as a player drags it on first: the one that adds
+    /// most to that card (damage first, the strongest damage one always over a weaker one; accuracy only on a card that can
+    /// miss). Null when he has none that helps, or the card is enchanted already.
+    /// </summary>
+    internal static (int Index, string Why)? EnchantFor(CombatDuelSubCircle me, int cardIndex, int enemies) {
+        if (me.GetSpellFromLastHand((byte) cardIndex) is not { } spell || spell.m_enchantment != 0
+            || CoreObjectFactory.GetCoreTemplate(spell.m_templateID) is not SpellTemplate target || CombatEnchantments.IsEnchantment(target)
+            || RewrittenAI.Read(spell) is not { } card) {
+            return null;
+        }
+
+        (int Index, BotEnchants.Enchant Enchant, int Worth) best = (-1, null, 0);
+        for (byte i = 0; i < 24; i++) {
+            if (i == cardIndex || me.GetSpellFromLastHand(i) is not { } other
+                || CoreObjectFactory.GetCoreTemplate(other.m_templateID) is not SpellTemplate template
+                || BotEnchants.Of(template) is not { } enchant) {
+                continue;
+            }
+
+            CombatEnchantments.Apply(target, template, out var changes);
+            var worth = changes ? BotEnchants.On(enchant, card, spell.m_accuracy, enemies) : 0;
+            if (worth > best.Worth) {
+                best = (i, enchant, worth);
+            }
+        }
+
+        if (best.Enchant is null) {
+            return null;
+        }
+
+        var name = me.GetSpellFromLastHand((byte) best.Index) is { } e && RewrittenAI.Read(e) is { } read ? read.Shown : "an enchantment";
+
+        return (best.Index, $"enchants {card.Shown} with {name} first ({best.Enchant.Plain})");
+    }
+
+    /// <summary>Whether his hand holds an enchantment card that would help a hit.</summary>
+    internal static bool HoldsHitEnchant(CombatDuelSubCircle me) {
+        for (byte i = 0; i < 24; i++) {
+            if (me.GetSpellFromLastHand(i) is { } spell && BotEnchants.Of(spell.m_templateID) is { Kind: BotEnchants.DAMAGE or BotEnchants.PIERCE }) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     // A hit as the game lands it, pierce counted (BotCore).
