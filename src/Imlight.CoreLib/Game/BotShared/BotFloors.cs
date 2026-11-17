@@ -318,6 +318,30 @@ internal static class BotFloors {
         return null;
     }
 
+    /// <summary>The open door a teleporter on sits just past, or null. Our ground map has every door shut, so a walk to
+    /// that teleporter ends at the door; a player walks straight through it.</summary>
+    internal static Gate OpenDoorBefore(Book book, Live live, string padName) {
+        if (book is null || string.IsNullOrEmpty(padName)) {
+            return null;
+        }
+
+        string StateOf(string obj) => live?.StateOf?.Invoke(obj) is { Length: > 0 } st ? st : book.Starts.GetValueOrDefault(obj) ?? "";
+
+        return book.Gates.FirstOrDefault(g => string.Equals(g.Through, padName, StringComparison.OrdinalIgnoreCase) && Opens(StateOf(g.Object)));
+    }
+
+    /// <summary>The open door a teleporter on at (x, y) sits just past, or null (see OpenDoorBefore).</summary>
+    internal static Gate OpenDoorBeforeAt(Book book, Live live, float x, float y) {
+        if (book is null) {
+            return null;
+        }
+
+        string StateOf(string obj) => live?.StateOf?.Invoke(obj) is { Length: > 0 } st ? st : book.Starts.GetValueOrDefault(obj) ?? "";
+
+        return book.Gates.Where(g => g.Through.Length > 0 && !float.IsNaN(g.TX) && Far(g.TX, g.TY, x, y) <= 300 && Opens(StateOf(g.Object)))
+            .OrderBy(g => Far(g.TX, g.TY, x, y)).FirstOrDefault();
+    }
+
     // The door is on his ground, or just this side of it is: our ground map is drawn with every door shut, so a door's own
     // spot (and the teleporter past it) can read as the next room's ground. Big Ben's fifteenth floor: Door31 opened after
     // Gear Spinner and Shrieker were beaten, but its spot read as the ground past it, so floor duty had nothing left and he

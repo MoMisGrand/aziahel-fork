@@ -1737,6 +1737,17 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
                 "through-door|" + target.Key);
         }
 
+        // The same for any walk to a teleporter just past a door open now: following a group mate up to "Level20 to Boss"
+        // he stopped at the open Door21 and never went into Meowiarty's room (Niduus, 2026-11-17: "he didn't go in the
+        // final room").
+        if (noWay && InDungeon(member) && UltimusPlanner.Far(member.X, member.Y, toX, toY) <= 2500
+            && BotFloors.OpenDoorBeforeAt(BotFloors.BookOf(member.Zone), FloorLive(member), toX, toY) is { } openDoor) {
+            points = [(member.X, member.Y), (openDoor.X, openDoor.Y), (toX, toY)];
+            noWay = false;
+            Think($"\"{what}\" is just past \"{openDoor.Object}\", which is open now. The map still has the door shut, so I walk " +
+                  "straight through it.", "through-open|" + openDoor.Object);
+        }
+
         // No way, but a player guided him through this dungeon before: the way they went (UltimusDirector.Guided.cs).
         if (noWay && index == 0 && GuidedWalk(member, toX, toY, toZ, what) is { } guided) {
             points = guided;
