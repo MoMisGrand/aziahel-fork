@@ -123,6 +123,10 @@ internal static class OverlayQuestPath {
         return WalkCore(charId, zonePath, fromX, fromY, toX, toY, body, avoid, remember: true, fromZ, toZ);
     }
 
+    // Closer than this on the map to a step on another floor: right under (or over) it, where both floors share the map's
+    // squares, so the floor map can't tell the floors apart and the game's walk map plans the stairs.
+    private const float UNDER_STEP = 400f;
+
     // Whether this thread's last WalkCore found a way on the floor (not the straight fallback).
     [ThreadStatic]
     private static bool t_found;
@@ -197,8 +201,12 @@ internal static class OverlayQuestPath {
             // the ground under a raised door, so the way ends right under it): the game's own walk map, from his floor to the
             // step's, by its stairs (Niduus's log, 2026-11-17: the TCO7 stood at 202 under the Oasis's door to the Altar of
             // Kings at 523 for over an hour; the walk map has the stairs up to it).
-            if (body && cells is { Count: > 0 } && !float.IsNaN(fromZ) && !float.IsNaN(toZ) && MathF.Abs(toZ - fromZ) > FLOOR_GAP
-                && !OnFloorOf(heightGrid, cells[^1], toZ)
+            // Standing right under the step, the way is no way at all (his spot and the step's are the same square of the
+            // map): that is the same case, not "already there" (2026-11-17 03:40: the TCO7 stood at (-2, 7914) at 202 under
+            // Professor Winthrop at 496 for hours, 133 flags, and this climb never ran).
+            if (body && !float.IsNaN(fromZ) && !float.IsNaN(toZ) && MathF.Abs(toZ - fromZ) > FLOOR_GAP
+                && (cells is not { Count: > 0 } || !OnFloorOf(heightGrid, cells[^1], toZ)
+                    || MathF.Sqrt(((toX - fromX) * (toX - fromX)) + ((toY - fromY) * (toY - fromY))) < UNDER_STEP)
                 && Imlight.CoreLib.Game.Zone.Core.ZoneNav.RouteOnFloors(zonePath, new System.Numerics.Vector3(fromX, fromY, fromZ),
                     new System.Numerics.Vector3(toX, toY, toZ)) is { Count: > 1 } climb) {
                 var climbPoints = climb.Select(p => (p.X, p.Y)).ToList();
