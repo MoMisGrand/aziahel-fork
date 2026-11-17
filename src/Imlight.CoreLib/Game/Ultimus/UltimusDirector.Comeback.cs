@@ -35,6 +35,8 @@ internal sealed partial class UltimusDirectorActor {
     private const double COMEBACK_HEALTH = 0.6;
     // With this little time left on the recall he goes back in anyway (above a quarter of his health).
     private const uint COMEBACK_LAST_SECONDS = 120;
+    // A potion fill before going back in only with this much of the recall left (a Wizard City trip took about 7 minutes).
+    private const uint COMEBACK_POTION_SECONDS = 420;
 
     // The dungeon area he fell in, and when: only a copy he fell in (not one he left when done) is gone back to.
     private (string Zone, DateTime At)? _fellIn;
@@ -75,6 +77,13 @@ internal sealed partial class UltimusDirectorActor {
         // (his log, 2026-11-16 06:46: fell on Big Ben's first floor, then at about half health walked in again and started
         // at Travis Pawman). The recall is never worse than that, so he takes it now, once over a quarter of his health
         // (under it his healing comes first, as before).
+        // No potions and the boss still ahead: filled first while the recall has time for it (Big Ben, 2026-11-17: he went
+        // back in to Meowiarty with none, six times, and lost five). The recall running out still brings him back at once.
+        var left = ticket.ExpireTime > now ? ticket.ExpireTime - now : 0;
+        if (!runningOut && PotionsBeforeComeback(leader, fell.Zone, left)) {
+            return false;
+        }
+
         var walkingIn = _target is { } next && !string.IsNullOrEmpty(next.To) && OverlayQuestTracker.SameZone(next.To, fell.Zone);
         // Walking in at any health is never better than the recall (16:38, same day: under a quarter of his health he
         // walked in at floor one again), so then he always takes it.

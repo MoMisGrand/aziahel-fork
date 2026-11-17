@@ -2105,7 +2105,12 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
 
             var most = Math.Max(1, stats.m_baseHitpoints + stats.m_bonusHitpoints);
             var key = "potion|" + i;
-            if (stats.m_currentHitpoints < most * 0.4 && stats.m_potionCharge >= 1 && CanClick(key)) {
+            // Potions are kept for right before the boss (Niduus, 2026-11-16). Away from a boss only under a quarter of his
+            // health, and in a dungeon the last one stays for its boss unless he is nearly down: on Big Ben's floors he drank
+            // them at 25-35% health, so he met Meowiarty with none, six times (his log, 2026-11-17).
+            var below = stats.m_currentHitpoints / (double) most;
+            var keepLast = InDungeon(_team[i]) && stats.m_potionCharge < 2 && below >= POTION_LAST_BELOW;
+            if (below < POTION_ONLY_BELOW && !keepLast && stats.m_potionCharge >= 1 && CanClick(key)) {
                 Clicked(key);
                 Note(_team[i].Role, $"{_team[i].Name} drinks a potion ({stats.m_currentHitpoints} of {most} health).");
                 _actors[i].Tell(new UltimusMember.UsePotion());
