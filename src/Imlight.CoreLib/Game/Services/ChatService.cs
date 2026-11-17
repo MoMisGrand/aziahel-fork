@@ -80,6 +80,11 @@ internal class ChatService(SessionActor sessionActor) : MessageService(sessionAc
         var charObj = GetActiveGameObject();
         var wizard = GetActiveWizard();
         var account = GetActiveAccount();
+        // A line sent while the wizard is still changing areas (a bot talks as it zones) has no wizard here yet: it is
+        // dropped, not thrown (two server errors on 2026-11-17 while the TCO7 zoned into The Oasis).
+        if (account is null || wizard is null || charObj is null) {
+            return;
+        }
 
         if (account.InfractionHistory.IsCurrentlyMuted) {
             InformGameClient("You are currently muted.");
