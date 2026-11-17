@@ -96,6 +96,17 @@ internal sealed partial class UltimusDirectorActor {
     /// water cut it off. The words say which.
     /// </summary>
     private (float X, float Y, string What) WayTo(UltimusMember.Status member, UltimusPlanner.Target target) {
+        // The target is itself a floor's teleporter on, just past a door open now (floor duty "through"): straight to it, not
+        // to some other teleporter "toward" it. Big Ben floor 3, 2026-11-17 06:39-07:00: with Door6 open he was sent to
+        // "Activator Volume (Level3 to Level4)" at (-15163, 20997), but the way finder picked a teleporter learned at
+        // (-15623, 20945), 460 short of it in the elevator, which never fires; 30 stuck flags and two NEEDS HELP.
+        if ((target.Key ?? "").StartsWith("floor|through|", StringComparison.Ordinal)
+            && UltimusPlanner.Far(member.X, member.Y, target.X, target.Y) <= 4000) {
+            _viaPad = null;
+
+            return (target.X, target.Y, target.What);
+        }
+
         // Cut off by walls or water: the teleporter that leads there. Else a teleporter that is much faster than the walk.
         var left = PadsLeft();
         var pad = UltimusPads.Toward(member.Zone, member.X, member.Y, target.X, target.Y, left)
