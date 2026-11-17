@@ -671,6 +671,8 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
             // In a dungeon: each floor's battle circle, fight, door spot and puzzle first (UltimusDirector.Rooms.cs).
             target = FloorDuty(leader, target) ?? target;
         }
+        // In a group: following the leader or his own decision, where both are, written down closely (UltimusDirector.GroupLog.cs).
+        GroupLog(leader, target);
         // Healing first, above all before a fight (UltimusDirector.Health.cs).
         if (HealFirst(group, target)) {
             _healingAt = DateTime.UtcNow;
