@@ -51,6 +51,7 @@ internal sealed partial class UltimusDirectorActor {
 
     private static readonly TimeSpan s_loopWindow = TimeSpan.FromMinutes(20);
     private const int LOOP_REPEATS = 4;
+    private static readonly TimeSpan s_loopSameTry = TimeSpan.FromSeconds(30);
     private readonly List<(DateTime At, string What)> _loopTrail = [];
     private string _loopZone = "";
     private DateTime _loopBrokeAt = DateTime.MinValue;
@@ -67,6 +68,13 @@ internal sealed partial class UltimusDirectorActor {
         if (zone.Length > 0 && zone != _loopZone) {
             _loopZone = zone;
             _loopTrail.Add((DateTime.UtcNow, "area|" + zone));
+            // A fresh way into a dungeon (Dungeon Recall, or walking in again) starts its floors over: the floor moves from
+            // the last time in are not a loop. Big Ben, 2026-11-17 08:57: he lost to Meowiarty at 08:44, came back by Dungeon
+            // Recall, climbed floors 4 to 20 in five minutes, and the loop guard sat him down at the boss teleporter, counting
+            // the tries on it from before the fight.
+            if (InDungeon(leader)) {
+                _loopTrail.RemoveAll(t => t.What.StartsWith("move|floor|", StringComparison.Ordinal));
+            }
         }
 
         // A dungeon floor's teleporter that took him on (a jump on the same map) is progress up the floors: the floor moves
@@ -79,7 +87,12 @@ internal sealed partial class UltimusDirectorActor {
 
         (_loopJumpZone, _loopJumpAt) = (zone, (leader.X, leader.Y));
         if (newMove && target is not null && !string.IsNullOrEmpty(target.Key) && !target.Key.StartsWith(PARTY_KEY, StringComparison.Ordinal)) {
-            _loopTrail.Add((DateTime.UtcNow, "move|" + target.Key));
+            // The same move picked again within half a minute is one try, not many: stepping on and off a teleporter that
+            // has not fired yet re-picks it every second (Big Ben 08:37: 30 picks of the boss teleporter in 16 seconds).
+            var what = "move|" + target.Key;
+            if (!_loopTrail.Any(t => t.What == what && DateTime.UtcNow - t.At < s_loopSameTry)) {
+                _loopTrail.Add((DateTime.UtcNow, what));
+            }
         }
 
         _loopTrail.RemoveAll(t => DateTime.UtcNow - t.At > s_loopWindow);
