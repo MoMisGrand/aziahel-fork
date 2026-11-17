@@ -399,6 +399,14 @@ internal static class BotFloors {
                 continue;
             }
 
+            // The fight is only there to open the floor's door, and that door is open already: a player walks past the
+            // circle. Big Ben's eighteenth floor: Door25 opens when the seventeenth floor's fight is won, and Niduus walked
+            // straight through floor 18 with no fight (2026-11-17, his guided run).
+            if (book.Gates.Any(g => g.By == Opener.Beat && g.Through.Length > 0 && !Closed(g) && Here(g.Z)
+                                    && Far(circle.X, circle.Y, g.X, g.Y) <= ROOM && Before(g))) {
+                continue;
+            }
+
             return new Duty(STEP, circle.X, circle.Y, $"the room's battle circle \"{circle.Volume}\"", key,
                 "each room's fight starts on its battle circle, and the way on opens once it is won");
         }
