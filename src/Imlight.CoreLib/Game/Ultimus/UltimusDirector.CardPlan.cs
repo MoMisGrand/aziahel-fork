@@ -107,8 +107,10 @@ internal sealed partial class UltimusDirectorActor {
     /// kind first (a hit, a blade, a heal, a shield, a trap, a stop), then more copies, as a player stacks a boss deck.
     /// </summary>
     internal static List<PlannedCard> PlanCards(string school, int level, IReadOnlyCollection<string> foes, int room, IEnumerable<uint> pool) {
+        // One per name: two versions of a card with the same name (Storm Hound twice in his plan, 2026-11-17) are one card.
         var scored = pool.Distinct().Select(id => (Id: id, Use: TcUse(id, school, level, foes)))
-            .Where(c => c.Use is { Score: > 10 }).ToList();
+            .Where(c => c.Use is { Score: > 10 })
+            .GroupBy(c => CardName(c.Id), StringComparer.OrdinalIgnoreCase).Select(g => g.OrderByDescending(c => c.Use.Score).First()).ToList();
         var picks = new List<(uint Id, string Kind, int Score, int Copies, string When)>();
         foreach (var (kind, cards, copies) in s_planShape) {
             foreach (var c in scored.Where(c => c.Use.Kind == kind).OrderByDescending(c => c.Use.Score).Take(cards)) {
@@ -198,8 +200,19 @@ internal sealed partial class UltimusDirectorActor {
                 Think("The Bazaar is turned off on this server, so I get my treasure cards from the game's own vendors.", "bazaar|off");
                 return null;
             case BazaarState.Opening:
-                _nextBazaarCardLook = DateTime.UtcNow.AddSeconds(75);
-                return null;
+                // It wakes in about a minute, and the walk there takes longer: he sets off now and looks at its stock when
+                // he gets there. Waiting for it, he walked into Big Ben first and the plan was never bought (2026-11-17 16:20).
+                if (BazaarBook.Mode != BazaarMode.Unlimited) {
+                    _nextBazaarCardLook = DateTime.UtcNow.AddSeconds(75);
+                    return null;
+                }
+
+                Think($"I have hard fights ahead and my treasure card plan is missing {missing.Sum(p => p.Missing)} card(s) " +
+                      $"({string.Join(", ", missing.Select(p => $"{p.Card.Name} x{p.Missing}"))}). The Bazaar in Olde Town stocks every card, so I mark my " +
+                      "spot, buy them there and Recall back, as a player does before a boss.", "tc-bazaar|" + string.Join(",", missing.Select(p => p.Card.Id)));
+                _bazaarCardTrip = UltimusPlanner.Travel(leader, BAZAAR_ZONE, "the Bazaar, for treasure cards", "bazaarcards");
+                _nextBazaarCardLook = DateTime.UtcNow.AddSeconds(10);
+                return _bazaarCardTrip;
             case BazaarState.Closed:
                 return null;
         }
