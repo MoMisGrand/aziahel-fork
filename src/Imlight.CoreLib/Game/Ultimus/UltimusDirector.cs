@@ -655,9 +655,13 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
         // set-aside work wait (Niduus, 2026-11-16: in Big Ben he stepped on the first room's circle alone while Walter was
         // still loading in, so the fight started without him).
         var withGroup = target?.Key?.StartsWith(PARTY_KEY, StringComparison.Ordinal) == true;
+        // The wisps a fight just left come before the floor's next duty: they are gone in seconds (UltimusDirector.Smart.cs).
+        var afterFightWisp = target?.Key is { } wispKey
+                             && (wispKey.StartsWith(WISP_CENTER_KEY, StringComparison.Ordinal) || (wispKey.StartsWith("wisp|", StringComparison.Ordinal)
+                                                                                                  && _wispSweep is not null));
         // The way a group mate leads him through a dungeon is kept, to retrace alone later (UltimusDirector.Guided.cs).
         RecordGuided(leader, target);
-        if (!withGroup) {
+        if (!withGroup && !afterFightWisp) {
             // A quest thing that did not work with its boss or creatures still standing: they are fought first (BotUseGuards).
             target = GuardFight(leader, target) ?? target;
             // Ten stuck alarms at one spot: the creatures around it first (UltimusDirector.Approach.cs).

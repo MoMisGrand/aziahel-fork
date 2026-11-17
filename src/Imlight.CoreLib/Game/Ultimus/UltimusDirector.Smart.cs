@@ -41,7 +41,33 @@ internal sealed partial class UltimusDirectorActor {
     private const float WISP_AFTER_FIGHT_BERTH = 120f;
 
     /// <summary>A battle he won ended here: the wisps it left are picked up (Niduus, 2026-11-14: "have him nab up the wisps").</summary>
-    private void NoteFightSpot(UltimusMember.Status leader) => _wispSweep = (leader.Zone ?? "", leader.X, leader.Y, DateTime.UtcNow.AddSeconds(75));
+    private void NoteFightSpot(UltimusMember.Status leader) {
+        _wispSweep = (leader.Zone ?? "", leader.X, leader.Y, DateTime.UtcNow.AddSeconds(75));
+        // The fight's wisps fall in the middle of its circle (Niduus, 2026-11-17: "measure the distance from him and the first
+        // enemy slot, after a battle, he charges to the half way point. When a battle ends, the center is given wisps"). His
+        // own slot is where he stands now, the first enemy's is where the creature he went for stood: halfway between.
+        _wispCenter = _target is { Kind: UltimusPlanner.FIGHT } fought && UltimusPlanner.Far(leader.X, leader.Y, fought.X, fought.Y) is > 60 and <= 900
+            ? (leader.Zone ?? "", (leader.X + fought.X) / 2, (leader.Y + fought.Y) / 2, DateTime.UtcNow.AddSeconds(WISP_CENTER_SECONDS))
+            : null;
+    }
+
+    private (string Zone, float X, float Y, DateTime Until)? _wispCenter;
+    // How long after a win he goes to the circle's middle for its wisps (they last [Battle] BattleWispSeconds, 7 by default).
+    private const int WISP_CENTER_SECONDS = 9;
+    internal const string WISP_CENTER_KEY = "wispcenter|";
+
+    /// <summary>Not full right after a win: to the middle of the circle, where its wisps fall, walking through them.</summary>
+    private UltimusPlanner.Target WispCenter(UltimusMember.Status leader, bool health, bool mana) {
+        if (_wispCenter is not { } c || DateTime.UtcNow > c.Until || !string.Equals(c.Zone, leader.Zone, StringComparison.OrdinalIgnoreCase)
+            || (!health && !mana) || UltimusPlanner.Far(leader.X, leader.Y, c.X, c.Y) <= 40) {
+            return null;
+        }
+
+        Think("The fight is over and I am not full. Its wisps fall in the middle of the circle, halfway between my spot and the " +
+              "first enemy's, so I go there and walk through them.", "wisp-center|" + (int) c.X + "," + (int) c.Y);
+        return new UltimusPlanner.Target(UltimusPlanner.SPOT, c.X, c.Y, "to the middle of the battle circle for its wisps",
+            Key: WISP_CENTER_KEY + (int) c.X + "," + (int) c.Y);
+    }
 
     private UltimusPlanner.Target WispAfterFight(UltimusMember.Status leader) {
         if (_wispSweep is not { } sweep || DateTime.UtcNow > sweep.Until || !string.Equals(sweep.Zone, leader.Zone, StringComparison.OrdinalIgnoreCase)
@@ -57,7 +83,7 @@ internal sealed partial class UltimusDirectorActor {
         // not collect the after battle wisps"; the 500-unit berth for the area's wisps ruled every one of them out).
         if ((!health && !mana) || Wisp(leader, health, mana, WISP_AFTER_FIGHT_BERTH) is not { } wisp
             || UltimusPlanner.Far(sweep.X, sweep.Y, wisp.X, wisp.Y) > WISP_SWEEP_REACH) {
-            return null;
+            return WispCenter(leader, health, mana);
         }
 
         Think($"The fight left {wisp.What} right here, and I am not full: I pick it up before I go on, as any player does.", "wisp-after|" + wisp.Key);
