@@ -114,8 +114,14 @@ internal sealed partial class UltimusDirectorActor {
             return false;
         }
 
+        // Behind only when the teleporter toward it is one of the area's own teleporters back (an "Exit" one). One that is
+        // neither (a teleporter he learned by walking into it, whose spot the files have a little apart) is not proof: the
+        // floor is played as on the way up. Big Ben, 2026-11-17 04:04: the teleporter he learned at room 3's elevator was
+        // not on the list of ways on, so the second Travis Pawman on floor 5 read as "behind", his floor fights were turned
+        // off, and he walked past rooms 1 to 3 without a fight (Niduus: "he's just ignoring the fights").
         var pad = UltimusPads.Toward(leader.Zone, leader.X, leader.Y, target.X, target.Y, PadsLeft());
-        return pad is not null && !book.Ahead.Any(a => BotFloors.Far(a.X, a.Y, pad.X, pad.Y) <= 300);
+        return pad is not null && book.Back.Any(b => BotFloors.Far(b.X, b.Y, pad.X, pad.Y) <= 300)
+               && !book.Ahead.Any(a => BotFloors.Far(a.X, a.Y, pad.X, pad.Y) <= 300);
     }
 
     private UltimusPlanner.Target FloorDuty(UltimusMember.Status leader, UltimusPlanner.Target target) {

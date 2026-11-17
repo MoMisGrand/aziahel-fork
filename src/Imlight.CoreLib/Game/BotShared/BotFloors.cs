@@ -64,6 +64,9 @@ internal static class BotFloors {
 
         /// <summary>Every teleporter on (not one back or out), by its volume's name and spot.</summary>
         internal List<(string Name, float X, float Y)> Ahead { get; init; } = [];
+
+        /// <summary>Every teleporter back or out (an "Exit" one: down to the floor before, or out of the area), by its volume's name and spot.</summary>
+        internal List<(string Name, float X, float Y)> Back { get; init; } = [];
     }
 
     /// <summary>One floor duty: step on a spot, fight by a spot, or click the lever there.</summary>
@@ -252,10 +255,17 @@ internal static class BotFloors {
 
         // The teleporter on just past each door (not one back or out): once the door is open, the way on is through it.
         var pads = new List<(string Name, float X, float Y)>();
+        var backs = new List<(string Name, float X, float Y)>();
         foreach (var t in triggers.Where(t => Results(t).Any(r => r is ResTeleport))) {
             string name = (string) t.m_triggerName ?? "";
             if (name.Contains("Exit", StringComparison.OrdinalIgnoreCase) || name.Contains("Out", StringComparison.OrdinalIgnoreCase)
                 || name.Contains("Back", StringComparison.OrdinalIgnoreCase) || name.Contains("Hub", StringComparison.OrdinalIgnoreCase)) {
+                foreach (var fire in Fires(t)) {
+                    if (VolumeOf(fire) is { } bv) {
+                        backs.Add(((string) bv.m_volumeName ?? name, bv.m_locationX, bv.m_locationY));
+                    }
+                }
+
                 continue;
             }
 
@@ -275,7 +285,7 @@ internal static class BotFloors {
         }
 
         return new Book(circles.DistinctBy(c => c.Trigger + "|" + c.Volume).ToList(), gates.DistinctBy(g => g.Object + "|" + g.Trigger).ToList(),
-            toggles.DistinctBy(g => g.Object + "|" + g.From + "|" + g.Volume).ToList(), starts) { Ahead = pads };
+            toggles.DistinctBy(g => g.Object + "|" + g.From + "|" + g.Volume).ToList(), starts) { Ahead = pads, Back = backs };
     }
 
     // A thing a player pulls or presses.
@@ -328,6 +338,64 @@ internal static class BotFloors {
         string StateOf(string obj) => live?.StateOf?.Invoke(obj) is { Length: > 0 } st ? st : book.Starts.GetValueOrDefault(obj) ?? "";
 
         return book.Gates.FirstOrDefault(g => string.Equals(g.Through, padName, StringComparison.OrdinalIgnoreCase) && Opens(StateOf(g.Object)));
+    }
+
+    // How close a walk may pass a shut door's middle before it counts as going through it (Big Ben's doors fill a corridor
+    // about 500 wide).
+    private const float DOOR_REACH = 260f;
+
+    /// <summary>
+    /// The walk cut short of the first door still shut that it goes through, or the walk as it is. Our ground map is drawn
+    /// with every door open (no door is in the area's walls), so a walk on it goes straight through a shut one; a player's
+    /// game stops him at the door. Big Ben, 2026-11-17 04:00: Ultimus walked from room 1 through the shut Door42 and Door4
+    /// to room 3's elevator without a fight (Niduus: "he's just ignoring the fights").
+    /// </summary>
+    internal static List<(float X, float Y)> CutAtShutDoor(Book book, Func<string, string> stateOf, float x, float y, float z,
+        List<(float X, float Y)> points, out Gate door) {
+        door = null;
+        if (book is null || book.Gates.Count == 0 || points is not { Count: > 0 }) {
+            return points;
+        }
+
+        string StateOf(string obj) => stateOf?.Invoke(obj) is { Length: > 0 } st ? st : book.Starts.GetValueOrDefault(obj) ?? "";
+        var shut = book.Gates.Where(g => OnFloor(z, g.Z) && !Opens(StateOf(g.Object))).ToList();
+        if (shut.Count == 0) {
+            return points;
+        }
+
+        var (px, py) = (x, y);
+        for (var i = 0; i < points.Count; i++) {
+            var (qx, qy) = points[i];
+            var (dx, dy) = (qx - px, qy - py);
+            var len2 = (dx * dx) + (dy * dy);
+            if (len2 >= 1) {
+                foreach (var g in shut) {
+                    var t = (((g.X - px) * dx) + ((g.Y - py) * dy)) / len2;
+                    // Only a door the leg goes up to or past, and not one he stands at now walking away from it.
+                    if (t <= 0 || Far(px, py, g.X, g.Y) <= DOOR_REACH * 0.5f) {
+                        continue;
+                    }
+
+                    var ct = MathF.Min(t, 1f);
+                    if (Far(px + (dx * ct), py + (dy * ct), g.X, g.Y) > DOOR_REACH || (t > 1 && Far(qx, qy, g.X, g.Y) > DOOR_REACH)) {
+                        continue;
+                    }
+
+                    // Stop on his side of it.
+                    var len = MathF.Sqrt(len2);
+                    var stop = MathF.Max(0f, (t * len) - DOOR_REACH - 40f) / len;
+                    var cut = points.Take(i).ToList();
+                    cut.Add((px + (dx * stop), py + (dy * stop)));
+                    door = g;
+
+                    return cut;
+                }
+            }
+
+            (px, py) = (qx, qy);
+        }
+
+        return points;
     }
 
     /// <summary>The open door a teleporter on at (x, y) sits just past, or null (see OpenDoorBefore).</summary>

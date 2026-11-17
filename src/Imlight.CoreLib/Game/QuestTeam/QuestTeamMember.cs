@@ -216,7 +216,10 @@ internal sealed class QuestTeamMember : ReceiveActor, IWithTimers {
                 return;
             }
 
-            foreach (var point in m.Points) {
+            // Never through a door still shut in its copy of the area (the map has no doors; a player's game stops him there).
+            var points = BotShared.BotFloors.CutAtShutDoor(BotShared.BotFloors.BookOf(View.Zone),
+                Zone.Core.ZoneStates.Of(View.ZoneActor) is { } doors ? doors.GetObjectState : null, View.X, View.Y, View.Z, m.Points, out _);
+            foreach (var point in points) {
                 _route.Enqueue(point);
             }
 

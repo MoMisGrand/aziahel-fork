@@ -275,6 +275,14 @@ internal sealed class UltimusMember : ReceiveActor, IWithTimers {
                     "Every walk is checked against the area's floor before it is walked.", "The way finder or the step's spot needs a look here.");
             }
 
+            // Never through a door still shut in his copy of the area: the map has no doors, his game would stop him there.
+            legal = BotShared.BotFloors.CutAtShutDoor(BotShared.BotFloors.BookOf(View.Zone),
+                Zone.Core.ZoneStates.Of(View.ZoneActor) is { } doors ? doors.GetObjectState : null, View.X, View.Y, View.Z, legal, out var shutDoor);
+            if (shutDoor is not null && DateTime.UtcNow - _doorSaid > TimeSpan.FromSeconds(30)) {
+                _doorSaid = DateTime.UtcNow;
+                Note($"stops at \"{shutDoor.Object}\": it is still shut, so a walk ({m.Why}) through it ends at the door, as it does for a player.");
+            }
+
             foreach (var point in legal) {
                 _route.Enqueue(point);
             }
@@ -940,6 +948,7 @@ internal sealed class UltimusMember : ReceiveActor, IWithTimers {
 
     private void Note(string text) => UltimusLink.Note(UltimusRoster.NAME, text);
 
+    private DateTime _doorSaid;
     private DateTime _cutSaid = DateTime.MinValue;
 
 }
