@@ -37,6 +37,7 @@ internal sealed partial class UltimusDirectorActor {
 
     // Steps and clicks made per floor duty, for this copy of the area.
     private readonly Dictionary<string, int> _floorTries = new(StringComparer.Ordinal);
+    private string _floorBehindSaid;
     private string _floorZone = "";
     // The spot he stands on now (stepped on once); he steps off before stepping on it again.
     private string _floorOn;
@@ -119,6 +120,22 @@ internal sealed partial class UltimusDirectorActor {
 
         var book = BotFloors.BookOf(leader.Zone);
         if (book.IsEmpty) {
+            return null;
+        }
+
+        // His step is on a floor before this one (a talk back at the dungeon's start): he goes straight back by the
+        // teleporters down, not fighting and solving every floor on the way. After the update restart his Big Ben copy came
+        // back fresh with "Stealthy Stuff" at its first step (Talk to Travis Pawman, room 1), and he fought rooms 15, 14, 13
+        // and 12 and stepped on their puzzle plates on his way down, an hour of going backwards (Niduus, 2026-11-17: "The
+        // zone transfers are messed up in BIG BEN").
+        if (StepBehind(leader, target, book)) {
+            if (_floorOn is not null || zoneKey != _floorBehindSaid) {
+                _floorBehindSaid = zoneKey;
+                Think($"My step ({target.What}) is on a floor before this one, so I go straight back to it by the teleporters down. " +
+                      "This floor's fights and puzzles are for the way up, not the way back.", "floor-behind|" + target.Key);
+            }
+
+            _floorOn = null;
             return null;
         }
 
