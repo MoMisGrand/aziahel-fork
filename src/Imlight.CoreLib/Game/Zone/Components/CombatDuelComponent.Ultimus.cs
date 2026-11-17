@@ -209,6 +209,12 @@ internal sealed partial class CombatDuelComponent {
             return false;
         }
 
+        // Nearly won (no boss, every enemy under a quarter of its health): a treasure card is kept for a fight that needs it
+        // (Niduus, 2026-11-17: "what to use, when").
+        if (!enemies.Any(RewrittenAI.IsBoss) && enemies.All(e => RewrittenAI.HealthShare(e) < 0.25f)) {
+            return false;
+        }
+
         return enemies.Any(RewrittenAI.IsBoss) || enemies.Count >= 3 || RewrittenAI.HealthShare(me) < 0.5
                || BotCore.Incoming(enemies, Duel.m_roundNum, c => "").Share >= 0.4;
     }
