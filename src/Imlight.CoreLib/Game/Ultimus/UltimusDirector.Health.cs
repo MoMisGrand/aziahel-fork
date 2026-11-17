@@ -320,6 +320,10 @@ internal sealed partial class UltimusDirectorActor {
     // PotionRun takes him there and stops when they are full.
     // Below this share of health a potion is drunk even away from a boss: falling costs more than the potion.
     private const double POTION_ONLY_BELOW = 0.25;
+    // In a dungeon the last potion is drunk away from the boss only under this share: nearly down.
+    private const double POTION_LAST_BELOW = 0.1;
+    // Before a dungeon with no shop near, a trip to Wizard City's shop when he has under this share of his potions.
+    private const double POTION_FAR_BELOW = 0.5;
     private ulong _potionBossDrank;
 
     // The boss of the next fight, a potion in hand, and health or mana short of full: he drinks right before it.
@@ -374,7 +378,7 @@ internal sealed partial class UltimusDirectorActor {
         // potions cost him fights on every floor (his log, 2026-11-16: Big Ben's floors at 32% and 15% health with "no potion
         // or wisp in here", lost to Gearhead, Filcher and O'Leary Rowdy).
         _potionFar = PotionShopTarget(leader, out var hops) is null || hops > 1;
-        if (_potionFar && stats.m_potionCharge >= 1) {
+        if (_potionFar && stats.m_potionCharge >= stats.m_potionMax * POTION_FAR_BELOW) {
             _potionFar = false;
             return;
         }
@@ -389,7 +393,7 @@ internal sealed partial class UltimusDirectorActor {
         _potionRunUntil = DateTime.UtcNow.AddMinutes(_potionFar ? 15 : 5);
         _potionAsked = false;
         if (_potionFar) {
-            Think($"\"{target.What}\" takes me into a dungeon ({UltimusText.Zone(target.To)}) and I have no potions. This world has no potion shop " +
+            Think($"\"{target.What}\" takes me into a dungeon ({UltimusText.Zone(target.To)}) and I have {stats.m_potionCharge:0.#} of {stats.m_potionMax:0} potions. This world has no potion shop " +
                   "I can reach, so I fill them in Wizard City first and Recall back: a dungeon is done in one go.", "dungeon-potions-far|" + target.To);
             Note("Ultimus", $"{leader.Name} fills its potions in Wizard City before the dungeon {UltimusText.Zone(target.To)}.");
             return;
@@ -398,6 +402,40 @@ internal sealed partial class UltimusDirectorActor {
         Think($"\"{target.What}\" takes me into a dungeon ({UltimusText.Zone(target.To)}). I have {stats.m_potionCharge:0.#} of {stats.m_potionMax:0} potions and a " +
               $"potion shop is {(hops == 0 ? "right here" : "one area away")}, so I fill them first.", "dungeon-potions|" + target.To);
         Note("Ultimus", $"{leader.Name} fills its potions before the dungeon {UltimusText.Zone(target.To)}.");
+    }
+
+    /// <summary>
+    /// Put out of a dungeon with no potions and its boss still to beat: a potion fill first, at a shop near or in Wizard
+    /// City, when the Dungeon Recall has time enough left for the trip. True while that fill runs.
+    /// </summary>
+    private bool PotionsBeforeComeback(UltimusMember.Status leader, string dungeon, uint secondsLeft) {
+        if (leader.Wizard?.GameStats is not { } stats || stats.m_potionMax < 1 || stats.m_potionCharge >= 1) {
+            return false;
+        }
+
+        if (DateTime.UtcNow < _potionRunUntil) {
+            return true;
+        }
+
+        if (_potionPrepFor == "comeback|" + dungeon || secondsLeft < COMEBACK_POTION_SECONDS) {
+            return false;
+        }
+
+        _potionPrepFor = "comeback|" + dungeon;
+        _potionFar = PotionShopTarget(leader, out var hops) is null || hops > 1;
+        if (_potionFar && FarPotionShop(leader) is null) {
+            _potionFar = false;
+            return false;
+        }
+
+        _potionRunUntil = DateTime.UtcNow.AddSeconds(Math.Max(60, secondsLeft - 90));
+        _potionAsked = false;
+        Think($"I fell in {UltimusText.Zone(dungeon)} with no potions left, and its boss is still ahead. My Dungeon Recall holds the copy for " +
+              $"{secondsLeft / 60} more minutes, so I fill my potions first{(_potionFar ? " in Wizard City" : "")} and go back in by it: " +
+              "a potion right before the boss is what I lacked.", "comeback-potions|" + dungeon);
+        Note("Ultimus", $"{leader.Name} fills its potions before going back into {UltimusText.Zone(dungeon)} by Dungeon Recall.", UltimusLink.NOTABLE);
+
+        return true;
     }
 
     private void HealingCantrip(UltimusMember.Status leader) {
