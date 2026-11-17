@@ -1785,7 +1785,10 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
         }
 
         _sent[index] = (target, DateTime.UtcNow, member.X, member.Y);
-        _actors[index].Tell(new UltimusMember.WalkTo(Wobble(Smooth(member.Zone, StopShort(points, target))), what));
+        // A walk on the game's own walk map (stairs between floors) is walked as planned: no shortcuts or wobble off its links.
+        var heights = OverlayQuestPath.GameWalkHeights(points);
+        _actors[index].Tell(new UltimusMember.WalkTo(heights is not null ? StopShort(points, target) : Wobble(Smooth(member.Zone, StopShort(points, target))), what,
+            heights is not null, heights));
         if (index == 0) {
             _leaderLastTarget = target;
         }

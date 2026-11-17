@@ -127,6 +127,21 @@ internal static class OverlayQuestPath {
     // squares, so the floor map can't tell the floors apart and the game's walk map plans the stairs.
     private const float UNDER_STEP = 400f;
 
+    // Walks planned on the game's own walk map (zone.nav): its stairs and ramps between floors are links our floor map
+    // shows as wall or black, so the legal-ground check takes them as they are (it would cut the climb at the first stair).
+    // The TCO7 at the Oasis, 2026-11-17 04:54-05:01 (v0.10.907): the climb to the Altar of Kings door was found every 30
+    // seconds, and every time it was cut "where the floor ends", at the foot of the ramp.
+    // Each point's height on the walk map is kept too: walked on our floor map the wizard keeps the floor nearest his own
+    // height, so on a ramp over a lower floor (the Oasis's ramp up to the Altar of Kings door) he would stay down below.
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<List<(float X, float Y)>, float[]> s_gameWalks = new();
+
+    /// <summary>Whether this walk came from the game's own walk map (its stairs between floors are walkable).</summary>
+    internal static bool FromGameWalkMap(List<(float X, float Y)> points) => points is not null && s_gameWalks.TryGetValue(points, out _);
+
+    /// <summary>The height of each point of a walk on the game's own walk map, or null.</summary>
+    internal static float[] GameWalkHeights(List<(float X, float Y)> points)
+        => points is not null && s_gameWalks.TryGetValue(points, out var heights) ? heights : null;
+
     // Whether this thread's last WalkCore found a way on the floor (not the straight fallback).
     [ThreadStatic]
     private static bool t_found;
@@ -210,6 +225,7 @@ internal static class OverlayQuestPath {
                 && Imlight.CoreLib.Game.Zone.Core.ZoneNav.RouteOnFloors(zonePath, new System.Numerics.Vector3(fromX, fromY, fromZ),
                     new System.Numerics.Vector3(toX, toY, toZ)) is { Count: > 1 } climb) {
                 var climbPoints = climb.Select(p => (p.X, p.Y)).ToList();
+                s_gameWalks.AddOrUpdate(climbPoints, climb.Select(p => p.Z).ToArray());
                 if (s_navTold.TryAdd($"{zonePath}|{goal}|climb", 0)) {
                     Imlight.Common.Logger.Debug("Way finder: in {0}, from ({1:0}, {2:0}, {3:0}) to ({4:0}, {5:0}, {6:0}) on another floor: the game's own walk map climbs there ({7} points).",
                         Imlight.Common.Logger.Args(zonePath, fromX, fromY, fromZ, toX, toY, toZ, climbPoints.Count));
@@ -231,6 +247,7 @@ internal static class OverlayQuestPath {
                 && Imlight.CoreLib.Game.Zone.Core.ZoneNav.Route(zonePath, new System.Numerics.Vector3(fromX, fromY, fromZ),
                     new System.Numerics.Vector3(toX, toY, toZ)) is { Count: > 1 } nav) {
                 var navPoints = nav.Select(p => (p.X, p.Y)).ToList();
+                s_gameWalks.AddOrUpdate(navPoints, nav.Select(p => p.Z).ToArray());
                 if (s_navTold.TryAdd($"{zonePath}|{goal}", 0)) {
                     Imlight.Common.Logger.Debug("Way finder: in {0}, from ({1:0}, {2:0}) to ({3:0}, {4:0}) the game's own walk map has the way ({5} points).",
                         Imlight.Common.Logger.Args(zonePath, fromX, fromY, toX, toY, navPoints.Count));
@@ -853,7 +870,7 @@ internal static class OverlayQuestPath {
         }
 
         try {
-            if (GridOf(zonePath) is not { } grid) {
+            if (GridOf(zonePath) is not { } grid || FromGameWalkMap(points)) {
                 return points;
             }
 

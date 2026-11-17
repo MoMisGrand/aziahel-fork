@@ -1,0 +1,4 @@
+Fixed: TCO7 cut short at the foot of the Oasis ramp, and Ultimus slow to start Big Ben's first fight
+After the last update, the TCO7 found the way up to Professor Winthrop at the Oasis, but every walk was cut short at the foot of the ramp, because our map shows the ramp as a wall. Now a walk planned on the game's own walk map is walked as it is, and the bot climbs the ramp at its real height instead of staying on the ground under it. Ultimus also stood at Big Ben's first door for a minute before starting the room's fight, because that room's battle circle sits lower than the floor in the game's files. Now he counts it as his room's circle and starts the fight first.
+Where: The Oasis (TCO7 to the Altar of Kings), Big Ben room 1, and any area with a ramp over a lower floor
+Test: Watch the TCO7 at the Oasis and check that they walk up the ramp to Professor Winthrop, and check that Ultimus starts Big Ben's first fight right after talking to Travis Pawman.
