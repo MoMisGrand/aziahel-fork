@@ -1275,6 +1275,11 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
     // Quick hands (Niduus, 2026-11-13: "Have Ultimus be more responsive"): a click a second at most, the same thing clicked
     // again after 12 seconds when it did nothing.
     private static readonly TimeSpan CLICK_AGAIN = TimeSpan.FromSeconds(12);
+
+    // When each member last pressed a teleporter, and how long every teleporter sleeps after one (1.5 s delay + 5 s cool
+    // down by default, and a little more).
+    private readonly Dictionary<int, DateTime> _padPressedAt = [];
+    private static readonly TimeSpan PAD_REST = TimeSpan.FromSeconds(8);
     private static readonly TimeSpan s_resendWalk = TimeSpan.FromSeconds(8);
 
     private void Clicked(string key) {
@@ -1694,6 +1699,16 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
         // By a door or street teleporter stone of the way: pressed, as a player presses X (standing by it does nothing).
         if (PadToPress(member) is { } press && UltimusPlanner.Far(member.X, member.Y, press.X, press.Y) <= PRESS_REACH
             && member.Options.ContainsKey(press.Click)) {
+            // The last teleporter pressed puts every teleporter to sleep for its delay and cool down (ZoneService, [World]
+            // TeleporterDelaySeconds + TeleporterCooldownSeconds): one pressed sooner does nothing and is not pressed again
+            // for 12 seconds. He waits it out first. Idunn, 2026-11-17 05:56-06:00: Triton Avenue's "To Lower Triton" put
+            // her by the next teleporter, she pressed it 1.5 seconds after landing, the server ignored it, and she stood
+            // there until a stuck fix sent her to the Commons; 39 times on the way to the Haunted Cave.
+            if (_padPressedAt.TryGetValue(index, out var pressedAt) && DateTime.UtcNow - pressedAt < PAD_REST) {
+                return;
+            }
+
+            _padPressedAt[index] = DateTime.UtcNow;
             ClickOnce(index, new UltimusPlanner.Target(UltimusPlanner.STONE, press.X, press.Y, press.Name, GlobalId: press.Click, Key: "pad|" + press.Click),
                 ["Interact"], $"presses {press.Name}, the teleporter toward \"{target.What}\"");
 
