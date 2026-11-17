@@ -250,6 +250,8 @@ public partial class Zone : ReceiveProtocolDispatcher, IWithTimers {
 
     [MessageHandler(typeof(ZONE_102_PROTOCOL.MSG_ZONETRANSFER))]
     protected virtual void ReceiveZoneTransfer(ZONE_102_PROTOCOL.MSG_ZONETRANSFER message) {
+        // A wizard is on the way in: the copy must not close under them while their game loads it (NoteArriving).
+        NoteArriving();
         if (_isLoading) {
             _pendingPlayerEvents[Sender] = message;
 
@@ -767,6 +769,26 @@ public partial class Zone : ReceiveProtocolDispatcher, IWithTimers {
     // Kept because someone was in another room of the dungeon (ReceiveInstanceIdleExpire).
     private bool _heldForOtherRooms;
 
+    // A wizard was sent here and has not been added yet (between the transfer and the game's attach). The empty-room
+    // timer of the last visit could fire in that gap and close the room under them: Idunn walked out of the Robe Shop
+    // and straight back in, the 5-second timer of her leaving fired 65 ms after her attach, and she stood in a closed
+    // room for 18 minutes where no exit worked and her friends saw her offline (Niduus, 2026-11-17: "one of TCO7 is
+    // offline?").
+    private const int ARRIVING_SECONDS = 20;
+    private DateTime _arrivingUntil = DateTime.MinValue;
+
+    private void NoteArriving() {
+        if (!IsInstance) {
+            return;
+        }
+
+        _arrivingUntil = DateTime.UtcNow.AddSeconds(ARRIVING_SECONDS);
+        if (_players.Count == 0 && !_isLoading) {
+            Timers.StartSingleTimer(IDLE_EXPIRE_TIMER, new ZONE_102_PROTOCOL.MSG_INSTANCEIDLEEXPIRE(),
+                TimeSpan.FromSeconds(ARRIVING_SECONDS + 1));
+        }
+    }
+
     private void ScheduleIdleExpiryIfEmpty() {
         // Instance.IdleMinutes of 0 or less disables the expiry; a join cancels the timer.
         if (!IsInstance || _players.Count > 0 || _isLoading) {
@@ -803,6 +825,15 @@ public partial class Zone : ReceiveProtocolDispatcher, IWithTimers {
     [MessageHandler(typeof(ZONE_102_PROTOCOL.MSG_INSTANCEIDLEEXPIRE))]
     private void ReceiveInstanceIdleExpire(ZONE_102_PROTOCOL.MSG_INSTANCEIDLEEXPIRE message) {
         if (!IsInstance || _players.Count > 0) {
+            return;
+        }
+
+        // Someone is still loading in (NoteArriving): wait for them, then look again.
+        var arriving = _arrivingUntil - DateTime.UtcNow;
+        if (!message.Force && arriving > TimeSpan.Zero) {
+            Timers.StartSingleTimer(IDLE_EXPIRE_TIMER, new ZONE_102_PROTOCOL.MSG_INSTANCEIDLEEXPIRE(),
+                arriving + TimeSpan.FromSeconds(1));
+
             return;
         }
 
