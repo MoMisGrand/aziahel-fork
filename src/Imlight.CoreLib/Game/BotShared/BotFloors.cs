@@ -428,6 +428,9 @@ internal static class BotFloors {
         return live.SameGround(g.X + ((x - g.X) / far * back), g.Y + ((y - g.Y) / far * back));
     }
 
+    // How far under his floor a battle circle's volume may sit and still be his room's (Big Ben room 1: 730 under; Counterweight East's floors are 900 apart, so a floor below is never taken).
+    private const float SUNK_CIRCLE = 800f;
+
     // How far up or down a thing may be and still be on the wizard's floor (Counterweight East's floors are 900 apart).
     internal const float FLOOR = 300f;
 
@@ -455,13 +458,20 @@ internal static class BotFloors {
         // The floors stand one over another, so a circle or lever right above or below is not this room's.
         bool Here(float oz) => OnFloor(z, oz);
 
+        // A battle circle's volume can sit well under the floor it is on (Big Ben's first room: "InitiateCombat-Room1" at
+        // -935 under a floor at -203, so floor duty never stepped on it; 2026-11-17 04:57 he stood at the shut Door42 until a
+        // stuck fix found the circle). One under him, on his ground, with no circle of his own floor in the room, is his.
+        bool HereCircle(Circle c) => Here(c.Z)
+            || (!float.IsNaN(z) && !float.IsNaN(c.Z) && c.Z < z && z - c.Z <= SUNK_CIRCLE && live?.SameGround?.Invoke(c.X, c.Y) != false
+                && !book.Circles.Any(o => !ReferenceEquals(o, c) && Far(o.X, o.Y, c.X, c.Y) <= ROOM && Here(o.Z)));
+
         int Tried(string key) => tries?.GetValueOrDefault(key) ?? 0;
         string StateOf(string obj) => live?.StateOf?.Invoke(obj) is { Length: > 0 } s ? s : book.Starts.GetValueOrDefault(obj) ?? "";
         bool Closed(Gate g) => !Opens(StateOf(g.Object));
         bool Off(string trigger) => live?.EnabledOf?.Invoke(trigger) == false;
 
         // 1. The room's battle circle, when it has not started its fight in this copy of the area.
-        foreach (var circle in book.Circles.Where(c => Far(x, y, c.X, c.Y) <= ROOM && Here(c.Z)).OrderBy(c => Far(x, y, c.X, c.Y))) {
+        foreach (var circle in book.Circles.Where(c => Far(x, y, c.X, c.Y) <= ROOM && HereCircle(c)).OrderBy(c => Far(x, y, c.X, c.Y))) {
             var key = "circle|" + circle.Trigger;
             if ((live?.FiresOf?.Invoke(circle.Trigger) ?? 0) > 0 || Tried(key) >= 1 || Off(circle.Trigger)) {
                 continue;
@@ -491,7 +501,7 @@ internal static class BotFloors {
 
         // Only a circle whose fight has started: before that its creatures are not out for a player (Niduus, 2026-11-16, Big
         // Ben's twentieth floor: "didn't show mobs on my screen but Ultimus started the combat with them").
-        foreach (var circle in book.Circles.Where(c => Far(x, y, c.X, c.Y) <= ROOM && Here(c.Z) && (live?.FiresOf is null || live.FiresOf(c.Trigger) > 0))) {
+        foreach (var circle in book.Circles.Where(c => Far(x, y, c.X, c.Y) <= ROOM && HereCircle(c) && (live?.FiresOf is null || live.FiresOf(c.Trigger) > 0))) {
             if (live?.FoesNear?.Invoke(circle.X, circle.Y) == true) {
                 return new Duty(FIGHT, circle.X, circle.Y, $"the creatures of the room's battle circle \"{circle.Volume}\"", "room|" + circle.Trigger,
                     "the room's creatures are beaten before going on");

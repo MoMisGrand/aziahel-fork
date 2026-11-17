@@ -54,7 +54,7 @@ internal sealed class UltimusMember : ReceiveActor, IWithTimers {
     internal sealed record Disconnect(string Why);
 
     /// <summary>Walk through these points (the last is the goal), at a player's running pace.</summary>
-    internal sealed record WalkTo(List<(float X, float Y)> Points, string Why);
+    internal sealed record WalkTo(List<(float X, float Y)> Points, string Why, bool GameMap = false, float[] Heights = null);
 
     internal sealed record StopWalking;
 
@@ -266,7 +266,9 @@ internal sealed class UltimusMember : ReceiveActor, IWithTimers {
 
             // Every walk stays on the legal ground (Niduus, 2026-11-14: "MAke sure he respects the world/games boundaries"):
             // a leg over a wall or the Minimap's black is cut where the floor ends, whatever planned it.
-            var legal = OverlayQuestPath.Legal(View.Zone, View.X, View.Y, m.Points, out var cut);
+            // A walk on the game's own walk map climbs its stairs, which our floor map shows as wall: taken as planned.
+            var cut = false;
+            var legal = m.GameMap ? m.Points : OverlayQuestPath.Legal(View.Zone, View.X, View.Y, m.Points, out cut);
             if (cut && DateTime.UtcNow - _cutSaid > TimeSpan.FromSeconds(30)) {
                 _cutSaid = DateTime.UtcNow;
                 Note($"keeps to the walkable ground: a walk ({m.Why}) went over a wall or out of bounds in {UltimusText.Zone(View.Zone)}, so it stops where the floor ends.");
@@ -282,6 +284,12 @@ internal sealed class UltimusMember : ReceiveActor, IWithTimers {
                 _doorSaid = DateTime.UtcNow;
                 Note($"stops at \"{shutDoor.Object}\": it is still shut, so a walk ({m.Why}) through it ends at the door, as it does for a player.");
             }
+
+            // The planned heights of a walk on the game's walk map, so he climbs its ramps instead of keeping the floor under them.
+            _plannedFrom = (View.X, View.Y, View.Z);
+            _planned = m.Heights is { Length: > 0 } h && ReferenceEquals(legal, m.Points)
+                ? legal.Select((p, i) => (p.X, p.Y, Z: h[Math.Min(i, h.Length - 1)])).ToList()
+                : null;
 
             foreach (var point in legal) {
                 _route.Enqueue(point);
@@ -822,7 +830,7 @@ internal sealed class UltimusMember : ReceiveActor, IWithTimers {
         _lastStep = now;
         var (nx, ny, yaw) = BotShared.BotWalk.Step(_route, View.X, View.Y, seconds, BotShared.BotWalk.RunSpeed * (mounted ? MOUNT_SPEED : 1f));
 
-        var nz = UltimusGround.HeightAt(View.Zone, nx, ny, View.Z);
+        var nz = UltimusGround.HeightAt(View.Zone, nx, ny, PlannedZ(nx, ny) is var pz && !float.IsNaN(pz) ? pz : View.Z);
         Place(nx, ny, nz);
         Send(new GAME_5_PROTOCOL.MSG_CLIENTMOVE {
             LocationX = Compress(nx), LocationY = Compress(ny), LocationZ = Compress(nz),
@@ -949,6 +957,34 @@ internal sealed class UltimusMember : ReceiveActor, IWithTimers {
     private void Note(string text) => UltimusLink.Note(UltimusRoster.NAME, text);
 
     private DateTime _doorSaid;
+    private List<(float X, float Y, float Z)> _planned;
+    private (float X, float Y, float Z) _plannedFrom;
+
+    // The height the game's walk map has at (x, y) along the walk being walked (the nearest spot on its legs), or NaN.
+    private float PlannedZ(float x, float y) {
+        if (_planned is not { Count: > 0 } planned) {
+            return float.NaN;
+        }
+
+        var best = float.MaxValue;
+        var z = float.NaN;
+        var a = _plannedFrom;
+        foreach (var b in planned) {
+            var (dx, dy) = (b.X - a.X, b.Y - a.Y);
+            var len2 = (dx * dx) + (dy * dy);
+            var t = len2 < 1 ? 0f : Math.Clamp((((x - a.X) * dx) + ((y - a.Y) * dy)) / len2, 0f, 1f);
+            var (px, py) = (a.X + (dx * t), a.Y + (dy * t));
+            var far = ((x - px) * (x - px)) + ((y - py) * (y - py));
+            if (far < best) {
+                best = far;
+                z = a.Z + ((b.Z - a.Z) * t);
+            }
+
+            a = b;
+        }
+
+        return best <= 200 * 200 ? z : float.NaN;
+    }
     private DateTime _cutSaid = DateTime.MinValue;
 
 }
