@@ -181,9 +181,9 @@ internal static class ZoneNav {
     /// </summary>
     public static List<Vector3> Route(string zonePath, Vector3 from, Vector3 to) => Graph(zonePath) is { } graph ? Route(graph, from, to) : null;
 
-    internal static List<Vector3> Route(NavGraph graph, Vector3 from, Vector3 to) {
-        var starts = Near(graph, from);
-        var goals = Near(graph, to);
+    internal static List<Vector3> Route(NavGraph graph, Vector3 from, Vector3 to, bool onFloors = false) {
+        var starts = onFloors ? NearOnFloor(graph, from) : Near(graph, from);
+        var goals = onFloors ? NearOnFloor(graph, to) : Near(graph, to);
         if (starts.Count == 0 || goals.Count == 0) {
             return null;
         }
@@ -222,6 +222,42 @@ internal static class ZoneNav {
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// The game's own way between two floors: its first point on the wizard's own floor and its last on the step's (both
+    /// heights must be known), so it climbs by the stairs or ramp the walk map shows. Null when there is none. Where the
+    /// nearest points on the right floor are a little further off (a wizard standing under a raised door, the stairs a
+    /// way back), they are looked for further out. Niduus's log, 2026-11-17: Cyndr, Garm and Kurrent stood under the
+    /// Oasis's door to the Altar of Kings (at 523) on the ground at 202 for over an hour; the plain way snapped onto the
+    /// door's own point 294 above them and walked straight on.
+    /// </summary>
+    public static List<Vector3> RouteOnFloors(string zonePath, Vector3 from, Vector3 to)
+        => float.IsFinite(from.Z) && float.IsFinite(to.Z) && Graph(zonePath) is { } graph ? Route(graph, from, to, onFloors: true) : null;
+
+    // How far in height a point may be from a spot to stand on its floor, and how far out the right floor is looked for.
+    private const float FLOOR_HEIGHT = 150f;
+    private const float FLOOR_REACH = 1500f;
+
+    // The graph's points on a spot's own floor, nearest first, at most four: within SNAP, else within FLOOR_REACH.
+    private static List<int> NearOnFloor(NavGraph graph, Vector3 at) {
+        var found = new List<(int I, float Far)>();
+        for (var i = 0; i < graph.Nodes.Length; i++) {
+            var n = graph.Nodes[i];
+            if (graph.Next[i].Length == 0 || !Finite(n) || MathF.Abs(n.Z - at.Z) > FLOOR_HEIGHT) {
+                continue;
+            }
+
+            var far = Flat(n, at);
+            if (far <= FLOOR_REACH) {
+                found.Add((i, far));
+            }
+        }
+
+        found.Sort((a, b) => a.Far.CompareTo(b.Far));
+        var close = found.Where(f => f.Far <= SNAP).ToList();
+
+        return (close.Count > 0 ? close : found).Take(4).Select(f => f.I).ToList();
     }
 
     private static float Flat(Vector3 a, Vector3 b) => Vector2.Distance(new Vector2(a.X, a.Y), new Vector2(b.X, b.Y));
