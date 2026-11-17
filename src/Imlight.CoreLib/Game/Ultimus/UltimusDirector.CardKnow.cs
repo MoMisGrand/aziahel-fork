@@ -37,9 +37,10 @@ namespace Imlight.CoreLib.Game.Ultimus;
 /// <list type="bullet">
 /// <item>what each card is for and when it is worth playing (TcUse), so the best ones for the fights ahead go into his
 /// deck first and the ones that can't help stay out;</item>
-/// <item>where they are sold: the game's own treasure card vendors of each world (VendorGuide, never the Bazaar, a test
-/// shop or a custom vendor), so with a hard fight ahead and few cards left he goes to the nearest one in his world before
-/// it, marks his spot and recalls back (RestockTrip);</item>
+/// <item>where they are sold: the Bazaar, which stocks every card (UltimusDirector.CardPlan.cs, Niduus 2026-11-17: "Also
+/// able to buy them from bazaar"), and the game's own treasure card vendors of each world (VendorGuide, never a test shop
+/// or a custom vendor), so with a hard fight ahead and few cards left he goes to the nearest one in his world before it,
+/// marks his spot and recalls back (RestockTrip, when the Bazaar is off);</item>
 /// <item>all of it written down for Niduus in treasure-cards.txt beside his other notes.</item>
 /// </list>
 /// </summary>
@@ -248,9 +249,16 @@ internal sealed partial class UltimusDirectorActor {
                     : $"  {CardName(id)} x{copies} ({use.Kind}, worth {use.Score}): {use.When}.");
             }
 
+            lines.Add("");
+            lines.Add($"MY PLAN for the fights ahead ({PlanRoom(wizard)} treasure card slots), and what I still need:");
+            foreach (var (card, missing) in CardPlanNow(wizard, out _)) {
+                lines.Add($"  {card.Name} x{card.Copies} ({card.Kind}, worth {card.Score}): {card.When}." + (missing > 0 ? $" Need {missing} more." : " Have them."));
+            }
+
+            lines.Add("  With a hard fight ahead and 3 or more missing, I buy them at the Bazaar in Olde Town (it stocks every card).");
             var world = (leader.Zone ?? "").Split('/')[0];
             lines.Add("");
-            lines.Add($"WHERE TO GET THEM in {world} (the game's own vendors; never the Bazaar):");
+            lines.Add($"WHERE ELSE TO GET THEM in {world} (the game's own vendors):");
             foreach (var npc in VendorGuide.All().Where(VanillaTcVendor)
                          .Where(n => n.Zones.Any(z => z.Length > 0 && z[0].StartsWith(world + "/", StringComparison.OrdinalIgnoreCase)))) {
                 var useful = UsefulAt(npc, school, level, foes);

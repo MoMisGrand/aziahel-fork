@@ -1,0 +1,5 @@
+Fixed: Ultimus plans his treasure cards for hard fights and buys them at the Bazaar
+
+Ultimus kept losing to Meowiarty in Big Ben with plenty of gold and only two treasure cards. He now makes a treasure card plan for the creatures ahead, with the best hits for what they are weak to, a blade and a trap for his big hit, a shield against what they hit with, a heal and a card that stops a big hit, stacked to fill his deck's treasure card slots. With a hard fight ahead and three or more of those cards missing, he marks his spot, buys them at the Bazaar in Olde Town with gold past his reserve, puts them in his deck and recalls back. After losing a fight twice, buying the planned cards is now one of the things he weighs before trying again.
+Where: Ultimus, any world, and his treasure-cards.txt notes in his log folder.
+Test: Let Ultimus lose to Meowiarty in Big Ben, then watch his log for "My treasure card plan" and "buys treasure cards at the Bazaar", and check his deck has the new cards before he goes back in.

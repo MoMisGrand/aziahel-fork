@@ -121,6 +121,8 @@ internal sealed class UltimusMember : ReceiveActor, IWithTimers {
     internal sealed record QuickSell(List<ulong> Items, string What);
     /// <summary>Buys an item at the Bazaar (its Bazaar id), as a player does.</summary>
     internal sealed record BuyAtBazaar(ulong NpcGlobalId, ulong BazaarId, string What);
+    /// <summary>Buys treasure cards at the Bazaar (each card's Bazaar id and how many), one Buy click per copy, as a player does.</summary>
+    internal sealed record BuyCardsAtBazaar(ulong NpcGlobalId, List<(ulong BazaarId, int Count)> Cards, string What);
     /// <summary>Sells backpack items at the Bazaar, as a player does: each one's price asked, then Yes.</summary>
     internal sealed record SellAtBazaar(ulong NpcGlobalId, List<ulong> Items, string What);
     internal sealed record MarkSpot;
@@ -431,6 +433,15 @@ internal sealed class UltimusMember : ReceiveActor, IWithTimers {
             Note($"buys {m.What} at the Bazaar.");
             Send(new WIZARD_12_PROTOCOL.MSG_AUCTIONHOUSEREQUEST { Command = 1, npcGlobalID = m.NpcGlobalId, itemTemplateID = m.BazaarId });
             Send(new WIZARD_12_PROTOCOL.MSG_AUCTIONHOUSEREQUEST { Command = 3, npcGlobalID = m.NpcGlobalId, itemTemplateID = m.BazaarId });
+        });
+        Receive<BuyCardsAtBazaar>(m => {
+            Note($"buys treasure cards at the Bazaar: {m.What}.");
+            foreach (var (id, count) in m.Cards) {
+                Send(new WIZARD_12_PROTOCOL.MSG_AUCTIONHOUSEREQUEST { Command = 1, npcGlobalID = m.NpcGlobalId, itemTemplateID = id });
+                for (var i = 0; i < count; i++) {
+                    Send(new WIZARD_12_PROTOCOL.MSG_AUCTIONHOUSEREQUEST { Command = 3, npcGlobalID = m.NpcGlobalId, itemTemplateID = id });
+                }
+            }
         });
         Receive<SellAtBazaar>(m => {
             Note($"sells {m.What} at the Bazaar.");
