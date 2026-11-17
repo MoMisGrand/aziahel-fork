@@ -625,9 +625,11 @@ internal sealed class UltimusMember : ReceiveActor, IWithTimers {
         }
 
         var wizard = account.Characters?.FirstOrDefault(c => c.CharId == _member.CharId);
-        var zone = transfer?.Zone ?? wizard?.Zone ?? "";
+        // A login (not a zone change) starts where a player's would: never mid-dungeon in a copy that is gone.
+        var start = transfer is null && wizard is not null ? Game.World.BotLoginSpot.For(wizard) : ((string Zone, string Location)?) null;
+        var zone = transfer?.Zone ?? start?.Zone ?? wizard?.Zone ?? "";
         var zoneId = transfer?.ZoneId ?? 0;
-        var location = transfer?.Location ?? (wizard is null ? "" : Util.GetCompactStringFromVector(wizard.Location, wizard.Orientation));
+        var location = transfer?.Location ?? start?.Location ?? (wizard is null ? "" : Util.GetCompactStringFromVector(wizard.Location, wizard.Orientation));
         var key = _key;
         _ = System.Threading.Tasks.Task.Run(async () => {
             var useKey = key ?? await QuestTeam.QuestTeamHost.CreateKey(account);
