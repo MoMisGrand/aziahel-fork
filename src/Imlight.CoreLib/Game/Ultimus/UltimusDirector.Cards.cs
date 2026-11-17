@@ -38,7 +38,7 @@ namespace Imlight.CoreLib.Game.Ultimus;
 
 /// <summary>
 /// Treasure cards (Niduus, 2026-11-15: "Let him buy a few treasure cards and play them in tough fights. - Yes, let him").
-/// From a game's own treasure card vendor in the area he is in (never the Bazaar, which stocks every card), he buys a few
+/// From a game's own treasure card vendor in the area he is in (the Bazaar trip is UltimusDirector.CardPlan.cs), he buys a few
 /// treasure cards of his school that he can cast (two hits and a heal, the best for his level), with gold past his
 /// reserve, and puts them in his deck as a player does in the deck window. In a tough fight he presses Draw for one (CombatDuelComponent.Ultimus.cs).
 /// </summary>
@@ -213,8 +213,8 @@ internal sealed partial class UltimusDirectorActor {
 
     /// <summary>
     /// A few treasure cards from a game's own treasure card vendor in the area he is in, with gold past his reserve: the walk
-    /// to them, or the buy. Never the Bazaar (Niduus, 2026-11-15: it stocks every treasure card in the game; he may only sell
-    /// them there), never a custom or event vendor, never the test shop.
+    /// to them, or the buy. Never a custom or event vendor, never the test shop. The Bazaar (allowed since Niduus, 2026-11-17:
+    /// "Also able to buy them from bazaar") is its own trip, for his card plan: UltimusDirector.CardPlan.cs.
     /// </summary>
     private UltimusPlanner.Target TreasureCardTarget(List<UltimusMember.Status> group) {
         if (DateTime.UtcNow < _nextCardLook) {

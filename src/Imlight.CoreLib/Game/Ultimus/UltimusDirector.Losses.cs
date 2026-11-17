@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Imlight.CoreLib.Game.Bazaar;
 using Imlight.CoreLib.Game.BotShared;
 using Imlight.CoreLib.Game.Zone.Components;
 
@@ -32,6 +33,7 @@ namespace Imlight.CoreLib.Game.Ultimus;
 ///   full     he went in hurt, low on mana or with no potions: next time full health, full mana and potions first (the
 ///            one case besides being under 25% where he goes out of his way to heal or buy potions).
 ///   gear     he has gold past his reserve: a shopping trip for a clear upgrade, even in push mode.
+///   cards    a treasure card plan for this creature, the missing cards bought at the Bazaar (UltimusDirector.CardPlan.cs).
 ///   deck     a deck rebuilt for this creature's school and tricks.
 ///   level    a side quest of his level given nearby (never farming creatures).
 ///   patience rested and careful, and he waits a few minutes by the fight for a player who may join, then tries again.
@@ -84,6 +86,8 @@ internal sealed partial class UltimusDirectorActor {
             ("full", plan.StartHealth < 0.95 || plan.StartMana < 0.6 || plan.StartPotions == 0 ? 90 : 5,
                 $"I went in with {plan.StartHealth:P0} health, {plan.StartMana:P0} mana and {plan.StartPotions} potions"),
             ("gear", spare > 300 ? 60 + Math.Min(20, spare / 500.0) : 10, $"I have {gold:N0} gold, {Math.Max(0, spare):N0} past my reserve, for better gear"),
+            ("cards", CardsRemedyScore(me, spare), $"I have {UsefulCards(me)} treasure card(s) that help against it; a planned stack of " +
+                "blades, traps, shields, heals and its weak-school hits from the Bazaar may turn it"),
             ("deck", 50, "a deck made for this creature's school and tricks may turn it"),
             ("level", 35, "a side quest of my level nearby makes me stronger without farming"),
             ("patience", 20, "rested and careful, and a player may join to help"),
@@ -101,6 +105,7 @@ internal sealed partial class UltimusDirectorActor {
         var plain = pick.Remedy switch {
             "full" => "next time I go in at full health and mana with potions, even if I have to fetch them",
             "gear" => "I shop for a clear gear upgrade first",
+            "cards" => "I plan my treasure cards for this creature and buy the missing ones at the Bazaar before I go back in",
             "deck" => "I rebuild my deck for this creature",
             "level" => "I do a side quest of my level nearby first",
             _ => "I rest, go in careful, and wait a few minutes by the fight in case a player joins",
@@ -117,11 +122,21 @@ internal sealed partial class UltimusDirectorActor {
             case "deck":
                 PrepareDeck(0, _target?.Kind == UltimusPlanner.FIGHT ? UltimusScout.SituationOf(_target.Template) : BotCards.Situation.Unknown, force: true);
                 break;
+            case "cards":
+                CardsRemedy();
+                PrepareDeck(0, _target?.Kind == UltimusPlanner.FIGHT ? UltimusScout.SituationOf(_target.Template) : BotCards.Situation.Unknown, force: true);
+                break;
             case "patience":
                 _patienceUntil = DateTime.UtcNow.AddMinutes(4);
                 break;
         }
     }
+
+    private int UsefulCards(UltimusMember.Status me) => me.Wizard is { } wizard ? UsefulCardsOwned(wizard) : 0;
+
+    // Few treasure cards that help and gold to spare: the cards are the strongest remedy after going in hurt.
+    private double CardsRemedyScore(UltimusMember.Status me, long spare)
+        => spare <= 300 || BazaarLink.StateNow == BazaarState.Disabled ? 10 : UsefulCards(me) < RESTOCK_BELOW ? 85 : 30;
 
     /// <summary>The "patience" remedy: he waits by the fight a few minutes (a player may come to help); true while waiting.</summary>
     private bool WaitingForHelp(UltimusMember.Status leader, UltimusPlanner.Target target) {

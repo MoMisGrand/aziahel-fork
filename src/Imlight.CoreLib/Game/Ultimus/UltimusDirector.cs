@@ -1000,7 +1000,13 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
             return Source("bazaar", bazaar);
         }
 
-        // A few treasure cards for tough fights from a treasure card vendor in this area, never the Bazaar (UltimusDirector.Cards.cs).
+        // His treasure card plan for the hard fights ahead, bought at the Bazaar when three or more are missing (UltimusDirector.CardPlan.cs).
+        if (SideTripsOpen && ShopAllowed(leader) && SideTrip(NotMidStep(BazaarCardsTarget(group)), "treasure cards") is { } bazaarCards) {
+            MarkBeforeTrip(leader, bazaarCards);
+            return Source("bazaar-cards", bazaarCards);
+        }
+
+        // A few treasure cards for tough fights from a treasure card vendor in this area (UltimusDirector.Cards.cs).
         if (SideTripsOpen && ShopAllowed(leader) && SideTrip(NotMidStep(TreasureCardTarget(group)), "treasure cards") is { } cards) {
             MarkBeforeTrip(leader, cards);
             return Source("treasure-cards", cards);
