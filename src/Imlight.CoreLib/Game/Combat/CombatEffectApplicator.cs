@@ -424,7 +424,7 @@ internal static class CombatEffectApplicator {
     }
 
     // A participant's pips as the game counts them for a pip-power spell: a pip is 1, a power or school pip 2.
-    private static int PipPower(CombatDuelSubCircle who) {
+    internal static int PipPower(CombatDuelSubCircle who) {
         if (who?.CombatParticipant?.m_pipCount is not { } pips) {
             return 0;
         }

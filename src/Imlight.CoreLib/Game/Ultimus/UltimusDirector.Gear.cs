@@ -22,6 +22,7 @@ using System.Linq;
 using Akka.Actor;
 using Imlight.Common;
 using Imlight.CoreLib.Game.BotShared;
+using Imlight.CoreLib.Game.Combat;
 using Imlight.CoreLib.Game.Tools;
 using Imlight.CoreLib.Game.Zone.Components;
 using Imlight.CoreLib.WizardData.Models.Player;
@@ -284,7 +285,9 @@ internal sealed partial class UltimusDirectorActor {
             return;
         }
 
-        var (deckId, clicks) = BotCards.ItemCardClicks(wizard, StyleOf(member));
+        var folder = UltimusSeat.Current.Folder;
+        var level = BotGear.LevelOf(wizard);
+        var (deckId, clicks) = BotCards.ItemCardClicks(wizard, StyleOf(member), id => UltimusCardUse.Rarely(folder, id, level));
         if (clicks.Count == 0) {
             _itemCardsSent.Remove(member.Role);
             return;
@@ -327,7 +330,19 @@ internal sealed partial class UltimusDirectorActor {
             return;
         }
 
-        var wanted = BotCards.Plan(book.LearnedSpellTemplateIds ?? [], BotGear.SchoolOf(wizard), StyleOf(member), situation,
+        // Spells he has held in many fights and never cast make way for others (UltimusCardUse; Niduus, 2026-11-18).
+        var seat = UltimusSeat.Current.Folder;
+        var level = BotGear.LevelOf(wizard);
+        var learned = (book.LearnedSpellTemplateIds ?? []).ToList();
+        var rarely = learned.Select(id => (Id: (uint) id, Why: UltimusCardUse.Rarely(seat, (uint) id, level))).Where(r => r.Why is not null).ToList();
+        if (rarely.Count > 0 && learned.Count - rarely.Count >= 4) {
+            learned.RemoveAll(id => rarely.Any(r => r.Id == (uint) id));
+        }
+        else {
+            rarely.Clear();
+        }
+
+        var wanted = BotCards.Plan(learned, BotGear.SchoolOf(wizard), StyleOf(member), situation,
             book.MaxSpells, Math.Max(1, book.SchoolMaxInstances), Math.Max(1, book.GenericMaxInstances));
         // Treasure cards and anything that is not a fighting card stay as they are.
         var now = (book.SpellList ?? []).Where(s => s is not null && BotCards.CardOf(s.m_templateID) is not null)
@@ -344,8 +359,45 @@ internal sealed partial class UltimusDirectorActor {
             return;
         }
 
-        Note(member.Role, $"{member.Name} makes its deck ready for {key}: {BotCards.Describe(wanted.Select(w => (w.Key, w.Value)))}.");
+        Note(member.Role, $"{member.Name} makes its deck ready for {key}: {BotCards.Describe(wanted.Select(w => (w.Key, w.Value)))}."
+                          + (rarely.Count > 0 ? $" Left out: {string.Join("; ", rarely.Select(r => $"{BotCards.Describe([(r.Id, 1)]).Replace(" x1", "")} ({r.Why})"))}." : ""));
+        WhyDeck(BotGear.SchoolOf(wizard), wanted);
         _actors[index].Tell(new UltimusMember.EditDeck(deckItem.m_globalID, take, put, "for " + key));
+    }
+
+    /// <summary>
+    /// His deck in card-use.txt, a line per spell with why he packs it and how often he plays it (Niduus, 2026-11-18: "Does
+    /// Ultimus currently state why he packs what spells that he does").
+    /// </summary>
+    private static void WhyDeck(string school, Dictionary<uint, int> wanted) {
+        var folder = UltimusSeat.Current.Folder;
+        var lines = wanted.Where(w => w.Value > 0).OrderByDescending(w => w.Value).Select(w => {
+            var card = RewrittenAI.ReadTemplate(w.Key);
+            var seen = UltimusCardUse.Likelihood(folder, w.Key);
+            return $"  {BotCards.Describe([(w.Key, w.Value)])}: {WhyPacked(card, school)}" + (seen.Length > 0 ? $" Played: {seen}." : " Not held in a fight yet.");
+        });
+        UltimusCardUse.Deck(folder, lines);
+    }
+
+    private static string WhyPacked(RewrittenAI.Card card, string school) {
+        if (card is null) {
+            return "a card of my book.";
+        }
+
+        var own = RewrittenAI.Same(card.School, school);
+        var pips = card.XPip ? "X pips (more pips, a bigger tier" + (card.Tiers.Length > 0 ? $": {string.Join(", ", card.Tiers.Select(t => $"{t.Pips} pips {t.Damage}"))}" : "") + ")" : card.PerPip > 0 ? $"{card.Rank} pips ({card.PerPip} damage for each of the enemy's pips)" : $"{card.Rank} pips";
+        return card.Kind switch {
+            "attack" => $"{(card.HitsAll ? "a hit on every enemy" : "a hit on one enemy")}, about {card.BaseDamage} damage for {pips}"
+                        + (own ? ", of my own school (my boosts count)." : $", {card.School} (for enemies that resist my school)."),
+            "heal" => $"a heal{(card.HealWholeTeam ? " for the whole team" : "")} of about {card.HealAmount}, for when I am low.",
+            "blade" => $"makes my next hit {card.BladePercent}% stronger.",
+            "trap" => $"makes the enemy take {card.TrapPercent}% more from the next hit.",
+            "shield" => $"guards me against {(card.ShieldSchools is { Length: > 0 } s ? string.Join("/", s) : card.ShieldSchool is { Length: > 0 } one ? one : "every school")} hits.",
+            "weakness" => "makes the enemy's next hit weaker.",
+            "charm removal" => "takes the enemy's blades or my curses away.",
+            "stun" => "makes an enemy lose its turn.",
+            _ => "a card I can plan with.",
+        };
     }
 
     // ---------------------------------------------------------------------

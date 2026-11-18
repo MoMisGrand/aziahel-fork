@@ -444,7 +444,10 @@ internal static class BotCards {
     /// The item cards to turn off or back on for the deck worn, one entry per copy (one click in the deck window each),
     /// with the reason; the deck's global id (0 when no deck is worn).
     /// </summary>
-    internal static (ulong DeckId, List<(uint Id, bool Off, string Why)> Clicks) ItemCardClicks(Wizard wizard, BotStyle style) {
+    /// <paramref name="rarely"/>: why a card it is not ruled to turn off goes off anyway, from how seldom it plays it (Ultimus's
+    /// card use counts, UltimusCardUse), or null.
+    internal static (ulong DeckId, List<(uint Id, bool Off, string Why)> Clicks) ItemCardClicks(Wizard wizard, BotStyle style,
+                                                                                               Func<uint, string> rarely = null) {
         var clicks = new List<(uint Id, bool Off, string Why)>();
         var book = wizard?.SpellbookBehavior;
         // The deck's id as the battle reads the crossed-out cards (CombatDuelSubCircle: the Deck slot's item).
@@ -456,7 +459,7 @@ internal static class BotCards {
         ulong deckId = wornId.Full;
         foreach (var group in (book.TemporarySpells ?? []).Where(t => t is not null).GroupBy(t => (uint) t.m_templateID)) {
             var copies = group.Count();
-            var why = ItemCardOff(group.Key, style);
+            var why = ItemCardOff(group.Key, style) ?? rarely?.Invoke(group.Key);
             var want = why is null ? 0 : copies;
             var now = book.ExcludedItemSpellCount(deckId, group.Key);
             for (var i = now; i < want; i++) {
