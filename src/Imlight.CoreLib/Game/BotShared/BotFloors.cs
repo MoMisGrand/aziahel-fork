@@ -55,7 +55,17 @@ internal static class BotFloors {
     /// </summary>
     internal sealed record Gate(string Object, string Trigger, float X, float Y, Opener By, string Volume, float VX, float VY,
         string Lever, float LX, float LY, List<(string Object, string State)> Needs, string Through = "", float TX = float.NaN, float TY = float.NaN,
-        float Z = float.NaN, float VZ = float.NaN, float LZ = float.NaN);
+        float Z = float.NaN, float VZ = float.NaN, float LZ = float.NaN) {
+
+        /// <summary>
+        /// The puzzle's pieces are clicked themselves, in the order of <see cref="Needs"/>, with no lever after (the Vault of
+        /// Ice's obelisks and braziers); <see cref="LX"/>, <see cref="LY"/> is the middle of the pieces, often a wing away.
+        /// </summary>
+        internal bool Pieces { get; init; }
+
+        /// <summary>Where each piece of a <see cref="Pieces"/> puzzle stands.</summary>
+        internal Dictionary<string, (float X, float Y, float Z)> PieceSpots { get; init; } = [];
+    }
 
     /// <summary>What the area's files say about its floors.</summary>
     internal sealed record Book(List<Circle> Circles, List<Gate> Gates, List<Toggle> Toggles, Dictionary<string, string> Starts) {
@@ -128,6 +138,44 @@ internal static class BotFloors {
         List<Result> Results(Trigger t) => [.. t.m_results?.m_results?.Where(r => r is not null) ?? []];
 
         List<Requirement> Needs(Trigger t) => [.. t.m_requirements?.m_requirements?.Where(r => r is not null) ?? []];
+
+        Trigger Named(string name) => triggers.FirstOrDefault(x => string.Equals((string) x.m_triggerName, name, StringComparison.OrdinalIgnoreCase));
+
+        // The pieces a puzzle needs, in the order a player sets them: down the "ActivateFrom_" chain to the trigger that
+        // fires when a piece changes ("Sun1.Idle_On.EnterState") or on the pieces' own events ("ToFire"), with the states it
+        // needs. When other checks of the same pieces need some of them set first (the Vault's obelisks: Snake, then Moon,
+        // then Bird, then Sun), that order is kept: a piece more checks need comes first.
+        List<(string Object, string State)> PiecesPuzzle(Trigger start) {
+            var t = start;
+            for (var hop = 0; hop < 4 && t is not null; hop++) {
+                var needs = Needs(t).OfType<ReqTriggerObjectState>().Where(n => !n.m_applyNOT && !string.IsNullOrEmpty(n.m_triggerObjName))
+                    .Select(n => ((string) n.m_triggerObjName, (string) n.m_triggerObjState)).ToList();
+                var fires = Fires(t);
+                // Needs on a chain of other triggers (the Vault's "Master Lock": the three locks broken) are other gates.
+                if (needs.Count > 0 && fires.Any(f => f.StartsWith("ActivateFrom_", StringComparison.OrdinalIgnoreCase))) {
+                    return [];
+                }
+
+                if (needs.Count > 0 && fires.Count > 0) {
+                    var final = needs;
+                    var rank = final.ToDictionary(n => n.Item1, _ => 0, StringComparer.OrdinalIgnoreCase);
+                    foreach (var other in triggers) {
+                        var met = Needs(other).OfType<ReqTriggerObjectState>().Where(n => !n.m_applyNOT
+                            && final.Any(f => string.Equals(f.Item1, (string) n.m_triggerObjName, StringComparison.OrdinalIgnoreCase)
+                                              && string.Equals(f.Item2, (string) n.m_triggerObjState, StringComparison.OrdinalIgnoreCase))).ToList();
+                        foreach (var n in met) {
+                            rank[(string) n.m_triggerObjName]++;
+                        }
+                    }
+
+                    return [.. final.OrderByDescending(n => rank[n.Item1])];
+                }
+
+                t = fires.FirstOrDefault(f => f.StartsWith("ActivateFrom_", StringComparison.OrdinalIgnoreCase)) is { } up ? Named(up["ActivateFrom_".Length..]) : null;
+            }
+
+            return [];
+        }
 
         // Start states: the trigger objects, then the area's object list.
         var starts = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -226,6 +274,17 @@ internal static class BotFloors {
                         && triggers.FirstOrDefault(x => string.Equals((string) x.m_triggerName, fire["ActivateFrom_".Length..], StringComparison.OrdinalIgnoreCase)) is { } from) {
                         if (Fires(from).Select(VolumeOf).FirstOrDefault(v => v is not null) is { } step) {
                             gate = gate with { By = Opener.Step, Volume = (string) step.m_volumeName ?? "", VX = step.m_locationX, VY = step.m_locationY, VZ = step.m_locationZ };
+                            break;
+                        }
+
+                        // A puzzle whose pieces are clicked themselves (the Vault of Ice: "Break BirdLock" fires from
+                        // "BirdRoomVictory", which fires from "SunCheck" once the four obelisks are lit in order).
+                        if (PiecesPuzzle(from) is { Count: > 0 } pieces && pieces.All(n => spots.ContainsKey(n.Object))) {
+                            var (px, py, pz) = (pieces.Average(n => spots[n.Object].X), pieces.Average(n => spots[n.Object].Y), pieces.Average(n => spots[n.Object].Z));
+                            gate = gate with {
+                                By = Opener.Click, LX = px, LY = py, LZ = pz, Needs = pieces, Pieces = true,
+                                PieceSpots = pieces.ToDictionary(n => n.Object, n => spots[n.Object], StringComparer.OrdinalIgnoreCase),
+                            };
                             break;
                         }
 
@@ -541,6 +600,40 @@ internal static class BotFloors {
             if (wrong.Count == 0 && Tried("lever|" + gate.Lever) < TRIES + 2) {
                 return new Duty(CLICK, gate.LX, gate.LY, $"the lever \"{gate.Lever}\", which opens \"{gate.Object}\"", "lever|" + gate.Lever,
                     gate.Needs.Count > 0 ? "the puzzle is right, so the lever now opens the door" : $"pulling it opens \"{gate.Object}\"");
+            }
+        }
+
+        // 4b. A puzzle whose pieces are clicked themselves, often in a wing far from the lock it opens. The Vault of Ice
+        // (Krokotopia): three locks bar the Frost door to the Keeper of the Fang, and each opens from its own wing, where a
+        // guardian's defeat brings out the pieces: four obelisks lit in order, two obelisks, three braziers set to Fire, Ice
+        // and Storm. Tulkar, Ra, Kurrent and Mythis stood at the shut BirdLock for hours (2026-11-17), as nothing showed
+        // what opens it. As a player: the wing's battle circle, its creatures, then each piece not yet right, in order.
+        foreach (var gate in book.Gates.Where(g => g.Pieces && Closed(g) && !Off(g.Trigger) && Here(g.LZ)).OrderBy(g => Far(x, y, g.LX, g.LY))) {
+            var wing = book.Circles.Where(c => Far(c.X, c.Y, gate.LX, gate.LY) <= ROOM).OrderBy(c => Far(c.X, c.Y, gate.LX, gate.LY)).FirstOrDefault();
+            if (wing is not null && (live?.FiresOf?.Invoke(wing.Trigger) ?? 0) == 0 && Tried("circle|" + wing.Trigger) < 1 && !Off(wing.Trigger)) {
+                return new Duty(STEP, wing.X, wing.Y, $"the battle circle \"{wing.Volume}\" by the puzzle that opens \"{gate.Object}\"", "circle|" + wing.Trigger,
+                    "beating its guardian brings out the puzzle, and the puzzle opens a lock on the way on");
+            }
+
+            if (wing is not null && live?.FoesNear?.Invoke(wing.X, wing.Y) == true) {
+                return new Duty(FIGHT, wing.X, wing.Y, $"the creatures by the puzzle that opens \"{gate.Object}\"", "room|" + wing.Trigger,
+                    "the puzzle comes out once they are beaten");
+            }
+
+            foreach (var (obj, state) in gate.Needs) {
+                var now = StateOf(obj);
+                if (string.Equals(now, state, StringComparison.OrdinalIgnoreCase)) {
+                    continue;
+                }
+
+                var key = $"piece|{obj}|{now}";
+                if (Tried(key) < TRIES + 2 && gate.PieceSpots.TryGetValue(obj, out var at)) {
+                    return new Duty(CLICK, at.X, at.Y, $"the puzzle piece \"{obj}\" (now {(now.Length > 0 ? now : "unknown")}, needs {state})", key,
+                        $"\"{gate.Object}\" opens once {string.Join(", then ", gate.Needs.Select(n => $"{n.Object} is {n.State}"))}");
+                }
+
+                // The order counts (the obelisks): never a later piece before this one.
+                break;
             }
         }
 
