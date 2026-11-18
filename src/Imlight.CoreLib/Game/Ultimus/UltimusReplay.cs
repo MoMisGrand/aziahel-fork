@@ -169,6 +169,31 @@ internal static class UltimusReplay {
             && BotEnchants.Playable(new Imcodec.ObjectProperty.TypeCache.SpellTemplate { m_levelRestriction = 0 }, 26)
             && BotEnchants.Playable(new Imcodec.ObjectProperty.TypeCache.SpellTemplate { m_levelRestriction = 52 }, 52)
                 ? null : "an enchantment card above his level would still count as one he can play"),
+        new("Cleanse Charm sat in his hand fight after fight and was never cast (2026-11-18): rarely played cards go", () => {
+            var folder = Path.Combine(Path.GetTempPath(), "ultimus-card-use-check-" + Guid.NewGuid().ToString("N"));
+            try {
+                const uint never = 4_000_000_001, often = 4_000_000_002;
+                for (ulong fight = 1; fight <= UltimusCardUse.MIN_FIGHTS; fight++) {
+                    for (var round = 1; round <= 3; round++) {
+                        UltimusCardUse.Round(folder, fight, round, 26, [never, often], often);
+                    }
+                }
+
+                UltimusCardUse.Round(folder, 999, 1, 26, [], 0);
+                return UltimusCardUse.Rarely(folder, never, 26) is null ? "a card held in 5 fights and never cast is still kept"
+                    : UltimusCardUse.Rarely(folder, often, 26) is not null ? "a card he casts every fight counts as rarely played"
+                    : UltimusCardUse.Rarely(folder, never, 26 + UltimusCardUse.RETRY_LEVELS) is not null ? "a rarely played card never gets a new try"
+                    : null;
+            }
+            finally {
+                try {
+                    Directory.Delete(folder, true);
+                }
+                catch (Exception) {
+                    // A temporary folder.
+                }
+            }
+        }),
     ];
 
     /// <summary>The failed checks (plain words), chat answers included; written to replay-pack.txt.</summary>

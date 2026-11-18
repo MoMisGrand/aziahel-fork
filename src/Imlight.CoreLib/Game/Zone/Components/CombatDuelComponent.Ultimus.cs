@@ -493,6 +493,8 @@ internal sealed partial class CombatDuelComponent {
 
             _ultimusPicks[member.SlotIndex] = pick;
             UltimusLink.Note(UltimusRoster.NAME, $"round {Duel.m_roundNum}: {choice.Why}");
+            // How likely he plays each card, learned from his own fights (UltimusCardUse; Niduus, 2026-11-18).
+            UltimusCardUseRound(member, choice);
             // What the overlay's Ultimus Spectator shows of this round (read only).
             UltimusSpectate.NoteRound(Duel.m_duelID.Full, Duel.m_roundNum, member, circles, choice,
                 [.. moves.Where(m => m.Type == CombatMoveType.Discard).Select(m => m.Why)]);
@@ -512,6 +514,25 @@ internal sealed partial class CombatDuelComponent {
             if (UltimusDirector.ActorOf(UltimusRole(member)) is { } wizard) {
                 wizard.Tell(new UltimusMember.Clicks(clicks), Akka.Actor.ActorRefs.NoSender);
             }
+        }
+    }
+
+    // The cards in his hand this round and the one he casts, for his card use counts (UltimusCardUse).
+    private void UltimusCardUseRound(CombatDuelSubCircle member, UltimusTactics.Choice choice) {
+        try {
+            var hand = new List<uint>();
+            for (var i = 0; i < member.HandCount; i++) {
+                if (member.GetSpellFromLastHand((byte) i) is { } spell) {
+                    hand.Add(spell.m_templateID);
+                }
+            }
+
+            var cast = choice.Move == UltimusTactics.Move.Cast && member.GetSpellFromLastHand((byte) choice.Card) is { } picked ? (uint) picked.m_templateID : 0u;
+            var level = (int) (member.ParticipantGameStats?.Level ?? 0);
+            UltimusCardUse.Round(UltimusSeat.Current.Folder, Duel.m_duelID.Full, Duel.m_roundNum, level, hand, cast);
+        }
+        catch (Exception) {
+            // Counts only: never in the way of the fight.
         }
     }
 

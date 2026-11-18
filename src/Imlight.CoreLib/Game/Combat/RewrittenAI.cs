@@ -265,6 +265,11 @@ internal static class RewrittenAI {
         internal bool HitsAll;
         internal int BaseDamage;
         internal string DamageSchool = "";
+        // An X-pip spell: the damage of each pip tier it offers (the game resolves the highest the pips paid reach).
+        internal bool XPip;
+        internal (int Pips, int Damage)[] Tiers = [];
+        // A damage-per-pip spell: the damage for each pip of the target's (a power pip is 2); BaseDamage counts 4 of them.
+        internal int PerPip;
 
         internal bool Blade;
         internal bool BladeForTeammate;
@@ -313,6 +318,7 @@ internal static class RewrittenAI {
         return new Card {
             Spell = spell, Id = spell.m_templateID, Name = known.Name, Shown = known.Shown, Rank = spell.m_pipCost?.m_spellRank ?? known.Rank,
             School = known.School, Hit = known.Hit, HitsAll = known.HitsAll, BaseDamage = known.BaseDamage, DamageSchool = known.DamageSchool,
+            XPip = known.XPip, Tiers = known.Tiers, PerPip = known.PerPip,
             Blade = known.Blade, BladeForTeammate = known.BladeForTeammate, BladeOnlyTeammate = known.BladeOnlyTeammate,
             BladeWholeTeam = known.BladeWholeTeam, BladeSchool = known.BladeSchool, BladePercent = known.BladePercent,
             Trap = known.Trap, TrapAll = known.TrapAll, TrapSchool = known.TrapSchool, TrapPercent = known.TrapPercent,
@@ -408,6 +414,12 @@ internal static class RewrittenAI {
         }
 
         card.BaseDamage = (int) (template.m_effects ?? []).Where(e => e is not null).Sum(DamageOf);
+        if ((template.m_effects ?? []).OfType<VariableSpellEffect>().FirstOrDefault() is { m_effectList.Count: > 0 } variable) {
+            card.XPip = true;
+            card.Tiers = [.. variable.m_effectList.Where(e => e is not null).Select(e => ((int) e.m_pipNum, (int) DamageOf(e))).OrderBy(t => t.Item1)];
+        }
+
+        card.PerPip = (int) leaves.Where(e => e.m_effectType == kSpellEffects.kDamagePerTotalPipPower && IsEnemy(e.m_effectTarget)).Sum(PerPipOf);
         if (card.Hit && string.IsNullOrEmpty(card.DamageSchool)) {
             card.DamageSchool = card.School;
         }
@@ -424,6 +436,8 @@ internal static class RewrittenAI {
         }
     }
 
+    private static float PerPipOf(SpellEffect effect) => effect.m_numRounds > 0 ? effect.m_numRounds : Math.Max(0, effect.m_effectParam);
+
     // A card's base damage: random effects count as their average, a choice of tiers (X pips) or conditions as the best.
     private static float DamageOf(SpellEffect effect) => effect switch {
         null => 0,
@@ -434,7 +448,8 @@ internal static class RewrittenAI {
         EffectListSpellEffect list => list.m_effectList?.Sum(DamageOf) ?? 0,
         CountBasedSpellEffect counted => counted.m_effectList?.Sum(DamageOf) ?? 0,
         _ when !IsEnemy(effect.m_effectTarget) => 0,
-        _ when effect.m_effectType == kSpellEffects.kDamagePerTotalPipPower => effect.m_effectParam * 4,
+        // The game files keep the damage for each of the target's pips in m_numRounds (m_effectParam is -1): counted as 4 pips.
+        _ when effect.m_effectType == kSpellEffects.kDamagePerTotalPipPower => PerPipOf(effect) * 4,
         _ when CombatCharms.DamageEffects.Contains(effect.m_effectType) => Math.Max(0, effect.m_effectParam),
         _ => 0,
     };
@@ -459,6 +474,23 @@ internal static class RewrittenAI {
 
         var school = card.DamageSchool;
         double damage = Math.Max(0, card.BaseDamage);
+        // An X-pip spell hits for the tier the caster's pips reach now, not its best (Niduus, 2026-11-18: "Does he know what
+        // X pip spells do and damage per pip?"); a damage-per-pip spell for the target's own pips.
+        try {
+            if (card.XPip && card.Tiers.Length > 0 && card.Spell is not null && caster?.CombatParticipant is not null) {
+                var paid = CombatActionResolver.GetXPipCost(card.Spell, caster);
+                var tier = card.Tiers.Where(t => t.Pips > 0 && t.Pips <= paid).OrderByDescending(t => t.Pips).FirstOrDefault();
+                damage = tier.Pips > 0 ? Math.Max(0, tier.Damage) : 0;
+            }
+
+            if (card.PerPip > 0) {
+                damage = Math.Max(0, damage + (card.PerPip * (CombatEffectApplicator.PipPower(target) - 4)));
+            }
+        }
+        catch (Exception) {
+            // The plain estimate stands.
+        }
+
         // A Balance spell is boosted by the caster's Balance damage, whatever it lands as (CombatEffectApplicator.BoostSchoolOf).
         damage *= 1 + BoostOf(caster, string.Equals(card.School, "Balance", StringComparison.OrdinalIgnoreCase) ? card.School : school);
         if (caster?._hangingEffects is { } own) {

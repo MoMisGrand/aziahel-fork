@@ -116,7 +116,10 @@ internal sealed partial class UltimusDirectorActor {
     /// </summary>
     private Dictionary<uint, int> DeckTreasureCards(Wizard wizard, int room) {
         var owned = OwnedCopies(wizard);
-        var usable = CardsForDeck(wizard, owned.Keys.Where(id => !BrokenCards.Skip(id))).ToList();
+        // Treasure cards he has held in many fights and never cast stay in his book (UltimusCardUse; Niduus, 2026-11-18).
+        var folder = UltimusSeat.Current.Folder;
+        var level = BotGear.LevelOf(wizard);
+        var usable = CardsForDeck(wizard, owned.Keys.Where(id => !BrokenCards.Skip(id) && UltimusCardUse.Rarely(folder, id, level) is null)).ToList();
         var want = new Dictionary<uint, int>();
         void Take(uint id, int copies) {
             var left = room - want.Values.Sum();
