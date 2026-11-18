@@ -62,6 +62,12 @@ internal static class BotEnchants {
 
     }
 
+    /// <summary>
+    /// Whether a wizard of this level may play this card: every enchantment treasure card of the game needs level 50 or
+    /// more (Tough and Giant 52, Sniper 54, Gargantuan 58), so a level 26 wizard holding them can't use them yet.
+    /// </summary>
+    internal static bool Playable(SpellTemplate template, int level) => template is not null && template.m_levelRestriction <= level;
+
     /// <summary>The enchantment a card is, or null when it is not one.</summary>
     internal static Enchant Of(uint templateId)
         => CoreObjectFactory.GetCoreTemplate(templateId) is SpellTemplate template ? Of(template) : null;

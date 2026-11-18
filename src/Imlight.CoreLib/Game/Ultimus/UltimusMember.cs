@@ -144,7 +144,8 @@ internal sealed class UltimusMember : ReceiveActor, IWithTimers {
     internal sealed record ItemCards(ulong DeckId, List<(uint Id, bool Off)> Clicks);
 
     /// <summary>Treasure cards from his book into his deck (by the card's name hash, as the deck window sends them).</summary>
-    internal sealed record TreasureIntoDeck(ulong DeckId, List<uint> Hashes);
+    // Treasure cards out of his deck (back to his book) and into it, as a player sets them in the deck window.
+    internal sealed record TreasureDeckChange(ulong DeckId, List<uint> Out, List<uint> In);
 
     /// <summary>Buys treasure cards at a treasure card vendor's shop (one of each), then closes it.</summary>
     internal sealed record BuyTreasureCards(ulong NpcGlobalId, List<uint> Hashes, string What);
@@ -493,8 +494,12 @@ internal sealed class UltimusMember : ReceiveActor, IWithTimers {
 
             Send(new WIZARD_12_PROTOCOL.MSG_DONESHOPPING());
         });
-        Receive<TreasureIntoDeck>(m => {
-            foreach (var hash in m.Hashes) {
+        Receive<TreasureDeckChange>(m => {
+            foreach (var hash in m.Out) {
+                Send(new WIZARD_12_PROTOCOL.MSG_REMOVETREASURESPELLFROMDECK { SpellID = unchecked((int) hash), DeckID = m.DeckId, Destroy = 0 });
+            }
+
+            foreach (var hash in m.In) {
                 Send(new WIZARD_12_PROTOCOL.MSG_ADDTREASURESPELLTODECK { SpellID = unchecked((int) hash), DeckID = m.DeckId });
             }
         });

@@ -265,7 +265,9 @@ internal sealed partial class UltimusDirectorActor {
             };
             foreach (var (id, copies) in OwnedCopies(wizard).OrderByDescending(c => TcUse(c.Key, school, level, foes)?.Score ?? 0)) {
                 var use = TcUse(id, school, level, foes);
-                lines.Add(use is null ? $"  {CardName(id)} x{copies}: no use to me now (too high a level, or not a real card)."
+                var needs = CoreObjectFactory.GetCoreTemplate(id) is SpellTemplate t && t.m_levelRestriction > level ? t.m_levelRestriction : 0;
+                lines.Add(use is null ? needs > 0 ? $"  {CardName(id)} x{copies}: needs level {needs} (I am {level}): kept in my book, out of my deck, until then."
+                        : $"  {CardName(id)} x{copies}: no use to me now (not a card I can play, or not a real card)."
                     : $"  {CardName(id)} x{copies} ({use.Kind}, worth {use.Score}): {use.When}.");
             }
 
