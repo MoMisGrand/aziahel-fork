@@ -172,7 +172,9 @@ internal sealed partial class UltimusDirectorActor {
             (x, y) => BotUseGuards.Near(leader.ZoneActor, x, y).Any(m => DudCreatures.Fightable(m.Object.m_globalID.Full)
                                                                     && BotFloors.OnFloor(leader.Z, m.Object.m_location.Z)),
             (x, y) => OverlayQuestPath.IslandOf(leader.Zone, leader.X, leader.Y) is var a && OverlayQuestPath.IslandOf(leader.Zone, x, y) is var b
-                      && (a < 0 || b < 0 || a == b));
+                      && (a < 0 || b < 0 || a == b)) {
+            EncounterDone = BotFloors.EncounterDoneFor(leader.Wizard),
+        };
         if (BotFloors.Next(book, live, leader.X, leader.Y, _floorTries, leader.Z) is not { } duty) {
             _floorOn = null;
             return null;

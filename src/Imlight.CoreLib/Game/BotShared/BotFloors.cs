@@ -25,6 +25,7 @@ using Imlight.Common;
 using Imlight.CoreLib.Game.Tools;
 using Imlight.CoreLib.Game.Ultimus;
 using Imlight.CoreLib.Shared.Resources;
+using Imlight.CoreLib.WizardData.Models.Player;
 
 namespace Imlight.CoreLib.Game.BotShared;
 
@@ -68,6 +69,13 @@ internal static class BotFloors {
 
         /// <summary>What must be set before each piece can be (another piece or a lever in a given state), by piece.</summary>
         internal Dictionary<string, List<(string Object, string State)>> PieceFirst { get; init; } = [];
+
+        /// <summary>
+        /// The dungeon quest that must be done before its opener works at all (the trigger's ReqEncounterComplete), or "".
+        /// Emperor's Retreat: "Activator Volume (2)" opens "Keymaster'sDoor" only once KT-SPH5-C02-003 (the Colossus in the
+        /// fourth tower) is complete.
+        /// </summary>
+        internal string Encounter { get; init; } = "";
     }
 
     /// <summary>What the area's files say about its floors.</summary>
@@ -100,6 +108,8 @@ internal static class BotFloors {
     internal const float ON_SPOT = 120f;
     // How near a door its teleporter on may be (Big Ben: the pad up stands 190 past each floor's door).
     private const float THROUGH = 900f;
+    // How near the straight way to a spot a quest-locked door must be to stand in it.
+    private const float LOCKED_DOOR = 500f;
     // Tries per spot or lever before it is left be.
     internal const int TRIES = 3;
 
@@ -338,6 +348,12 @@ internal static class BotFloors {
                     }
                 }
 
+                // A quest that must be done first, on the trigger itself or on the one it fires from.
+                var quest = Needs(t).OfType<ReqEncounterComplete>().FirstOrDefault(r => !r.m_applyNOT && !string.IsNullOrEmpty(r.m_encounterName));
+                if (quest is not null) {
+                    gate = gate with { Encounter = quest.m_encounterName };
+                }
+
                 gates.Add(gate);
             }
         }
@@ -530,13 +546,39 @@ internal static class BotFloors {
 
     /// <summary>What the bot sees of the zone right now: object states, trigger fires and creatures (null when unknown).</summary>
     internal sealed record Live(Func<string, string> StateOf, Func<string, int> FiresOf, Func<string, bool?> EnabledOf, Func<float, float, bool> FoesNear,
-        Func<float, float, bool> SameGround = null);
+        Func<float, float, bool> SameGround = null) {
+
+        /// <summary>Whether the wizard has done a dungeon quest (a gate's <see cref="Gate.Encounter"/>); null when unknown.</summary>
+        internal Func<string, bool?> EncounterDone { get; init; }
+    }
 
     /// <summary>
     /// The next floor duty for a wizard at (x, y), or null when the floor is done: the room's battle circle not yet
     /// started, then creatures by a fight-gate or a started circle, then a gate's spot to step on, then a puzzle's plates
     /// and its lever. <paramref name="tries"/> counts the steps and clicks already made, by key (kept by the bot per zone copy).
     /// </summary>
+    /// <summary>Whether this wizard has done a dungeon quest, as the zone's ReqEncounterComplete reads it; null when unknown.</summary>
+    internal static Func<string, bool?> EncounterDoneFor(Wizard wizard) => name => {
+        if (wizard is null || string.IsNullOrEmpty(name)) {
+            return null;
+        }
+
+        try {
+            return wizard.HasCompletedQuest(name) || wizard.HasQuestRegistryValue(name, "Complete");
+        }
+        catch (Exception) {
+            return null;
+        }
+    };
+
+    // How far a point is from the segment (ax, ay)-(bx, by).
+    private static float ToSegment(float px, float py, float ax, float ay, float bx, float by) {
+        var (dx, dy) = (bx - ax, by - ay);
+        var len = (dx * dx) + (dy * dy);
+        var t = len <= 0 ? 0 : Math.Clamp((((px - ax) * dx) + ((py - ay) * dy)) / len, 0, 1);
+        return Far(px, py, ax + (t * dx), ay + (t * dy));
+    }
+
     internal static Duty Next(Book book, Live live, float x, float y, IReadOnlyDictionary<string, int> tries, float z = float.NaN) {
         if (book is null || book.IsEmpty) {
             return null;
@@ -558,6 +600,12 @@ internal static class BotFloors {
         string StateOf(string obj) => live?.StateOf?.Invoke(obj) is { Length: > 0 } s ? s : book.Starts.GetValueOrDefault(obj) ?? "";
         bool Closed(Gate g) => !Opens(StateOf(g.Object));
         bool Off(string trigger) => live?.EnabledOf?.Invoke(trigger) == false;
+        // A gate whose opener waits on a dungeon quest not done yet: nothing here opens it now (Tulkar stood on Emperor's
+        // Retreat's "Activator Volume (2)" for an hour, 2026-11-17, as "Keymaster'sDoor" opens only after the Colossus).
+        bool Locked(Gate g) => g.Encounter.Length > 0 && live?.EncounterDone?.Invoke(g.Encounter) == false;
+        // A spot past such a locked, shut door: walking there ends at the door.
+        bool PastLocked(float tx, float ty) => book.Gates.Any(g => Locked(g) && Closed(g) && Far(x, y, g.X, g.Y) < Far(x, y, tx, ty)
+                                                                  && ToSegment(g.X, g.Y, x, y, tx, ty) <= LOCKED_DOOR);
 
         // 1. The room's battle circle, when it has not started its fight in this copy of the area.
         foreach (var circle in book.Circles.Where(c => Far(x, y, c.X, c.Y) <= ROOM && HereCircle(c)).OrderBy(c => Far(x, y, c.X, c.Y))) {
@@ -598,7 +646,7 @@ internal static class BotFloors {
         }
 
         // 3. A spot that opens a door here.
-        foreach (var gate in near.Where(g => g.By == Opener.Step && !Off(g.Trigger) && Here(g.VZ))) {
+        foreach (var gate in near.Where(g => g.By == Opener.Step && !Off(g.Trigger) && Here(g.VZ) && !Locked(g))) {
             var key = "step|" + gate.Volume;
             if (Tried(key) < TRIES) {
                 return new Duty(STEP, gate.VX, gate.VY, $"\"{gate.Volume}\", which opens \"{gate.Object}\"", key,
@@ -607,8 +655,8 @@ internal static class BotFloors {
         }
 
         // 4. A puzzle: the plates that are wrong, one at a time, then the lever.
-        foreach (var gate in book.Gates.Where(g => g.By == Opener.Click && Closed(g) && !Off(g.Trigger)
-                                                   && Far(x, y, g.LX, g.LY) <= PUZZLE && Here(g.LZ))
+        foreach (var gate in book.Gates.Where(g => g.By == Opener.Click && Closed(g) && !Off(g.Trigger) && !Locked(g)
+                                                   && Far(x, y, g.LX, g.LY) <= PUZZLE && Here(g.LZ) && !PastLocked(g.LX, g.LY))
                      .OrderBy(g => Far(x, y, g.LX, g.LY))) {
             var wrong = gate.Needs.Where(n => !string.Equals(StateOf(n.Object), n.State, StringComparison.OrdinalIgnoreCase)).ToList();
             foreach (var (obj, state) in wrong) {
@@ -638,7 +686,9 @@ internal static class BotFloors {
         // guardian's defeat brings out the pieces: four obelisks lit in order, two obelisks, three braziers set to Fire, Ice
         // and Storm. Tulkar, Ra, Kurrent and Mythis stood at the shut BirdLock for hours (2026-11-17), as nothing showed
         // what opens it. As a player: the wing's battle circle, its creatures, then each piece not yet right, in order.
-        foreach (var gate in book.Gates.Where(g => g.Pieces && Closed(g) && !Off(g.Trigger) && Here(g.LZ)).OrderBy(g => Far(x, y, g.LX, g.LY))) {
+        foreach (var gate in book.Gates.Where(g => g.Pieces && Closed(g) && !Off(g.Trigger) && Here(g.LZ) && !Locked(g)
+                                                   && !PastLocked(g.LX, g.LY) && !g.PieceSpots.Values.Any(p => PastLocked(p.X, p.Y)))
+                     .OrderBy(g => Far(x, y, g.LX, g.LY))) {
             var wing = book.Circles.Where(c => Far(c.X, c.Y, gate.LX, gate.LY) <= ROOM).OrderBy(c => Far(c.X, c.Y, gate.LX, gate.LY)).FirstOrDefault();
             if (wing is not null && (live?.FiresOf?.Invoke(wing.Trigger) ?? 0) == 0 && Tried("circle|" + wing.Trigger) < 1 && !Off(wing.Trigger)) {
                 return new Duty(STEP, wing.X, wing.Y, $"the battle circle \"{wing.Volume}\" by the puzzle that opens \"{gate.Object}\"", "circle|" + wing.Trigger,
