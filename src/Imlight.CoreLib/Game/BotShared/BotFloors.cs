@@ -65,6 +65,9 @@ internal static class BotFloors {
 
         /// <summary>Where each piece of a <see cref="Pieces"/> puzzle stands.</summary>
         internal Dictionary<string, (float X, float Y, float Z)> PieceSpots { get; init; } = [];
+
+        /// <summary>What must be set before each piece can be (another piece or a lever in a given state), by piece.</summary>
+        internal Dictionary<string, List<(string Object, string State)>> PieceFirst { get; init; } = [];
     }
 
     /// <summary>What the area's files say about its floors.</summary>
@@ -139,6 +142,8 @@ internal static class BotFloors {
 
         List<Requirement> Needs(Trigger t) => [.. t.m_requirements?.m_requirements?.Where(r => r is not null) ?? []];
 
+        var templates = new Dictionary<string, ulong>(StringComparer.OrdinalIgnoreCase);
+
         Trigger Named(string name) => triggers.FirstOrDefault(x => string.Equals((string) x.m_triggerName, name, StringComparison.OrdinalIgnoreCase));
 
         // The pieces a puzzle needs, in the order a player sets them: down the "ActivateFrom_" chain to the trigger that
@@ -177,6 +182,27 @@ internal static class BotFloors {
             return [];
         }
 
+        // What a piece needs before it can be set (its own options' requirements): the Vault's Bug obelisk lights only with
+        // Lever1 Off, the Skull one only with Lever1 On, so the lever is pulled between them, as a player finds.
+        List<(string Object, string State)> PieceNeeds(string piece, string state) {
+            try {
+                if (!templates.TryGetValue(piece, out var id) || CoreObjectFactory.GetCoreTemplate(id) is not GameObjectTemplate template) {
+                    return [];
+                }
+
+                return [.. template.m_behaviors?.OfType<InteractableBehaviorTemplate>().SelectMany(b => b.m_interactOptions ?? [])
+                    .OfType<InteractStateOptionTemplate>()
+                    .Where(o => string.Equals(o.m_enterState.ToString(), state, StringComparison.OrdinalIgnoreCase))
+                    .SelectMany(o => o.m_requirements?.m_requirements ?? []).OfType<ReqTriggerObjectState>()
+                    .Where(r => !r.m_applyNOT && !string.IsNullOrEmpty(r.m_triggerObjName))
+                    .Select(r => ((string) r.m_triggerObjName, (string) r.m_triggerObjState)) ?? []];
+            }
+            catch (Exception ex) {
+                Logger.Debug("Bot floors: the piece {0} could not be read: {1}", Logger.Args(piece, ex.Message));
+                return [];
+            }
+        }
+
         // Start states: the trigger objects, then the area's object list.
         var starts = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var spots = new Dictionary<string, (float X, float Y, float Z)>(StringComparer.OrdinalIgnoreCase);
@@ -205,6 +231,7 @@ internal static class BotFloors {
             }
 
             spots.TryAdd(tag, (o.m_location.X, o.m_location.Y, o.m_location.Z));
+            templates.TryAdd(tag, o.m_templateID.Full);
         }
 
         // Battle circles.
@@ -281,9 +308,12 @@ internal static class BotFloors {
                         // "BirdRoomVictory", which fires from "SunCheck" once the four obelisks are lit in order).
                         if (PiecesPuzzle(from) is { Count: > 0 } pieces && pieces.All(n => spots.ContainsKey(n.Object))) {
                             var (px, py, pz) = (pieces.Average(n => spots[n.Object].X), pieces.Average(n => spots[n.Object].Y), pieces.Average(n => spots[n.Object].Z));
+                            var first = pieces.ToDictionary(n => n.Object, n => PieceNeeds(n.Object, n.State), StringComparer.OrdinalIgnoreCase);
+                            var spotsOf = pieces.Select(n => n.Object).Concat(first.Values.SelectMany(l => l.Select(f => f.Object)))
+                                .Where(spots.ContainsKey).Distinct(StringComparer.OrdinalIgnoreCase)
+                                .ToDictionary(o => o, o => spots[o], StringComparer.OrdinalIgnoreCase);
                             gate = gate with {
-                                By = Opener.Click, LX = px, LY = py, LZ = pz, Needs = pieces, Pieces = true,
-                                PieceSpots = pieces.ToDictionary(n => n.Object, n => spots[n.Object], StringComparer.OrdinalIgnoreCase),
+                                By = Opener.Click, LX = px, LY = py, LZ = pz, Needs = pieces, Pieces = true, PieceSpots = spotsOf, PieceFirst = first,
                             };
                             break;
                         }
@@ -624,6 +654,19 @@ internal static class BotFloors {
                 var now = StateOf(obj);
                 if (string.Equals(now, state, StringComparison.OrdinalIgnoreCase)) {
                     continue;
+                }
+
+                // Something set first (the lever the obelisk waits on): that one is clicked first.
+                if (gate.PieceFirst.GetValueOrDefault(obj)?.FirstOrDefault(f => !string.Equals(StateOf(f.Object), f.State, StringComparison.OrdinalIgnoreCase)) is { Object: { } pre } first
+                    && gate.PieceSpots.TryGetValue(pre, out var preAt)) {
+                    var was = StateOf(pre);
+                    var preKey = $"piece|{pre}|{was}|for|{obj}";
+                    if (Tried(preKey) < TRIES + 2) {
+                        return new Duty(CLICK, preAt.X, preAt.Y, $"\"{pre}\" (now {(was.Length > 0 ? was : "unknown")}, needs {first.State} before \"{obj}\" can be set)", preKey,
+                            $"\"{obj}\" only turns while {pre} is {first.State}, and \"{gate.Object}\" opens once {string.Join(", then ", gate.Needs.Select(n => $"{n.Object} is {n.State}"))}");
+                    }
+
+                    break;
                 }
 
                 var key = $"piece|{obj}|{now}";
