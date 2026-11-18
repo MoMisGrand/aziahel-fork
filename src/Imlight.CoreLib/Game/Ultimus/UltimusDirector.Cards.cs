@@ -64,10 +64,15 @@ internal sealed partial class UltimusDirectorActor {
     private static bool IsTreasure(uint templateId)
         => CoreObjectFactory.GetCoreTemplate(templateId) is SpellTemplate t && (t.m_Treasure || ((string) t.m_name)?.EndsWith(" TC", StringComparison.Ordinal) == true);
 
-    /// <summary>The treasure cards in his book go into his deck (out of battle), as a player drags them in.</summary>
+    /// <summary>
+    /// His deck's treasure card slots hold his best cards for the fights ahead (out of battle), as a player sets them in the
+    /// deck window: his card plan first (UltimusDirector.CardPlan.cs), then the next best he owns. A card he can't play takes
+    /// no slot: every enchantment treasure card of the game needs level 50 or more (Tough and Giant 52, Gargantuan 58), so
+    /// at level 26 the Tough, Giant, Sniper and Keen Eyes in his deck were dead slots while Storm Hound and Monsoon Hound
+    /// sat in his book (Niduus's deck window, 2026-11-17). Those go back to his book and the best ones come in.
+    /// </summary>
     private void TreasureCardsIntoDeck(UltimusMember.Status member) {
-        if (member.Wizard is not { SpellbookBehavior: { } book } wizard || CombatDuelComponent.IsInBattle(member.GlobalId)
-            || book.TreasureCardTemplateIds is not { Count: > 0 } owned) {
+        if (member.Wizard is not { SpellbookBehavior: { } book } wizard || CombatDuelComponent.IsInBattle(member.GlobalId)) {
             return;
         }
 
@@ -76,24 +81,62 @@ internal sealed partial class UltimusDirectorActor {
             return;
         }
 
-        // The deck's treasure card slots already full: nothing goes in (his log said "puts 3 treasure cards in his deck" every
-        // hour while the server refused each one, the deck being full of the ones from before).
-        var inDeck = (book.SpellList ?? []).Where(s => s is not null && IsTreasure(s.m_templateID)).Sum(s => (int) s.m_quantity);
-        var room = book.MaxTreasureCards > 0 ? book.MaxTreasureCards - inDeck : TREASURE_CARDS_KEPT;
-        if (room <= 0) {
+        var inDeck = new Dictionary<uint, int>();
+        foreach (var s in (book.SpellList ?? []).Where(s => s is not null && IsTreasure(s.m_templateID))) {
+            inDeck[s.m_templateID] = inDeck.GetValueOrDefault(s.m_templateID) + (int) s.m_quantity;
+        }
+
+        var want = DeckTreasureCards(wizard, book.MaxTreasureCards > 0 ? book.MaxTreasureCards : TREASURE_CARDS_KEPT);
+        var outOfDeck = inDeck.Select(c => (Id: c.Key, Count: c.Value - want.GetValueOrDefault(c.Key))).Where(c => c.Count > 0).ToList();
+        var intoDeck = want.Select(c => (Id: c.Key, Count: c.Value - inDeck.GetValueOrDefault(c.Key))).Where(c => c.Count > 0).ToList();
+        if (intoDeck.Count == 0 && outOfDeck.Count == 0) {
             return;
         }
 
-        // The best for the fights ahead first; the ones that can't help him stay in his book (UltimusDirector.CardKnow.cs).
-        var ids = CardsForDeck(wizard, owned.Where(id => CoreObjectFactory.GetCoreTemplate(id) is SpellTemplate && !BrokenCards.Skip(id)))
-            .Take(Math.Min(room, TREASURE_CARDS_KEPT)).ToList();
-        if (ids.Count == 0) {
-            return;
+        static uint Hash(uint id) => (CoreObjectFactory.GetCoreTemplate(id) as SpellTemplate)?.m_name is { } n ? StringHash.Compute((string) n) : 0u;
+        static string Say(List<(uint Id, int Count)> cards) => string.Join(", ", cards.Select(c => $"{CardName(c.Id)} x{c.Count}"));
+        if (outOfDeck.Count > 0) {
+            Note("Ultimus", $"takes treasure cards out of his deck, back to his book, to make room for better ones: {Say(outOfDeck)}.");
         }
 
-        Note("Ultimus", $"puts {ids.Count} treasure card(s) in his deck: {string.Join(", ", ids.Select(CardName))}.");
-        _actors[0].Tell(new UltimusMember.TreasureIntoDeck(deckItem.m_globalID,
-            [.. ids.Select(id => (CoreObjectFactory.GetCoreTemplate(id) as SpellTemplate)?.m_name is { } n ? StringHash.Compute((string) n) : 0u).Where(h => h != 0)]));
+        if (intoDeck.Count > 0) {
+            Note("Ultimus", $"puts {intoDeck.Sum(c => c.Count)} treasure card(s) in his deck: {Say(intoDeck)}.");
+        }
+
+        // Out first, so the slots are free when the new ones go in (the game handles them in the order sent).
+        _actors[0].Tell(new UltimusMember.TreasureDeckChange(deckItem.m_globalID,
+            [.. outOfDeck.SelectMany(c => Enumerable.Repeat(Hash(c.Id), c.Count)).Where(h => h != 0)],
+            [.. intoDeck.SelectMany(c => Enumerable.Repeat(Hash(c.Id), c.Count)).Where(h => h != 0)]));
+    }
+
+    /// <summary>
+    /// The treasure cards his deck should hold, and how many of each: the cards of his plan he owns (up to the plan's
+    /// copies), then the next best he owns for the fights ahead (CardsForDeck, up to COPIES of each), until the slots are
+    /// full. Only cards he can play at his level, never a broken one.
+    /// </summary>
+    private Dictionary<uint, int> DeckTreasureCards(Wizard wizard, int room) {
+        var owned = OwnedCopies(wizard);
+        var usable = CardsForDeck(wizard, owned.Keys.Where(id => !BrokenCards.Skip(id))).ToList();
+        var want = new Dictionary<uint, int>();
+        void Take(uint id, int copies) {
+            var left = room - want.Values.Sum();
+            var n = Math.Min(Math.Min(copies, left), owned.GetValueOrDefault(id) - want.GetValueOrDefault(id));
+            if (n > 0) {
+                want[id] = want.GetValueOrDefault(id) + n;
+            }
+        }
+
+        foreach (var (card, _) in CardPlanNow(wizard, out _)) {
+            if (usable.Contains(card.Id)) {
+                Take(card.Id, card.Copies);
+            }
+        }
+
+        foreach (var id in usable) {
+            Take(id, COPIES - want.GetValueOrDefault(id));
+        }
+
+        return want;
     }
 
     private static string CardName(uint id)

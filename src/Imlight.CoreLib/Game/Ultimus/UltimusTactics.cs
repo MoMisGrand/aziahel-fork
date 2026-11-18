@@ -370,10 +370,11 @@ internal static class UltimusTactics {
         }
 
         (int Index, BotEnchants.Enchant Enchant, int Worth) best = (-1, null, 0);
+        var level = BotGear.LevelOf(me._wizard);
         for (byte i = 0; i < 24; i++) {
             if (i == cardIndex || me.GetSpellFromLastHand(i) is not { } other
                 || CoreObjectFactory.GetCoreTemplate(other.m_templateID) is not SpellTemplate template
-                || BotEnchants.Of(template) is not { } enchant) {
+                || !BotEnchants.Playable(template, level) || BotEnchants.Of(template) is not { } enchant) {
                 continue;
             }
 
@@ -395,8 +396,10 @@ internal static class UltimusTactics {
 
     /// <summary>Whether his hand holds an enchantment card that would help a hit.</summary>
     internal static bool HoldsHitEnchant(CombatDuelSubCircle me) {
+        var level = BotGear.LevelOf(me._wizard);
         for (byte i = 0; i < 24; i++) {
-            if (me.GetSpellFromLastHand(i) is { } spell && BotEnchants.Of(spell.m_templateID) is { Kind: BotEnchants.DAMAGE or BotEnchants.PIERCE }) {
+            if (me.GetSpellFromLastHand(i) is { } spell && CoreObjectFactory.GetCoreTemplate(spell.m_templateID) is SpellTemplate template
+                && BotEnchants.Playable(template, level) && BotEnchants.Of(template) is { Kind: BotEnchants.DAMAGE or BotEnchants.PIERCE }) {
                 return true;
             }
         }

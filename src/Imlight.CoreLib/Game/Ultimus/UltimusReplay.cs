@@ -164,6 +164,11 @@ internal static class UltimusReplay {
             && OverlayQuestRoute.Landing("ReplayCheckWorld/Hub") == "ReplayCheckWorld/Landing"
             && !OverlayQuestRoute.NoteSpiralLanding("ReplayCheckWorld/Landing", "ReplayCheckWorld/Other", "ReplayCheckWorld/Hub")
                 ? null : "the Spiral Door would still be planned to its own world, or to a world's main area instead of where its door stands"),
+        new("At level 26 he dug for Tough and Giant (level 52 cards) and threw away Balanceblade for them (2026-11-17)", () =>
+            !BotEnchants.Playable(new Imcodec.ObjectProperty.TypeCache.SpellTemplate { m_levelRestriction = 52 }, 26)
+            && BotEnchants.Playable(new Imcodec.ObjectProperty.TypeCache.SpellTemplate { m_levelRestriction = 0 }, 26)
+            && BotEnchants.Playable(new Imcodec.ObjectProperty.TypeCache.SpellTemplate { m_levelRestriction = 52 }, 52)
+                ? null : "an enchantment card above his level would still count as one he can play"),
     ];
 
     /// <summary>The failed checks (plain words), chat answers included; written to replay-pack.txt.</summary>

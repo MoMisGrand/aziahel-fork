@@ -243,6 +243,9 @@ internal sealed partial class CombatDuelComponent {
 
         return me._wizard?.SpellbookBehavior?.SpellList is { } deck
                && deck.Any(s => s is not null && CoreObjectFactory.GetCoreTemplate(s.m_templateID) is SpellTemplate t && t.m_Treasure
+                                // One he can play at his level: he dug three times a fight for Tough and Giant (level 52 cards)
+                                // at level 26, throwing away Balanceblade and Dragonblade (his log, 2026-11-17 19:36-19:52).
+                                && BotEnchants.Playable(t, BotGear.LevelOf(me._wizard))
                                 && BotEnchants.Of(t) is { Kind: BotEnchants.DAMAGE or BotEnchants.PIERCE });
     }
 
