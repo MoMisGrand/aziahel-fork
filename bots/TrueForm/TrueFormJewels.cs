@@ -59,6 +59,8 @@ internal static class TrueFormJewels {
 
             var lines = new List<string>();
             var put = 0;
+            // What his gear gives, so each socket gets what he needs most (BotJewelPicker).
+            var need = BotJewelPicker.For(wizard, "Myth", BotStyle.Backup);
             foreach (var item in (wizard.EquipmentBehavior?.EquippedItems ?? []).ToList()) {
                 var template = ItemHelper.GetItemTemplate(item);
                 var sockets = JewelSockets.GetSockets(template);
@@ -81,12 +83,12 @@ internal static class TrueFormJewels {
 
                     var nowId = JewelSockets.GetPairs(item).FirstOrDefault(p => p?.m_socketNumber == socket)?.m_jewelTemplateID ?? 0;
                     var now = jewels.FirstOrDefault(j => j.Id == nowId);
-                    var nowScore = nowId == 0 ? double.MinValue : Score(now, pet);
+                    var nowScore = nowId == 0 ? double.MinValue : Score(now, shape.Value, pet, need);
                     if (nowId != 0) {
                         JewelSockets.Unsocket(item, socket);
                     }
 
-                    var best = jewels.Where(j => j.Shape == shape.Value).Select(j => (Jewel: j, Score: Score(j, pet)))
+                    var best = jewels.Where(j => j.Shape == shape.Value).Select(j => (Jewel: j, Score: Score(j, shape.Value, pet, need)))
                         .Where(x => x.Score > 0).OrderByDescending(x => x.Score).ThenBy(x => x.Jewel.Id)
                         .FirstOrDefault(x => JewelSockets.CheckSocket(wizard, item, x.Jewel.Template, socket) is null);
                     if (best.Jewel is not null && best.Score > nowScore) {
@@ -103,6 +105,7 @@ internal static class TrueFormJewels {
                     }
 
                     var inIt = JewelSockets.GetPairs(item).FirstOrDefault(p => p?.m_socketNumber == socket)?.m_jewelTemplateID ?? 0;
+                    need.Add(inIt == 0 ? null : jewels.FirstOrDefault(j => j.Id == inIt));
                     lines.Add($"{BotJewels.NameOf(template)}, {JewelSockets.ShapeName(shape.Value)} socket: "
                               + (inIt == 0 ? "empty (no jewel fits)" : BotJewels.NameOf(CoreObjectFactory.GetCoreTemplate((uint) inIt) as WizItemTemplate)));
                 }
@@ -133,13 +136,13 @@ internal static class TrueFormJewels {
 
     // How good a jewel is for him: its stats as his gear is scored; a pet jewel by his pet talents (first ones best), only
     // a talent his pet does not have yet.
-    private static double Score(BotJewels.Jewel jewel, ClientPetItemBehavior pet) {
+    private static double Score(BotJewels.Jewel jewel, JewelSocketType shape, ClientPetItemBehavior pet, BotJewelPicker need) {
         if (jewel is null) {
             return 0;
         }
 
         if (jewel.Shape != JewelSocketType.SOCKETTYPE_PET) {
-            return BotGear.ScoreStats(jewel.Stats, "Myth", BotStyle.Backup);
+            return need.Score(jewel, shape);
         }
 
         var best = 0.0;
