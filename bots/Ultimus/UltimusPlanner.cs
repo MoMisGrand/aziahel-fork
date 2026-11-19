@@ -465,6 +465,15 @@ internal static class UltimusPlanner {
                         standing.Object.m_globalID.Full, Key: key);
                 }
 
+                // Not out in this dungeon copy, and a spot here brings someone out when stepped on: he walks over it first, as
+                // a player who came in by the door has (The Ironworks, 2026-11-19: "Purloin the Plans", Baxter comes out by the
+                // first gate; bots that logged in beside his spot found nobody to talk to for two hours).
+                if (npc != 0 && leader.Wizard?.ZoneIsInstance == true && (stepZone.Length == 0 || OverlayQuestTracker.SameZone(stepZone, zone))
+                    && BotShared.BotFloors.NextSpawnPad(zone, leader.CharId, leader.X, leader.Y) is { } pad) {
+                    return new Target(SPOT, pad.X, pad.Y, $"{step} (nobody here yet: over \"{pad.Name}\", which brings someone out)", questName, goalName,
+                        Key: key + "|spawnpad");
+                }
+
                 // The Quest Atlas (UltimusAtlas): the zone files place this person in one other story area only, so the step is
                 // done there, known before he gets stuck looking for them where the quest says.
                 if (UltimusAtlas.Of(questName, goalName) is { RealZone.Length: > 0 } atlas && !OverlayQuestTracker.SameZone(atlas.RealZone, zone)
