@@ -155,6 +155,9 @@ internal static class UltimusReplay {
             && WatchdogPause.FromOtherBuild("Watchdog: Stopped.\nBuild: 1.0 then", "1.0 now")
             && !WatchdogPause.FromOtherBuild("Watchdog: Stopped.\nBuild: 1.0 now", "1.0 now")
             && !WatchdogPause.FromOtherBuild("Pause and explain", "1.0 now")
+            // A stop written while the stamp could not be read (bots loaded from memory) is lifted by the next build.
+            && WatchdogPause.FromOtherBuild("Watchdog: Stopped.\nBuild: unknown", "1.0 abc")
+            && !WatchdogPause.Stamp().EndsWith("unknown", StringComparison.Ordinal)
                 ? null : "an old watchdog pause would not lift after an update, or a pause by hand would"),
         new("Spiral Door to The Commons landed in The World Tree; he backed out, then tried the door to his own world 3 times (2026-11-15)", () =>
             OverlayQuestRoute.Landing("WizardCity/WC_Hub") == "WizardCity/WC_Ravenwood_Teleporter"

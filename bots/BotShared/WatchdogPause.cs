@@ -17,7 +17,6 @@
  */
 
 using System;
-using System;
 using System.IO;
 using Imlight.Common;
 
@@ -41,9 +40,13 @@ internal static class WatchdogPause {
             return s_stamp;
         }
 
+        // The bots are loaded from memory (BotLoader), so their assembly has no file: its Location is "" and the old stamp
+        // (the file's write time) came out "unknown" in every build, so a watchdog stop was never lifted by an update
+        // (Ultimus and three of the TCO7 stood stopped through v0.10.922, 2026-11-19). The build's own module id changes
+        // with every build of the bots' code.
         try {
-            var dll = typeof(WatchdogPause).Assembly.Location;
-            s_stamp = $"{typeof(WatchdogPause).Assembly.GetName().Version} {File.GetLastWriteTimeUtc(dll):o}";
+            var assembly = typeof(WatchdogPause).Assembly;
+            s_stamp = $"{assembly.GetName().Version} {assembly.ManifestModule.ModuleVersionId:N}";
         }
         catch (Exception) {
             s_stamp = "unknown";
@@ -57,7 +60,8 @@ internal static class WatchdogPause {
 
     /// <summary>Whether a pause file's text is a watchdog stop written by another build than this one (pure, for the replay pack).</summary>
     internal static bool FromOtherBuild(string pauseText, string stamp)
-        => pauseText.StartsWith(MARK, StringComparison.Ordinal) && !pauseText.Contains(BUILD + stamp, StringComparison.Ordinal);
+        => pauseText.StartsWith(MARK, StringComparison.Ordinal)
+           && !pauseText.Contains(BUILD + stamp, StringComparison.Ordinal);
 
     /// <summary>
     /// Whether the pause file there is the watchdog's own stop, not Ahziael's Pause button: the status then says so, so a
