@@ -65,6 +65,13 @@ internal static class BotCards {
         /// <summary>A creature that keeps beating this wizard (his own results): more shields and heals in the deck.</summary>
         internal bool Rival { get; init; }
 
+        /// <summary>
+        /// A rival whose fights run long (he runs out of good cards before it falls): the deck brings more hits and blades
+        /// instead of more shields and heals. Ultimus lost to the Sanzoku Outlaws 34 of 35 times in MooShu (2026-11-18), most
+        /// "the fight ran 6 minutes, so I ran out of good cards", with a rival deck of 6 hits in 18.
+        /// </summary>
+        internal bool LongFights { get; init; }
+
         /// <summary>Two or more enemies now, or (not counted yet) most of its recent fights had that many.</summary>
         internal bool CrowdLikely => Enemies >= 2 || (Enemies == 0 && CrowdShare >= CROWD_MOSTLY);
 
@@ -77,7 +84,10 @@ internal static class BotCards {
                 foe += $"; its cheats punish {string.Join(", ", Punished.Select(p => p.ToLowerInvariant() + "s"))}, so fewer of those";
             }
 
-            if (Rival) {
+            if (Rival && LongFights) {
+                foe += "; a rival that outlasts me, so more hits and blades to end it sooner";
+            }
+            else if (Rival) {
                 foe += "; a rival that keeps beating me, so more shields and heals";
             }
 
@@ -187,7 +197,12 @@ internal static class BotCards {
         // A rival, a creature that beat this wizard at least as often as it lost to him (UltimusFoes, by its exact template):
         // the deck stands up longer, as a player brings more shields and heals to a fight they keep losing (Niduus,
         // 2026-11-16, "all" to the pitch: Clockwork Warrior won 3 of 5, Desert Golem 5 of 17).
-        if (situation.Rival && style != BotStyle.Hitter) {
+        if (situation.Rival && situation.LongFights) {
+            shares[Kind.Hit] += 0.05;
+            shares[Kind.Blade] += 0.05;
+            shares[Kind.Other] = 0;
+        }
+        else if (situation.Rival && style != BotStyle.Hitter) {
             shares[Kind.Shield] += 0.05;
             shares[Kind.Heal] += 0.05;
             shares[Kind.Hit] = Math.Max(0.1, shares[Kind.Hit] - 0.1);
@@ -602,6 +617,22 @@ internal static class BotCards {
             if (targets.All(t => RewrittenAI.HasEffectOfSpell(t, group.Key))) {
                 throwAway.AddRange(group.Skip(1).Select(h => h.Index));
             }
+        }
+
+        // No hit in the whole hand: the spare charms, wards and heals go so hits come, as a player digs (the best heal and
+        // one of each other kind stay). Ultimus passed four rounds in a row "saving pips for a bigger hit" with a hand of
+        // Hex, Bladestorm, shields and heals and no hit at all (MooShu, 2026-11-18).
+        if (!hand.Any(h => h.Card.Hit) && hand.Count >= 5) {
+            var keep = new HashSet<int>();
+            if (hand.Where(h => h.Card.Heal).OrderByDescending(h => h.Card.HealAmount).FirstOrDefault() is { Card: not null } heal) {
+                keep.Add(heal.Index);
+            }
+
+            foreach (var group in hand.Where(h => !h.Card.Heal).GroupBy(h => h.Card.Kind)) {
+                keep.Add(group.First().Index);
+            }
+
+            throwAway.AddRange(hand.Where(h => !keep.Contains(h.Index)).Select(h => h.Index));
         }
 
         // Spare heals while everyone is healthy and the hand is full: the best one stays.

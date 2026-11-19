@@ -206,6 +206,8 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
     public ITimerScheduler Timers { get; set; }
 
     private const double TICK_SECONDS = 0.5;
+    // A rival whose fights ran this long on average: he ran out of good cards (more hits), not health.
+    private const double LONG_FIGHT_SECONDS = 240;
 
     private readonly List<UltimusMember.Status> _team = [];
     private readonly List<IActorRef> _actors = [];
@@ -743,7 +745,8 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
                     // shields and heals.
                     var situation = UltimusScout.SituationOf(target.Template);
                     if (UltimusFoes.Of((uint) Math.Min(target.Template, uint.MaxValue)) is { Lost: >= 2 } rival && rival.Lost * 4 >= rival.Fought) {
-                        situation = situation with { Rival = true };
+                        // Fights that ran over four minutes on average: he ran out of good cards, not health.
+                        situation = situation with { Rival = true, LongFights = rival.Fought > 0 && rival.Seconds / rival.Fought >= LONG_FIGHT_SECONDS };
                     }
 
                     PrepareDecks(situation);
