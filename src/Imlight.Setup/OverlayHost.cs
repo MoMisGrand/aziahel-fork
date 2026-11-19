@@ -470,7 +470,7 @@ internal static class OverlayHost {
 
             var title = (string?) newest["Title"] ?? "";
             foreach (var game in s_games) {
-                ShowNotice(game, $"Quest Team alert{(title.Length > 0 ? $" in {title}" : "")}: {text} (see Ahziael > Quest Team > Team Issues)", botAlert: true);
+                ShowNotice(game, $"Quest Team alert{(title.Length > 0 ? $" in {title}" : "")}: {text} (see Ahziael > Bots > Quest Team > Team Issues)", botAlert: true);
             }
         }
         catch (Exception) {
@@ -515,7 +515,7 @@ internal static class OverlayHost {
 
             var title = (string?) newest["Title"] ?? "";
             foreach (var game in s_games) {
-                ShowNotice(game, $"Ultimus alert{(title.Length > 0 ? $" in {title}" : "")}: {text} (see Ahziael > Ultimus > Ultimus Issues)", botAlert: true);
+                ShowNotice(game, $"Ultimus alert{(title.Length > 0 ? $" in {title}" : "")}: {text} (see Ahziael > Bots > Ultimus > Ultimus Issues)", botAlert: true);
             }
         }
         catch (Exception) {

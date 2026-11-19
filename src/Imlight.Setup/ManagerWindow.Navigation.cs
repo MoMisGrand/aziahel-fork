@@ -75,20 +75,14 @@ internal sealed partial class ManagerWindow {
             // Niduus, 2026-11-04: what each NPC gives (quests, shop items, treasure cards, spells), each with a switch.
             // Niduus, 2026-11-04: which rooms of dungeons, towers and instances can be teleported into.
             ["Game Modes", "Battles and World", "On and Off", "What NPCs Give", "Teleport Rooms", "Animations", "Events", "Shops and Codes"]),
-        // Niduus, 2026-11-12: "Make them their own section and server": four wizards that play the story together and
-        // say which quests do not work (ManagerWindow.QuestTeam.cs).
-        ("Quest Team", "users", "Bots that test the story",
-            "Four wizards (Ice, Life, Death and Storm) the server plays by itself through the story, like players, and what they ran into.",
-            [QUEST_TEAM_TAB, QUEST_TEAM_WIZARDS_TAB, QUEST_TEAM_ISSUES_TAB, QUEST_TEAM_LOGS_TAB]),
-        // Niduus, 2026-11-12: "Can we create a Solo Quester called Ultimus?" (ManagerWindow.Ultimus.cs).
-        ("Ultimus", "user", "The Solo Quester",
-            "One Balance wizard named Ultimus the server plays alone through the Main Story, and what it ran into.",
-            [ULTIMUS_TAB, ULTIMUS_ISSUES_TAB, ULTIMUS_LOGS_TAB, ULTIMUS_AI_TAB]),
-        // Niduus, 2026-11-16: "This will be called the TCO7 (The Calling of 7) ... Each Member gets their own sub-page in the
-        // TCO7 section. Each page is a complete mirror of Ultimus' page" (ManagerWindow.Tco7.cs).
-        ("TCO7", "users", "The Calling of 7",
-            "Seven wizards, one of each school, each its own Ultimus: they read all he has done, try to do better, talk and team up.",
-            Tco7TabNames),
+        // Niduus, 2026-11-19: "Allow for the bots to be a unified category with sub pages": Ultimus, the TCO7, the Quest Team
+        // and the street Bot Players on one page of the side bar, each a part of its own there (s_groupParts).
+        // Before: Niduus, 2026-11-12 (Quest Team, ManagerWindow.QuestTeam.cs; Ultimus, ManagerWindow.Ultimus.cs) and
+        // 2026-11-16 (TCO7, ManagerWindow.Tco7.cs) had a page each.
+        (BOTS, "users", "Ultimus, TCO7, Quest Team, street bots",
+            "Every wizard the server plays by itself: Ultimus the Solo Quester, the seven of the TCO7, the four of the Quest Team, " +
+            "and the Bot Players who fill the streets.",
+            [.. BotParts.SelectMany(p => p.Tabs)]),
         ("Server", "server", "Start, settings, accounts, logs",
             "Run the server and set it up: start and stop, every setting, who can log in, logs, game files, and Ahziael itself.",
             // Niduus, 2026-10-30: Ahziael on a server hosted on another PC, for its admins.
@@ -100,6 +94,19 @@ internal sealed partial class ManagerWindow {
             // Niduus, 2026-11-09: "add credits to Ahziael".
             ["Guides", WHATS_NEW, CREDITS]),
     ];
+
+    private const string BOTS = "Bots";
+
+    /// <summary>The parts of the Bots page in the side bar: a heading each that opens its tabs (Niduus, 2026-11-19).</summary>
+    private static (string Name, string Icon, string[] Tabs)[] BotParts => [
+        ("Ultimus", "user", [ULTIMUS_TAB, ULTIMUS_ISSUES_TAB, ULTIMUS_LOGS_TAB, ULTIMUS_AI_TAB]),
+        ("TCO7", "users", Tco7TabNames),
+        ("Quest Team", "users", [QUEST_TEAM_TAB, QUEST_TEAM_WIZARDS_TAB, QUEST_TEAM_ISSUES_TAB, QUEST_TEAM_LOGS_TAB]),
+        ("Street bots", "users", [STREET_BOTS_TAB]),
+    ];
+
+    /// <summary>A page's parts in the side bar, for the pages that have them.</summary>
+    private static (string Name, string Icon, string[] Tabs)[]? PartsOf(string group) => group == BOTS ? BotParts : null;
 
     private const string HOME = "Home";
 

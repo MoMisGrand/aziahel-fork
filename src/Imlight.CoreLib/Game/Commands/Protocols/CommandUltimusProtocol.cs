@@ -49,8 +49,8 @@ internal class CommandUltimus : CommandProtocol {
         var members = UltimusDirector.MembersOf(seat);
         if (members.Count == 0) {
             InformSenderClient(seat.IsUltimus
-                ? "The Ultimus is not playing right now. Turn it on in Ahziael (Ultimus > Ultimus) with the server running."
-                : $"{seat.Name} of the TCO7 is not playing right now. Turn the TCO7 on in Ahziael (Ultimus > TCO7) with the server running.");
+                ? "The Ultimus is not playing right now. Turn it on in Ahziael (Bots > Ultimus) with the server running."
+                : $"{seat.Name} of the TCO7 is not playing right now. Turn the TCO7 on in Ahziael (Bots > TCO7) with the server running.");
 
             return;
         }

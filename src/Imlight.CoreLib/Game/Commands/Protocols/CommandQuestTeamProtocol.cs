@@ -44,7 +44,7 @@ internal class CommandQuestTeam : CommandProtocol {
     private void TeleportCommand([Remainder] string who) {
         var members = QuestTeamDirector.Members;
         if (members.Count == 0) {
-            InformSenderClient("The Quest Team is not playing right now. Turn it on in Ahziael (Quest Team > Quest Team) with the server running.");
+            InformSenderClient("The Quest Team is not playing right now. Turn it on in Ahziael (Bots > Quest Team) with the server running.");
 
             return;
         }

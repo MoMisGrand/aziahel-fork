@@ -451,6 +451,7 @@ internal sealed partial class ManagerWindow : Window {
             Tab(ULTIMUS_ISSUES_TAB, () => UltimusPart(1, UltimusIssuesTab)),
             Tab(ULTIMUS_LOGS_TAB, () => UltimusPart(2, UltimusLogsTab)),
             Tab(ULTIMUS_AI_TAB, UltimusAiTab),
+            Tab(STREET_BOTS_TAB, StreetBotsTab),
         }.Concat(Tco7Tabs()).ToDictionary(t => (string) t.Tag!);
         // The side bar's pages, with these tabs inside them (ManagerWindow.Navigation.cs).
         var nav = Navigation(tabs);
@@ -503,6 +504,7 @@ internal sealed partial class ManagerWindow : Window {
         _timer.Tick += (_, _) => Refresh();
         Opened += async (_, _) => {
             ManagerApp.WindowShown = true;
+            FitToScreen();
             AppLogs.Opened(_manager.InstallFolder);
             if (ManagerApp.SafeStart) {
                 Say($"Safe start: last time {Edition.NAME} closed while it was opening. The game overlay is off until the next start. " +
@@ -802,7 +804,7 @@ internal sealed partial class ManagerWindow : Window {
         Render();
 
         return new DockPanel {
-            Margin = new Thickness(24, 12, 24, 16), MaxWidth = ManagerTheme.PAGE_MAX_WIDTH,
+            Margin = new Thickness(24, 12, 24, 16), MaxWidth = ManagerTheme.TWO_COLUMN_MAX_WIDTH,
             Children = {
                 WithDock(WithMargin(MissingNote("the Custom commands here are made for " + ServerSource.DefaultName +
                     ", so many of them won't work on it.", () => !_manager.HasIdLookup), new Thickness(0, 0, 0, 10)), Dock.Top),
@@ -955,7 +957,7 @@ internal sealed partial class ManagerWindow : Window {
     // the game plays, which all sat on the Server tab, a tab for each kind.
     private Control GameModesTab() => Page(RulesWaitNote(), _modesCard, _trainersCard);
 
-    private Control BattlesTab() => Page(RulesWaitNote(), _battleCard, BotPlayersCard(), TamedDropsCard(), PlantGrowthCard());
+    private Control BattlesTab() => Page(RulesWaitNote(), _battleCard, TamedDropsCard(), PlantGrowthCard());
 
     private Control EventsTab() => Page(EventsCard());
 
@@ -3137,7 +3139,7 @@ internal sealed partial class ManagerWindow : Window {
         ["Commands"] = ("terminal", "Every chat command the server knows, ready to copy."),
         [OVERLAY] = ("sparkle", "What Ahziael draws over the Wizard101 window: design it with fonts, colours and gradients, no code. The server can require it."),
         ["Wiki"] = ("book", "Look up any creature, spell or item like a wiki: a creature's school, rank, health, places, spells, cheats and drops; who casts or teaches a spell; who drops or sells an item."),
-        ["Locations"] = ("map", "Every place of the game by the name players know (Unicorn Way) and its code name (WC_Unicorn), with a Teleport button. .tp takes either."),
+        ["Locations"] = ("map", "Every zone and place of the game by the name players know (Unicorn Way) and its code name (WC_Unicorn): teleport there, lock or unlock it, and who can teleport into its rooms, all in one place. .tp takes either name."),
         ["Lookup"] = ("search", "Find any command, item, spell, creature, zone or quest and its ID."),
         ["My Quests"] = ("flag", "Your quest book and the story as a path: the step you are on, what comes next, and buttons to go there, complete a step or finish a quest. Updates by itself while you play."),
         ["Quests"] = ("flag", "Which quests your wizard has done and which come next, with Start and Teleport buttons."),
@@ -3172,6 +3174,7 @@ internal sealed partial class ManagerWindow : Window {
         ["Server"] = ("server", "Start, restart and stop the server, and pick where the server comes from."),
         ["Game Modes"] = ("dice", "Whole-server modes such as Randomizer and Die = Delete, and what spell trainers ask for."),
         ["Battles and World"] = ("sword", "Switches for battles, pips, pets, jewels, houses and the world, Tamed Drops, and how fast plants grow."),
+        [STREET_BOTS_TAB] = ("users", "Bot Players: wizards the server plays in the streets so the game feels busy. Turn them on, how many, and the ones out now."),
         ["On and Off"] = ("power", "Turn any NPC, creature, zone or world of the game, or any of your customs, on or off, with no restart."),
         ["What NPCs Give"] = ("bag", "Pick an NPC and switch each quest it offers, and each item, treasure card or spell it sells or teaches, on or off."),
         ["Teleport Rooms"] = ("sigil", "Pick which rooms of dungeons, towers and instances can be teleported into: like the game, open to friends, or closed."),
@@ -3239,21 +3242,44 @@ internal sealed partial class ManagerWindow : Window {
         var (icon, line) = s_tabs.TryGetValue(header, out var look) ? look : ("sliders", "");
         var about = new TextBlock {
             Text = line, FontSize = ManagerTheme.FONT_SMALL, Foreground = MUTED, TextWrapping = TextWrapping.Wrap,
-            Margin = new Thickness(26, 2, 26, 0), MaxWidth = ManagerTheme.PAGE_MAX_WIDTH - 4,
+            Margin = new Thickness(26, 2, 26, 0), MaxWidth = ManagerTheme.TWO_COLUMN_MAX_WIDTH - 4,
         };
+        var top = new StackPanel { Children = { about } };
+        if (s_testingTools.Contains(header)) {
+            top.Children.Add(TestingToolNote());
+        }
+
         var tab = new TabItem {
             Tag = header,
             Classes = { "sub" },
             Header = ManagerTheme.SubTabHeader(icon, ManagerTheme.Accent(header), header),
-            Content = new DockPanel { Children = { WithDock(about, Dock.Top), content } },
+            Content = new DockPanel { Children = { WithDock(top, Dock.Top), content } },
         };
         ToolTip.SetTip(tab, line);
 
         return tab;
     }
 
+    // Tabs made for testing Imlight itself while it is built (Niduus, 2026-11-19: "Reports of people using my tools built in,
+    // this is confusing people. Either add a disclaimer or remove tools we no longer use"). They say so at the top.
+    private static readonly HashSet<string> s_testingTools = ["Quest Testing", "Boss Test", QUEST_TEAM_ISSUES_TAB, ULTIMUS_ISSUES_TAB];
+
+    private static Control TestingToolNote() => new Border {
+        Margin = new Thickness(24, 6, 24, 0), MaxWidth = ManagerTheme.TWO_COLUMN_MAX_WIDTH - 2, Padding = new Thickness(10, 6),
+        CornerRadius = new CornerRadius(ManagerTheme.RADIUS_SMALL), Background = ManagerTheme.Brush(ManagerTheme.BLOCK_WHEN, 28),
+        BorderBrush = ManagerTheme.Brush(ManagerTheme.BLOCK_WHEN, 120), BorderThickness = new Thickness(1),
+        Child = new TextBlock {
+            Text = "Testing tool: made by Niduus for testing Imlight while it is built. You don't need it to play or to run your server, " +
+                "and what it shows is about Imlight's own testing, not your game.",
+            TextWrapping = TextWrapping.Wrap, FontSize = ManagerTheme.FONT_SMALL,
+        },
+    };
+
+    // Niduus, 2026-11-19: "lots of empty space": on a wide window the cards go in two columns (CardColumns), from the left.
     private static Control Page(params Control[] cards) {
-        var stack = new StackPanel { Margin = new Thickness(24, 12, 24, 24), Spacing = ManagerTheme.GAP, MaxWidth = ManagerTheme.PAGE_MAX_WIDTH };
+        var stack = new CardColumns {
+            Margin = new Thickness(24, 12, 24, 24), MaxWidth = ManagerTheme.TWO_COLUMN_MAX_WIDTH,
+        };
         stack.Children.AddRange(cards);
 
         return new ScrollViewer { Content = stack };
