@@ -35,7 +35,7 @@
  *
  * Created by: Claude
  * Version: KALI 1.0
- * Last Updated: 10/22/2026
+ * Last Updated: 11/19/2026
  */
 
 using System.Collections.Concurrent;
@@ -83,5 +83,22 @@ internal static class InstancedPlayers {
         => s_zones.TryGetValue(charId, out var zone) && zone is global::Imlight.CoreLib.Game.Zone.Core.Zone copy
             ? (copy.ZonePath, copy.ContainerOwnerId)
             : null;
+
+    /// <summary>
+    /// Whether anyone is in the owner's copy of this zone right now. A group mate who joins a wizard on a ride (the
+    /// Krokotopia flying ship) must join that copy, not start a fresh one that throws the wizard already on board out
+    /// of the world (his log, 2026-11-19: Ra joined Garm on the ship a second after Garm boarded, Garm's copy was
+    /// dropped with Garm in it, and Garm stood in a dead ship for two hours).
+    /// </summary>
+    internal static bool Occupied(ulong ownerCharId, string zonePath) {
+        foreach (var zone in s_zones.Values) {
+            if (zone is global::Imlight.CoreLib.Game.Zone.Core.Zone copy && copy.ContainerOwnerId == ownerCharId
+                && string.Equals(copy.ZonePath, zonePath, System.StringComparison.OrdinalIgnoreCase)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
 }
