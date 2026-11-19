@@ -823,11 +823,16 @@ internal static class UltimusPlanner {
                 Key: key + "|obelisks");
         }
 
-        if (BotShared.BotObelisks.Next(leader.Wizard, leader.X, leader.Y, live) is not { } obelisk) {
+        var interact = leader.Options.Where(kv => kv.Value.Any(o => o.Service == "Interact")).Select(kv => kv.Key).ToList();
+        if (BotShared.BotObelisks.Next(leader.Wizard, leader.X, leader.Y, live, interact) is not { } obelisk) {
             return null;
         }
 
         var what = $"storm obelisk {obelisk.Number} in The Oasis ({obelisk.Left} of 3 still to light before the Tomb of Storms lets me into the Well of Spirits; {why})";
+
+        if (obelisk.Mark is null && obelisk.Press != 0) {
+            return new Target(STONE, leader.X, leader.Y, what, GlobalId: obelisk.Press, Key: key + "|obelisk|" + obelisk.Number);
+        }
 
         return obelisk.Mark is not { } mark
             ? new Target(SPOT, obelisk.X, obelisk.Y, what, Key: key + "|obelisk|" + obelisk.Number, Z: obelisk.Z)

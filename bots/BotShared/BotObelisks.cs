@@ -9,6 +9,7 @@
  */
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using Imlight.CoreLib.Game.Quests;
@@ -42,8 +43,8 @@ internal static class BotObelisks {
     /// <summary>
     /// The obelisk to light next in The Oasis: the nearest one not lit yet, with its live mark when the area shows it.
     /// </summary>
-    internal static (int Number, float X, float Y, float Z, MinimapIndex.Mark Mark, int Left)? Next(WizardData.Models.Player.Wizard wizard,
-                                                                                             float x, float y, IReadOnlyList<MinimapIndex.Mark> live) {
+    internal static (int Number, float X, float Y, float Z, MinimapIndex.Mark Mark, int Left, ulong Press)? Next(WizardData.Models.Player.Wizard wizard,
+        float x, float y, IReadOnlyList<MinimapIndex.Mark> live, IEnumerable<ulong> interact = null) {
         var unlit = StormObelisks.Unlit(wizard).ToList();
         if (unlit.Count == 0) {
             return null;
@@ -58,8 +59,29 @@ internal static class BotObelisks {
                                     && Far(pick.At.X, pick.At.Y, m.Object.m_location.X, m.Object.m_location.Y) < 300)
             .OrderBy(m => Far(pick.At.X, pick.At.Y, m.Object.m_location.X, m.Object.m_location.Y)).FirstOrDefault();
 
-        return (pick.Number, pick.At.X, pick.At.Y, pick.At.Z, mark, unlit.Count);
+        // The obelisk is a big pillar on a block nobody walks on: the walk ends at its foot, some 130-150 from its middle
+        // (TCO7 logs, 2026-11-19 09:00: Cyndr, Garm and Idunn stood at obelisk 3's foot for minutes). The minimap does not
+        // list it, but by its foot the game offers it to the wizard (an Interact option within 300), as to a player: that
+        // offer is what gets pressed, one not tried in the last two minutes first (so a wrong pick is not pressed for ever).
+        var press = 0UL;
+        if (mark is null && interact is not null && Far(x, y, pick.At.X, pick.At.Y) <= PRESS_FROM) {
+            var known = new HashSet<ulong>(live?.Where(m => m.Object is not null).Select(m => m.Object.m_globalID.Full) ?? []);
+            press = interact.Where(id => !known.Contains(id))
+                .OrderBy(id => s_tried.TryGetValue(id, out var at) && DateTime.UtcNow - at < TimeSpan.FromMinutes(2) ? 1 : 0)
+                .FirstOrDefault();
+        }
+
+        return (pick.Number, pick.At.X, pick.At.Y, pick.At.Z, mark, unlit.Count, press);
     }
+
+    // How near the obelisk's middle a wizard is once at its foot.
+    internal const float PRESS_FROM = 260f;
+
+    // The offers pressed for an obelisk, and when.
+    private static readonly ConcurrentDictionary<ulong, DateTime> s_tried = new();
+
+    /// <summary>An offer pressed as an obelisk.</summary>
+    internal static void Pressed(ulong id) => s_tried[id] = DateTime.UtcNow;
 
     private static float Far(float x1, float y1, float x2, float y2) => MathF.Sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
 }
