@@ -196,8 +196,20 @@ internal static class UltimusReplay {
         }),
     ];
 
+    // One run at a time: the chat checks share the chat brain's memory of the last lines heard. After the 2026-11-18 7:24 PM
+    // update all eight seats (Ultimus and the Calling of 7) ran their self-test in the same second, and their chat checks
+    // read each other's lines: Cyndr failed 32 of 192 ("Hi" read as nothing), Mythis 22, Garm 7, while Ultimus and Kurrent,
+    // a moment apart, passed them all.
+    private static readonly object s_runLock = new();
+
     /// <summary>The failed checks (plain words), chat answers included; written to replay-pack.txt.</summary>
     internal static List<string> Run() {
+        lock (s_runLock) {
+            return RunOnce();
+        }
+    }
+
+    private static List<string> RunOnce() {
         var failed = new List<string>();
         foreach (var c in s_cases) {
             try {
