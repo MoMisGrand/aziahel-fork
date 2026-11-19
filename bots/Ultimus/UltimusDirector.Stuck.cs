@@ -20,6 +20,7 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using Akka.Actor;
+using Imlight.CoreLib.Game.Bazaar;
 using Imlight.CoreLib.Game.BotShared;
 using Imlight.CoreLib.Game.Tools;
 
@@ -71,11 +72,18 @@ internal sealed partial class UltimusDirectorActor {
 
             // Standing still while it works a walk-through exit is the exit work, not being stuck (it flagged itself stuck
             // over and over at The Oasis's exit, v0.10.851).
-            if (_stuck.Look(i, member.Zone, member.X, member.Y, resting || (i == 0 && (WorkingExit || _grabWaiting))) is var tries and > 0) {
+            if (_stuck.Look(i, member.Zone, member.X, member.Y, resting || (i == 0 && (WorkingExit || _grabWaiting || WaitsForBazaar(member)))) is var tries and > 0) {
                 Unstick(i);
             }
         }
     }
+
+    // At the Bazaar for a sale or a buy while the Bazaar is still waking up (its bot takes about 30 seconds): waiting at the
+    // counter is not being stuck (his log, 2026-11-19: Ultimus, Mythis and Idunn each dropped a Bazaar sale as "stuck" at
+    // (153, 409) a few seconds before "the Bazaar is open", and skipped the Bazaar for 3 hours).
+    private bool WaitsForBazaar(UltimusMember.Status member) =>
+        _target?.Key is { } key && key.StartsWith("bazaar", StringComparison.Ordinal)
+        && OverlayQuestTracker.SameZone(member.Zone ?? "", BAZAAR_ZONE) && BazaarLink.StateNow == BazaarState.Opening;
 
     /// <summary>
     /// Stuck: written down as a flag, and the next fix for that spot made (UltimusFixes). <paramref name="why"/>: what was
