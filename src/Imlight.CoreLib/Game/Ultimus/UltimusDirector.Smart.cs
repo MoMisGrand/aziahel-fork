@@ -236,37 +236,11 @@ internal sealed partial class UltimusDirectorActor {
     // ---------------------------------------------------------------------
 
     /// <summary>
-    /// Whether he wants the fights on his way (approved by Niduus, 2026-11-14: "avoid or seek fights depending on the step"):
-    /// short of the level his quest needs and healthy, a creature on the way is XP, not something to walk round.
+    /// Whether he wants the fights on his way: never. Niduus, 2026-11-14: no farming creatures for XP, the main story comes
+    /// first; 2026-11-19: "avoid ones that he doesn't need for his quest. Making sure to only fight mobs named after the
+    /// targets of his quests". Creatures his step doesn't need are always walked round, whatever the playbook says; his XP
+    /// comes from quest fights and rewards (and a side quest of his level when he is short).
     /// </summary>
-    private bool SeekFights(UltimusMember.Status member) {
-        // Niduus, 2026-11-14: no farming creatures for XP; the main story comes first. Creatures his step doesn't need are
-        // walked round; XP comes from quest fights and rewards.
-        if (UltimusPlaybook.Value("Push.SeekFights") < 0.5) {
-            return false;
-        }
-
-        if (member.Wizard is not { } wizard || wizard.GameStats is not { } stats || wizard.ZoneIsInstance) {
-            return false;
-        }
-
-        if (stats.m_currentHitpoints < (stats.m_baseHitpoints + stats.m_bonusHitpoints) * 0.75) {
-            return false;
-        }
-
-        var quest = _currentQuest is null ? null : QuestTemplateCollection.GetQuestByName(_currentQuest);
-        var level = wizard.MagicSchoolBehavior?.Level ?? 1;
-        var needs = QuestLevelOf(quest);
-        if (UltimusPlanner.LevelBlocked(wizard) is var (_, blocked)) {
-            needs = Math.Max(needs, blocked);
-        }
-
-        var seek = needs > level;
-        if (seek) {
-            Think($"I am level {level} and my story needs {needs}: creatures on my way are XP, so I don't walk round them.", "seek|" + level);
-        }
-
-        return seek;
-    }
+    private static bool SeekFights(UltimusMember.Status member) => false;
 
 }

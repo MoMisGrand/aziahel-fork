@@ -80,7 +80,7 @@ internal sealed partial class QuestTeamDirectorActor {
         SetStuckLine($"stuck {count} times in {where} on \"{_target?.What ?? _doing}\": tries a new approach.");
 
         var foes = BotUseGuards.Near(leader.ZoneActor, leader.X, leader.Y)
-            .Where(m => BotShared.DudCreatures.Fightable(m.Object.m_globalID.Full)).ToList();
+            .Where(m => BotShared.DudCreatures.Fightable(m.Object.m_globalID.Full) && MayClear(leader, m)).ToList();
         if (foes.Count > 0) {
             _clearAround = (leader.Zone ?? "", leader.X, leader.Y, DateTime.UtcNow.AddMinutes(10));
             Note(leader.Role, $"NEW APPROACH: stuck {count} times in {where} on \"{_target?.What ?? _doing}\": the same moves are no use, so the team " +
@@ -123,6 +123,11 @@ internal sealed partial class QuestTeamDirectorActor {
         return true;
     }
 
+    // A creature the team may beat to clear a stuck spot: any in a dungeon, on the streets only one its quests name, as
+    // Ultimus does (Niduus, 2026-11-19: "only fight mobs named after the targets of his quests").
+    private static bool MayClear(QuestTeamMember.Status leader, Tools.MinimapIndex.Mark mark)
+        => leader.Wizard?.ZoneIsInstance == true || Ultimus.UltimusPlanner.QuestFoe(leader.Wizard, mark);
+
     // While clearing round a stuck spot: the nearest free creature there comes first.
     private QuestTeamPlanner.Target ClearAroundFight(QuestTeamMember.Status leader) {
         if (_clearAround is not { } clear) {
@@ -136,7 +141,7 @@ internal sealed partial class QuestTeamDirectorActor {
         }
 
         var foe = BotUseGuards.Near(leader.ZoneActor, clear.X, clear.Y)
-            .Where(m => BotShared.DudCreatures.Fightable(m.Object.m_globalID.Full))
+            .Where(m => BotShared.DudCreatures.Fightable(m.Object.m_globalID.Full) && MayClear(leader, m))
             .OrderBy(m => QuestTeamPlanner.Far(leader.X, leader.Y, m.Object.m_location.X, m.Object.m_location.Y)).FirstOrDefault();
         if (foe is null) {
             _clearAround = null;

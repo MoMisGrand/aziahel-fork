@@ -241,18 +241,20 @@ internal sealed partial class UltimusDirectorActor {
 
     /// <summary>
     /// Creatures to walk round on the way: every free creature in the area except the one it is going to fight (a player
-    /// running to the next step does not run through a pack of creatures).
+    /// running to the next step does not run through a pack of creatures). On the way to a fight too: the creatures his
+    /// quests don't name are gone round, so only the one he means to fight (and its kind) starts the battle (Niduus,
+    /// 2026-11-19: "avoid ones that he doesn't need for his quest").
     /// </summary>
     private static List<(float X, float Y)> CreaturesToAvoid(UltimusMember.Status member, UltimusPlanner.Target target) {
-        if (target.Kind is UltimusPlanner.FIGHT) {
-            return null;
-        }
-
+        var fight = target.Kind is UltimusPlanner.FIGHT;
         var list = MinimapIndex.In(member.ZoneActor)
             .Where(m => m.Kind is MinimapIndex.MOB or MinimapIndex.BOSS && m.Object.m_globalID.Full != target.GlobalId
                         && !CombatDuelComponent.IsInBattle(m.Object.m_globalID.Full))
-            // The step itself may stand among them (a thing to click by a creature): those right by it are not avoided.
-            .Where(m => UltimusPlanner.Far(m.Object.m_location.X, m.Object.m_location.Y, target.X, target.Y) > 250)
+            .Where(m => !fight || (m.Template != target.Template && !UltimusPlanner.QuestFoe(member.Wizard, m)))
+            // The step itself may stand among them (a thing to click by a creature): those right by it are not avoided. By
+            // the creature he goes to fight a little wider: one standing with it joins the battle whatever he does (the fight
+            // was picked for the fewest of those), and stepping back from it would keep him from his fight.
+            .Where(m => UltimusPlanner.Far(m.Object.m_location.X, m.Object.m_location.Y, target.X, target.Y) > (fight ? 450 : 250))
             .Select(m => (m.Object.m_location.X, m.Object.m_location.Y)).ToList();
 
         return list.Count > 0 ? list : null;
