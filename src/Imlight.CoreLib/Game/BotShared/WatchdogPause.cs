@@ -60,6 +60,21 @@ internal static class WatchdogPause {
         => pauseText.StartsWith(MARK, StringComparison.Ordinal) && !pauseText.Contains(BUILD + stamp, StringComparison.Ordinal);
 
     /// <summary>
+    /// Whether the pause file there is the watchdog's own stop, not Ahziael's Pause button: the status then says so, so a
+    /// bot the watchdog stopped is never shown as paused by hand (Niduus, 2026-11-19: six of the Calling of 7 showed
+    /// "paused (Ahziael's Pause button)" while he had not touched them; the watchdog had stopped them).
+    /// </summary>
+    internal static bool ByWatchdog(string folder, string pauseFile) {
+        try {
+            var pause = Path.Combine(folder, pauseFile);
+            return File.Exists(pause) && File.ReadAllText(pause).StartsWith(MARK, StringComparison.Ordinal);
+        }
+        catch (Exception) {
+            return false;
+        }
+    }
+
+    /// <summary>
     /// A watchdog pause from before this update is lifted: paused.txt goes, watchdog-stop.txt is kept as
     /// watchdog-stop-old.txt for the record. True when it was lifted.
     /// </summary>

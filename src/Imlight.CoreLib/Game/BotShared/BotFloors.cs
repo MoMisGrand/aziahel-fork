@@ -110,6 +110,9 @@ internal static class BotFloors {
     private const float THROUGH = 900f;
     // How near the straight way to a spot a quest-locked door must be to stand in it.
     private const float LOCKED_DOOR = 500f;
+
+    // A thing this much nearer a locked door than the wizard is (a share of his distance to it) is behind that door.
+    private const float LOCKED_NEAR_SHARE = 0.25f;
     // Tries per spot or lever before it is left be.
     internal const int TRIES = 3;
 
@@ -604,8 +607,14 @@ internal static class BotFloors {
         // Retreat's "Activator Volume (2)" for an hour, 2026-11-17, as "Keymaster'sDoor" opens only after the Colossus).
         bool Locked(Gate g) => g.Encounter.Length > 0 && live?.EncounterDone?.Invoke(g.Encounter) == false;
         // A spot past such a locked, shut door: walking there ends at the door.
+        // Past a locked door: the door lies on the straight way there, or (seen from far off, where the straight line says
+        // little of the real way round) the thing stands much nearer that door than he does. The Calling of 7, 2026-11-18:
+        // Emperor's Retreat's Snake obelisk stands 3,400 from the locked Keymaster's door and 20,000 from them; from one spot
+        // the straight line missed the door by more than 500 and floor duty sent them there, from a step beside it not, and
+        // they flipped between it and Shalek the Wise every second for two hours.
         bool PastLocked(float tx, float ty) => book.Gates.Any(g => Locked(g) && Closed(g) && Far(x, y, g.X, g.Y) < Far(x, y, tx, ty)
-                                                                  && ToSegment(g.X, g.Y, x, y, tx, ty) <= LOCKED_DOOR);
+                                                                  && (ToSegment(g.X, g.Y, x, y, tx, ty) <= LOCKED_DOOR
+                                                                      || Far(g.X, g.Y, tx, ty) <= Far(x, y, tx, ty) * LOCKED_NEAR_SHARE));
 
         // 1. The room's battle circle, when it has not started its fight in this copy of the area.
         foreach (var circle in book.Circles.Where(c => Far(x, y, c.X, c.Y) <= ROOM && HereCircle(c)).OrderBy(c => Far(x, y, c.X, c.Y))) {
