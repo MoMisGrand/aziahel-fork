@@ -387,8 +387,6 @@ internal static class CommandGuide {
                 + ".benefit off all switches them all off. Everyone online is told. Also .benefits."),
             Command("Announce to everyone", ".announce <words>   or   .announce chat <words>   or   .announce both <words>", HM,
                 "Sends everyone online a message, as Ahziael's Announcement card does: a box on screen, a chat line (chat), or both."),
-            Command("Check all quests", ".questcheck", ADMIN, "Checks every main quest against the game's zone files, as the Check all quests button does. "
-                + "The report shows on Ahziael's Quests > Quest Testing tab."),
         ]),
     ];
 
