@@ -233,7 +233,12 @@ internal sealed partial class UltimusDirectorActor {
         // A quest step they both have, done together next to them.
         foreach (var quest in leader.Wizard.QuestBehavior?.CurrentQuestInstances?.Select(q => q?.QuestName).Where(q => !string.IsNullOrEmpty(q)).ToList() ?? []) {
             if (wizard?.QuestBehavior?.HasQuest(quest) != true || UltimusPlanner.ForQuest([leader], quest) is not { } step
-                || step.Problem.Length > 0 || UltimusPlanner.Far(step.X, step.Y, at.X, at.Y) > 900) {
+                || step.Problem.Length > 0 || UltimusPlanner.Far(step.X, step.Y, at.X, at.Y) > 900
+                // A step that leaves the area (a door, an exit, the spiral) is not done "next to them": it takes him away
+                // from his mate. His log, 2026-11-19 06:00: Idunn came into the Tomb of Storms to Cyndr, saw they both had
+                // "Secret Strife of Pets", whose step was the dungeon's exit to The Oasis, and walked straight back out,
+                // over and over, while Cyndr stayed inside. The mate leads the way out when it is time.
+                || LeavesArea(step)) {
                 continue;
             }
 
@@ -249,6 +254,10 @@ internal sealed partial class UltimusDirectorActor {
             ? new UltimusPlanner.Target(UltimusPlanner.SPOT, at.X + 40, at.Y + 40, $"going along with {name} (my group)", Key: PARTY_KEY + "follow|" + mate.CharId)
             : new UltimusPlanner.Target(UltimusPlanner.SPOT, leader.X, leader.Y, $"with {name} (my group)", Key: PARTY_KEY + "with|" + mate.CharId);
     }
+
+    // A step whose move takes him to another area: a door, an exit or the spiral door.
+    private static bool LeavesArea(UltimusPlanner.Target step)
+        => step.Kind is UltimusPlanner.EXIT or UltimusPlanner.DOOR or UltimusPlanner.SPIRAL || !string.IsNullOrEmpty(step.To);
 
     // The sigil his mate is counting down on: walked to, then pressed once he is on it ("Interact", as the X a player presses).
     private UltimusPlanner.Target SigilTarget(UltimusMember.Status leader, (float X, float Y) mateAt, string name) {
