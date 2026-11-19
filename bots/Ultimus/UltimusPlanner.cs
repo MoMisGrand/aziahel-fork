@@ -756,8 +756,13 @@ internal static class UltimusPlanner {
         }
 
         var nextWorld = next.Split('/')[0];
+        // Two ways into the same area: one he can walk to first, then the nearest. Emperor's Retreat has two pads into
+        // Prince Suten Sokkwi's Chamber; the nearer one by a few units ("TeleportVol_ToTower2") sits inside the tower's wall
+        // with no floor round it, so every TCO7 walked toward it, stopped where the floor ended and stood there for hours
+        // (their logs, 2026-11-19 00:38-02:33) while the open pad ("Activator Volume (3)") was a walk away.
         var exit = exits.Where(e => OverlayQuestTracker.SameZone(next, e.To) || OverlayQuestTracker.SameZone(e.To, next))
-            .OrderBy(e => Far(leader.X, leader.Y, e.X, e.Y)).FirstOrDefault();
+            .OrderBy(e => CantReach(zone, leader, e.X, e.Y) ? 1 : 0)
+            .ThenBy(e => Far(leader.X, leader.Y, e.X, e.Y)).FirstOrDefault();
         exit ??= exits.Where(e => string.Equals(e.To.Split('/')[0], nextWorld, StringComparison.OrdinalIgnoreCase)
                                   && !string.Equals(e.To.Split('/')[0], zone.Split('/')[0], StringComparison.OrdinalIgnoreCase))
             .OrderBy(e => Far(leader.X, leader.Y, e.X, e.Y)).FirstOrDefault();
@@ -790,6 +795,11 @@ internal static class UltimusPlanner {
 
         return new Target(EXIT, exit.X, exit.Y, $"to {UltimusText.Zone(exit.To)} ({why})", To: exit.To, Key: key + "|exit|" + exit.To, Z: exit.Z);
     }
+
+    // An exit with no floor anywhere near it, or on ground cut off from where he stands (false when the ground is not known).
+    private static bool CantReach(string zone, UltimusMember.Status leader, float x, float y)
+        => OverlayQuestPath.NearestFloor(zone, x, y) is null && OverlayQuestPath.IslandOf(zone, x, y) < 0 && OverlayQuestPath.IslandOf(zone, leader.X, leader.Y) >= 0
+           || OverlayQuestPath.Apart(zone, leader.X, leader.Y, x, y);
 
     /// <summary>The giver of a quest: here, or the way to its area.</summary>
     // The nearest storm obelisk the leader has not lit yet, to press on the way into the Well of Spirits.
