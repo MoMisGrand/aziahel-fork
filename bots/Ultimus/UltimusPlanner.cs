@@ -553,7 +553,9 @@ internal static class UltimusPlanner {
                 // within walking-in reach counts as one more in the fight, the wanted ones too, and he waits a little for one
                 // standing apart (his log, 2026-11-19: the Ronin Keyholders of "Key to Success" beat him 40+ times, the fight
                 // began with 1 or 2 and the others walked in during the first two rounds).
-                var wary = group.Count == 1 && !strong && notTheTeams.Any(m => UltimusFoes.Of((uint) m.Template) is { Tough: true });
+                // Never inside a dungeon or other area copy (Tulkar, Gibson's Factory, 2026-11-19): its creatures stand where
+                // they stand and no gap ever opens, so he only stood still waiting.
+                var wary = group.Count == 1 && !strong && leader.Wizard?.ZoneIsInstance != true && notTheTeams.Any(m => UltimusFoes.Of((uint) m.Template) is { Tough: true });
                 var joinReach = wary ? GAP_REACH : 350f;
                 int Joiners(MinimapIndex.Mark m) => others.Count(o => o != m
                     && Far(m.Object.m_location.X, m.Object.m_location.Y, o.Object.m_location.X, o.Object.m_location.Y) < joinReach);
