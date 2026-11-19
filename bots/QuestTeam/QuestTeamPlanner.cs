@@ -515,7 +515,20 @@ internal static class QuestTeamPlanner {
 
         // The Tomb of Storms' way into the Well of Spirits opens once the three storm obelisks are lit: lit first, one by
         // one, as a player does (StormObelisks).
-        if (StormObelisks.IsCrypt(zone) && StormObelisks.IsInside(exit.To) && StormObelisks.Shut(leader.Wizard)) {
+        // They stand in The Oasis (BotObelisks): lit there on the way to the Tomb of Storms, and a wizard already in the tomb
+        // with some still to light goes back out to them (the tomb's own copies stand off its ground).
+        if (BotShared.BotObelisks.ToLight(leader.Wizard)) {
+            if (BotShared.BotObelisks.IsOasis(zone) && StormObelisks.IsCrypt(exit.To) && StormObelisks.IsInside(toZone)) {
+                return ObeliskFirst(leader, live, why, key);
+            }
+
+            if (StormObelisks.IsCrypt(zone) && StormObelisks.IsInside(exit.To)
+                && exits.Where(e => BotShared.BotObelisks.IsOasis(e.To)).OrderBy(e => Far(leader.X, leader.Y, e.X, e.Y)).FirstOrDefault() is { } back) {
+                exit = back;
+                why = $"the storm obelisks stand there and must be lit first; {why}";
+            }
+        }
+        else if (StormObelisks.IsCrypt(zone) && StormObelisks.IsInside(exit.To) && StormObelisks.Shut(leader.Wizard)) {
             return ObeliskFirst(leader, live, why, key);
         }
 
@@ -539,16 +552,16 @@ internal static class QuestTeamPlanner {
                 Key: key + "|obelisks");
         }
 
-        var obelisk = StormObelisks.Unlit(leader.Wizard).OrderBy(o => Far(leader.X, leader.Y, o.X, o.Y)).First();
-        var mark = live.Where(m => m.Template == obelisk.Template)
-            .OrderBy(m => Far(obelisk.X, obelisk.Y, m.Object.m_location.X, m.Object.m_location.Y)).FirstOrDefault();
-        var left = StormObelisks.Unlit(leader.Wizard).Count();
-        var what = $"storm obelisk {obelisk.Number} of the Tomb of Storms ({left} of 3 still to light before the way into the Well of Spirits opens; {why})";
+        if (BotShared.BotObelisks.Next(leader.Wizard, leader.X, leader.Y, live) is not { } obelisk) {
+            return null;
+        }
 
-        return mark is null
-            ? new Target(SPOT, obelisk.X, obelisk.Y, what, Key: key + "|obelisk|" + obelisk.Number)
+        var what = $"storm obelisk {obelisk.Number} in The Oasis ({obelisk.Left} of 3 still to light before the Tomb of Storms lets me into the Well of Spirits; {why})";
+
+        return obelisk.Mark is not { } mark
+            ? new Target(SPOT, obelisk.X, obelisk.Y, what, Key: key + "|obelisk|" + obelisk.Number, Z: obelisk.Z)
             : new Target(STONE, mark.Object.m_location.X, mark.Object.m_location.Y, what, GlobalId: mark.Object.m_globalID.Full,
-                Key: key + "|obelisk|" + obelisk.Number);
+                Key: key + "|obelisk|" + obelisk.Number, Z: mark.Object.m_location.Z);
     }
 
     internal static Target ForGiver(QuestTeamMember.Status leader, QuestTemplate quest, ulong giver) {
