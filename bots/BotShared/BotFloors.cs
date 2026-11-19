@@ -82,7 +82,7 @@ internal static class BotFloors {
     /// <summary>What the area's files say about its floors.</summary>
     internal sealed record Book(List<Circle> Circles, List<Gate> Gates, List<Toggle> Toggles, Dictionary<string, string> Starts) {
         internal static readonly Book Empty = new([], [], [], new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase));
-        internal bool IsEmpty => Circles.Count == 0 && Gates.Count == 0 && EventPuzzles.Count == 0;
+        internal bool IsEmpty => Circles.Count == 0 && Gates.Count == 0 && EventPuzzles.Count == 0 && SpawnPads.Count == 0;
 
         /// <summary>Every teleporter on (not one back or out), by its volume's name and spot.</summary>
         internal List<(string Name, float X, float Y)> Ahead { get; init; } = [];
@@ -95,6 +95,12 @@ internal static class BotFloors {
         /// puzzle, Sun, Tree, Snake and Bug, posts "PuzzleComplete", which "Get Smart" waits on). Each is a <see cref="Gate.Pieces"/> gate.
         /// </summary>
         internal Dictionary<string, Gate> EventPuzzles { get; init; } = new(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>
+        /// Spots that bring someone out when stepped on (a volume whose trigger, with nothing it needs, spawns a spawner
+        /// switched on). The Ironworks: "Activator Volume 0" by the first gate brings out the Baxter of "Purloin the Plans".
+        /// </summary>
+        internal List<(string Name, float X, float Y, float Z)> SpawnPads { get; init; } = [];
     }
 
     /// <summary>One floor duty: step on a spot, fight by a spot, or click the lever there.</summary>
@@ -455,8 +461,75 @@ internal static class BotFloors {
             }
         }
 
+        // Spots that bring someone out: stepping on them switches a spawner on, with nothing else needed (The Ironworks, 2026-11-19:
+        // the Baxter of "Purloin the Plans" comes out once a wizard walks past the first gate; six bots that came back by
+        // logging in beside his spot never passed it and stood there for two hours with nobody to talk to).
+        var spawnPads = new List<(string Name, float X, float Y, float Z)>();
+        foreach (var t in triggers.Where(t => Needs(t).Count == 0 && Results(t).OfType<ResSpawn>().Any(r => r.m_activate) && !Results(t).Any(r => r is ResInitiateCombat))) {
+            foreach (var fire in Fires(t)) {
+                if (VolumeOf(fire) is { } v) {
+                    spawnPads.Add(((string) v.m_volumeName ?? "", v.m_locationX, v.m_locationY, v.m_locationZ));
+                }
+            }
+        }
+
         return new Book(circles.DistinctBy(c => c.Trigger + "|" + c.Volume).ToList(), gates.DistinctBy(g => g.Object + "|" + g.Trigger).ToList(),
-            toggles.DistinctBy(g => g.Object + "|" + g.From + "|" + g.Volume).ToList(), starts) { Ahead = pads, Back = backs, EventPuzzles = eventPuzzles };
+            toggles.DistinctBy(g => g.Object + "|" + g.From + "|" + g.Volume).ToList(), starts) {
+            Ahead = pads, Back = backs, EventPuzzles = eventPuzzles, SpawnPads = spawnPads.DistinctBy(p => p.Name).ToList(),
+        };
+    }
+
+    // Spawn pads per wizard and area copy: when he first headed for one, and when he stood on it.
+    private static readonly ConcurrentDictionary<string, (DateTime Since, DateTime On)> s_spawnPads = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// The nearest spot here that brings someone out and that this wizard has not stepped on lately (15 minutes), or null.
+    /// Standing on it counts as stepped; a spot not reached within 5 minutes of heading there is left for 15 minutes.
+    /// </summary>
+    internal static (string Name, float X, float Y, float Z)? NextSpawnPad(string zonePath, ulong who, float x, float y, DateTime? at = null) {
+        var pads = BookOf(zonePath).SpawnPads;
+        if (pads.Count == 0) {
+            return null;
+        }
+
+        var now = at ?? DateTime.UtcNow;
+        (string Name, float X, float Y, float Z)? best = null;
+        var bestFar = float.MaxValue;
+        foreach (var pad in pads) {
+            var key = $"{zonePath}|{who}|{pad.Name}";
+            var seen = s_spawnPads.GetOrAdd(key, _ => (DateTime.MinValue, DateTime.MinValue));
+            var far = MathF.Sqrt((pad.X - x) * (pad.X - x) + (pad.Y - y) * (pad.Y - y));
+            if (far <= ON_SPOT) {
+                s_spawnPads[key] = (seen.Since, now);
+                continue;
+            }
+
+            if (now - seen.On < TimeSpan.FromMinutes(15)) {
+                continue;
+            }
+
+            if (seen.Since != DateTime.MinValue && now - seen.Since > TimeSpan.FromMinutes(5)) {
+                if (now - seen.Since < TimeSpan.FromMinutes(20)) {
+                    continue;
+                }
+
+                seen = (DateTime.MinValue, seen.On);
+            }
+
+            if (far < bestFar) {
+                bestFar = far;
+                best = pad;
+            }
+        }
+
+        if (best is { } chosen) {
+            var key = $"{zonePath}|{who}|{chosen.Name}";
+            if (s_spawnPads.TryGetValue(key, out var seen) && seen.Since == DateTime.MinValue) {
+                s_spawnPads[key] = (now, seen.On);
+            }
+        }
+
+        return best;
     }
 
     // A thing a player pulls or presses.
