@@ -44,6 +44,30 @@ internal sealed partial class UltimusDirectorActor {
     // How far a creature may be for a fight while the step waits.
     private const float ASIDE_FIGHT_REACH = 4000f;
 
+    // A creature whose walk goes through a door still shut in his copy is out of reach for a fight while the step waits (his
+    // log, 2026-11-19: Garm picked the Street Sweepers behind The Ironworks' shut Gate2 60 times in an hour, stopping at the
+    // door each time).
+    private static bool BehindShutDoor(UltimusMember.Status leader, float x, float y) {
+        try {
+            var book = BotFloors.BookOf(leader.Zone);
+            if (book.Gates.Count == 0) {
+                return false;
+            }
+
+            var points = OverlayQuestPath.Walk(leader.CharId, leader.Zone, leader.X, leader.Y, x, y, body: true);
+            if (points is not { Count: > 0 }) {
+                return false;
+            }
+
+            BotFloors.CutAtShutDoor(book, Zone.Core.ZoneStates.Of(leader.ZoneActor) is { } doors ? doors.GetObjectState : null,
+                leader.X, leader.Y, leader.Z, points, out var door);
+            return door is not null;
+        }
+        catch (Exception) {
+            return false;
+        }
+    }
+
     private UltimusPlanner.Target AsideWork(UltimusMember.Status leader, UltimusPlanner.Target target) {
         _asideWaiting = false;
         if (target?.Key is not { Length: > 0 } key || key.StartsWith("floor|", StringComparison.Ordinal) || key.StartsWith("aside|", StringComparison.Ordinal)
@@ -61,7 +85,8 @@ internal sealed partial class UltimusDirectorActor {
                         && !CombatDuelComponent.IsInBattle(m.Object.m_globalID.Full)
                         && UltimusPlanner.Far(leader.X, leader.Y, m.Object.m_location.X, m.Object.m_location.Y) <= ASIDE_FIGHT_REACH)
             .OrderBy(m => UltimusPlanner.Far(leader.X, leader.Y, m.Object.m_location.X, m.Object.m_location.Y))
-            .FirstOrDefault();
+            .Take(6)
+            .FirstOrDefault(m => !BehindShutDoor(leader, m.Object.m_location.X, m.Object.m_location.Y));
         if (foe is not null) {
             Think($"\"{target.What}\" is set aside until {until.ToLocalTime():h:mm tt} and I have no other story step open, so I fight " +
                   $"{foe.Name} here meanwhile instead of trying the same moves again.", "aside-fight|" + key);
