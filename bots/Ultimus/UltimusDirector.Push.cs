@@ -220,6 +220,10 @@ internal sealed partial class UltimusDirectorActor {
     // ---------------------------------------------------------------------
 
     private string _markedZone;
+    // What the trip marked for is ("to Jade Palace (the Bazaar, for treasure cards)"), and the trips given up a moment after
+    // they began, by purpose.
+    private string _markedTrip = "";
+    private readonly List<(string Purpose, DateTime At)> _quickReturns = [];
     private DateTime _markedAt = DateTime.MinValue;
 
     /// <summary>
@@ -235,6 +239,7 @@ internal sealed partial class UltimusDirectorActor {
         _markedZone = leader.Zone;
         _markLeft = false;
         _markedAt = DateTime.UtcNow;
+        _markedTrip = trip.What;
         _actors[0].Tell(new UltimusMember.MarkSpot());
         Note("Ultimus", $"marks his spot in {UltimusText.Zone(leader.Zone)} before the trip ({trip.What}), to recall back after.");
         Announce(SAY_TRIP, $"Off {UltimusText.Short(trip.What, 70)} for a bit, back soon!");
@@ -302,6 +307,23 @@ internal sealed partial class UltimusDirectorActor {
             _markedZone = null;
             _recallTries = 0;
             return;
+        }
+
+        // A trip given up a moment after it began: the next area on the way had no way on (or a leg of it was set aside),
+        // so he recalls straight back, and back home the trip looks worth taking again. Twice like that in 15 minutes and
+        // the trip's purpose is set aside for an hour (his log, 2026-11-19 10:00: Hametsu Village to Jade Palace and back
+        // every 7 seconds on "the Bazaar, for treasure cards", after a stuck in Jade Palace set its next leg aside).
+        if (_recallTries == 0 && DateTime.UtcNow - _markedAt < TimeSpan.FromMinutes(2) && TripPurpose(_markedTrip) is { Length: > 0 } quick) {
+            _quickReturns.RemoveAll(r => DateTime.UtcNow - r.At > TimeSpan.FromMinutes(15));
+            _quickReturns.Add((quick, DateTime.UtcNow));
+            if (_quickReturns.Count(r => r.Purpose == quick) >= 2) {
+                _tripsOutOfReach[quick] = DateTime.UtcNow.AddHours(1);
+                _quickReturns.RemoveAll(r => r.Purpose == quick);
+                Note("Ultimus", $"ABNORMAL: the trip \"{_markedTrip}\" ended a moment after it began twice: the way on is not there, so he sets it aside for an hour.",
+                    UltimusLink.ABNORMAL);
+                Think($"I started \"{_markedTrip}\" twice and came straight back both times: the way on from the next area isn't there for me now. " +
+                      "I set that trip aside for an hour instead of going back and forth.", "trip-quick|" + quick);
+            }
         }
 
         _recallTries++;
