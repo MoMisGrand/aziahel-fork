@@ -958,7 +958,7 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
         }
     }
 
-    private UltimusPlanner.Target PickTarget(List<UltimusMember.Status> group) => Steady(group, PickLadder(group));
+    private UltimusPlanner.Target PickTarget(List<UltimusMember.Status> group) => WatchTripBounce(group[0], Steady(group, PickLadder(group)));
 
     // The ladder of rules, in order; the rule that won is kept in _pickSource for the flip-flop breaker (UltimusDirector.Commit.cs).
     private UltimusPlanner.Target PickLadder(List<UltimusMember.Status> group) {

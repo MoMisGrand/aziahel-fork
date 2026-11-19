@@ -102,6 +102,33 @@ internal static class BotFloors {
 
     // How far back from a door, toward the wizard, its own side is looked at (OurSide).
     private const float DOOR_SIDE = 400f;
+    /// <summary>
+    /// The pieces of a puzzle in an order where none is undone by a later one: a piece whose setting puts another needed
+    /// piece into a wrong state goes first (Temple of Storms, 2026-11-19: Moon2, Moon1, Moon4, Moon3 in that order left
+    /// Moon1 off again every time, and Cyndr pressed them for over an hour; Moon2 and Moon4 first, then Moon1 and Moon3, is
+    /// right). Otherwise the order given is kept; on a loop of undoing, the first piece left goes next (pure, for the checks).
+    /// </summary>
+    internal static List<(string Object, string State)> UndoFirst(List<(string Object, string State)> order,
+                                                                  Func<string, string, IEnumerable<(string Object, string State)>> sets) {
+        var left = order.ToList();
+        var undoes = order.DistinctBy(p => p.Object, StringComparer.OrdinalIgnoreCase).ToDictionary(p => p.Object, p => sets(p.Object, p.State)
+            .Where(s => order.Any(o => string.Equals(o.Object, s.Object, StringComparison.OrdinalIgnoreCase) && !string.Equals(o.Object, p.Object, StringComparison.OrdinalIgnoreCase)
+                                       && !string.Equals(o.State, s.State, StringComparison.OrdinalIgnoreCase)))
+            .Select(s => s.Object).ToHashSet(StringComparer.OrdinalIgnoreCase), StringComparer.OrdinalIgnoreCase);
+        var result = new List<(string Object, string State)>();
+        while (left.Count > 0) {
+            var next = left.FirstOrDefault(p => !left.Any(o => o.Object != p.Object && undoes[o.Object].Contains(p.Object)));
+            if (next.Object is null) {
+                next = left[0];
+            }
+
+            result.Add(next);
+            left.Remove(next);
+        }
+
+        return result;
+    }
+
     // How far a puzzle gate may be from the plates and lever that open it.
     private const float PUZZLE = 6500f;
     // Close enough to a spot to have stepped on it.
@@ -186,7 +213,12 @@ internal static class BotFloors {
                         }
                     }
 
-                    return [.. final.OrderByDescending(n => rank[n.Item1])];
+                    // A piece that, once set, puts another piece back (Temple of Storms: Moon4 and Moon2 turn Moon1 and Moon3
+                    // off) is set before that one, as a player learns after the first try.
+                    return UndoFirst([.. final.OrderByDescending(n => rank[n.Item1])], (piece, state) => triggers
+                        .Where(o => Fires(o).Any(f => string.Equals(f, $"{piece}.{state}.EnterState", StringComparison.OrdinalIgnoreCase)))
+                        .SelectMany(o => Results(o).OfType<ResModifyTriggerObject>())
+                        .Select(r => ((string) r.m_triggerObjName, (string) r.m_triggerObjState)));
                 }
 
                 t = fires.FirstOrDefault(f => f.StartsWith("ActivateFrom_", StringComparison.OrdinalIgnoreCase)) is { } up ? Named(up["ActivateFrom_".Length..]) : null;
