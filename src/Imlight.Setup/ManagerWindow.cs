@@ -408,7 +408,6 @@ internal sealed partial class ManagerWindow : Window {
             Tab("Pet Talents", PetTalentsTab),
             Tab("Pet Derby", PetDerbyTab),
             Tab("Quest Tree", QuestTreeTab),
-            Tab("Quest Testing", QuestTestingTab),
             Tab("Spell Quests", SpellQuestsTab),
             Tab("Fast Forward", FastForwardTab),
             Tab("Best Gear", BestGearTab),
@@ -417,7 +416,6 @@ internal sealed partial class ManagerWindow : Window {
             Tab("Monstrology", MonstrologyTab),
             Tab("Bosses", BossesTab),
             Tab("Player Cheats", PlayerCheatsTab),
-            Tab("Boss Test", BossTestTab),
             Tab("Customs", CustomsTab),
             Tab("Share", ShareTab),
             Tab("Quest Editor", QuestEditorTab),
@@ -594,7 +592,6 @@ internal sealed partial class ManagerWindow : Window {
             case "Pet Talents": await LoadPetTalentsAsync(_petTalentPage); break;
             case "Pet Derby": await LoadPetTalentsAsync(_petDerbyPage); break;
             case "Quest Tree": await LoadQuestTreeAsync(); break;
-            case "Quest Testing": await LoadQuestTestingAsync(); break;
             case "Spell Quests": LoadSpellQuests(); break;
             case "Fast Forward": LoadFastForward(); break;
             case "Best Gear": await LoadBestGearAsync(); break;
@@ -603,7 +600,6 @@ internal sealed partial class ManagerWindow : Window {
             case "Monstrology": await LoadMonstrologyAsync(); break;
             case "Bosses": await LoadBossesAsync(); break;
             case "Player Cheats": ShowPlayerCheats(); break;
-            case "Boss Test": await LoadBossTestAsync(); break;
             case "Customs": await LoadCustomsAsync(); break;
             case "Share": await LoadShareAsync(); break;
             case "Quest Editor": LoadQuestEditor(); break;
@@ -1101,9 +1097,6 @@ internal sealed partial class ManagerWindow : Window {
                         WithCenter(_gameFilesProgress),
                     },
                 })),
-            Shut(Fold("bag", "Game Files", "Shop research",
-                "Zips the game's shop files to your desktop, to find why some shops open as a robe shop.",
-                Row(_shopResearch))),
             AuroriumCard());
     }
 
@@ -3155,7 +3148,6 @@ internal sealed partial class ManagerWindow : Window {
         ["Pet Derby"] = ("bolt", "Every pet derby racing talent, which pets have them, and buttons for your pet."),
         ["Quest Tree"] = ("flag", "Every world's main story in order, with the side quests each quest opens and which ones this server has."),
         ["Spell Quests"] = ("star", "Every quest chain that ends in a spell, in order, with what each NPC says and where your wizard is."),
-        ["Quest Testing"] = ("check", "Every main story quest from start to finish: why it may not work here, what to do, what should happen, and a tick when it did."),
         ["Fast Forward"] = ("bolt", "Bring a wizard up to a level or a world: the server finishes the quests before it, in story order, with their real rewards and XP."),
         ["Unlearn Spells"] = ("undo", "Pick any spell your wizard knows and unlearn it: it leaves the spellbook and decks, and the training points it cost come back."),
         ["Collect Spells"] = ("sparkle", "Give a wizard every spell their finished quests, skipped side quests and trainers should have given them by now."),
@@ -3163,7 +3155,6 @@ internal sealed partial class ManagerWindow : Window {
         ["Best Gear"] = ("shield", "The best gear for your level and school by the stat you want, slot by slot, and where to get each piece."),
         ["Bosses"] = ("crown", "Change a boss's health, stats, spells and cheats."),
         ["Player Cheats"] = ("bolt", "Your own cheats in battle, made from the same blocks as a boss's."),
-        ["Boss Test"] = ("crown", "Every boss with cheats, by world: what each cheat should do, where it is, a button to bring it into your battle, and a tick when it worked."),
         ["Customs"] = ("puzzle", "Your own creatures and areas, built from the game's."),
         ["Share"] = ("link", "Export any of your customs to one file to share, or import a friend's file safely."),
         ["Quest Editor"] = ("flag", "Change any quest's rewards, steps, giver, level and what it needs, or make quests of your own."),
@@ -3262,7 +3253,8 @@ internal sealed partial class ManagerWindow : Window {
 
     // Tabs made for testing Imlight itself while it is built (Niduus, 2026-11-19: "Reports of people using my tools built in,
     // this is confusing people. Either add a disclaimer or remove tools we no longer use"). They say so at the top.
-    private static readonly HashSet<string> s_testingTools = ["Quest Testing", "Boss Test", QUEST_TEAM_ISSUES_TAB, ULTIMUS_ISSUES_TAB];
+    // Niduus, 2026-11-19: "Quest Testing, Boss Test, Shop research - remove them": those are out of the app.
+    private static readonly HashSet<string> s_testingTools = [QUEST_TEAM_ISSUES_TAB, ULTIMUS_ISSUES_TAB];
 
     private static Control TestingToolNote() => new Border {
         Margin = new Thickness(24, 6, 24, 0), MaxWidth = ManagerTheme.TWO_COLUMN_MAX_WIDTH - 2, Padding = new Thickness(10, 6),

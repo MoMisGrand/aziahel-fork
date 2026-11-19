@@ -23,7 +23,7 @@ Each bot's sheet now shows every treasure card it owns, in its deck or not, with
 Where: Bots > Ultimus
 Test: With Ultimus playing, open his page and look under his deck for Treasure Card stock.
 
-Changed: Testing tools say so
-Quest Testing, Boss Test, Team Issues and Ultimus Issues are tools made for testing Imlight while it is built. They now say so at the top, so nobody thinks they need them to play.
-Where: Quests > Quest Testing
-Test: Open Quest Testing; a yellow note at the top says it is a testing tool.
+Changed: Testing tools removed or marked
+Quest Testing, Boss Test and Shop research were tools made for testing Imlight while it was built, and they confused players, so they are gone from Ahziael. Team Issues and Ultimus Issues stay, with a note at the top that they are about the bots' own testing.
+Where: Bots > Ultimus Issues
+Test: Look in the side bar under Quests and Create; Quest Testing and Boss Test are no longer there. Open Ultimus Issues and see the yellow note at the top.

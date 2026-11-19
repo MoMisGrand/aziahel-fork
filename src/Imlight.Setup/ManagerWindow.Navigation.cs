@@ -51,7 +51,7 @@ internal sealed partial class ManagerWindow {
         ("Quests", "flag", "Quests, story, editor",
             "Follow your wizard's quests, see every world's main story in order, and change any quest or make your own.",
             // Niduus, 2026-10-27: a main quest testing list, story order, start to finish.
-            ["My Quests", "Quests", "Spell Quests", "Quest Testing", "Quest Tree", "Quest Editor"]),
+            ["My Quests", "Quests", "Spell Quests", "Quest Tree", "Quest Editor"]),
         // Niduus, 2026-10-29: "help guide the player softly to the stage they want to be in": catch up to a level or a
         // world with the quests' real rewards, and the best gear for your level with where to get it.
         ("Progress", "bolt", "Fast forward, best gear, spells",
@@ -66,7 +66,7 @@ internal sealed partial class ManagerWindow {
             "Build your own creatures and areas and share them, make cheats for yourself, test the bosses' cheats, and word what the server announces.",
             // Niduus, 2026-10-28: "Make BOSS TEST in the exe": the bosses with cheats to test, beside the cheat editor.
             // Niduus, 2026-10-29: every custom can be exported and imported for sharing (Share, beside Customs).
-            ["Customs", "Share", "Player Cheats", "Boss Test", "Announcements"]),
+            ["Customs", "Share", "Player Cheats", "Announcements"]),
         // Niduus, 2026-10-30: the Server tab held a pile of cards that change how the game plays; they get a page of their own.
         ("Game Rules", "dice", "Modes, battles, events, shops",
             "Change how the game plays on your server: game modes and spell trainers, battle and world switches, what is turned on or off, how long spell animations wait, events, and the shops and codes.",
@@ -480,7 +480,7 @@ internal sealed partial class ManagerWindow {
 
     /// <summary>The tabs with a search box of their own, for Home's "Search a tab" rows.</summary>
     private IEnumerable<(string Tab, TextBox Box)> SearchableTabs() => [
-        (WIKI, _wikiSearch), ("Spells", _spellsSearch), ("Gear", _gearSearch), ("Furniture", _furnitureSearch), ("Items", _itemsSearch), ("Badges", _badgesSearch), ("Locations", _locationsSearch), ("Recipes", _recipeSearch), ("Vendors", _vendorSearch), ("Pet Talents", _petTalentPage.Search), ("Pet Derby", _petDerbyPage.Search), ("Quest Tree", _qtSearch), ("Quest Testing", _qxSearch), ("Boss Test", _btSearch), ("Spell Quests", _sqSearch), ("Phrases", _phraseSearch),
+        (WIKI, _wikiSearch), ("Spells", _spellsSearch), ("Gear", _gearSearch), ("Furniture", _furnitureSearch), ("Items", _itemsSearch), ("Badges", _badgesSearch), ("Locations", _locationsSearch), ("Recipes", _recipeSearch), ("Vendors", _vendorSearch), ("Pet Talents", _petTalentPage.Search), ("Pet Derby", _petDerbyPage.Search), ("Quest Tree", _qtSearch), ("Spell Quests", _sqSearch), ("Phrases", _phraseSearch),
         ("Quests", _questSearch), ("Bosses", _bossSearch), ("Commands", _commandSearch), ("Announcements", _announcementSearch),
         ("Lookup", _lookupSearch), ("Settings", _settingSearch), ("Customs", _customListSearch), ("Share", _shareSearch), ("Accounts", _accountSearch),
         ("Logs", _logSearch), (WHATS_NEW, _notesSearch),
