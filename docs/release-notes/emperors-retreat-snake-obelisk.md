@@ -1,0 +1,4 @@
+Fixed: The Calling of 7 flipped between Shalek the Wise and the Snake obelisk in Emperor's Retreat
+In Emperor's Retreat the Calling of 7 switched every second between walking to Shalek the Wise and walking to the Snake obelisk, which stands behind the Keymaster's door that stays locked until the Colossus fight is done. From some spots the bots did not see that the obelisk was behind that door. Now anything that stands much nearer a locked door than the bot counts as behind it, and a person to talk to who stands right there in the dungeon comes before the dungeon's puzzles.
+Where: Emperor's Retreat in Krokotopia, and other dungeons with doors locked until one of their quests is done.
+Test: resume the Calling of 7 in Ahziael and check that in Emperor's Retreat they go and talk to Shalek the Wise instead of turning back and forth.

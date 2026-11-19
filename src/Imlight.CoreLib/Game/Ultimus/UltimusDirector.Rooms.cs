@@ -124,6 +124,28 @@ internal sealed partial class UltimusDirectorActor {
                && !book.Ahead.Any(a => BotFloors.Far(a.X, a.Y, pad.X, pad.Y) <= 300);
     }
 
+    // A talk step whose person stands in this area, on his floor and ground, with the walk there going through no door
+    // still shut (one that is shut is the floor's to open first, as in Big Ben).
+    private static bool TalkHere(UltimusMember.Status leader, UltimusPlanner.Target target, BotFloors.Book book, BotFloors.Live live) {
+        if (target is not { Kind: UltimusPlanner.TALK, GlobalId: not 0 } || !live.SameGround(target.X, target.Y)
+            || !BotFloors.OnFloor(leader.Z, TargetZ(leader, target))) {
+            return false;
+        }
+
+        try {
+            var points = OverlayQuestPath.Walk(leader.CharId, leader.Zone, leader.X, leader.Y, target.X, target.Y, body: true);
+            if (points is not { Count: > 0 } || UltimusPlanner.Far(points[^1].X, points[^1].Y, target.X, target.Y) > 400) {
+                return false;
+            }
+
+            BotFloors.CutAtShutDoor(book, live.StateOf, leader.X, leader.Y, leader.Z, points, out var door);
+            return door is null;
+        }
+        catch (Exception) {
+            return false;
+        }
+    }
+
     private UltimusPlanner.Target FloorDuty(UltimusMember.Status leader, UltimusPlanner.Target target) {
         if (string.IsNullOrEmpty(leader?.Zone) || !InDungeon(leader) || IsSideDungeon(leader.Zone)) {
             return null;
@@ -175,6 +197,15 @@ internal sealed partial class UltimusDirectorActor {
                       && (a < 0 || b < 0 || a == b)) {
             EncounterDone = BotFloors.EncounterDoneFor(leader.Wizard),
         };
+        // A person to talk to, standing here on his own ground, comes before the floor's puzzles: a player talks first, and
+        // the dungeon's own quest says what the puzzles are for (the Calling of 7, 2026-11-18 19:28-22:20: Shalek the Wise
+        // stood by Emperor's Retreat's start for "Guardians at the Gate", and floor duty sent them to the far Snake obelisk
+        // every other second, for two hours, until the watchdog stopped them).
+        if (TalkHere(leader, target, book, live)) {
+            _floorOn = null;
+            return null;
+        }
+
         if (BotFloors.Next(book, live, leader.X, leader.Y, _floorTries, leader.Z) is not { } duty) {
             _floorOn = null;
             return null;

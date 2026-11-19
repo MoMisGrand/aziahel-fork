@@ -58,6 +58,13 @@ internal sealed partial class UltimusDirectorActor {
     private DateTime _nextBazaarCardLook = DateTime.MinValue;
     private UltimusPlanner.Target _bazaarCardTrip;
     private string _bazaarCardTripZone;
+
+    // When he set off for the Bazaar for cards: the trip holds until he is there (or this long), however the next area
+    // reads his fights. Ultimus, 2026-11-18 20:32-22:26: from Hametsu Village he set off, in Jade Palace on the way the
+    // trip was weighed again, no hard fight there, so he Recalled back to Hametsu, where it was weighed again and he set
+    // off again: every 6 seconds for two hours, until the watchdog stopped him.
+    private DateTime _bazaarCardTripSince = DateTime.MinValue;
+    private static readonly TimeSpan s_bazaarCardTripHold = TimeSpan.FromMinutes(20);
     private readonly Dictionary<uint, DateTime> _bazaarCardSkipped = [];
     private static readonly TimeSpan s_bazaarCardSkip = TimeSpan.FromHours(1);
     private string _cardPlanSaid = "";
@@ -171,12 +178,22 @@ internal sealed partial class UltimusDirectorActor {
     private UltimusPlanner.Target BazaarCardsTarget(List<UltimusMember.Status> group) {
         var leader = group[0];
         var tripElsewhere = _bazaarCardTrip is not null && !string.Equals(_bazaarCardTripZone, leader.Zone, StringComparison.OrdinalIgnoreCase);
+        // On the way: only the way on from this area is worked out again, not whether to go.
+        if (tripElsewhere && DateTime.UtcNow - _bazaarCardTripSince < s_bazaarCardTripHold
+            && !OverlayQuestTracker.SameZone(leader.Zone ?? "", BAZAAR_ZONE)) {
+            _bazaarCardTripZone = leader.Zone;
+            _bazaarCardTrip = UltimusPlanner.Travel(leader, BAZAAR_ZONE, "the Bazaar, for treasure cards", "bazaarcards");
+            _nextBazaarCardLook = DateTime.UtcNow.AddSeconds(10);
+            return _bazaarCardTrip;
+        }
+
         if (DateTime.UtcNow < _nextBazaarCardLook && !tripElsewhere) {
             return _bazaarCardTrip;
         }
 
         _nextBazaarCardLook = DateTime.UtcNow.AddMinutes(5);
         _bazaarCardTrip = null;
+        _bazaarCardTripSince = DateTime.MinValue;
         _bazaarCardTripZone = leader.Zone;
         if (leader.Wizard is not { } wizard || wizard.ZoneIsInstance || _leaderLastTarget?.Key?.StartsWith(PARTY_KEY, StringComparison.Ordinal) == true) {
             return null;
@@ -211,6 +228,7 @@ internal sealed partial class UltimusDirectorActor {
                       $"({string.Join(", ", missing.Select(p => $"{p.Card.Name} x{p.Missing}"))}). The Bazaar in Olde Town stocks every card, so I mark my " +
                       "spot, buy them there and Recall back, as a player does before a boss.", "tc-bazaar|" + string.Join(",", missing.Select(p => p.Card.Id)));
                 _bazaarCardTrip = UltimusPlanner.Travel(leader, BAZAAR_ZONE, "the Bazaar, for treasure cards", "bazaarcards");
+                _bazaarCardTripSince = DateTime.UtcNow;
                 _nextBazaarCardLook = DateTime.UtcNow.AddSeconds(10);
                 return _bazaarCardTrip;
             case BazaarState.Closed:
@@ -259,6 +277,7 @@ internal sealed partial class UltimusDirectorActor {
                   $"them: {string.Join(", ", buys.Select(b => $"{CardName(b.Id)} x{b.Count}"))}, {cost:N0} gold in all, and my reserve stays. " +
                   "I mark my spot, buy them there and Recall back, as a player does before a boss.", "tc-bazaar|" + string.Join(",", buys.Select(b => b.Id)));
             _bazaarCardTrip = UltimusPlanner.Travel(leader, BAZAAR_ZONE, "the Bazaar, for treasure cards", "bazaarcards");
+            _bazaarCardTripSince = DateTime.UtcNow;
         }
 
         if (_bazaarCardTrip is not null) {
@@ -285,6 +304,7 @@ internal sealed partial class UltimusDirectorActor {
             if (TimesClicked(target.Key) >= 2) {
                 Note("Ultimus", "could not buy treasure cards at the Bazaar.");
                 _bazaarCardTrip = null;
+                _bazaarCardTripSince = DateTime.MinValue;
                 _nextBazaarCardLook = DateTime.UtcNow.AddMinutes(15);
             }
 
@@ -299,6 +319,7 @@ internal sealed partial class UltimusDirectorActor {
         if (state != BazaarState.Open) {
             Note("Ultimus", $"the Bazaar is not open for treasure cards ({BazaarLink.Describe()}).");
             _bazaarCardTrip = null;
+            _bazaarCardTripSince = DateTime.MinValue;
             return;
         }
 
@@ -307,6 +328,7 @@ internal sealed partial class UltimusDirectorActor {
             .Select(x => (Id: uint.Parse(x[0]), Count: int.Parse(x[1]))).ToList();
         if (list.Count == 0) {
             _bazaarCardTrip = null;
+            _bazaarCardTripSince = DateTime.MinValue;
             return;
         }
 
@@ -326,6 +348,7 @@ internal sealed partial class UltimusDirectorActor {
 
         Count("treasure cards bought", list.Sum(c => c.Count));
         _bazaarCardTrip = null;
+        _bazaarCardTripSince = DateTime.MinValue;
         // A few seconds later the new cards go into his deck (UltimusDirector.Cards.cs).
         _nextCardLook = DateTime.UtcNow.AddSeconds(6);
         _nextBazaarCardLook = DateTime.UtcNow.AddMinutes(2);

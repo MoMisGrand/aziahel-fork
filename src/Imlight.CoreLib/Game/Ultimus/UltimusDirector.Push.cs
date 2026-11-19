@@ -533,6 +533,7 @@ internal sealed partial class UltimusDirectorActor {
 
         StuckStop($"{where} at ({leader.X:0}, {leader.Y:0})" + (_target is { } step ? $", on \"{UltimusText.Short(step.What, 70)}\"" : "") + ".");
         _paused = true;
+        _pausedByWatchdog = true;
         _doing = "stopped by the watchdog (nothing done for a long time)";
         _watchdogStage = 0;
         _progressAt = DateTime.UtcNow;

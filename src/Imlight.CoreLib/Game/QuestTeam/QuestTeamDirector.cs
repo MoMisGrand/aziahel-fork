@@ -370,6 +370,7 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
             }
 
             var paused = File.Exists(Path.Combine(QuestTeamWire.Folder, QuestTeamWire.PAUSE_FILE));
+            _pausedByWatchdog = paused && BotShared.WatchdogPause.ByWatchdog(QuestTeamWire.Folder, QuestTeamWire.PAUSE_FILE);
             if (paused != _paused) {
                 _paused = paused;
                 _progressAt = DateTime.UtcNow;
@@ -378,7 +379,9 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
         }
 
         if (_paused) {
-            _doing = "paused (Ahziael's Pause button)";
+            _doing = _pausedByWatchdog
+                ? "stopped by the watchdog (nothing done for a long time): press Resume in Ahziael"
+                : "paused (Ahziael's Pause button)";
             _lastProgress = DateTime.UtcNow;
             for (var i = 0; i < _team.Count; i++) {
                 StopWalking(i);
@@ -1768,6 +1771,8 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
     }
 
     private bool _paused;
+    // The pause is the watchdog's own stop (paused.txt starts "Watchdog:"), not Ahziael's Pause button.
+    private bool _pausedByWatchdog;
 
     // Battles won for each fighting step (quest|goal), and how many is odd for one step.
     private readonly Dictionary<string, int> _fightsFor = [];
