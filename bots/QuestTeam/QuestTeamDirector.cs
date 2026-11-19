@@ -783,6 +783,10 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
                 }
 
                 _stonesUsed[target.GlobalId] = DateTime.UtcNow;
+                if (target.Key.Contains("|obelisk|", StringComparison.Ordinal)) {
+                    BotShared.BotObelisks.Pressed(target.GlobalId);
+                }
+
                 _nextClick = DateTime.UtcNow.AddSeconds(4);
                 break;
             case QuestTeamPlanner.SHOP:
