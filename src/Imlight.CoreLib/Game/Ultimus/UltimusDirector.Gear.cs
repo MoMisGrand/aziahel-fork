@@ -436,6 +436,15 @@ internal sealed partial class UltimusDirectorActor {
             return trip;
         }
 
+        // The step here is a fight he keeps losing, and his remedy is gear or cards: the trip comes first, as a player who
+        // keeps losing goes to get stronger. All night in MooShu he lost to the Sanzoku Outlaws 34 times while "I finish it
+        // first and shop when the story takes me out of this area" held back a Wysteria Stone and Vernal Shears upgrade
+        // he could pay for (2026-11-18).
+        if (DateTime.UtcNow < _gearPushUntil || RemedyFor(story.Key) is "gear" or "cards" || UltimusMood.LostRecently) {
+            Think($"I keep losing at {story.What}, so getting stronger comes first: I go {trip.What} and come back.", "shop-now|" + story.Key);
+            return trip;
+        }
+
         Think($"I could go {trip.What}, but my story step ({story.What}) is right here: I finish it first and shop when the story " +
               "takes me out of this area.", "shop-wait|" + story.Key);
 
