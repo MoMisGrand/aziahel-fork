@@ -26,6 +26,7 @@ using Imlight.CoreLib.Game.Tools;
 using Imlight.CoreLib.Game.Ultimus;
 using Imlight.CoreLib.Shared.Resources;
 using Imlight.CoreLib.WizardData.Models.Player;
+using Imlight.CoreLib.WizardData.Collections;
 
 namespace Imlight.CoreLib.Game.BotShared;
 
@@ -81,13 +82,19 @@ internal static class BotFloors {
     /// <summary>What the area's files say about its floors.</summary>
     internal sealed record Book(List<Circle> Circles, List<Gate> Gates, List<Toggle> Toggles, Dictionary<string, string> Starts) {
         internal static readonly Book Empty = new([], [], [], new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase));
-        internal bool IsEmpty => Circles.Count == 0 && Gates.Count == 0;
+        internal bool IsEmpty => Circles.Count == 0 && Gates.Count == 0 && EventPuzzles.Count == 0;
 
         /// <summary>Every teleporter on (not one back or out), by its volume's name and spot.</summary>
         internal List<(string Name, float X, float Y)> Ahead { get; init; } = [];
 
         /// <summary>Every teleporter back or out (an "Exit" one: down to the floor before, or out of the area), by its volume's name and spot.</summary>
         internal List<(string Name, float X, float Y)> Back { get; init; } = [];
+
+        /// <summary>
+        /// Puzzles that open no door but post an event a quest step waits on, by that event (Temple of Storms: the third
+        /// puzzle, Sun, Tree, Snake and Bug, posts "PuzzleComplete", which "Get Smart" waits on). Each is a <see cref="Gate.Pieces"/> gate.
+        /// </summary>
+        internal Dictionary<string, Gate> EventPuzzles { get; init; } = new(StringComparer.OrdinalIgnoreCase);
     }
 
     /// <summary>One floor duty: step on a spot, fight by a spot, or click the lever there.</summary>
@@ -424,8 +431,32 @@ internal static class BotFloors {
             }
         }
 
+        // Puzzles that post a quest's event instead of opening a door (Temple of Storms' "PuzzleVictory" posts "PuzzleComplete"
+        // once "Victory2" fires from "BugTrigger", the last of the Sun, Tree, Snake and Bug pieces). Seven bots stood at the
+        // "Get Smart" marker for two hours (2026-11-19), as only the two puzzles with doors were known.
+        var eventPuzzles = new Dictionary<string, Gate>(StringComparer.OrdinalIgnoreCase);
+        foreach (var t in triggers.Where(t => Fires(t).Any(f => f.StartsWith("ActivateFrom_", StringComparison.OrdinalIgnoreCase)))) {
+            foreach (var post in Results(t).OfType<ResPostEvent>()) {
+                string evt = (string) post.m_eventName ?? "";
+                if (evt.Length == 0 || evt.StartsWith("ActivateFrom_", StringComparison.OrdinalIgnoreCase) || evt.StartsWith("Enable_", StringComparison.OrdinalIgnoreCase)
+                    || evt.StartsWith("Disable_", StringComparison.OrdinalIgnoreCase) || eventPuzzles.ContainsKey(evt)
+                    || PiecesPuzzle(t) is not { Count: > 0 } pieces || !pieces.All(n => spots.ContainsKey(n.Object))) {
+                    continue;
+                }
+
+                var (px, py, pz) = (pieces.Average(n => spots[n.Object].X), pieces.Average(n => spots[n.Object].Y), pieces.Average(n => spots[n.Object].Z));
+                var first = pieces.ToDictionary(n => n.Object, n => PieceNeeds(n.Object, n.State), StringComparer.OrdinalIgnoreCase);
+                var spotsOf = pieces.Select(n => n.Object).Concat(first.Values.SelectMany(l => l.Select(f => f.Object)))
+                    .Where(spots.ContainsKey).Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToDictionary(o => o, o => spots[o], StringComparer.OrdinalIgnoreCase);
+                eventPuzzles[evt] = new Gate("event|" + evt, (string) t.m_triggerName ?? "", px, py, Opener.Click, "", 0, 0, "", px, py, pieces, Z: pz, LZ: pz) {
+                    Pieces = true, PieceSpots = spotsOf, PieceFirst = first,
+                };
+            }
+        }
+
         return new Book(circles.DistinctBy(c => c.Trigger + "|" + c.Volume).ToList(), gates.DistinctBy(g => g.Object + "|" + g.Trigger).ToList(),
-            toggles.DistinctBy(g => g.Object + "|" + g.From + "|" + g.Volume).ToList(), starts) { Ahead = pads, Back = backs };
+            toggles.DistinctBy(g => g.Object + "|" + g.From + "|" + g.Volume).ToList(), starts) { Ahead = pads, Back = backs, EventPuzzles = eventPuzzles };
     }
 
     // A thing a player pulls or presses.
@@ -585,6 +616,26 @@ internal static class BotFloors {
 
         /// <summary>Whether the wizard has done a dungeon quest (a gate's <see cref="Gate.Encounter"/>); null when unknown.</summary>
         internal Func<string, bool?> EncounterDone { get; init; }
+
+        /// <summary>The zone events his quest step waits on (its goal's generic events), for the area's event puzzles.</summary>
+        internal IReadOnlyCollection<string> StepEvents { get; init; } = [];
+    }
+
+    /// <summary>The zone events a quest step waits on (the goal's generic events, "PuzzleComplete"), or none.</summary>
+    internal static IReadOnlyCollection<string> StepEventsOf(string quest, string goal) {
+        if (string.IsNullOrEmpty(quest) || string.IsNullOrEmpty(goal)) {
+            return [];
+        }
+
+        try {
+            return QuestTemplateCollection.GetQuestByName(quest)?.m_goals?
+                       .FirstOrDefault(g => g is not null && string.Equals((string) g.m_goalName, goal, StringComparison.OrdinalIgnoreCase))?
+                       .m_genericEvents?.Select(e => (string) e).Where(e => !string.IsNullOrEmpty(e)).ToList()
+                   ?? [];
+        }
+        catch (Exception) {
+            return [];
+        }
     }
 
     /// <summary>
@@ -727,9 +778,14 @@ internal static class BotFloors {
         // guardian's defeat brings out the pieces: four obelisks lit in order, two obelisks, three braziers set to Fire, Ice
         // and Storm. Tulkar, Ra, Kurrent and Mythis stood at the shut BirdLock for hours (2026-11-17), as nothing showed
         // what opens it. As a player: the wing's battle circle, its creatures, then each piece not yet right, in order.
+        // And a puzzle that opens no door but posts the event his quest step waits on (the Temple of Storms' third puzzle
+        // for "Get Smart"), until its pieces are all right.
+        var stepPuzzles = (live?.StepEvents ?? []).Select(e => book.EventPuzzles.GetValueOrDefault(e)).Where(g => g is not null
+                && g.Needs.Any(n => !string.Equals(StateOf(n.Object), n.State, StringComparison.OrdinalIgnoreCase))
+                && !PastLocked(g.LX, g.LY) && !g.PieceSpots.Values.Any(p => PastLocked(p.X, p.Y)));
         foreach (var gate in book.Gates.Where(g => g.Pieces && Closed(g) && !Off(g.Trigger) && Here(g.LZ) && !Locked(g)
                                                    && !PastLocked(g.LX, g.LY) && !g.PieceSpots.Values.Any(p => PastLocked(p.X, p.Y)))
-                     .OrderBy(g => Far(x, y, g.LX, g.LY))) {
+                     .OrderBy(g => Far(x, y, g.LX, g.LY)).Concat(stepPuzzles)) {
             var wing = book.Circles.Where(c => Far(c.X, c.Y, gate.LX, gate.LY) <= ROOM).OrderBy(c => Far(c.X, c.Y, gate.LX, gate.LY)).FirstOrDefault();
             if (wing is not null && (live?.FiresOf?.Invoke(wing.Trigger) ?? 0) == 0 && Tried("circle|" + wing.Trigger) < 1 && !Off(wing.Trigger)) {
                 return new Duty(STEP, wing.X, wing.Y, $"the battle circle \"{wing.Volume}\" by the puzzle that opens \"{gate.Object}\"", "circle|" + wing.Trigger,

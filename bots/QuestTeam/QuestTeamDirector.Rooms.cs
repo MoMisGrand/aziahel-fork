@@ -77,6 +77,7 @@ internal sealed partial class QuestTeamDirectorActor {
             (x, y) => OverlayQuestPath.IslandOf(leader.Zone, leader.X, leader.Y) is var a && OverlayQuestPath.IslandOf(leader.Zone, x, y) is var b
                       && (a < 0 || b < 0 || a == b)) {
             EncounterDone = BotFloors.EncounterDoneFor(leader.Wizard),
+            StepEvents = BotFloors.StepEventsOf(target?.Quest, target?.Goal),
         };
         if (BotFloors.Next(book, live, leader.X, leader.Y, _floorTries, leader.Z) is not { } duty) {
             _floorOn = null;
