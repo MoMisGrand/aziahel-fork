@@ -248,7 +248,8 @@ internal static class BotSheet {
 
     // The worn pieces that give to one stat, as "Hat name: +5%", and what the rest comes from. Only the wizard's own stats:
     // a school stat counts from pieces for that school or for every school.
-    private static JsonArray Sources(List<BotGear.Piece> worn, string kind, string school, string shownValue) {
+    // exact: the row holds only stats for exactly that school ("" = only every-school stats), as the split resist lines do.
+    private static JsonArray Sources(List<BotGear.Piece> worn, string kind, string school, string shownValue, bool exact = false) {
         var lines = new JsonArray();
         double fromGear = 0;
         var percent = shownValue.EndsWith('%');
@@ -257,7 +258,8 @@ internal static class BotSheet {
                                                 || kind == "ShadowPip" && st.Kind.Contains("ShadowPip", StringComparison.Ordinal)
                                                 || kind == "Archmastery" && st.Kind.Contains("Archmastery", StringComparison.Ordinal)
                                                 || kind == "StunResist" && st.Kind.Contains("Stun", StringComparison.Ordinal))
-                                               && (st.School.Length == 0 || school.Length == 0 || st.School.Equals(school, StringComparison.OrdinalIgnoreCase)))
+                                               && (exact ? st.School.Equals(school, StringComparison.OrdinalIgnoreCase)
+                                                   : st.School.Length == 0 || school.Length == 0 || st.School.Equals(school, StringComparison.OrdinalIgnoreCase)))
                 .Sum(st => BotGear.Percent(st));
             if (Math.Abs(sum) < 0.5) {
                 continue;
@@ -303,9 +305,12 @@ internal static class BotSheet {
             .Select(i => BotGear.Read((uint) Math.Min((ulong) i.m_templateID, uint.MaxValue)))
             .Where(p => p is not null).ToList();
         string kindNow = null;
+        var exactNow = false;
         void Row(string value, string after, string words, string rowSchool, params string[] icons) {
             var kind = kindNow;
+            var exact = exactNow;
             kindNow = null;
+            exactNow = false;
             if (!Shown(value)) {
                 return;
             }
@@ -315,7 +320,7 @@ internal static class BotSheet {
                 ["icons"] = new JsonArray([.. icons.Select(i => (JsonNode) i)]),
             };
             if (kind is not null) {
-                row["from"] = Sources(worn, kind, rowSchool, value);
+                row["from"] = Sources(worn, kind, rowSchool, value, exact);
             }
 
             rows.Add(row);
@@ -361,9 +366,15 @@ internal static class BotSheet {
         Row($"{stats.m_archmasteryBase:0}", "RATING", "Archmastery rating", "", "archmastery");
         Kind("StunResist");
         Row(Pct(stats.m_stunResistancePercent), "", "Stun resistance", "", "stunresist");
+        // Resist: one "Universal resist" line, then a school line only for resist that school has on top of it (Niduus,
+        // 2026-11-19: "if I have 10 universal resist, it says that. If I have 4 fire, it shows separately").
+        Kind("ReduceDamage");
+        exactNow = true;
+        Row(Pct(stats.m_dmgReducePercentAll), "", "Universal resist", "", "resist");
         foreach (var s in s_schools.Where(s => s != "Shadow")) {
             Kind("ReduceDamage");
-            Row(Pct(At(stats.m_dmgReducePercent, s) + stats.m_dmgReducePercentAll), "", $"{s} resist", s, "resist");
+            exactNow = true;
+            Row(Pct(At(stats.m_dmgReducePercent, s)), "", $"{s} resist", s, "resist");
         }
 
         return rows;
@@ -396,9 +407,10 @@ internal static class BotSheet {
             $"Archmastery: {stats.m_archmasteryBase:0}",
             $"Stun resistance: {Pct(stats.m_stunResistancePercent)}",
         };
-        var resists = s_schools.Where(s => s != "Shadow")
-            .Select(s => $"{s} {Pct(At(stats.m_dmgReducePercent, s) + stats.m_dmgReducePercentAll)}");
-        lines.Add("Resist: " + string.Join(", ", resists));
+        // One universal number, then only the schools with extra resist on top of it.
+        var extra = s_schools.Where(s => s != "Shadow" && Math.Round(At(stats.m_dmgReducePercent, s) * 100f) >= 1)
+            .Select(s => $"{s} +{Pct(At(stats.m_dmgReducePercent, s))}").ToList();
+        lines.Add($"Universal resist: {Pct(stats.m_dmgReducePercentAll)}" + (extra.Count > 0 ? $" (on top: {string.Join(", ", extra)})" : ""));
 
         return lines;
     }
