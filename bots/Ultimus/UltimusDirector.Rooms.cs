@@ -196,6 +196,7 @@ internal sealed partial class UltimusDirectorActor {
             (x, y) => OverlayQuestPath.IslandOf(leader.Zone, leader.X, leader.Y) is var a && OverlayQuestPath.IslandOf(leader.Zone, x, y) is var b
                       && (a < 0 || b < 0 || a == b)) {
             EncounterDone = BotFloors.EncounterDoneFor(leader.Wizard),
+            StepEvents = BotFloors.StepEventsOf(target?.Quest, target?.Goal),
         };
         // A person to talk to, standing here on his own ground, comes before the floor's puzzles: a player talks first, and
         // the dungeon's own quest says what the puzzles are for (the Calling of 7, 2026-11-18 19:28-22:20: Shalek the Wise
