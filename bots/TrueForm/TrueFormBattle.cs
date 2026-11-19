@@ -80,8 +80,14 @@ internal static class TrueFormBattle {
         bool Friendly(kEffectTarget t) => t is kEffectTarget.kSelf or kEffectTarget.kFriendlySingle or kEffectTarget.kFriendlySingleNotMe
             or kEffectTarget.kFriendlyTeam or kEffectTarget.kFriendlyTeamAllAtOnce or kEffectTarget.kMultiTargetFriendly;
 
-        var enchants = all.Where(e => CoreObjectFactory.GetCoreTemplate(e.Id) is SpellTemplate t && CombatEnchantments.IsEnchantment(t)).ToList();
-        var enchantIds = enchants.Select(e => e.Id).ToHashSet();
+        bool IsEnchant(TrueFormPool.Entry e) => CoreObjectFactory.GetCoreTemplate(e.Id) is SpellTemplate t && CombatEnchantments.IsEnchantment(t);
+        // Enchantments from every version he may have, so the strongest comes up (Niduus, 2026-11-19: he used Monstrous, +275,
+        // at top level, where Epic is +315; a family read by name can hide a stronger one behind its first version).
+        var enchants = TrueFormPool.Versions(key.Level, key.Dev).Where(IsEnchant)
+            // A dev enchantment far over the game's best (+315) would be a dev one-shot by the back door.
+            .Where(e => !e.Dev || (BotEnchants.Of(e.Id)?.Amount ?? 0) <= 400)
+            .GroupBy(e => e.Id).Select(g => g.First()).ToList();
+        var enchantIds = all.Where(IsEnchant).Select(e => e.Id).Concat(enchants.Select(e => e.Id)).ToHashSet();
         var plain = all.Where(e => !enchantIds.Contains(e.Id) && !BotCards.NotVanilla(e.Card)).ToList();
 
         return new Kinds(plain,
@@ -154,6 +160,10 @@ internal static class TrueFormBattle {
 
         var mode = RoundMode(me, circles, round, out var why);
         var ids = Pick(me, circles, kinds, mode);
+        // Never a weaker aura or global over a stronger one already up (Niduus, 2026-11-19: he put a 100% aura for 4 rounds
+        // over a 666% one with 66 rounds left).
+        var weaker = ids.Where(id => WorseThanUp(me, id, out _)).ToList();
+        ids.RemoveAll(weaker.Contains);
         foreach (var asked in TrueForm.Requested) {
             if (ids.Count >= HAND) {
                 ids.RemoveAt(ids.Count - 1);
@@ -224,7 +234,7 @@ internal static class TrueFormBattle {
                     e => e.Card.BladePercent + (e.Card.BladeWholeTeam ? 5 : 0)));
                 Add(Best(k.Traps.Where(e => BotCore.Fits(e.Card.TrapSchool, hitSchool) && !RewrittenAI.HasEffectOfSpell(focus, e.Id) && Now(e)),
                     e => e.Card.TrapPercent + (e.Card.TrapAll ? 5 : 0)));
-                Add(Best(k.Enchants, e => BotEnchants.Of(e.Id) is { } en ? en.Amount + 1 : 0));
+                Add(Best(k.Enchants, e => BotEnchants.Of(e.Id) is { } en ? en.Worth : 0));
                 Add(hurt ? teamHeal ?? oneHeal : teamShield ?? teamHeal);
                 break;
 
@@ -311,6 +321,49 @@ internal static class TrueFormBattle {
     /// <summary>What a troll says when he plays a troll move (Evil), or null.</summary>
     internal static string Quip { get; private set; }
 
+    /// <summary>
+    /// Whether casting this spell would put a weaker aura on him, or a weaker global on the battle, in place of the one up
+    /// now: each counted as its effects' amounts times the rounds they last (the one up now, by the rounds it has left).
+    /// </summary>
+    internal static bool WorseThanUp(CombatDuelSubCircle me, uint id, out string why) {
+        why = "";
+        if (CoreObjectFactory.GetCoreTemplate(id) is not SpellTemplate t) {
+            return false;
+        }
+
+        var leaves = CombatEnchantments.Leaves(t.m_effects ?? []).Where(e => e is not null).ToList();
+        static double Worth(IEnumerable<SpellEffect> effects)
+            => effects.Sum(e => Math.Abs((double) e.m_effectParam) * Math.Max(1, e.m_numRounds));
+
+        var newGlobal = leaves.Where(e => e.m_effectTarget == kEffectTarget.kGlobal).ToList();
+        if (newGlobal.Count > 0) {
+            var up = me?._duelActor?.Duel?.m_duelModifier?.m_battlefieldEffects?.Where(e => e is not null).ToList() ?? [];
+            if (up.Count > 0 && Worth(up) >= Worth(newGlobal)) {
+                why = "a stronger global is already up";
+                return true;
+            }
+
+            return false;
+        }
+
+        var newAura = leaves.Where(CombatRequirements.IsAura).ToList();
+        if (newAura.Count == 0 || me?._hangingEffects is not { } hanging) {
+            return false;
+        }
+
+        List<SpellEffect> mine;
+        lock (hanging) {
+            mine = [.. hanging.Where(e => e is not null && CombatRequirements.IsAura(e) && !CombatResolver.IsShadowSelf(e) && !CombatResolver.StaysWithNewAura(e))];
+        }
+
+        if (mine.Count > 0 && Worth(mine) >= Worth(newAura)) {
+            why = "a stronger aura is already on him";
+            return true;
+        }
+
+        return false;
+    }
+
     /// <summary>His pick for this round from the hand he was dealt.</summary>
     internal static UltimusTactics.Choice Decide(CombatDuelSubCircle me, IReadOnlyList<CombatDuelSubCircle> circles, CombatResolver resolver, int round) {
         Quip = null;
@@ -386,8 +439,15 @@ internal static class TrueFormBattle {
                 break;
         }
 
-        // Attack, or nothing of the mode's own to do: Ultimus's own battle brain on this hand.
-        return Said(UltimusTactics.Decide(me, circles, resolver, round));
+        // Attack, or nothing of the mode's own to do: Ultimus's own battle brain on this hand. A weaker aura or global over
+        // a stronger one is never his pick: he passes instead (the dealt hand leaves those out; a spell asked for may not).
+        var pick = UltimusTactics.Decide(me, circles, resolver, round);
+        if (pick.Move == UltimusTactics.Move.Cast && me.GetSpellFromLastHand((byte) pick.Card) is { } spell
+            && WorseThanUp(me, spell.m_templateID, out var worse)) {
+            return Said(new(UltimusTactics.Move.Pass, 0, -1, $"keeps what is up ({worse}) instead of casting {RewrittenAI.ReadTemplate(spell.m_templateID)?.Shown ?? "a weaker one"}"));
+        }
+
+        return Said(pick);
     }
 
     private static bool KindsHas(TrueFormPool.Entry e, Func<Kinds, List<TrueFormPool.Entry>> list)
