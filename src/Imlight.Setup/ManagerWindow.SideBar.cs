@@ -97,12 +97,14 @@ internal sealed partial class ManagerWindow {
             },
         };
 
-        _sideScroll.Padding = new Thickness(8, 8, 8, SIDE_BOTTOM_ROOM);
+        // The room under the last row is the list's own margin, not the scroll viewer's padding: padding was left out of how
+        // far the list scrolls, so the last row (Help > Guides) stayed half under the bottom edge (Niduus, 2026-11-19).
+        _sideScroll.Padding = new Thickness(8, 8, 8, 0);
         // The scroll bar stays in sight whenever the list is longer than the window, so it is plain the list goes on below;
         // the rows keep clear of it on the right.
         _sideScroll.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
         _sideScroll.AllowAutoHide = false;
-        _sideList.Margin = new Thickness(0, 0, 10, 0);
+        _sideList.Margin = new Thickness(0, 0, 10, SIDE_BOTTOM_ROOM);
         _sideScroll.Content = _sideList;
         var side = ManagerTheme.GlassPanel(_sideScroll, 16);
         side.Width = SIDE_WIDTH;
