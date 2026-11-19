@@ -1742,7 +1742,7 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
 
         // The shortcut by sight keeps off the street's creature paths as well as the creatures standing there now (Niduus,
         // 2026-11-15: "short cutting streets by walking through mob paths"): a straight line across a patrol is no shortcut.
-        var sightAvoid = seek ? null : (walkAvoid ?? []).Concat(target.Kind == UltimusPlanner.FIGHT ? [] : avoid ?? []).ToList();
+        var sightAvoid = seek ? null : (walkAvoid ?? []).Concat(avoid ?? []).ToList();
         var points = (known || MathF.Abs(toZ - member.Z) > OTHER_FLOOR ? null : SightWalk(member, toX, toY, what, sightAvoid))
                      ?? OverlayQuestPath.Walk(member.CharId, member.Zone, member.X, member.Y, toX, toY, body: true, avoid: walkAvoid, fromZ: member.Z, toZ: toZ);
         if (deepPad is not null) {

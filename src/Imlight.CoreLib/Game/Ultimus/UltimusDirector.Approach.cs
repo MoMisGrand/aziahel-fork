@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Imlight.CoreLib.Game.BotShared;
+using Imlight.CoreLib.Game.Tools;
 using Imlight.CoreLib.Game.Zone.Components;
 
 namespace Imlight.CoreLib.Game.Ultimus;
@@ -50,7 +51,7 @@ internal sealed partial class UltimusDirectorActor {
         }
 
         var foes = BotUseGuards.Near(member.ZoneActor, member.X, member.Y)
-            .Where(m => BotShared.DudCreatures.Fightable(m.Object.m_globalID.Full)).ToList();
+            .Where(m => BotShared.DudCreatures.Fightable(m.Object.m_globalID.Full) && MayClear(member, m)).ToList();
         if (foes.Count > 0) {
             _clearAround = (member.Zone ?? "", member.X, member.Y, DateTime.UtcNow.AddMinutes(10));
             Note("Ultimus", $"NEW APPROACH: stuck {count} times in {where} on \"{goal?.What ?? _doing}\": the same moves are no use, so he fights " +
@@ -71,6 +72,12 @@ internal sealed partial class UltimusDirectorActor {
         return true;
     }
 
+    // A creature he may beat to clear a stuck spot: any in a dungeon (a room's fights open its doors), on the streets only
+    // one his quests name (Niduus, 2026-11-19: "only fight mobs named after the targets of his quests"); the rest he
+    // walks round, and with none of his there the step is set aside instead.
+    private static bool MayClear(UltimusMember.Status member, MinimapIndex.Mark mark)
+        => member.Wizard?.ZoneIsInstance == true || UltimusPlanner.QuestFoe(member.Wizard, mark);
+
     // While clearing around a stuck spot: the nearest free creature there comes first.
     private UltimusPlanner.Target ClearAroundFight(UltimusMember.Status leader) {
         if (_clearAround is not { } clear) {
@@ -84,7 +91,7 @@ internal sealed partial class UltimusDirectorActor {
         }
 
         var foe = BotUseGuards.Near(leader.ZoneActor, clear.X, clear.Y)
-            .Where(m => BotShared.DudCreatures.Fightable(m.Object.m_globalID.Full))
+            .Where(m => BotShared.DudCreatures.Fightable(m.Object.m_globalID.Full) && MayClear(leader, m))
             .OrderBy(m => UltimusPlanner.Far(leader.X, leader.Y, m.Object.m_location.X, m.Object.m_location.Y)).FirstOrDefault();
         if (foe is null) {
             _clearAround = null;

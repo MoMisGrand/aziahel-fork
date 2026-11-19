@@ -546,7 +546,7 @@ internal static class UltimusPlanner {
                     var wantedNear = near.Count(o => notTheTeams.Contains(o));
                     var otherNear = near.Count - wantedNear;
 
-                    return WalkLength(leader, mx, my) + (otherNear * 600) + (strong ? -300 * wantedNear : 500 * wantedNear)
+                    return WalkLength(leader, mx, my) + (otherNear * OTHER_JOINS) + (strong ? -300 * wantedNear : 500 * wantedNear)
                            + (UltimusDrops.Score(questName, goalName, m.Template) < 0 ? 3000 : 0);
                 }
 
@@ -838,23 +838,45 @@ internal static class UltimusPlanner {
         return new Target(NONE, leader.X, leader.Y, what, questName, Problem: "the NPC who gives it is not in the area", Key: "offer|" + questName);
     }
 
+    // What a creature his quests don't need, standing by the one he picks and so joining its battle, costs the pick (as
+    // that much more walk): he picks the wanted one standing apart, even a good way further off.
+    private const float OTHER_JOINS = 2500f;
+
     /// <summary>
-    /// A creature to fight for XP, as a player who is under-leveled does (Niduus, 2026-11-14: he quests as a human; no XP
-    /// command): the nearest free creature in this area that is not a boss and not the Quest Team's. Null when there is none.
+    /// Whether this creature is one his quests send him to fight: an open "defeat" step of any quest he holds names it (by
+    /// the step's creature tags, a stand-in the quest names, or one that counted for that step before). On the streets he
+    /// fights only these (Niduus, 2026-11-19: "avoid ones that he doesn't need for his quest. Making sure to only fight mobs
+    /// named after the targets of his quests"); every other creature, and its walk, is gone round.
     /// </summary>
-    internal static Target ForXp(UltimusMember.Status leader, int level, string why) {
-        if (leader.Wizard?.ZoneIsInstance == true) {
-            return null;
+    internal static bool QuestFoe(Wizard wizard, MinimapIndex.Mark mark) {
+        if (wizard?.QuestBehavior?.CurrentQuestInstances is not { } held || mark is null) {
+            return false;
         }
 
-        var foe = MinimapIndex.In(leader.ZoneActor)
-            .Where(m => m.Kind == MinimapIndex.MOB && BotShared.DudCreatures.Fightable(m.Object.m_globalID.Full)
-                        && !NearQuestTeam(leader, m.Object.m_location.X, m.Object.m_location.Y))
-            .OrderBy(m => Far(leader.X, leader.Y, m.Object.m_location.X, m.Object.m_location.Y))
-            .FirstOrDefault();
+        try {
+            foreach (var instance in held) {
+                if (instance is null || QuestTemplateCollection.GetQuestByName(instance.QuestName) is not { } quest) {
+                    continue;
+                }
 
-        return foe is null ? null : new Target(FIGHT, foe.Object.m_location.X, foe.Object.m_location.Y, $"a fight for XP toward level {level} ({why})",
-            Template: foe.Template, GlobalId: foe.Object.m_globalID.Full, Key: "xp|" + level);
+                foreach (var goal in quest.m_goals ?? []) {
+                    if (goal is not BountyGoalTemplate bounty || !instance.IsGoalActive((string) goal.m_goalName)) {
+                        continue;
+                    }
+
+                    var adjectives = (bounty.m_npcAdjectives ?? []).Select(a => (string) a).Where(a => !string.IsNullOrEmpty(a)).ToArray();
+                    if ((mark.Adjectives ?? []).Any(a => adjectives.Contains(a, StringComparer.Ordinal)) || Quests.BountyStandIns.Counts(adjectives, mark.Template)
+                        || UltimusDrops.Score(instance.QuestName, (string) goal.m_goalName, mark.Template) > 0) {
+                        return true;
+                    }
+                }
+            }
+        }
+        catch (Exception) {
+            // Quests changing under him: not his this time.
+        }
+
+        return false;
     }
 
     /// <summary>Whether this area has creatures to fight (for remembering where XP can be had).</summary>

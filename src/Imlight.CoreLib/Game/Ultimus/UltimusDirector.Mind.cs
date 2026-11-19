@@ -349,7 +349,8 @@ internal sealed partial class UltimusDirectorActor {
     /// </summary>
     private bool WaitForGap(UltimusMember.Status member, UltimusPlanner.Target target, List<(float X, float Y)> points,
         List<(float X, float Y)> creatures) {
-        if (target.Kind == UltimusPlanner.FIGHT || creatures is not { Count: > 0 } || points is not { Count: > 0 }) {
+        // On the way to a fight too (Niduus, 2026-11-19): the creatures in the list are the ones his quests don't need.
+        if (creatures is not { Count: > 0 } || points is not { Count: > 0 }) {
             _gapWait = null;
             return false;
         }

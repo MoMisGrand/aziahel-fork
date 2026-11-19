@@ -52,9 +52,12 @@ internal sealed partial class UltimusDirectorActor {
             return null;
         }
 
-        // 1. A free creature in the area: a fight is play, and often what the area wants anyway.
+        // 1. A free creature in the area: a fight is play, and often what the area wants anyway. On the streets only one his
+        // quests name (Niduus, 2026-11-19: "only fight mobs named after the targets of his quests").
+        var streets = leader.Wizard?.ZoneIsInstance != true;
         var foe = MinimapIndex.In(leader.ZoneActor)
             .Where(m => m.Kind == MinimapIndex.MOB && DudCreatures.Fightable(m.Object.m_globalID.Full)
+                        && (!streets || UltimusPlanner.QuestFoe(leader.Wizard, m))
                         && !CombatDuelComponent.IsInBattle(m.Object.m_globalID.Full)
                         && UltimusPlanner.Far(leader.X, leader.Y, m.Object.m_location.X, m.Object.m_location.Y) <= ASIDE_FIGHT_REACH)
             .OrderBy(m => UltimusPlanner.Far(leader.X, leader.Y, m.Object.m_location.X, m.Object.m_location.Y))
