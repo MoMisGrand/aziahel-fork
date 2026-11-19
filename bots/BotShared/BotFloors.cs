@@ -79,6 +79,12 @@ internal static class BotFloors {
         internal string Encounter { get; init; } = "";
 
         /// <summary>
+        /// A mark the wizard must carry for the opener to work, or empty (The Ironworks' "Factory Door" opens only with
+        /// "BradyDefeated", the password won from Brady; without it the door stays shut however often he steps on it).
+        /// </summary>
+        internal string Entry { get; init; } = "";
+
+        /// <summary>
         /// A puzzle walked through in order: each set of piece states in turn, as each check enables the next one (The
         /// Ironworks' Gate2: Symbol1 to Symbol4, the Bird, Moon, Tree and Bug plates stepped down one at a time). Empty for
         /// any other gate.
@@ -359,6 +365,13 @@ internal static class BotFloors {
                     continue;
                 }
 
+                // Opened and shut again by the same trigger (The Ironworks' "Don Gato": the door's eye opens, then it is
+                // Closed again two seconds later): only a peek, never a way through.
+                var after = Results(t).SkipWhile(r => !ReferenceEquals(r, set)).Skip(1).OfType<ResModifyTriggerObject>();
+                if (after.Any(r => string.Equals((string) r.m_triggerObjName, obj, StringComparison.OrdinalIgnoreCase) && !Opens(r.m_triggerObjState))) {
+                    continue;
+                }
+
                 if (!spots.TryGetValue(obj, out var at)) {
                     continue;
                 }
@@ -439,6 +452,12 @@ internal static class BotFloors {
                 var quest = Needs(t).OfType<ReqEncounterComplete>().FirstOrDefault(r => !r.m_applyNOT && !string.IsNullOrEmpty(r.m_encounterName));
                 if (quest is not null) {
                     gate = gate with { Encounter = quest.m_encounterName };
+                }
+
+                // A mark he must carry (not a quest's own): the opener does nothing without it.
+                var mark = Needs(t).OfType<ReqHasEntry>().FirstOrDefault(r => !r.m_applyNOT && !r.m_isQuestRegistry && !string.IsNullOrEmpty(r.m_entryName));
+                if (mark is not null) {
+                    gate = gate with { Entry = mark.m_entryName };
                 }
 
                 gates.Add(gate);
@@ -760,6 +779,9 @@ internal static class BotFloors {
         /// <summary>Whether the wizard has done a dungeon quest (a gate's <see cref="Gate.Encounter"/>); null when unknown.</summary>
         internal Func<string, bool?> EncounterDone { get; init; }
 
+        /// <summary>Whether the wizard carries a mark (a gate's <see cref="Gate.Entry"/>); null when unknown.</summary>
+        internal Func<string, bool?> HasEntry { get; init; }
+
         /// <summary>The zone events his quest step waits on (its goal's generic events), for the area's event puzzles.</summary>
         internal IReadOnlyCollection<string> StepEvents { get; init; } = [];
     }
@@ -786,6 +808,20 @@ internal static class BotFloors {
     /// started, then creatures by a fight-gate or a started circle, then a gate's spot to step on, then a puzzle's plates
     /// and its lever. <paramref name="tries"/> counts the steps and clicks already made, by key (kept by the bot per zone copy).
     /// </summary>
+    /// <summary>Whether this wizard carries a mark, as the zone's ReqHasEntry reads it; null when unknown.</summary>
+    internal static Func<string, bool?> HasEntryFor(Wizard wizard) => name => {
+        if (wizard is null || string.IsNullOrEmpty(name)) {
+            return null;
+        }
+
+        try {
+            return wizard.HasRegistryValue(Imlight.CoreLib.WizardData.QuestCodeAliases.ResolveEntry(name) ?? name);
+        }
+        catch (Exception) {
+            return null;
+        }
+    };
+
     /// <summary>Whether this wizard has done a dungeon quest, as the zone's ReqEncounterComplete reads it; null when unknown.</summary>
     internal static Func<string, bool?> EncounterDoneFor(Wizard wizard) => name => {
         if (wizard is null || string.IsNullOrEmpty(name)) {
@@ -831,7 +867,8 @@ internal static class BotFloors {
         bool Off(string trigger) => live?.EnabledOf?.Invoke(trigger) == false;
         // A gate whose opener waits on a dungeon quest not done yet: nothing here opens it now (Tulkar stood on Emperor's
         // Retreat's "Activator Volume (2)" for an hour, 2026-11-17, as "Keymaster'sDoor" opens only after the Colossus).
-        bool Locked(Gate g) => g.Encounter.Length > 0 && live?.EncounterDone?.Invoke(g.Encounter) == false;
+        bool Locked(Gate g) => (g.Encounter.Length > 0 && live?.EncounterDone?.Invoke(g.Encounter) == false)
+                               || (g.Entry.Length > 0 && live?.HasEntry?.Invoke(g.Entry) == false);
         // A spot past such a locked, shut door: walking there ends at the door.
         // Past a locked door: the door lies on the straight way there, or (seen from far off, where the straight line says
         // little of the real way round) the thing stands much nearer that door than he does. The Calling of 7, 2026-11-18:
