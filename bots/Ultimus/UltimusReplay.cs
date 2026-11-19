@@ -197,6 +197,22 @@ internal static class UltimusReplay {
                 }
             }
         }),
+        new("Temple of Storms moon puzzle: Moon4 turned Moon1 off again after it was set, for over an hour (2026-11-19)", () => {
+            var sets = new Dictionary<string, List<(string Object, string State)>>(StringComparer.OrdinalIgnoreCase) {
+                ["Part2Moon1"] = [("Part2Sun1", "Idle_Off"), ("Part2Sun2", "Idle_Off")],
+                ["Part2Moon3"] = [("Part2Sun3", "Idle_Off"), ("Part2Sun4", "Idle_Off")],
+                ["Part2Moon4"] = [("Part2Moon1", "Idle_Off"), ("Part2Moon3", "Idle_Off")],
+                ["Part2Moon2"] = [("Part2Moon1", "Idle_Off"), ("Part2Moon3", "Idle_Off")],
+            };
+            var order = BotFloors.UndoFirst(
+                [("Part2Moon2", "Idle_On"), ("Part2Moon1", "Idle_On"), ("Part2Moon4", "Idle_On"), ("Part2Moon3", "Idle_On"),
+                 ("Part2Sun1", "Idle_Off"), ("Part2Sun2", "Idle_Off"), ("Part2Sun4", "Idle_Off"), ("Part2Sun3", "Idle_Off")],
+                (piece, _) => sets.GetValueOrDefault(piece) ?? []);
+            var at = order.Select((p, i) => (p.Object, i)).ToDictionary(p => p.Object, p => p.i);
+            return at["Part2Moon4"] < at["Part2Moon1"] && at["Part2Moon2"] < at["Part2Moon1"] && at["Part2Moon4"] < at["Part2Moon3"]
+                   && order.Count == 8 && order[0].Object == "Part2Moon2"
+                ? null : "a piece that turns another back off still comes after it: " + string.Join(", ", order.Select(p => p.Object));
+        }),
     ];
 
     // One run at a time: the chat checks share the chat brain's memory of the last lines heard. After the 2026-11-18 7:24 PM
