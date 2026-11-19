@@ -239,7 +239,19 @@ internal sealed partial class UltimusDirectorActor {
         };
         // Nothing in this world: the potion shop of Wizard City, however far (Niduus, 2026-11-14: "he should hunt for them
         // and if he can't find any safely then he just goes to a potion vendor"). He marks his spot and Recalls back after.
-        pick ??= FarPotionShop(leader);
+        if (pick is null && FarPotionShop(leader) is { } far) {
+            pick = far;
+            // The trip holds until his potions are full (PotionRun), not only while he reads as hurt: in Hametsu Village the
+            // next step was a fight with a rival (full health wanted) and in Jade Palace it was only a walk (his normal rule:
+            // go on), so he turned back at Jade Palace and went in and out of Hametsu Village 17 times in 6 minutes (his log,
+            // 2026-11-19 00:58-01:04, "Never Again").
+            if (stats.m_potionCharge < stats.m_potionMax && DateTime.UtcNow >= _potionRunUntil) {
+                _potionFar = true;
+                _potionAsked = false;
+                _potionPrepFor = HEAL_TRIP;
+                _potionRunUntil = DateTime.UtcNow.AddMinutes(15);
+            }
+        }
         // No gold (or no bottles) for potions: the hub areas' wisps, this world's hub first, then Wizard City's (Niduus,
         // 2026-11-16: "If he doesn't have gold, he searches the hub areas for wisps instead").
         pick ??= HubWisps(leader, lowHealth, lowMana);
@@ -314,6 +326,9 @@ internal sealed partial class UltimusDirectorActor {
     private bool _potionAsked;
     // The potion run before a dungeon goes to Wizard City's shop (none near in this world).
     private bool _potionFar;
+
+    // _potionPrepFor of a far potion trip to heal (HealFirst), not before a dungeon.
+    private const string HEAL_TRIP = "heal|far";
 
     // Before walking into a dungeon, potions filled at a potion shop in this area or the next one, as a player stocks up
     // before a dungeon (Niduus, 2026-11-15, after he went into The Vault of Ice at 35% with no potions). Once per dungeon door;
@@ -630,7 +645,8 @@ internal sealed partial class UltimusDirectorActor {
             return false;
         }
 
-        _doing = _potionPrepFor is not null && !_potionAsked ? "filling potions before a dungeon" : "getting potions, as a player asked";
+        _doing = _potionAsked ? "getting potions, as a player asked"
+            : _potionPrepFor == HEAL_TRIP ? "getting potions in Wizard City to heal up" : "filling potions before a dungeon";
         if (shop.Key?.StartsWith(HUB_KEY, StringComparison.Ordinal) == true) {
             PressHubButton(leader, shop.What);
         }
@@ -695,7 +711,9 @@ internal sealed partial class UltimusDirectorActor {
     /// </summary>
     private UltimusPlanner.Target FarPotionShop(UltimusMember.Status leader) {
         var stats = leader.Wizard?.GameStats;
-        if (stats is null || stats.m_potionMax < 1 || stats.m_currentGold < PotionService.PotionCostPerBottle(Math.Max(1, stats.Level))) {
+        // Full potions: a trip to fill them gives nothing.
+        if (stats is null || stats.m_potionMax < 1 || stats.m_potionCharge >= stats.m_potionMax
+            || stats.m_currentGold < PotionService.PotionCostPerBottle(Math.Max(1, stats.Level))) {
             return null;
         }
 
