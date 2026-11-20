@@ -667,7 +667,7 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
         }
 
         // Put out of a dungeon copy that still waits for him: back in by Dungeon Recall (UltimusDirector.Comeback.cs).
-        if (DungeonComeback(leader)) {
+        if (!WaitingForHelper(leader) && DungeonComeback(leader)) {
             StopWalking(0);
             return;
         }

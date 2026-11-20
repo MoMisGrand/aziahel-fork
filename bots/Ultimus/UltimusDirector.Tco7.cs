@@ -415,6 +415,12 @@ internal sealed partial class UltimusDirectorActor {
         // A squad never splits: its mates come along on every quest, the leader's story is theirs too (they catch up on it).
         var squadGroup = UltimusTco7.InSquad(_seat) && mates.All(m => UltimusSeat.OfCharacter(m.CharId) is { } s && UltimusTco7.InSquad(s));
         var shared = quest.Length > 0 && mates.Any(m => PlayerCheats.LiveWizard(m.CharId)?.QuestBehavior?.HasQuest(quest) == true);
+        // Called for help: he waits for the helper to reach him before he fights again (Kurrent went straight back into
+        // Counterweight East and its fight each time, so Cyndr, waiting out his battles from Regent's Square, never got in).
+        if (HelperComing(leader, mate) is { } wait) {
+            return wait;
+        }
+
         if (shared || quest.Length == 0 || squadGroup || HelpCallActive()) {
             _tco7SplitSince = DateTime.MaxValue;
             return null;
@@ -495,6 +501,43 @@ internal sealed partial class UltimusDirectorActor {
 
         return true;
     }
+
+    private static readonly TimeSpan s_helperWaitMax = TimeSpan.FromMinutes(6);
+    private DateTime _helperWaitSince = DateTime.MaxValue;
+
+    /// <summary>While help is called and the helper is grouped with him but not by him yet: a wait (at most 6 minutes), else null.</summary>
+    private UltimusPlanner.Target HelperComing(UltimusMember.Status leader, GroupMemberSnapshot mate) {
+        if (!HelpCallActive() || mate is null || !mate.IsOnline || CombatDuelComponent.IsInBattle(leader.GlobalId)) {
+            _helperWaitSince = DateTime.MaxValue;
+            return null;
+        }
+
+        var helper = PlayerCheats.LiveWizard(mate.CharId);
+        var here = helper is not null && OverlayQuestTracker.SameZone(helper.Zone ?? "", leader.Zone ?? "")
+                   && UltimusPlanner.Far(helper.Location.X, helper.Location.Y, leader.X, leader.Y) < 500;
+        if (here) {
+            _helperWaitSince = DateTime.MaxValue;
+            return null;
+        }
+
+        if (_helperWaitSince == DateTime.MaxValue) {
+            _helperWaitSince = DateTime.UtcNow;
+        }
+
+        if (DateTime.UtcNow - _helperWaitSince > s_helperWaitMax) {
+            return null;
+        }
+
+        var name = PlayerCheats.LiveName(mate.CharId) is { Length: > 0 } n ? n : "my teammate";
+        _lastProgress = DateTime.UtcNow;
+        return new UltimusPlanner.Target(UltimusPlanner.WAIT, leader.X, leader.Y, $"waiting for {name} to reach me before the fight (I asked them to help)",
+            Key: PARTY_KEY + "helper|" + mate.CharId);
+    }
+
+    /// <summary>Whether he waits for a called helper now (the Dungeon Recall back in waits too, so the helper can come along).</summary>
+    private bool WaitingForHelper(UltimusMember.Status leader)
+        => _seat.IsTeamBot && HelpCallActive() && GroupRegistry.TryGetGroup(leader.CharId, out var group) && group.LeaderCharId == leader.CharId
+           && group.Members.FirstOrDefault(m => m.CharId != leader.CharId && m.IsOnline) is { } mate && HelperComing(leader, mate) is not null;
 
     /// <summary>A fight won while help was called: the help has done its job (the group splits as usual).</summary>
     private void HelpCallWon() {
