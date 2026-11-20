@@ -100,5 +100,21 @@
         }
       }
     ]
+  },
+  {
+    "ZoneName": "DragonSpire/DS_A1_Knowledge/DS_A1Z1_WizardTower",
+    "Teleports": [
+      {
+        "TriggerName": "Crystal_Vortex",
+        "Teleport": {
+          "m_destinationLoc": "16315.64,-14340.93,933.8438,-0.7996936",
+          "m_destinationZone": "DragonSpire/DS_A1_Knowledge/DS_A1Z1_WizardTower",
+          "m_exitTeleporter": 0,
+          "m_teleporterTag": 0,
+          "m_teleportType": "TELEPORT_STATIC",
+          "m_transitionID": 0
+        }
+      }
+    ]
   }
 ]
