@@ -250,6 +250,7 @@ internal sealed partial class UltimusDirectorActor {
         var step = _target?.Key?.StartsWith("aside|wait|", StringComparison.Ordinal) == true && _asideStep is { } aside ? aside : _target;
         var noFoe = step is { } last && !string.IsNullOrEmpty(last.Quest)
                     && (last.Problem == "no creature for this step is in the area"
+                        || UseDud(zone, last, now)
                         || (last.Kind == UltimusPlanner.WAIT && last.What.StartsWith("resting while", StringComparison.Ordinal))
                         || last.Key.EndsWith("|spawns", StringComparison.Ordinal));
         if (!noFoe) {
@@ -277,7 +278,7 @@ internal sealed partial class UltimusDirectorActor {
         }
 
         _resetting = (zone, now);
-        Note("Ultimus", $"ABNORMAL: in {UltimusText.Zone(zone)} the creature for \"{step.What}\" " + (quick ? "stood still and started no battle" : $"has not been there to fight for {(now - _noFoeSince.Value).TotalMinutes:0} minutes") +
+        Note("Ultimus", $"ABNORMAL: in {UltimusText.Zone(zone)} " + (UseDud(zone, step, now) ? "what is used" : "the creature") + $" for \"{step.What}\" " + (quick ? "stood still and started no battle" : $"has not been there to fight for {(now - _noFoeSince.Value).TotalMinutes:0} minutes") +
                         $": walks out to {UltimusText.Zone(safe)} and back in for a fresh copy.", UltimusLink.ABNORMAL);
         Think($"The creature my step needs in {UltimusText.Zone(zone)} has not been there to fight for a long time, and nothing else here is " +
               "left to do. A player walks out and comes back in, and the dungeon starts fresh, so I do that.", "resetcopy|" + zone);
@@ -307,6 +308,22 @@ internal sealed partial class UltimusDirectorActor {
         times.RemoveAll(t => now - t > TimeSpan.FromHours(1));
         return times.Count < 2;
     }
+
+    // When his step's things to use were last found all used up in a dungeon copy (nothing offered at the spot, or nothing
+    // more found looking around): Cyndr and Kurrent stood hours in Katzenstein's Lab by "Collect Crates", whose crates in
+    // that copy were already used while the step (an instance quest, started over by a restart) still wanted all three.
+    private (string Zone, DateTime At, string Step)? _useDudAt;
+
+    /// <summary>The step's things to use are used up here: noted for the fresh-copy check (ResetCopy).</summary>
+    private void NoteUseDud(int index, UltimusMember.Status member, UltimusPlanner.Target target) {
+        if (index == 0 && member.Wizard?.ZoneIsInstance == true && !string.IsNullOrEmpty(target.Quest)) {
+            _useDudAt = (member.Zone ?? "", DateTime.UtcNow, StepKey(target));
+        }
+    }
+
+    /// <summary>Whether this step's things to use were found used up in this dungeon in the last 10 minutes.</summary>
+    private bool UseDud(string zone, UltimusPlanner.Target step, DateTime now)
+        => _useDudAt is { } dud && OverlayQuestTracker.SameZone(dud.Zone, zone) && now - dud.At < TimeSpan.FromMinutes(10) && dud.Step == StepKey(step);
 
     /// <summary>The quest and goal a target belongs to, so a dud creature counts only for its own step.</summary>
     private static string StepKey(UltimusPlanner.Target target) => target is null ? "" : $"{target.Quest}|{target.Goal}";

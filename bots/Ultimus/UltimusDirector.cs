@@ -1467,6 +1467,7 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
 
             if (searching && usable.Count == 0) {
                 if (DateTime.UtcNow - searchSince > TimeSpan.FromMinutes(3)) {
+                    NoteUseDud(index, member, target);
                     Issue("quest", target.Quest, $"{target.What}: {member.Name} used what was at the quest arrow's spot and looked around the area " +
                                                  "for 3 minutes without finding more to use.", key: target.Key + "|nothingtouse");
                 }
@@ -1542,6 +1543,7 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
                 }
 
                 if (DateTime.UtcNow - _targetSince > TimeSpan.FromSeconds(45)) {
+                    NoteUseDud(index, member, target);
                     Issue("quest", target.Quest, $"{target.What}: at the quest arrow's spot there is nothing {member.Name} can use.",
                         key: target.Key + "|nothingtouse");
                 }
