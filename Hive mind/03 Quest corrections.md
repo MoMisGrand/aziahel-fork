@@ -19,6 +19,10 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 - Pops never starts a fight when you walk into him. He only joins a fight started with the O'Leary Napper beside him, so the bots start that fight.
 - Confirmed November 19, 2026: Kurrent and Mythis beat Pops, Garm and Ra got out of The Ironworks.
 
+## Marleybone, Counterweight East
+- Metal Madness and Stolen Away are done in one run: pull the four levers floor by floor, then go straight up to Sprockets. A bot that leaves in between finds the levers no longer work for it in a fresh copy.
+- A floor creature that won't fight is never a reason to leave the dungeon. Only the step's own creature is.
+
 ## Marleybone, Gibson's Factory and every dungeon
 - Creatures inside a dungeon never move apart, so a bot fighting alone goes straight into the fight instead of waiting for a lone creature.
 
