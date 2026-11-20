@@ -208,7 +208,7 @@ internal sealed partial class UltimusDirectorActor {
     // fresh copies each dungeon had this hour: a boss that won't fight after a lost battle (Tulkar by Jacques in Knight's
     // Tower) or after a mate's win (Kurrent and Mythis by Pops O'Leary) needs no 20-minute wait, and bot updates every
     // few minutes restart that wait anyway.
-    private (string Zone, DateTime At)? _dudStepAt;
+    private (string Zone, DateTime At, string Step)? _dudStepAt;
     private readonly Dictionary<string, List<DateTime>> _quickResets = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
@@ -280,7 +280,12 @@ internal sealed partial class UltimusDirectorActor {
     /// wait instead of a walk out every minute).
     /// </summary>
     private bool QuickReset(string zone, DateTime now) {
-        if (_dudStepAt is not { } dud || !OverlayQuestTracker.SameZone(dud.Zone, zone) || now - dud.At > TimeSpan.FromMinutes(5)) {
+        // Only for the step whose creature it was: Garm (2026-11-20 01:06) had stood on a Metal Madness creature in Counterweight
+        // East that started no battle, finished Metal Madness, and the very next step ("Stolen Away", Sprockets a floor up)
+        // read that as its own and walked him out at once; the fresh copy's levers no longer work for him, and he stood
+        // at the first shut gate for over an hour.
+        if (_dudStepAt is not { } dud || !OverlayQuestTracker.SameZone(dud.Zone, zone) || now - dud.At > TimeSpan.FromMinutes(5)
+            || dud.Step != StepKey(_target)) {
             return false;
         }
 
@@ -291,6 +296,9 @@ internal sealed partial class UltimusDirectorActor {
         times.RemoveAll(t => now - t > TimeSpan.FromHours(1));
         return times.Count < 2;
     }
+
+    /// <summary>The quest and goal a target belongs to, so a dud creature counts only for its own step.</summary>
+    private static string StepKey(UltimusPlanner.Target target) => target is null ? "" : $"{target.Quest}|{target.Goal}";
 
     /// <summary>Out of a side dungeon: on foot toward his story step, as a player walks back out of the wrong dungeon.</summary>
     private UltimusPlanner.Target LeaveSideDungeon(UltimusMember.Status leader, string zone) {
