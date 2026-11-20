@@ -452,6 +452,20 @@ internal sealed partial class UltimusDirectorActor {
     private DateTime _helpCallNextAsk = DateTime.MinValue;
     private int _helpCallAsked;
 
+    // Fights lost on each quest in the last two hours (any step of it).
+    private readonly Dictionary<string, List<DateTime>> _questLosses = new(StringComparer.OrdinalIgnoreCase);
+
+    private int NoteQuestLoss(string quest) {
+        if (!_questLosses.TryGetValue(quest, out var times)) {
+            _questLosses[quest] = times = [];
+        }
+
+        var now = DateTime.UtcNow;
+        times.Add(now);
+        times.RemoveAll(t => now - t > TimeSpan.FromHours(2));
+        return times.Count;
+    }
+
     /// <summary>He lost the same fight several times: he wants a teammate's help for a while.</summary>
     private void CallForHelp(string quest) {
         if (string.IsNullOrEmpty(quest)) {
