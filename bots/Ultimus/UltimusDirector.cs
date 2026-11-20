@@ -1126,6 +1126,12 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
             return null;
         }
 
+        // No quest offered at all: a dungeon the story needs that was left undone ("It's Alive!" before "Fetch Bones!").
+        if (_currentQuest is null && BotShared.BotStory.SkippedDungeon(leader.Wizard) is var (dungeon, missed)
+            && UltimusPlanner.Travel(leader, dungeon, $"back into {World.ZoneNames.Shown(dungeon)} for \"{QuestGuide.QuestTitle(missed)}\", which the story needs and I skipped", "skipped-dungeon") is { } trip) {
+            return Source("skipped-dungeon", trip);
+        }
+
         if (_currentQuest is null) {
             _doing = "no World or Story quest is left to get";
             Issue("team", null, "There is no World or Story quest left for the team to get. If they have not reached the last world, " +

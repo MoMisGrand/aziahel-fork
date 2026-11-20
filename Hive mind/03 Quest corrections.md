@@ -78,6 +78,7 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 
 ## Marleybone, Scotland Yard
 - After Weird Science, Watson offers "Fetch Bones!" right at the hand-in. That offer is the only hint; the game does not mark Fetch Bones! as story. A bot that misses it must go back to Watson and take it, never go back to Wizard City for other quests (Cyndr, 20 November).
+- "Fetch Bones!" needs "It's Alive!", the second quest inside Katzenstein's Lab (after "If You Build It..."), not "Weird Science". A team that leaves the Lab with only Weird Science done has no quest offered anywhere; go back into the Lab, finish both, then see Watson (Cyndr and Kurrent, 20 November).
 
 ## Marleybone, Big Ben
 - Door43 (by the fourth room's battle circle, around (-9650,21000)) opens only when a level 29 Frog is beaten after the door's trigger was switched on by an earlier floor door. If the Frog is never out in that copy, stepping on the room's circle starts nothing and the door stays shut for good. Walk out and back in for a fresh copy (Garm and Ra, 20 November).

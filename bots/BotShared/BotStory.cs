@@ -24,6 +24,7 @@ using System.Threading;
 using Imcodec.ObjectProperty.TypeCache;
 using Imlight.CoreLib.Game.Tools;
 using Imlight.CoreLib.WizardData.Collections;
+using Imlight.CoreLib.WizardData.Models.Player;
 
 namespace Imlight.CoreLib.Game.BotShared;
 
@@ -89,6 +90,71 @@ internal static class BotStory {
         }
 
         return needed.Contains(questName);
+    }
+
+    /// <summary>
+    /// A dungeon the story needs that the wizard skipped: its quest is not done, every quest it needs is done (or comes
+    /// earlier in the same dungeon), and the furthest world first. Walking in gives its first quest, as it does a player.
+    /// Cyndr left Katzenstein's Lab without "If You Build It..." and "It's Alive!", so "Fetch Bones!" (which needs them)
+    /// was never offered and he stood with "no World or Story quest left" (2026-11-20). Null when there is none.
+    /// </summary>
+    internal static (string Zone, QuestTemplate Quest)? SkippedDungeon(Wizard wizard) {
+        if (wizard is null) {
+            return null;
+        }
+
+        (string Zone, QuestTemplate Quest)? best = null;
+        var bestRank = (World: -1, Chain: int.MaxValue);
+        foreach (var quest in QuestTemplateCollection.GetAllQuests()) {
+            if (quest is null || !DungeonQuestIndex.IsDungeonQuest(quest.m_questName) || !NeededByStory(quest.m_questName)
+                || Quests.QuestOptions.IsOff(quest.m_questName) || wizard.HasQuest(quest.m_questName) || wizard.HasCompletedQuest(quest.m_questName)
+                || InZone(quest) is not { Length: > 0 } zone) {
+                continue;
+            }
+
+            var world = MainWorlds.Number(zone.Split('/')[0]);
+            if (world <= 0) {
+                continue;
+            }
+
+            var chain = 0;
+            var ready = true;
+            foreach (var need in QuestGuide.NeededQuests(quest.m_requirements)) {
+                if (wizard.HasCompletedQuest(need)) {
+                    continue;
+                }
+
+                if (DungeonQuestIndex.IsDungeonQuest(need) && QuestTemplateCollection.GetQuestByName(need) is { } before
+                    && string.Equals(InZone(before), zone, StringComparison.OrdinalIgnoreCase)) {
+                    chain++;
+                    continue;
+                }
+
+                ready = false;
+                break;
+            }
+
+            if (!ready) {
+                continue;
+            }
+
+            if (world > bestRank.World || (world == bestRank.World && chain < bestRank.Chain)) {
+                best = (zone, quest);
+                bestRank = (world, chain);
+            }
+        }
+
+        return best;
+    }
+
+    private static string InZone(QuestTemplate quest) {
+        foreach (var requirement in quest?.m_requirements?.m_requirements ?? []) {
+            if (requirement is ReqInZone { m_applyNOT: false } inZone && !string.IsNullOrEmpty((string) inZone.m_zoneName)) {
+                return ((string) inZone.m_zoneName).Trim();
+            }
+        }
+
+        return "";
     }
 
     private static HashSet<string> BuildNeeded() {
