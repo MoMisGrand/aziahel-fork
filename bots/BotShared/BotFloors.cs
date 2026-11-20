@@ -97,6 +97,13 @@ internal static class BotFloors {
         /// open Gate02). A piece set too early is clicked back first, so the chain starts over.
         /// </summary>
         internal bool InOrder { get; init; }
+
+        /// <summary>
+        /// Every check of an <see cref="InOrder"/> chain, first to last (empty for any other gate). The later checks are
+        /// switched off until the one before fires, so the puzzle is off only when all of them are (Gate02's "Trigger
+        /// Puzzle01 part 4" starts off, and the bots skipped the whole puzzle for it, 2026-11-19 22:40).
+        /// </summary>
+        internal List<string> ChainTriggers { get; init; } = [];
     }
 
     /// <summary>What the area's files say about its floors.</summary>
@@ -305,8 +312,9 @@ internal static class BotFloors {
         // The pieces of a chain of checks that each fire when a piece turns ("DynaTrigger_MB_Plaque_Sun instance.On.EnterState")
         // and enable the next ("Enable_Trigger Puzzle01 part 2"), first to last, with the state each piece is turned to; empty
         // when the last check is enabled by nothing.
-        List<(string Object, string State)> ClickChain(Trigger last) {
+        List<(string Object, string State)> ClickChain(Trigger last, out List<string> checks) {
             var chain = new List<(string Object, string State)>();
+            checks = [];
             var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             for (var t = last; t is not null && seen.Add((string) t.m_triggerName ?? "") && chain.Count < 8;) {
                 var turn = Fires(t).Select(f => f.Split('.')).FirstOrDefault(b => b.Length == 3 && b[2].Equals("EnterState", StringComparison.OrdinalIgnoreCase));
@@ -316,6 +324,7 @@ internal static class BotFloors {
 
                 chain.Insert(0, (turn[0], turn[1]));
                 var name = (string) t.m_triggerName ?? "";
+                checks.Insert(0, name);
                 t = triggers.FirstOrDefault(p => Results(p).OfType<ResPostEvent>()
                     .Any(r => string.Equals((string) r.m_eventName, "Enable_" + name, StringComparison.OrdinalIgnoreCase)));
             }
@@ -421,9 +430,10 @@ internal static class BotFloors {
                     // ... unless it is the last of a chain of such checks, each enabling the next: then every piece of the
                     // chain is clicked in turn (Katzenstein's Lab: Sun, Bird, Tree, then Bug open Gate02; Cyndr clicked the Bug
                     // alone and stood at the shut gate for half an hour, 2026-11-19).
-                    if (bits.Length == 3 && bits[2].Equals("EnterState", StringComparison.OrdinalIgnoreCase) && ClickChain(t) is { Count: >= 2 } chain
+                    if (bits.Length == 3 && bits[2].Equals("EnterState", StringComparison.OrdinalIgnoreCase) && ClickChain(t, out var chainTriggers) is { Count: >= 2 } chain
                         && chain.All(n => spots.ContainsKey(n.Object))) {
                         gate = gate with {
+                            ChainTriggers = chainTriggers,
                             By = Opener.Click, LX = chain.Average(n => spots[n.Object].X), LY = chain.Average(n => spots[n.Object].Y),
                             LZ = chain.Average(n => spots[n.Object].Z), Needs = chain, Pieces = true, InOrder = true,
                             PieceSpots = chain.Select(n => n.Object).Distinct(StringComparer.OrdinalIgnoreCase).ToDictionary(o => o, o => spots[o], StringComparer.OrdinalIgnoreCase),
@@ -991,7 +1001,7 @@ internal static class BotFloors {
         }
 
         // 4. A puzzle: the plates that are wrong, one at a time, then the lever.
-        foreach (var gate in book.Gates.Where(g => g.By == Opener.Click && Closed(g) && !Off(g.Trigger) && !Locked(g)
+        foreach (var gate in book.Gates.Where(g => g.By == Opener.Click && !g.Pieces && Closed(g) && !Off(g.Trigger) && !Locked(g)
                                                    && Far(x, y, g.LX, g.LY) <= PUZZLE && Here(g.LZ) && !PastLocked(g.LX, g.LY))
                      .OrderBy(g => Far(x, y, g.LX, g.LY))) {
             var wrong = gate.Needs.Where(n => !string.Equals(StateOf(n.Object), n.State, StringComparison.OrdinalIgnoreCase)).ToList();
@@ -1027,7 +1037,7 @@ internal static class BotFloors {
         var stepPuzzles = (live?.StepEvents ?? []).Select(e => book.EventPuzzles.GetValueOrDefault(e)).Where(g => g is not null
                 && g.Needs.Any(n => !string.Equals(StateOf(n.Object), n.State, StringComparison.OrdinalIgnoreCase))
                 && !PastLocked(g.LX, g.LY) && !g.PieceSpots.Values.Any(p => PastLocked(p.X, p.Y)));
-        foreach (var gate in book.Gates.Where(g => g.Pieces && Closed(g) && !Off(g.Trigger) && Here(g.LZ) && !Locked(g)
+        foreach (var gate in book.Gates.Where(g => g.Pieces && Closed(g) && !(g.ChainTriggers.Count > 0 ? g.ChainTriggers.All(Off) : Off(g.Trigger)) && Here(g.LZ) && !Locked(g)
                                                    && !PastLocked(g.LX, g.LY) && !g.PieceSpots.Values.Any(p => PastLocked(p.X, p.Y)))
                      .OrderBy(g => Far(x, y, g.LX, g.LY)).Concat(stepPuzzles)) {
             var wing = book.Circles.Where(c => Far(c.X, c.Y, gate.LX, gate.LY) <= ROOM).OrderBy(c => Far(c.X, c.Y, gate.LX, gate.LY)).FirstOrDefault();
