@@ -23,7 +23,11 @@ What the bots did in Dragonspyre, from the server log: every quest finished, eve
 
 ## Portal Combat
 - Avoid, places bots got stuck:
-  - The Tower Archives near (8400, -10300) while Use Blue Crystal here ("Portal Combat"): stuck 3 time(s) (Ultimus).
+  - The Tower Archives near (8400, -10300) while Use Blue Crystal here ("Portal Combat"): stuck 10 time(s) (Ultimus); one bot tried every fix there.
+  - The Tower Archives near (8400, -10300) while a short break before trying "Use Blue Crystal here" again: stuck 2 time(s) (Ultimus).
+  - The Tower Archives near (11500, -15900) while Use Blue Crystal here ("Portal Combat"): stuck 2 time(s) (Ultimus).
+  - The Basilica near (0, 0) while a short break before trying "Use Blue Crystal here" again: stuck 1 time(s) (Ultimus).
+  - The Tower Archives near (7400, -9400) while a short break before trying "Use Blue Crystal here" again: stuck 1 time(s) (Ultimus).
 
 ## Bad Blood
 - Finished by Ultimus (12 min).
