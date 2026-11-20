@@ -593,6 +593,24 @@ internal static class UltimusPlanner {
                     }
                 }
 
+                // The wanted one stands there but walking into it starts nothing: it only walks into a fight started with the
+                // creature beside it (The Ironworks, 2026-11-19: Pops O'Leary joins the O'Leary Napper's fight; Kurrent, Ra and
+                // Mythis stood on him or waited by him for over half an hour). The nearest creature beside it starts the fight, in a
+                // dungeon only (on the street only quest creatures are fought).
+                if (free.Count == 0 && wanted.Count > 0 && leader.Wizard?.ZoneIsInstance == true) {
+                    var starter = wanted.Where(w => !NearQuestTeam(leader, w.Object.m_location.X, w.Object.m_location.Y))
+                        .SelectMany(w => others.Where(o => !wanted.Contains(o) && !CombatDuelComponent.IsInBattle(o.Object.m_globalID.Full)
+                                                            && Far(w.Object.m_location.X, w.Object.m_location.Y, o.Object.m_location.X, o.Object.m_location.Y) < 350)
+                            .Select(o => (Wanted: w, Starter: o)))
+                        .OrderBy(p => Far(leader.X, leader.Y, p.Starter.Object.m_location.X, p.Starter.Object.m_location.Y))
+                        .FirstOrDefault();
+                    if (starter.Starter is { } s) {
+                        return new Target(FIGHT, s.Object.m_location.X, s.Object.m_location.Y,
+                            $"{step} (starts the fight beside {starter.Wanted.Name} with {s.Name}, so it walks in)", questName, goalName, s.Template,
+                            s.Object.m_globalID.Full, Key: key + "|starter");
+                    }
+                }
+
                 // Only the Quest Team's are free: Ultimus waits off to the side for them to be done.
                 if (free.Count > 0) {
                     return new Target(WAIT, leader.X, leader.Y, $"{step} (waits: the Quest Team is fighting these creatures)", questName, goalName, Key: key + "|wait");
