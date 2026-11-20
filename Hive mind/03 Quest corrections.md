@@ -82,3 +82,4 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 
 ## Marleybone, Big Ben
 - Door43 (by the fourth room's battle circle, around (-9650,21000)) opens only when a level 29 Frog is beaten after the door's trigger was switched on by an earlier floor door. If the Frog is never out in that copy, stepping on the room's circle starts nothing and the door stays shut for good. Walk out and back in for a fresh copy (Garm and Ra, 20 November).
+- Server fix (next full release): leaving a dungeon copy and coming back (a lost battle, a relog, Dungeon Recall, a bots update) no longer puts counted steps back to 0. Before it, Katzenstein's Lab crates went back to 0 of 3 while the used crates stayed used, which forced a fresh copy (20 November).

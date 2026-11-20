@@ -215,6 +215,10 @@ public sealed class ZoneScriptState {
     public bool TryClaimQuestStep(InstanceQuestClaimKind kind, string questName, string goalName)
         => _quests.TryClaimStep(kind, questName, goalName);
 
+    /// <summary>A player's count on a counted step of this instance's dungeon quest.</summary>
+    public void NoteQuestGoalCount(ulong charId, string questName, string goalName, int count)
+        => _quests.NoteGoalCount(charId, questName, goalName, count);
+
     /// <summary>
     /// The dungeon quests this instance finished and, per quest, the goals it completed in order.
     /// </summary>

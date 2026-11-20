@@ -545,6 +545,13 @@ public partial class Zone : ReceiveProtocolDispatcher, IWithTimers {
     private void ReceiveCheckStepSpawns(ZONE_102_PROTOCOL.MSG_CHECKSTEPSPAWNS message)
         => _triggerSupervisor.Forward(message);
 
+    [MessageHandler(typeof(ZONE_102_PROTOCOL.MSG_NOTEINSTANCEGOALCOUNT))]
+    private void ReceiveNoteInstanceGoalCount(ZONE_102_PROTOCOL.MSG_NOTEINSTANCEGOALCOUNT message) {
+        if (IsInstance) {
+            ScriptState.NoteQuestGoalCount(message.CharId, message.QuestName, message.GoalName, message.Count);
+        }
+    }
+
     [MessageHandler(typeof(ZONE_102_PROTOCOL.MSG_CLAIMINSTANCEQUEST))]
     private void ReceiveClaimInstanceQuest(ZONE_102_PROTOCOL.MSG_CLAIMINSTANCEQUEST message) {
         if (!IsInstance) {
