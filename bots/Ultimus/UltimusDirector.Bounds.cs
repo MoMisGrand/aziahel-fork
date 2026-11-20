@@ -263,7 +263,10 @@ internal sealed partial class UltimusDirectorActor {
             return null;
         }
 
-        var quick = QuickReset(zone, now, step);
+        // Things to use found all used up at the step's own spot is plain to see, so it waits 3 minutes, not 20: every bots
+        // update restarts the 20 minutes, and Cyndr stood by Katz Lab's used crates through four updates (2026-11-20).
+        var quick = QuickReset(zone, now, step)
+                    || (UseDud(zone, step, now) && now - _noFoeSince >= TimeSpan.FromMinutes(3) && QuickLeft(zone, now));
         // Real progress only (a step, a quest, a level, XP, a won quest fight): a stuck fix that "got free" or a group check
         // counts as progress too, and kept Cyndr's Katz Lab copy from ever starting over (2026-11-20, two hours by used-up crates).
         if (!quick && (now - _noFoeSince < s_resetAfter || now - _realProgressAt < s_resetAfter)) {
@@ -280,7 +283,7 @@ internal sealed partial class UltimusDirectorActor {
         }
 
         _resetting = (zone, now);
-        Note("Ultimus", $"ABNORMAL: in {UltimusText.Zone(zone)} " + (UseDud(zone, step, now) ? "what is used" : "the creature") + $" for \"{step.What}\" " + (quick ? "stood still and started no battle" : $"has not been there to fight for {(now - _noFoeSince.Value).TotalMinutes:0} minutes") +
+        Note("Ultimus", $"ABNORMAL: in {UltimusText.Zone(zone)} " + (UseDud(zone, step, now) ? "what is used" : "the creature") + $" for \"{step.What}\" " + (quick ? (UseDud(zone, step, now) ? "was all used up" : "stood still and started no battle") : $"has not been there to fight for {(now - _noFoeSince.Value).TotalMinutes:0} minutes") +
                         $": walks out to {UltimusText.Zone(safe)} and back in for a fresh copy.", UltimusLink.ABNORMAL);
         Think($"The creature my step needs in {UltimusText.Zone(zone)} has not been there to fight for a long time, and nothing else here is " +
               "left to do. A player walks out and comes back in, and the dungeon starts fresh, so I do that.", "resetcopy|" + zone);
@@ -303,6 +306,11 @@ internal sealed partial class UltimusDirectorActor {
             return false;
         }
 
+        return QuickLeft(zone, now);
+    }
+
+    /// <summary>Whether this dungeon had fewer than 2 quick fresh copies in the last hour.</summary>
+    private bool QuickLeft(string zone, DateTime now) {
         if (!_quickResets.TryGetValue(zone, out var times)) {
             _quickResets[zone] = times = [];
         }
