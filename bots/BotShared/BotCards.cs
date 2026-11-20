@@ -342,6 +342,13 @@ internal static class BotCards {
             size += 2;
         }
 
+        // A rival whose fights run long empties a compact deck before it falls: Ultimus drew his last card around round 20
+        // against the Jade Oni (6,000 health, 14-18 minute fights) and passed seven rounds with pips while it healed back
+        // up, losing twice (2026-11-20). Room for more rounds of draws.
+        if (situation.Rival && situation.LongFights) {
+            size += 8;
+        }
+
         return size;
     }
 
