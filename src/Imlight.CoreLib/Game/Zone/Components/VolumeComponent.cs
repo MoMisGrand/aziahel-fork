@@ -113,9 +113,13 @@ internal sealed class VolumeComponent(ZoneEntity entity) : ZoneEntityComponent(e
         foreach (var quest in QuestTemplateCollection.GetAllQuests()) {
             foreach (var goal in quest.m_goals) {
                 // The tag is the volume's name or, as most game quests write it, its enter event ("Enter_<name>").
+                // A copied volume keeps the editor's " (1)" on its name: MooShu's Tree of Life quest ("Left Behind")
+                // names "Tree of Life", but the sphere round the tree is "Tree of Life (1)" (the plain one is the
+                // small hidden-oyster spot behind it), so the copy counts too.
                 if (goal is not WaypointGoalTemplate waypointGoal
                     || string.IsNullOrEmpty(waypointGoal.m_proximityTag)
                     || (waypointGoal.m_proximityTag != volumeName
+                        && WithoutCopyNumber(volumeName) != waypointGoal.m_proximityTag
                         && _volume.m_enterEvents?.Any(e => (string) e == waypointGoal.m_proximityTag) != true)) {
                     continue;
                 }
@@ -129,6 +133,23 @@ internal sealed class VolumeComponent(ZoneEntity entity) : ZoneEntityComponent(e
                 _volumeGoals.Add((quest.m_questName, goal.m_goalName));
             }
         }
+    }
+
+    /// <summary>"Tree of Life (1)" -> "Tree of Life"; a name without a copy number comes back as it is.</summary>
+    internal static string WithoutCopyNumber(string name) {
+        if (string.IsNullOrEmpty(name) || !name.EndsWith(')')) {
+            return name;
+        }
+        int open = name.LastIndexOf(" (", StringComparison.Ordinal);
+        if (open <= 0 || open + 2 >= name.Length - 1) {
+            return name;
+        }
+        for (int i = open + 2; i < name.Length - 1; i++) {
+            if (!char.IsDigit(name[i])) {
+                return name;
+            }
+        }
+        return name[..open];
     }
 
     private bool IsBox

@@ -47,3 +47,6 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 
 ## MooShu, trips away from the story
 - A trip that takes a bot into an area and then leaves it walking straight back out, twice within a quarter of an hour, is set aside for an hour so the bot gets on with the story. First seen with Ultimus going between Hametsu Village and Jade Palace.
+
+## MooShu, Tree of Life
+- Left Behind: the Go to Tree of Life step finishes inside the big circle round the dead tree itself, in the middle of the dungeon. The game files name that circle with a copy number, so the server did not count it and the step never finished (Ultimus stood at the tree for an hour). The small spot of the same name behind the tree is only the hidden oyster. Fixed in the server; walk up to the tree and the step finishes.
