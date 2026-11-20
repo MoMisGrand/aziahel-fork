@@ -264,7 +264,9 @@ internal sealed partial class UltimusDirectorActor {
         }
 
         var quick = QuickReset(zone, now, step);
-        if (!quick && (now - _noFoeSince < s_resetAfter || now - _storyProgressAt < s_resetAfter)) {
+        // Real progress only (a step, a quest, a level, XP, a won quest fight): a stuck fix that "got free" or a group check
+        // counts as progress too, and kept Cyndr's Katz Lab copy from ever starting over (2026-11-20, two hours by used-up crates).
+        if (!quick && (now - _noFoeSince < s_resetAfter || now - _realProgressAt < s_resetAfter)) {
             return null;
         }
 

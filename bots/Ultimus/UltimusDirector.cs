@@ -1530,6 +1530,13 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
             }
 
             if (usable.Count == 0) {
+                // Nothing offered at all at the step's own spot: noted at once for the fresh-copy check (ResetCopy waits 20
+                // minutes with no real progress before acting on it). The 45-second wait below never ran out at Katz Lab's
+                // crates: a stuck fix moved him off the spot every 30 seconds.
+                if (everything.Count == 0) {
+                    NoteUseDud(index, member, target);
+                }
+
                 // Nothing left at this spot: when he already picked something up for the step, he looks around for more;
                 // otherwise, after a while, the spot is written up (flagged, never skipped).
                 if (BotCollect.HasDone(member.CharId, target.Quest, target.Goal, target.X, target.Y)
