@@ -270,7 +270,11 @@ internal sealed partial class UltimusDirectorActor {
                     || (step is not null && UseDud(zone, step, now) && now - _noFoeSince >= TimeSpan.FromMinutes(3) && QuickLeft(zone, now));
         // Real progress only (a step, a quest, a level, XP, a won quest fight): a stuck fix that "got free" or a group check
         // counts as progress too, and kept Cyndr's Katz Lab copy from ever starting over (2026-11-20, two hours by used-up crates).
-        if (!quick && (now - _noFoeSince < s_resetAfter || now - _realProgressAt < s_resetAfter)) {
+        // Every fix failing twice over already took many minutes of trying; it waits 5 more, not 20 with no real progress:
+        // the 20 minutes start over at each bots update, and those came every 20 minutes while Garm and Ra stood behind Big
+        // Ben's shut Door43 (2026-11-20, 10:34 to past 12:00).
+        var parkedLongEnough = parked && now - _noFoeSince >= s_parkedResetAfter;
+        if (!quick && !parkedLongEnough && (now - _noFoeSince < s_resetAfter || now - _realProgressAt < s_resetAfter)) {
             return null;
         }
 
@@ -286,7 +290,7 @@ internal sealed partial class UltimusDirectorActor {
         _resetting = (zone, now);
         if (parked) {
             Note("Ultimus", $"ABNORMAL: in {UltimusText.Zone(zone)} every fix failed twice over for \"{step?.What ?? "his step"}\" and nothing moved on for " +
-                            $"{(now - _realProgressAt).TotalMinutes:0} minutes: walks out to {UltimusText.Zone(safe)} and back in for a fresh copy.", UltimusLink.ABNORMAL);
+                            $"{(now - _noFoeSince.Value).TotalMinutes:0} minutes: walks out to {UltimusText.Zone(safe)} and back in for a fresh copy.", UltimusLink.ABNORMAL);
             Think($"Nothing I tried in {UltimusText.Zone(zone)} got me on, twice over. A player walks out and comes back in, and the dungeon " +
                   "starts fresh with its doors and creatures back, so I do that.", "resetcopy|" + zone);
 
@@ -347,6 +351,7 @@ internal sealed partial class UltimusDirectorActor {
 
     // When every fix failed twice over in a dungeon copy (ParkStep), for the fresh-copy check.
     private (string Zone, DateTime At)? _parkedInCopyAt;
+    private static readonly TimeSpan s_parkedResetAfter = TimeSpan.FromMinutes(5);
 
     /// <summary>Whether every fix failed twice over in this dungeon copy in the last 30 minutes.</summary>
     private bool ParkedInCopy(string zone, DateTime now)
