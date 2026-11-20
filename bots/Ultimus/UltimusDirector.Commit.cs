@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Imlight.CoreLib.Game.Tools;
 
 namespace Imlight.CoreLib.Game.Ultimus;
 
@@ -73,6 +74,32 @@ internal sealed partial class UltimusDirectorActor {
     private UltimusPlanner.Target Source(string source, UltimusPlanner.Target target) {
         if (target is not null) {
             _pickSource = source;
+        }
+
+        return LiveFoeSpot(target);
+    }
+
+    /// <summary>
+    /// A fight's creature where it really is now along its walk, not where its last leg began (The Ironworks, 2026-11-19:
+    /// Pops O'Leary walks a path; his kept spot lagged a whole leg behind, so Kurrent, Ra and Mythis stood 250 to 330 away
+    /// from him for over half an hour and the server's "did not start a battle" said so). The same target otherwise.
+    /// </summary>
+    private UltimusPlanner.Target LiveFoeSpot(UltimusPlanner.Target target) {
+        if (target is not { Kind: UltimusPlanner.FIGHT, GlobalId: not 0 } || _team.Count == 0) {
+            return target;
+        }
+
+        try {
+            if (MinimapIndex.In(_team[0].ZoneActor).FirstOrDefault(m => m.Object.m_globalID.Full == target.GlobalId) is { Entity: { } entity }
+                && entity.GetComponentOfType<Imlight.CoreLib.Game.Zone.Components.PathMovementComponent>() is { } path) {
+                var now = path.CurrentPosition;
+                if (UltimusPlanner.Far(now.X, now.Y, target.X, target.Y) > 40) {
+                    return target with { X = now.X, Y = now.Y };
+                }
+            }
+        }
+        catch (Exception) {
+            // The creature left the area between the look and now: the spot it was given.
         }
 
         return target;
