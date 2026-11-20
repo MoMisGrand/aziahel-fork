@@ -2088,6 +2088,7 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
         if (!lost || index != 0) {
             if (index == 0) {
                 Note("Ultimus", "won the battle.");
+                HelpCallWon();
                 NoteFightSpot(member);
                 if (_battleCompany) {
                     Speak("won", 0.5);

@@ -100,6 +100,11 @@ internal sealed partial class UltimusDirectorActor {
             pick = scores.OrderByDescending(s => s.Score).First();
         }
 
+        // A TCO7 (or Kitharas) member who keeps losing the same fight asks a free teammate to come and help (UltimusDirector.Tco7.cs).
+        if (_seat.IsTeamBot && losses >= HELP_CALL_LOSSES) {
+            CallForHelp(_currentQuest ?? _target?.Quest ?? "");
+        }
+
         plan.Tried.Add(pick.Remedy);
         plan.Now = pick.Remedy;
         var plain = pick.Remedy switch {
