@@ -728,6 +728,9 @@ internal static class BotFloors {
     // about 500 wide).
     private const float DOOR_REACH = 260f;
 
+    // How near a walk's end must be to a puzzle piece to count as a walk to that piece.
+    private const float PIECE_REACH = 200f;
+
     /// <summary>
     /// The walk cut short of the first door still shut that it goes through, or the walk as it is. Our ground map is drawn
     /// with every door open (no door is in the area's walls), so a walk on it goes straight through a shut one; a player's
@@ -742,7 +745,12 @@ internal static class BotFloors {
         }
 
         string StateOf(string obj) => stateOf?.Invoke(obj) is { Length: > 0 } st ? st : book.Starts.GetValueOrDefault(obj) ?? "";
-        var shut = book.Gates.Where(g => OnFloor(z, g.Z) && !Opens(StateOf(g.Object))).ToList();
+        // A walk to one of a gate's own puzzle pieces never ends at that gate: its pieces are on the near side, often right
+        // by it (Katzenstein's Lab: the Bug plaque stands 400 from Gate02, and Tulkar, Garm and Kurrent were stopped at the
+        // shut gate on every walk to the plaques that open it, 2026-11-19 23:26).
+        var (ex, ey) = points[^1];
+        var shut = book.Gates.Where(g => OnFloor(z, g.Z) && !Opens(StateOf(g.Object))
+                                         && !g.PieceSpots.Values.Any(p => Far(ex, ey, p.X, p.Y) <= PIECE_REACH)).ToList();
         if (shut.Count == 0) {
             return points;
         }
