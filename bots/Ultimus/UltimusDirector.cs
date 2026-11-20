@@ -3082,6 +3082,14 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
                     if (!string.IsNullOrEmpty(fight.Quest) && me.Wizard?.ZoneIsInstance == true && !fight.Key.StartsWith("floor|", StringComparison.Ordinal)) {
                         _dudStepAt = (me.Zone ?? "", DateTime.UtcNow, StepKey(fight));
                     }
+                    // A floor's fight on the step's own creature counts for that step too: Idunn (2026-11-20, Counterweight
+                    // West) lost to Bellows twice, came back by Dungeon Recall, and Bellows, reached as the room's circle
+                    // fight, never fought again; the step then read "no creature here" and she rested beside it 40 minutes.
+                    else if (me.Wizard?.ZoneIsInstance == true && fight.Key.StartsWith("floor|", StringComparison.Ordinal)
+                             && MinimapIndex.In(me.ZoneActor).FirstOrDefault(m => m.Object?.m_globalID.Full == fight.GlobalId) is { } mark
+                             && UltimusPlanner.QuestFoeStep(me.Wizard, mark) is { } stepOf) {
+                        _dudStepAt = (me.Zone ?? "", DateTime.UtcNow, stepOf);
+                    }
                     Think($"I stood on this {TemplateName(fight.Template)} for 20 seconds and no battle started, so it can't be fought right now. " +
                           $"I leave it alone for {BotShared.DudCreatures.LeaveFor.TotalMinutes:0} minutes and pick another.", "dud|" + fight.GlobalId);
                 }
