@@ -109,7 +109,7 @@ internal sealed partial class UltimusDirectorActor {
 
         // Cut off by walls or water: the teleporter that leads there. Else a teleporter that is much faster than the walk.
         var left = PadsLeft();
-        var pad = UltimusPads.Toward(member.Zone, member.X, member.Y, target.X, target.Y, left)
+        var pad = UltimusPads.Toward(member.Zone, member.X, member.Y, target.X, target.Y, left, member.Z)
                   ?? UltimusPads.Faster(member.Zone, member.X, member.Y, target.X, target.Y, left);
         if (pad is null) {
             _viaPad = null;

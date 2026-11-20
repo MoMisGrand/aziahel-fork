@@ -70,3 +70,6 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 
 ## Marleybone, Katzenstein's Lab
 - If You Build It, Collect Crates: the three crates (by (-15577,55521), (-13898,49858) and (-17044,52394)) can be used up in a copy while the quest still wants all three (a restart starts the dungeon's quest over). Nothing is offered at the crate spots then. Walk out and back in for a fresh copy with new crates.
+
+## Dragonspyre, The Tower Archives
+- Portal Combat, Use Blue Crystal: the crystal is on top of the Blue Tower. From the low floor, walk up the long ramp east of the Wizard Tower teleporter (it starts by (8400,-10300) and runs south past (10800,-15000)) to the Blue Tower's teleporter at (9890,-18707). It lands on the tower at (11016,-16656); walk up the tower to the crystal by (12239,-16404). Bots used to read the ramp as a wall and never found the way.

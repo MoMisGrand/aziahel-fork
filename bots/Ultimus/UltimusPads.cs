@@ -160,13 +160,17 @@ internal static class UltimusPads {
     // no way and stood still (Niduus's log, 2026-11-15 20:28, "The Last Meow").
     internal const int MOST_PADS = 40;
 
-    internal static Pad Toward(string zonePath, float x, float y, float toX, float toY, ICollection<Pad> skip = null) {
+    internal static Pad Toward(string zonePath, float x, float y, float toX, float toY, ICollection<Pad> skip = null, float z = float.NaN) {
         var from = OverlayQuestPath.IslandOf(zonePath, x, y);
         var goal = OverlayQuestPath.IslandOf(zonePath, toX, toY);
-        if (from < 0 || goal < 0 || from == goal) {
+        if (from >= 0 && goal >= 0 && from == goal) {
             return null;
         }
 
+        return from < 0 || goal < 0 ? NavToward(zonePath, x, y, z, toX, toY, skip) : IslandToward(zonePath, from, goal, x, y, skip) ?? NavToward(zonePath, x, y, z, toX, toY, skip);
+    }
+
+    private static Pad IslandToward(string zonePath, int from, int goal, float x, float y, ICollection<Pad> skip) {
         var pads = In(zonePath).Where(p => skip is null || !skip.Contains(p))
             .Select(p => (Pad: p, On: OverlayQuestPath.IslandOf(zonePath, p.X, p.Y), Lands: OverlayQuestPath.IslandOf(zonePath, p.ToX, p.ToY)))
             .Where(p => p.On >= 0 && p.Lands >= 0 && p.On != p.Lands)
@@ -185,6 +189,113 @@ internal static class UltimusPads {
                     }
 
                     firstPad[pad.Lands] = firstPad[island] ?? pad.Pad;
+                    if (pad.Lands == goal) {
+                        return firstPad[goal];
+                    }
+
+                    next.Add(pad.Lands);
+                }
+            }
+
+            frontier = next;
+        }
+
+        return null;
+    }
+
+    // The game's own walk map (zone.nav) split into the parts a wizard can walk between, one array per map: a part's
+    // number for each point (-1 for a point with no links).
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<Imlight.CoreLib.Game.Zone.Core.ZoneNav.NavGraph, int[]> s_navParts = new();
+    private const float NAV_SNAP = 600f;
+    private const float NAV_FLOOR = 300f;
+
+    private static int[] NavParts(Imlight.CoreLib.Game.Zone.Core.ZoneNav.NavGraph graph) {
+        var part = new int[graph.Nodes.Length];
+        Array.Fill(part, -1);
+        var count = 0;
+        for (var i = 0; i < part.Length; i++) {
+            if (part[i] >= 0 || graph.Next[i].Length == 0) {
+                continue;
+            }
+
+            var stack = new Stack<int>();
+            stack.Push(i);
+            part[i] = count;
+            while (stack.Count > 0) {
+                foreach (var n in graph.Next[stack.Pop()]) {
+                    if (part[n] < 0) {
+                        part[n] = count;
+                        stack.Push(n);
+                    }
+                }
+            }
+
+            count++;
+        }
+
+        return part;
+    }
+
+    /// <summary>
+    /// Which part of the game's walk map (x, y) is on: the nearest linked point, on its own floor when its height is
+    /// known. -1 when the area has no walk map or no point is near.
+    /// </summary>
+    private static int NavPart(string zonePath, float x, float y, float z = float.NaN) {
+        try {
+            if (Imlight.CoreLib.Game.Zone.Core.ZoneNav.Graph(zonePath) is not { } graph) {
+                return -1;
+            }
+
+            var parts = s_navParts.GetValue(graph, NavParts);
+            var (best, bestFar) = (-1, NAV_SNAP);
+            for (var i = 0; i < graph.Nodes.Length; i++) {
+                var n = graph.Nodes[i];
+                if (parts[i] < 0 || !float.IsFinite(n.X) || (float.IsFinite(z) && float.IsFinite(n.Z) && MathF.Abs(n.Z - z) > NAV_FLOOR)) {
+                    continue;
+                }
+
+                var far = UltimusPlanner.Far(x, y, n.X, n.Y);
+                if (far < bestFar) {
+                    (best, bestFar) = (i, far);
+                }
+            }
+
+            return best < 0 ? -1 : parts[best];
+        }
+        catch (Exception) {
+            return -1;
+        }
+    }
+
+    /// <summary>
+    /// The same chain of pads, by the game's own walk map instead of our ground map: where our map splits one walkable
+    /// ground in two (a ramp it reads as a wall), the walk map still joins it, and its parts are only joined by teleporters.
+    /// The Tower Archives (Dragonspyre, "Portal Combat", 2026-11-20): the ramp from the low floor up to the Blue Tower's
+    /// teleporter was walls on our map, so no pad led to the Blue Crystal and Ultimus went in and out for an hour.
+    /// </summary>
+    private static Pad NavToward(string zonePath, float x, float y, float z, float toX, float toY, ICollection<Pad> skip) {
+        var from = NavPart(zonePath, x, y, z);
+        var goal = NavPart(zonePath, toX, toY);
+        if (from < 0 || goal < 0 || from == goal) {
+            return null;
+        }
+
+        var pads = In(zonePath).Where(p => skip is null || !skip.Contains(p))
+            .Select(p => (Pad: p, On: NavPart(zonePath, p.X, p.Y), Lands: NavPart(zonePath, p.ToX, p.ToY)))
+            .Where(p => p.On >= 0 && p.Lands >= 0 && p.On != p.Lands)
+            .ToList();
+
+        var firstPad = new Dictionary<int, Pad> { [from] = null };
+        var frontier = new List<int> { from };
+        for (var depth = 0; depth < MOST_PADS && frontier.Count > 0; depth++) {
+            var next = new List<int>();
+            foreach (var part in frontier) {
+                foreach (var pad in pads.Where(p => p.On == part).OrderBy(p => part == from ? UltimusPlanner.Far(x, y, p.Pad.X, p.Pad.Y) : 0)) {
+                    if (firstPad.ContainsKey(pad.Lands)) {
+                        continue;
+                    }
+
+                    firstPad[pad.Lands] = firstPad[part] ?? pad.Pad;
                     if (pad.Lands == goal) {
                         return firstPad[goal];
                     }
