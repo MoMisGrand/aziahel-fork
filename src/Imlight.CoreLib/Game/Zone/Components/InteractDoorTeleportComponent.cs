@@ -88,7 +88,7 @@ internal sealed class InteractDoorTeleportComponent(ZoneEntity entity)
     }
 
     public IEnumerable<ServiceOptionBase> GetServiceOptions(Wizard playerCharacter) {
-        if (!TryResolveTeleport(out _)) {
+        if (!TryResolveTeleport(out _) || !OwnOptionAllows(playerCharacter)) {
             return [];
         }
 
@@ -99,6 +99,16 @@ internal sealed class InteractDoorTeleportComponent(ZoneEntity entity)
 
     public void OnServiceInteraction(IActorRef playerActor, Wizard playerCharacter, CoreObject playerObject, uint serviceOptionIndex) {
         if (!TryResolveTeleport(out var teleport)) {
+            return;
+        }
+
+        // The door's own "enter" option names what opens it (the Tree of Life's spirit portal: only once the tree turned
+        // it On). A door that is still shut takes nobody anywhere.
+        if (!OwnOptionAllows(playerCharacter)) {
+            Logger.Debug("Zone {0}: door {1} refused {2}: its own option's requirements are not met (state '{3}').",
+                Logger.Args(Entity.Zone?.ZonePath, (Entity.Template as GameObjectTemplate)?.m_objectName, playerCharacter?.CharId,
+                    Entity.Zone?.ScriptState.GetObjectState(PlacedName ?? "")));
+
             return;
         }
 
@@ -201,6 +211,46 @@ internal sealed class InteractDoorTeleportComponent(ZoneEntity entity)
                 ScriptState = Entity.Zone.ScriptState,
             });
     }
+
+    /// <summary>
+    /// Whether the door's own teleport option lets this wizard in now. The game files put what opens a portal on the option
+    /// itself (MS_SpiritWorldPortal: ReqTriggerObjectState "MS_SpiritWorldPortal instance" On, set by using the Tree of
+    /// Life). A door with no such option, no requirements, other kinds of requirement, or one the codec cannot read stays
+    /// open, as before.
+    /// </summary>
+    private bool OwnOptionAllows(Wizard wizard) {
+        if (Imlight.CoreLib.Game.World.WorldAccess.AllOpen || Entity.Template is not GameObjectTemplate template) {
+            return true;
+        }
+
+        var options = template.m_behaviors?.OfType<InteractableBehaviorTemplate>()
+            .SelectMany(b => b.m_interactOptions ?? []).OfType<InteractStateOptionTemplate>()
+            .Where(o => o.m_results?.m_results?.Any(r => r is ResTeleport) == true).ToList() ?? [];
+        // Only a door opened by an object's state is held shut here (the portal lights when the tree is used). Other needs
+        // (a quest entry such as Death1's portal's QT-MS-DTH1-C01-006) were never checked for doors and the server does not
+        // always write those entries, so they stay as they were: open.
+        if (options.Count == 0 || options.Any(o => o.m_requirements?.m_requirements is not { Count: > 0 } list
+                                                   || list.Any(r => r is not ReqTriggerObjectState))) {
+            return true;
+        }
+
+        try {
+            return options.Any(o => ZoneTrigger.HasUndecodableRequirement(o.m_requirements)
+                                    || RequirementDispatcher.EvaluateRequirements(o.m_requirements,
+                                        new ZoneRequirementContext(o.m_requirements, null, null, wizard, Entity.ZoneRef,
+                                            PlacedName) {
+                                            ScriptState = Entity.Zone.ScriptState,
+                                        }));
+        }
+        catch (Exception ex) {
+            Logger.Debug("Zone {0}: door {1} requirements could not be read: {2}", Logger.Args(Entity.Zone?.ZonePath, template.m_objectName, ex.Message));
+
+            return true;
+        }
+    }
+
+    // The name the zone's scripts know this placed door by (its zone tag, else the template's name).
+    private string PlacedName => Entity.Info?.m_zoneTag is { Length: > 0 } tag ? tag : (Entity.Template as GameObjectTemplate)?.m_objectName.ToString();
 
     private static bool HasInteractableBehavior(GameObjectTemplate template)
         => template.m_behaviors?.OfType<InteractableBehaviorTemplate>().Any() == true;

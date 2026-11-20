@@ -72,6 +72,22 @@ internal static class BotRoomFoes {
         return null;
     }
 
+    /// <summary>
+    /// The room a door of this area leads to whose own spawn files hold a creature with one of these tags ("" when none):
+    /// the step's boss waits behind that door (the Tree of Life's spirit portal leads to Kagemoosha's Spirit World room).
+    /// </summary>
+    internal static string RoomBehindDoor(IEnumerable<MinimapIndex.Mark> live, string zone, IReadOnlyCollection<string> adjectives) {
+        if (live is null || adjectives is not { Count: > 0 }) {
+            return "";
+        }
+
+        return live.Where(m => m.Kind == MinimapIndex.DOOR && !string.IsNullOrEmpty(m.To)
+                               && !string.Equals(m.To.Trim(), zone, StringComparison.OrdinalIgnoreCase)
+                               && OverlayQuestRoute.IsDungeon(m.To.Trim()))
+            .Select(m => m.To.Trim()).Distinct(StringComparer.OrdinalIgnoreCase)
+            .FirstOrDefault(room => SpawnsIn(room, adjectives)) ?? "";
+    }
+
     /// <summary>Whether the room's own spawn files bring out a creature with one of these tags.</summary>
     internal static bool SpawnsIn(string zone, IReadOnlyCollection<string> adjectives) {
         if (string.IsNullOrEmpty(zone) || adjectives is not { Count: > 0 }) {

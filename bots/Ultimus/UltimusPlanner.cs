@@ -534,8 +534,15 @@ internal static class UltimusPlanner {
                 // tree, and Ultimus walked out of the room and back in for 20 minutes (BotShared/BotRoomFoes).
                 var roomHolds = wanted.Count == 0 && stepZone.Length == 0 && leader.Wizard?.ZoneIsInstance == true
                                 && BotShared.BotRoomFoes.SpawnsIn(zone, adjectives);
+                // Not here, and a door of this dungeon leads to the room that holds it (the Tree of Life's spirit portal,
+                // opened by the tree, leads to Kagemoosha's Spirit World room): that room is where the step is.
+                var behindDoor = wanted.Count == 0 && !roomHolds && stepZone.Length == 0 && leader.Wizard?.ZoneIsInstance == true
+                    ? BotShared.BotRoomFoes.RoomBehindDoor(live, zone, adjectives) : "";
                 if (wanted.Count > 0 || roomHolds) {
                     s_seenIn[key] = zone;
+                }
+                else if (behindDoor.Length > 0) {
+                    stepZone = behindDoor;
                 }
                 else if (stepZone.Length == 0 && s_seenIn.TryGetValue(key, out var seenZone) && !OverlayQuestTracker.SameZone(seenZone, zone)) {
                     stepZone = seenZone;
