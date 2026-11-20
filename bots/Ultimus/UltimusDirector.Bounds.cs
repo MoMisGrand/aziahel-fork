@@ -204,6 +204,12 @@ internal sealed partial class UltimusDirectorActor {
     private DateTime? _noFoeSince;
     private string _noFoeZone;
     private (string Zone, DateTime At)? _resetting;
+    // When his step's own creature in a dungeon was last stood on with no battle (NoticeOddities), and how many quick
+    // fresh copies each dungeon had this hour: a boss that won't fight after a lost battle (Tulkar by Jacques in Knight's
+    // Tower) or after a mate's win (Kurrent and Mythis by Pops O'Leary) needs no 20-minute wait, and bot updates every
+    // few minutes restart that wait anyway.
+    private (string Zone, DateTime At)? _dudStepAt;
+    private readonly Dictionary<string, List<DateTime>> _quickResets = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
     /// In a dungeon whose step's creature is not there to fight (none in the area, or only one that starts no battle) for
@@ -245,17 +251,45 @@ internal sealed partial class UltimusDirectorActor {
             return null;
         }
 
-        if (now - _noFoeSince < s_resetAfter || now - _storyProgressAt < s_resetAfter || leader.Wizard.SafeZone is not { Length: > 0 } safe) {
+        var quick = QuickReset(zone, now);
+        if (!quick && (now - _noFoeSince < s_resetAfter || now - _storyProgressAt < s_resetAfter)) {
             return null;
         }
 
+        if (leader.Wizard.SafeZone is not { Length: > 0 } safe) {
+            return null;
+        }
+
+        if (quick) {
+            _quickResets[zone].Add(now);
+            _dudStepAt = null;
+        }
+
         _resetting = (zone, now);
-        Note("Ultimus", $"ABNORMAL: in {UltimusText.Zone(zone)} the creature for \"{_target.What}\" has not been there to fight for " +
-                        $"{(now - _noFoeSince.Value).TotalMinutes:0} minutes: walks out to {UltimusText.Zone(safe)} and back in for a fresh copy.", UltimusLink.ABNORMAL);
+        Note("Ultimus", $"ABNORMAL: in {UltimusText.Zone(zone)} the creature for \"{_target.What}\" " + (quick ? "stood still and started no battle" : $"has not been there to fight for {(now - _noFoeSince.Value).TotalMinutes:0} minutes") +
+                        $": walks out to {UltimusText.Zone(safe)} and back in for a fresh copy.", UltimusLink.ABNORMAL);
         Think($"The creature my step needs in {UltimusText.Zone(zone)} has not been there to fight for a long time, and nothing else here is " +
               "left to do. A player walks out and comes back in, and the dungeon starts fresh, so I do that.", "resetcopy|" + zone);
 
         return UltimusPlanner.Travel(leader, safe, $"leaving {UltimusText.Zone(zone)} to start it over (its creature for my step is not there)", "resetcopy");
+    }
+
+    /// <summary>
+    /// True when his step's creature here was stood on with no battle in the last 5 minutes and this dungeon had fewer
+    /// than 2 quick fresh copies in the last hour (so a creature that never fights in any copy falls back to the 20-minute
+    /// wait instead of a walk out every minute).
+    /// </summary>
+    private bool QuickReset(string zone, DateTime now) {
+        if (_dudStepAt is not { } dud || !OverlayQuestTracker.SameZone(dud.Zone, zone) || now - dud.At > TimeSpan.FromMinutes(5)) {
+            return false;
+        }
+
+        if (!_quickResets.TryGetValue(zone, out var times)) {
+            _quickResets[zone] = times = [];
+        }
+
+        times.RemoveAll(t => now - t > TimeSpan.FromHours(1));
+        return times.Count < 2;
     }
 
     /// <summary>Out of a side dungeon: on foot toward his story step, as a player walks back out of the wrong dungeon.</summary>
