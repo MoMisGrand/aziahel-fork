@@ -1,0 +1,4 @@
+Fixed: Bots walked back out of the dungeon room their boss waits in
+In the Tree of Life, Nomoonaga waits in the Spirit World room and only comes out when you step on that room's battle circle. The quest arrow points at the way into that room, so Ultimus walked in, decided it was the wrong area, walked back out, and did this over and over for 20 minutes. Now a bot that walks into a dungeon room whose own files hold its fight step's creature stays there and steps on the room's battle circle to bring the boss out. This works the same way in every dungeon built like this, for Ultimus, The Calling of 7 and the Quest Team.
+Where: Any dungeon whose boss waits in a side room, first seen in MooShu's Tree of Life (Question of Faith, Defeat Nomoonaga).
+Test: Send a bot into the Tree of Life on Question of Faith and watch it go through the tower teleporter into the Spirit World room, step on the circle in the middle and fight Nomoonaga there.

@@ -528,7 +528,13 @@ internal static class UltimusPlanner {
                 var free = wanted.Where(m => BotShared.DudCreatures.Fightable(m.Object.m_globalID.Full)).ToList();
                 // Where he saw them, for when he is somewhere else and the step names no area (his PC log, 2026-11-15: out of The
                 // Vault of Ice he searched the Entrance Hall for Keeper of the Fang, "the quest names no other area").
-                if (wanted.Count > 0) {
+                // Not out yet, in a dungeon room whose own spawn files hold it (a boss that comes out on the room's battle
+                // circle): this room is where the step is, not the area the quest arrow points into. The Tree of Life,
+                // 2026-11-20: Nomoonaga waits in the Spirit World room, the arrow points at the teleporter into it from the
+                // tree, and Ultimus walked out of the room and back in for 20 minutes (BotShared/BotRoomFoes).
+                var roomHolds = wanted.Count == 0 && stepZone.Length == 0 && leader.Wizard?.ZoneIsInstance == true
+                                && BotShared.BotRoomFoes.SpawnsIn(zone, adjectives);
+                if (wanted.Count > 0 || roomHolds) {
                     s_seenIn[key] = zone;
                 }
                 else if (stepZone.Length == 0 && s_seenIn.TryGetValue(key, out var seenZone) && !OverlayQuestTracker.SameZone(seenZone, zone)) {
@@ -609,6 +615,12 @@ internal static class UltimusPlanner {
                             $"{step} (starts the fight beside {starter.Wanted.Name} with {s.Name}, so it walks in)", questName, goalName, s.Template,
                             s.Object.m_globalID.Full, Key: key + "|starter");
                     }
+                }
+
+                // The room's boss is not out: its battle circle brings it out, so he steps on it, as a player walks in.
+                if (roomHolds && BotShared.BotRoomFoes.WaitingCircle(zone, leader.ZoneActor, leader.X, leader.Y) is { } circle) {
+                    return new Target(SPOT, circle.X, circle.Y, $"{step} (onto the room's battle circle \"{circle.Volume}\", which brings them out)",
+                        questName, goalName, Key: key + "|roomcircle");
                 }
 
                 // Only the Quest Team's are free: Ultimus waits off to the side for them to be done.

@@ -409,6 +409,14 @@ internal static class QuestTeamPlanner {
                     }
                 }
 
+                // Not out yet, in a dungeon room whose own spawn files hold it: the room's battle circle brings it out, so
+                // the team steps on it (BotShared/BotRoomFoes; the Tree of Life's Spirit World room, 2026-11-20).
+                if (!anyWanted && stepZone.Length == 0 && leader.Wizard?.ZoneIsInstance == true && BotShared.BotRoomFoes.SpawnsIn(zone, adjectives)
+                    && BotShared.BotRoomFoes.WaitingCircle(zone, leader.ZoneActor, leader.X, leader.Y) is { } circle) {
+                    return new Target(SPOT, circle.X, circle.Y, $"{step} (onto the room's battle circle \"{circle.Volume}\", which brings them out)",
+                        questName, goalName, Key: key + "|roomcircle");
+                }
+
                 // None up right now: into the street area where they spawn, to meet the next one.
                 if (Tools.RouteMobs.SeekFor(leader.ZoneActor, leader.X, leader.Y, adjectives) is { } area) {
                     var (ax, ay) = Tools.RouteMobs.Nearest(area, leader.X, leader.Y);

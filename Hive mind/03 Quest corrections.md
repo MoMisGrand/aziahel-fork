@@ -50,6 +50,8 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 
 ## MooShu, Tree of Life
 - Left Behind: the Go to Tree of Life step finishes inside the big circle round the dead tree itself, in the middle of the dungeon. The game files name that circle with a copy number, so the server did not count it and the step never finished (Ultimus stood at the tree for an hour). The small spot of the same name behind the tree is only the hidden oyster. Fixed in the server; walk up to the tree and the step finishes.
+- Left Behind and Question of Faith's tower waypoint confirmed working on 20 November after the fix (Ultimus finished both alone).
+- Question of Faith, Defeat Nomoonaga: Nomoonaga is not in the tree area at all. From the tree take teleporter A by the tree's trunk, walk east to the tower and walk into the spot just before the tower teleporter; it takes you to the Spirit World room (same name, Tree of Life). Nomoonaga waits there and only comes out when you step on the battle circle in the middle of that room. Bots used to walk back out of that room as if it were the wrong area (Ultimus looped for 20 minutes); now they stay and step on the circle. Leave by the spot behind where you came in afterwards to go back to the tree for Yishin Chen.
 
 ## Marleybone, Counterweight East
 - Stolen Away: the levers that open the gates up to Sprockets could only be pulled during Metal Madness, so after that quest every new copy stayed shut and the bots waited for a Sprockets that never came (Garm and Tulkar, 20 November). Fixed in the server: the levers can now be pulled any time. Pull the first lever by the entrance, beat each floor's guard to free the next lever, and climb to Sprockets at the top.
