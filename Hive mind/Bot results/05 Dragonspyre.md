@@ -3,7 +3,7 @@
 What the bots did in Dragonspyre, from the server log: every quest finished, every fight won (to copy), every fight lost and every place they got stuck (to avoid). Solo means the bot fought alone; Team means another of our bots won the same fight with it. Updated after each bots update.
 
 ## Best way to beat each creature
-- Petrov Gloomstrider: won 2 time(s) (2 Solo, 0 Team), lost 1. Fastest: Ultimus in 5 rounds, plan "hit now", deck for a boss (Ice), hitting with Ice, Death, Myth (most of my fights lately had 2+ enemies), hits with Sandstorm, Scarab.
+- Petrov Gloomstrider: won 3 time(s) (3 Solo, 0 Team), lost 1. Fastest: Ultimus in 5 rounds, plan "hit now", deck for a boss (Ice), hitting with Ice, Death, Myth (most of my fights lately had 2+ enemies), hits with Sandstorm, Scarab.
 - Wandering Wizard: won 2 time(s) (2 Solo, 0 Team), lost 0. Fastest: Ultimus in 2 rounds, deck for Life enemies, hitting with Life, Fire, Storm (most of my fights lately had 2+ enemies).
 - Loathsome Creeper: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 10 rounds, plan "hit now", deck for Death enemies, hitting with Death, Fire, Myth (many of my fights lately had 2+ enemies), hits with Minor Crusade, Gearhead Destroyer, Scarab, Helping Hands.
 
@@ -22,12 +22,18 @@ What the bots did in Dragonspyre, from the server log: every quest finished, eve
   - The Tower Archives near (12300, -7200) while Use Yellow Crystal here ("The Towering Crystal"): stuck 1 time(s) (Ultimus).
 
 ## Portal Combat
+- Won by Ultimus (Solo) against Petrov Gloomstrider (rank 7, 2,000 health, Ice) on 2026-11-20 at 09:54:26.
+  It took 12 rounds, about 10 minutes.
+  Deck made for any fight (many of my fights lately had 2+ enemies).
 - Avoid, places bots got stuck:
-  - The Tower Archives near (8400, -10300) while Use Blue Crystal here ("Portal Combat"): stuck 10 time(s) (Ultimus); one bot tried every fix there.
+  - The Tower Archives near (8400, -10300) while Use Blue Crystal here ("Portal Combat"): stuck 11 time(s) (Ultimus); one bot tried every fix there.
+  - The Tower Archives near (12300, -7200) while Go to Dragonspyre,The Tower Archives ("Portal Combat"): stuck 9 time(s) (Ultimus); one bot tried every fix there.
+  - The Tower Archives near (13000, -11500) while Go to Dragonspyre,The Tower Archives ("Portal Combat"): stuck 4 time(s) (Ultimus).
   - The Tower Archives near (8400, -10300) while a short break before trying "Use Blue Crystal here" again: stuck 2 time(s) (Ultimus).
   - The Tower Archives near (11500, -15900) while Use Blue Crystal here ("Portal Combat"): stuck 2 time(s) (Ultimus).
   - The Basilica near (0, 0) while a short break before trying "Use Blue Crystal here" again: stuck 1 time(s) (Ultimus).
   - The Tower Archives near (7400, -9400) while a short break before trying "Use Blue Crystal here" again: stuck 1 time(s) (Ultimus).
+  - The Tower Archives near (13700, -9400) while resting while "Go to Dragonspyre,The Tower Archives" waits: stuck 1 time(s) (Ultimus).
 
 ## Bad Blood
 - Finished by Ultimus (12 min).
