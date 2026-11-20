@@ -13,6 +13,28 @@ What the bots did in Wizard City, from the server log: every quest finished, eve
   - The Commons near (700, -200) while going to Tulkar (my group) (): stuck 1 time(s) (Garm).
   - Wizard City Robe Shop near (0, -100) while resting while "to Shopping District (Talk to Ghost of Krokhotep)" waits: stuck 1 time(s) (Tulkar).
 
+## To the Registrar
+- Avoid, places bots got stuck:
+  - The Commons near (0, 0) while no World or Story quest is left to get: stuck 40 time(s) (Cyndr, Kurrent); one bot tried every fix there.
+  - The Commons near (400, 300) while no World or Story quest is left to get: stuck 10 time(s) (Cyndr, Kurrent).
+  - The Commons near (400, -200) while no World or Story quest is left to get: stuck 10 time(s) (Cyndr, Kurrent); one bot tried every fix there.
+  - The Commons near (-100, 300) while no World or Story quest is left to get: stuck 8 time(s) (Cyndr, Kurrent).
+  - The Commons near (-100, -200) while no World or Story quest is left to get: stuck 6 time(s) (Cyndr, Kurrent).
+  - The Commons near (-500, -200) while no World or Story quest is left to get: stuck 6 time(s) (Cyndr, Kurrent).
+  - The Commons near (-500, 300) while no World or Story quest is left to get: stuck 6 time(s) (Cyndr, Kurrent); one bot tried every fix there.
+  - The Commons near (1400, 1700) while no World or Story quest is left to get: stuck 6 time(s) (Cyndr); one bot tried every fix there.
+
+## Dog Gone Doug
+- Avoid, places bots got stuck:
+  - The Commons near (0, 0) while no World or Story quest is left to get: stuck 13 time(s) (Cyndr); one bot tried every fix there.
+  - The Commons near (400, -200) while no World or Story quest is left to get: stuck 5 time(s) (Cyndr); one bot tried every fix there.
+  - The Commons near (-1000, 400) while no World or Story quest is left to get: stuck 5 time(s) (Cyndr); one bot tried every fix there.
+  - The Commons near (-1600, 700) while no World or Story quest is left to get: stuck 4 time(s) (Cyndr); one bot tried every fix there.
+  - The Commons near (-100, 800) while a short break before trying "get "Dog Gone Doug"" again: stuck 3 time(s) (Cyndr); one bot tried every fix there.
+  - The Commons near (1400, -200) while no World or Story quest is left to get: stuck 2 time(s) (Cyndr); one bot tried every fix there.
+  - The Commons near (-2000, 800) while no World or Story quest is left to get: stuck 2 time(s) (Cyndr).
+  - The Commons near (0, 0) while a short break before trying "get "Dog Gone Doug"" again: stuck 2 time(s) (Cyndr).
+
 ## The Key at Last
 - Finished by Ultimus (5 s).
 
