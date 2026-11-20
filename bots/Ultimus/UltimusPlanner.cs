@@ -959,9 +959,15 @@ internal static class UltimusPlanner {
     /// fights only these (Niduus, 2026-11-19: "avoid ones that he doesn't need for his quest. Making sure to only fight mobs
     /// named after the targets of his quests"); every other creature, and its walk, is gone round.
     /// </summary>
-    internal static bool QuestFoe(Wizard wizard, MinimapIndex.Mark mark) {
+    internal static bool QuestFoe(Wizard wizard, MinimapIndex.Mark mark) => QuestFoeStep(wizard, mark) is not null;
+
+    /// <summary>
+    /// The open "defeat" step this creature counts for, as "quest|goal" (the key a step target has), or null when none
+    /// does: so a creature reached as a floor's fight is still known as the step's own (Bellows in Counterweight West).
+    /// </summary>
+    internal static string QuestFoeStep(Wizard wizard, MinimapIndex.Mark mark) {
         if (wizard?.QuestBehavior?.CurrentQuestInstances is not { } held || mark is null) {
-            return false;
+            return null;
         }
 
         try {
@@ -978,7 +984,7 @@ internal static class UltimusPlanner {
                     var adjectives = (bounty.m_npcAdjectives ?? []).Select(a => (string) a).Where(a => !string.IsNullOrEmpty(a)).ToArray();
                     if ((mark.Adjectives ?? []).Any(a => adjectives.Contains(a, StringComparer.Ordinal)) || Quests.BountyStandIns.Counts(adjectives, mark.Template)
                         || UltimusDrops.Score(instance.QuestName, (string) goal.m_goalName, mark.Template) > 0) {
-                        return true;
+                        return $"{instance.QuestName}|{(string) goal.m_goalName}";
                     }
                 }
             }
@@ -987,7 +993,7 @@ internal static class UltimusPlanner {
             // Quests changing under him: not his this time.
         }
 
-        return false;
+        return null;
     }
 
     /// <summary>Whether this area has creatures to fight (for remembering where XP can be had).</summary>

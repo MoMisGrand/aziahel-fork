@@ -64,3 +64,6 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 
 ## Marleybone, Counterweight East
 - Stolen Away: the levers that open the gates up to Sprockets could only be pulled during Metal Madness, so after that quest every new copy stayed shut and the bots waited for a Sprockets that never came (Garm and Tulkar, 20 November). Fixed in the server: the levers can now be pulled any time. Pull the first lever by the entrance, beat each floor's guard to free the next lever, and climb to Sprockets at the top.
+
+## Marleybone, Counterweight West
+- Weights and Measures, Defeat Bellows: after losing to Bellows and coming back by Dungeon Recall, the Bellows in that copy can stand there and never start a battle again (Idunn, 2026-11-20, 40 minutes). Walking out and back in gives a fresh copy where Bellows fights. Bots now count a boss that won't fight as the step's own, even when they reached it as the room's fight, and walk out for a fresh copy.

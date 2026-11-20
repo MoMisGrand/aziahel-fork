@@ -215,6 +215,8 @@ internal sealed partial class UltimusDirectorActor {
     // Tower) or after a mate's win (Kurrent and Mythis by Pops O'Leary) needs no 20-minute wait, and bot updates every
     // few minutes restart that wait anyway.
     private (string Zone, DateTime At, string Step)? _dudStepAt;
+    // The step set aside while he rests beside it (UltimusDirector.Aside.cs), so the rest still counts for that step.
+    private UltimusPlanner.Target _asideStep;
     private readonly Dictionary<string, List<DateTime>> _quickResets = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
@@ -243,7 +245,10 @@ internal sealed partial class UltimusDirectorActor {
             return null;
         }
 
-        var noFoe = _target is { } last && !string.IsNullOrEmpty(last.Quest)
+        // While he rests beside a set-aside step, the step is what counts (the rest itself names no quest): Idunn rested by
+        // a Bellows that would not fight for 40 minutes, and the rest never counted as "its creature is not there".
+        var step = _target?.Key?.StartsWith("aside|wait|", StringComparison.Ordinal) == true && _asideStep is { } aside ? aside : _target;
+        var noFoe = step is { } last && !string.IsNullOrEmpty(last.Quest)
                     && (last.Problem == "no creature for this step is in the area"
                         || (last.Kind == UltimusPlanner.WAIT && last.What.StartsWith("resting while", StringComparison.Ordinal))
                         || last.Key.EndsWith("|spawns", StringComparison.Ordinal));
@@ -257,7 +262,7 @@ internal sealed partial class UltimusDirectorActor {
             return null;
         }
 
-        var quick = QuickReset(zone, now);
+        var quick = QuickReset(zone, now, step);
         if (!quick && (now - _noFoeSince < s_resetAfter || now - _storyProgressAt < s_resetAfter)) {
             return null;
         }
@@ -272,7 +277,7 @@ internal sealed partial class UltimusDirectorActor {
         }
 
         _resetting = (zone, now);
-        Note("Ultimus", $"ABNORMAL: in {UltimusText.Zone(zone)} the creature for \"{_target.What}\" " + (quick ? "stood still and started no battle" : $"has not been there to fight for {(now - _noFoeSince.Value).TotalMinutes:0} minutes") +
+        Note("Ultimus", $"ABNORMAL: in {UltimusText.Zone(zone)} the creature for \"{step.What}\" " + (quick ? "stood still and started no battle" : $"has not been there to fight for {(now - _noFoeSince.Value).TotalMinutes:0} minutes") +
                         $": walks out to {UltimusText.Zone(safe)} and back in for a fresh copy.", UltimusLink.ABNORMAL);
         Think($"The creature my step needs in {UltimusText.Zone(zone)} has not been there to fight for a long time, and nothing else here is " +
               "left to do. A player walks out and comes back in, and the dungeon starts fresh, so I do that.", "resetcopy|" + zone);
@@ -285,13 +290,13 @@ internal sealed partial class UltimusDirectorActor {
     /// than 2 quick fresh copies in the last hour (so a creature that never fights in any copy falls back to the 20-minute
     /// wait instead of a walk out every minute).
     /// </summary>
-    private bool QuickReset(string zone, DateTime now) {
+    private bool QuickReset(string zone, DateTime now, UltimusPlanner.Target step) {
         // Only for the step whose creature it was: Garm (2026-11-20 01:06) had stood on a Metal Madness creature in Counterweight
         // East that started no battle, finished Metal Madness, and the very next step ("Stolen Away", Sprockets a floor up)
         // read that as its own and walked him out at once; the fresh copy's levers no longer work for him, and he stood
         // at the first shut gate for over an hour.
         if (_dudStepAt is not { } dud || !OverlayQuestTracker.SameZone(dud.Zone, zone) || now - dud.At > TimeSpan.FromMinutes(5)
-            || dud.Step != StepKey(_target)) {
+            || dud.Step != StepKey(step)) {
             return false;
         }
 

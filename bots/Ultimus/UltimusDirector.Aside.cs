@@ -110,6 +110,7 @@ internal sealed partial class UltimusDirectorActor {
         }
 
         _asideWaiting = true;
+        _asideStep = target;
         return new UltimusPlanner.Target(UltimusPlanner.WAIT, leader.X, leader.Y, $"resting while \"{target.What}\" waits", Key: "aside|wait|" + key);
     }
 
