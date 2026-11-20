@@ -208,7 +208,13 @@ internal sealed class InteractObjectStateComponent(ZoneEntity entity)
         }
 
         foreach (var option in GetStateOptions(Entity.Template as GameObjectTemplate)) {
-            if (IsGoalOption(option) || !ChangesWorld(option)) {
+            // A quest's own option is offered by its usage goal (InteractQuestSelectComponent). A dungeon lever's option is
+            // also the dungeon's own switch: its state change opens gates for anyone, with or without the quest
+            // (Counterweight East's levers name Metal Madness, but Stolen Away needs the same gates to reach Sprockets).
+            if (IsGoalOption(option) && !IsZoneSwitchWithoutGoal(option, wizard, current)) {
+                continue;
+            }
+            if (!ChangesWorld(option)) {
                 continue;
             }
 
@@ -234,6 +240,34 @@ internal sealed class InteractObjectStateComponent(ZoneEntity entity)
 
             yield return option;
         }
+    }
+
+    /// <summary>
+    /// True when a quest-goal option is also a switch of the zone (a trigger fires on the state it puts the object in),
+    /// the object is not in that state yet, and the wizard has no open usage goal for this object (that goal offers it).
+    /// </summary>
+    private bool IsZoneSwitchWithoutGoal(InteractOptionTemplate option, Wizard wizard, string current) {
+        var enterState = EnterState(option);
+        var objectName = ObjectName;
+        if (string.IsNullOrEmpty(enterState) || string.IsNullOrEmpty(objectName)
+            || string.Equals(current, enterState, StringComparison.OrdinalIgnoreCase)) {
+            return false;
+        }
+
+        var fire = $"{objectName}.{enterState}.EnterState";
+        if (Zone.TriggersByName?.Values.Any(t => t?.m_fireEvents?.Any(e => e == fire) == true) != true) {
+            return false;
+        }
+
+        if (wizard?.QuestBehavior?.CurrentQuestInstances is { } quests && Entity.Template is GameObjectTemplate template) {
+            foreach (var (quest, goal) in InteractQuestSelectComponent.UsageGoalsOf(template)) {
+                if (quests.Any(q => q.QuestName == quest && q.IsGoalActive(goal.m_goalName))) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     /// <summary>
