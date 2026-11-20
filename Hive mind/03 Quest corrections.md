@@ -19,6 +19,9 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 - Pops never starts a fight when you walk into him. He only joins a fight started with the O'Leary Napper beside him, so the bots start that fight.
 - Confirmed November 19, 2026: Kurrent and Mythis beat Pops, Garm and Ra got out of The Ironworks.
 
+## Marleybone, Katzenstein's Lab
+- If You Build It..., the plaque gate (Gate02): the plaques only work after Weird Science is done (beat Firegut and Clanker in the first wing). Clicked before that, all four stay set and the gate never opens (Cyndr and Kurrent, 20 November, 05:53 to past 07:00). Do Weird Science first, then click Sun, Bird, Tree, Bug. If all four are set and the gate is still shut, click Sun back to reset them and start again.
+
 ## Marleybone, Counterweight East
 - Metal Madness and Stolen Away are done in one run: pull the four levers floor by floor, then go straight up to Sprockets. A bot that leaves in between finds the levers no longer work for it in a fresh copy.
 - A floor creature that won't fight is never a reason to leave the dungeon. Only the step's own creature is.

@@ -499,8 +499,11 @@ internal static class BotFloors {
                     }
                 }
 
-                // A quest that must be done first, on the trigger itself or on the one it fires from.
-                var quest = Needs(t).OfType<ReqEncounterComplete>().FirstOrDefault(r => !r.m_applyNOT && !string.IsNullOrEmpty(r.m_encounterName));
+                // A quest that must be done first, on the trigger itself or on the one it fires from, or on any check of its
+                // chain: Katzenstein's Lab's first plaque check needs "Weird Science" done, so plaques clicked before it were
+                // left set with the gate shut, and the bots stood at Gate02 for an hour (the Calling of 7, 2026-11-20).
+                var quest = Needs(t).Concat(triggers.Where(p => gate.ChainTriggers.Contains((string) p.m_triggerName ?? "", StringComparer.OrdinalIgnoreCase)).SelectMany(Needs))
+                    .OfType<ReqEncounterComplete>().FirstOrDefault(r => !r.m_applyNOT && !string.IsNullOrEmpty(r.m_encounterName));
                 if (quest is not null) {
                     gate = gate with { Encounter = quest.m_encounterName };
                 }
@@ -1066,6 +1069,17 @@ internal static class BotFloors {
             if (wing is not null && live?.FoesNear?.Invoke(wing.X, wing.Y) == true) {
                 return new Duty(FIGHT, wing.X, wing.Y, $"the creatures by the puzzle that opens \"{gate.Object}\"", "room|" + wing.Trigger,
                     "the puzzle comes out once they are beaten");
+            }
+
+            // In-order pieces all set while the gate stays shut (set before the chain could count them, as before its quest
+            // was done): the first is clicked back, so the game's own reset turns them all back and the chain starts over.
+            if (gate.InOrder && gate.Needs.Count > 0 && gate.Needs.All(n => string.Equals(StateOf(n.Object), n.State, StringComparison.OrdinalIgnoreCase))
+                && gate.PieceSpots.TryGetValue(gate.Needs[0].Object, out var firstAt)) {
+                var restartKey = $"piece|{gate.Needs[0].Object}|{StateOf(gate.Needs[0].Object)}|restart";
+                if (Tried(restartKey) < TRIES) {
+                    return new Duty(CLICK, firstAt.X, firstAt.Y, $"the puzzle piece \"{gate.Needs[0].Object}\" back (all set, but \"{gate.Object}\" stayed shut)", restartKey,
+                        $"\"{gate.Object}\" opens only once {string.Join(", then ", gate.Needs.Select(n => n.Object))} are set in that order while it can count them, so it starts over");
+                }
             }
 
             // In-order pieces: one set ahead of an earlier one that isn't is clicked back first, so the chain starts over.
