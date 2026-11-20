@@ -15,11 +15,11 @@
 # It can still be run by hand from GitHub: Actions > Publish bot update > Run workflow (branch quality-assurance).
 name: Publish bot update
 
+# Niduus, 2026-11-20: "for now on, have all bot issues go forward with the update that happens every 15 minutes of the hour
+# unless critically needed". So merging bot code no longer publishes by itself: merged bot fixes wait on quality-assurance and
+# the 15-minute bot watch runs this once for all of them (or at once for a critical fix). Fewer updates also means the bots
+# log out and back in less often.
 on:
-  push:
-    branches: [quality-assurance]
-    paths:
-      - 'bots/**'
   workflow_dispatch:
     inputs:
       note:
