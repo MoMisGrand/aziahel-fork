@@ -21,6 +21,8 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Haru: won 2 time(s) (2 Solo, 0 Team), lost 0. Fastest: Ultimus in 9 rounds, deck for a boss (Myth), hitting with Myth, Balance, Storm (many of my fights lately had 2+ enemies), hits with Locust Swarm.
 - Walking Dead: won 2 time(s) (2 Solo, 0 Team), lost 0. Fastest: Ultimus in 6 rounds, deck for Death enemies, hitting with Death, Fire, Myth (most of my fights lately had 2+ enemies), hits with Sandstorm, Minor Crusade, Gearhead Destroyer.
 - Oyotomi the Defiler: won 2 time(s) (2 Solo, 0 Team), lost 0. Fastest: Ultimus in 9 rounds, deck for any fight (many of my fights lately had 2+ enemies), hits with Minor Crusade, Locust Swarm.
+- Tortured Kakeda Soul: won 2 time(s) (2 Solo, 0 Team), lost 0. Fastest: Ultimus in 5 rounds, deck for Death enemies, hitting with Death, Fire, Myth (most of my fights lately had 2+ enemies), hits with Sandstorm, Minor Crusade, Gearhead Destroyer.
+- Kakeda Spirit Slave: won 2 time(s) (2 Solo, 0 Team), lost 0. Fastest: Ultimus in 6 rounds, deck for Death enemies, hitting with Death, Fire, Myth (most of my fights lately had 2+ enemies), hits with Sandstorm, Gearhead Destroyer, Scarab.
 - Maito: never beaten yet, lost 1 time(s). Most common reason: it simply hit harder than I could heal.
 - Diseased Water Spirit: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 12 rounds, deck for Storm enemies, hitting with Storm, Death, Myth (most of my fights lately had 2+ enemies), hits with Seraph, Sandstorm, Storm Hound, Minor Crusade.
 - Plague Oni: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 25 rounds, deck for a boss (Balance), hitting with Balance, Death, Ice (most of my fights lately had 2+ enemies), hits with Balance, Sandstorm, Helping Hands, Vampire.
@@ -38,7 +40,6 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Tomugawa the Evil: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 11 rounds, deck for a boss (Death), hitting with Death, Ice, Storm (many of my fights lately had 2+ enemies), hits with Scarab, Fairy, Minor Crusade.
 - Sorrow Whisperer: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 8 rounds, deck for Death enemies, hitting with Death, Fire, Myth (most of my fights lately had 2+ enemies), hits with Minor Crusade, Sandstorm, Fairy.
 - Death Oni: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 12 rounds, deck for a boss (Death), hitting with Death, Ice, Storm (most of my fights lately had 2+ enemies), hits with Minor Crusade, Helping Hands, Fairy, Locust Swarm.
-- Tortured Kakeda Soul: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 5 rounds, deck for Death enemies, hitting with Death, Fire, Myth (most of my fights lately had 2+ enemies), hits with Sandstorm, Minor Crusade, Gearhead Destroyer.
 
 ## Never Again
 - Finished by Ultimus (15 min).
@@ -233,9 +234,11 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 
 ## Left Behind
 - Avoid, places bots got stuck:
-  - Tree of Life near (100, 8300) while Go to MooShu,Tree of Life ("Left Behind"): stuck 4 time(s) (Ultimus); one bot tried every fix there.
-  - Tree of Life near (100, 8300) while a short break before trying "Go to MooShu,Tree of Life" again: stuck 1 time(s) (Ultimus).
+  - Tree of Life near (100, 8300) while Go to MooShu,Tree of Life ("Left Behind"): stuck 9 time(s) (Ultimus); one bot tried every fix there.
+  - Tree of Life near (100, 8300) while a short break before trying "Go to MooShu,Tree of Life" again: stuck 3 time(s) (Ultimus).
   - Tree of Life near (-400, 8400) while a short break before trying "Go to MooShu,Tree of Life" again: stuck 1 time(s) (Ultimus).
+  - Tree of Life near (0, 7900) while a short break before trying "Go to MooShu,Tree of Life" again: stuck 1 time(s) (Ultimus).
+  - Tree of Life near (1500, 9800) while a short break before trying "Go to MooShu,Tree of Life" again: stuck 1 time(s) (Ultimus).
 
 ## Spies Like Us
 - Finished by Ultimus (16 s).
@@ -524,3 +527,15 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
   It took 5 rounds, about 2 minutes.
   Deck made for Death enemies, hitting with Death, Fire, Myth (most of my fights lately had 2+ enemies).
   Spells that landed the hits: Sandstorm, Minor Crusade, Gearhead Destroyer.
+- Won by Ultimus (Solo) against Kakeda Spirit Slave (rank 5, 675 health, Fire) on 2026-11-20 at 02:14:07.
+  It took 8 rounds, about 5 minutes.
+  Deck made for Death enemies, hitting with Death, Fire, Myth (most of my fights lately had 2+ enemies).
+  Spells that landed the hits: Sandstorm, Locust Swarm, Fairy, Helping Hands, Scarab.
+- Won by Ultimus (Solo) against Tortured Kakeda Soul (rank 6, 760 health, Death) on 2026-11-20 at 02:25:31.
+  It took 12 rounds, about 7 minutes.
+  Deck made for Death enemies, hitting with Death, Fire, Myth (most of my fights lately had 2+ enemies).
+  Spells that landed the hits: Helping Hands x2, Sandstorm, Fairy, Locust Swarm, Gearhead Destroyer.
+- Won by Ultimus (Solo) against Kakeda Spirit Slave (rank 5, 675 health, Fire) on 2026-11-20 at 02:29:19.
+  It took 6 rounds, about 3 minutes.
+  Deck made for Death enemies, hitting with Death, Fire, Myth (most of my fights lately had 2+ enemies).
+  Spells that landed the hits: Sandstorm, Gearhead Destroyer, Scarab.
