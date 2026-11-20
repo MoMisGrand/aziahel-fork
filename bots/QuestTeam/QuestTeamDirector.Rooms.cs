@@ -124,6 +124,13 @@ internal sealed partial class QuestTeamDirectorActor {
                     Note(leader.Role, $"{leader.Name} is at {duty.What}, but it offers nothing to pull yet.", QuestTeamLink.ABNORMAL);
                 }
 
+                // Nothing to pull: a piece like Katzenstein's Lab's plaques turns when a wizard walks onto it, so he steps right
+                // onto it instead of standing beside it (the Calling of 7, 2026-11-20: the plaques never offered a click, and
+                // turned only when a bot happened to walk over one).
+                if (lever == 0) {
+                    return new QuestTeamPlanner.Target(QuestTeamPlanner.SPOT, duty.X, duty.Y, $"onto {duty.What} (it turns when stepped on)", Key: "floor|" + duty.Key + "|onto");
+                }
+
                 return new QuestTeamPlanner.Target(QuestTeamPlanner.SPOT, leader.X, leader.Y, $"at {duty.What}", Key: "floor|" + duty.Key);
             }
             case BotFloors.CLICK:
