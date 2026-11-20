@@ -76,5 +76,8 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 - Portal Combat, Use Blue Crystal: the crystal is on top of the Blue Tower. From the low floor, walk up the long ramp east of the Wizard Tower teleporter (it starts by (8400,-10300) and runs south past (10800,-15000)) to the Blue Tower's teleporter at (9890,-18707). It lands on the tower at (11016,-16656); walk up the tower to the crystal by (12239,-16404). Bots used to read the ramp as a wall and never found the way.
 - Portal Combat, after the crystals: click the Crystal Vortex at (12767,-11249) (it turns on once the crystals are used). It lands on the high platform at (16316,-14341), where the Tower 11 sigil and the next step are. It is the only way onto that platform; before the fix of 2026-11-20 the vortex went nowhere for everyone.
 
+## Marleybone, Scotland Yard
+- After Weird Science, Watson offers "Fetch Bones!" right at the hand-in. That offer is the only hint; the game does not mark Fetch Bones! as story. A bot that misses it must go back to Watson and take it, never go back to Wizard City for other quests (Cyndr, 20 November).
+
 ## Marleybone, Big Ben
 - Door43 (by the fourth room's battle circle, around (-9650,21000)) opens only when a level 29 Frog is beaten after the door's trigger was switched on by an earlier floor door. If the Frog is never out in that copy, stepping on the room's circle starts nothing and the door stays shut for good. Walk out and back in for a fresh copy (Garm and Ra, 20 November).

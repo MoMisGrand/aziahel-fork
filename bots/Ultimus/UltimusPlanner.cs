@@ -231,10 +231,25 @@ internal static class UltimusPlanner {
     /// <summary>The next story quest (or quest the story needs) the team can get, and its giver (a story quest of this world first).</summary>
     internal static (QuestTemplate Quest, ulong Giver)? NextQuest(Wizard leader) {
         var world = (leader.Zone ?? "").Split('/')[0];
-        return QuestService.QuestFinderGivers()
-            .Where(g => IsMainStoryWorld(g.Quest) && BotShared.BotStory.Plays(g.Quest) && MapService.IsOfferedTo(g.Quest, leader))
+        var offered = QuestService.QuestFinderGivers()
+            .Where(g => IsMainStoryWorld(g.Quest) && MapService.IsOfferedTo(g.Quest, leader))
+            .ToList();
+        var story = offered.Where(g => BotShared.BotStory.Plays(g.Quest))
             .OrderByDescending(g => BotShared.BotStory.Rank(g.Quest))
             .ThenByDescending(g => string.Equals(QuestGuide.GiverZone(g.Quest).Split('/')[0], world, StringComparison.OrdinalIgnoreCase))
+            .Select(g => ((QuestTemplate, ulong)?) (g.Quest, g.Giver))
+            .FirstOrDefault();
+        if (story is not null) {
+            return story;
+        }
+
+        // No story quest offered: a main quest of the furthest story world offered to him. Marleybone's story goes on past
+        // the quests the game marks as story ("Fetch Bones!", "Stolen Away", then Big Ben), handed over only as the follow-on
+        // offer when "Weird Science" is turned in; Cyndr missed that offer (2026-11-20 12:29) and had "no World or Story quest
+        // left to get" while Watson still offered "Fetch Bones!".
+        return offered.Where(g => QuestStory.IsMain(g.Quest) && !DungeonQuestIndex.IsDungeonQuest(g.Quest.m_questName)
+                                  && !Imlight.CoreLib.Game.Quests.QuestOptions.IsOff(g.Quest.m_questName))
+            .OrderByDescending(g => BotShared.MainWorlds.Number(QuestGuide.GiverZone(g.Quest).Split('/')[0]))
             .Select(g => ((QuestTemplate, ulong)?) (g.Quest, g.Giver))
             .FirstOrDefault();
     }
