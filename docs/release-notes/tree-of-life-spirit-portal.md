@@ -1,0 +1,4 @@
+Fixed: Tree of Life spirit portal
+After you beat Nomoonaga and use the Tree of Life, the glowing spirit portal by the tree did nothing when you tried to enter it, so you could not reach Kagemoosha. The server did not know where the portal goes, so it never offered the Enter prompt. It now takes you to the Spirit World room where Kagemoosha waits, and only once the tree has opened it. Any portal or door that the game files say opens by being switched on now waits until it is on.
+Where: MooShu, Tree of Life dungeon, the spirit portal in front of the tree (quest Tree of Life).
+Test: Finish Question of Faith, talk to Yishin Chen, use the Tree of Life, then walk up to the portal and press X to enter. You should land in the Spirit World room; step on the circle in the middle to fight Kagemoosha.

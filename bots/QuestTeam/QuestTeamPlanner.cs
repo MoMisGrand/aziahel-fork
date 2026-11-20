@@ -417,6 +417,14 @@ internal static class QuestTeamPlanner {
                         questName, goalName, Key: key + "|roomcircle");
                 }
 
+                // Not here, and a door of this dungeon leads to the room whose spawn files hold it (the Tree of Life's spirit
+                // portal leads to Kagemoosha's Spirit World room): that room is where the step is (BotShared/BotRoomFoes).
+                if (!anyWanted && stepZone.Length == 0 && leader.Wizard?.ZoneIsInstance == true
+                    && BotShared.BotRoomFoes.RoomBehindDoor(live, zone, adjectives) is { Length: > 0 } room) {
+                    stepZone = room;
+                    break;
+                }
+
                 // None up right now: into the street area where they spawn, to meet the next one.
                 if (Tools.RouteMobs.SeekFor(leader.ZoneActor, leader.X, leader.Y, adjectives) is { } area) {
                     var (ax, ay) = Tools.RouteMobs.Nearest(area, leader.X, leader.Y);
