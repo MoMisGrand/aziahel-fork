@@ -166,6 +166,18 @@ internal static class MinimapIndex {
             return new Mark(DOOR, name.Length == 0 ? "Teleporter" : name, id, adjectives, entity.ActiveGameObject, 0);
         }
 
+        // A clickable thing whose teleport the game leaves blank, with its landing stored under its name (spiraldb-extra
+        // DungeonTeleports, as ResTeleportHandler reads it): a door like any other, so the way finders know it. The Tower
+        // Archives' Crystal Vortex is the only way onto the Tower 11 platform, and no bot knew it was a way at all
+        // (2026-11-20).
+        if (entity.GetComponentOfType<InteractObjectStateComponent>() is not null && StoredTeleport(entity) is { } stored) {
+            var to = ((string) stored.m_destinationZone).Trim();
+
+            return new Mark(DOOR, "To " + World.ZoneNames.Shown(to), id, adjectives, entity.ActiveGameObject, 0) {
+                To = to, ToLoc = ((string) stored.m_destinationLoc ?? "").Trim(),
+            };
+        }
+
         if (entity.GetComponentOfType<WispHealthComponent>() is not null) {
             return new Mark(WISP_HEALTH, "Health wisp", id, adjectives, entity.ActiveGameObject, 0);
         }
@@ -183,6 +195,19 @@ internal static class MinimapIndex {
         }
 
         return null;
+    }
+
+    // The stored teleport named like the entity (its zone tag, else its object name), when it names where it goes.
+    private static ResTeleport StoredTeleport(ZoneEntity entity) {
+        string name = entity.Info?.m_zoneTag is { Length: > 0 } tag ? tag : (entity.Template as GameObjectTemplate)?.m_objectName.ToString();
+        if (string.IsNullOrEmpty(name) || entity.Zone?.ZonePath is not { Length: > 0 } zone) {
+            return null;
+        }
+
+        var stored = WizardData.Collections.ZoneDataCollection.GetZoneData(zone)?.Teleports?
+            .FirstOrDefault(t => string.Equals(t?.TriggerName, name, StringComparison.Ordinal))?.Teleport;
+
+        return string.IsNullOrWhiteSpace(stored?.m_destinationZone) ? null : stored;
     }
 
     /// <summary>What an NPC does for players, from the service it offers when talked to (empty when nothing).</summary>
