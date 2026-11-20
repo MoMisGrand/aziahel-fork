@@ -18,6 +18,7 @@ public sealed class InstanceQuestProgress {
     private readonly HashSet<string> _startedQuests = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, List<string>> _completedGoals = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _zones = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, int> _goalCounts = new(StringComparer.OrdinalIgnoreCase);
     private readonly Lock _lock = new();
 
     /// <summary>
@@ -75,6 +76,20 @@ public sealed class InstanceQuestProgress {
         }
     }
 
+    /// <summary>A player's count on a counted step of this run (the highest one is kept).</summary>
+    public void NoteGoalCount(ulong charId, string questName, string goalName, int count) {
+        if (string.IsNullOrEmpty(questName) || string.IsNullOrEmpty(goalName) || count <= 0) {
+            return;
+        }
+
+        lock (_lock) {
+            var key = $"{charId}|{questName}|{goalName}";
+            if (!_goalCounts.TryGetValue(key, out var had) || count > had) {
+                _goalCounts[key] = count;
+            }
+        }
+    }
+
     /// <summary>
     /// The quests this instance finished and, per quest, the goals it completed in order.
     /// </summary>
@@ -86,6 +101,7 @@ public sealed class InstanceQuestProgress {
                 CompletedQuests = [.. _completedQuests],
                 StartedQuests = [.. _startedQuests],
                 CompletedGoals = _completedGoals.ToDictionary(kv => kv.Key, kv => kv.Value.ToArray()),
+                GoalCounts = new Dictionary<string, int>(_goalCounts, StringComparer.OrdinalIgnoreCase),
             };
         }
     }

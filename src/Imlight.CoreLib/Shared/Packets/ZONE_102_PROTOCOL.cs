@@ -1689,6 +1689,9 @@ public class ZONE_102_PROTOCOL : IServerProtocol {
         public string[] StartedQuests = [];
         public Dictionary<string, string[]> CompletedGoals = [];
         public string[] Zones = [];
+        // How far each player got on a counted step not yet done ("charId|quest|goal" -> count), kept so leaving the
+        // copy (a lost battle, a relog) and coming back in does not start the count over.
+        public Dictionary<string, int> GoalCounts = [];
 
     }
 
@@ -1820,6 +1823,21 @@ public class ZONE_102_PROTOCOL : IServerProtocol {
     /// Sent to a Beastmoon arena zone (Zone.Battleground.cs): its own capture timer ticks with Tick, `.bg points` asks
     /// with Status (the answer comes back in Text), and `.bg reset` puts every control point back to nobody's with Reset.
     /// The arena script's battleground steps (ResRaidHandlers.cs, in an arena) and the match's own timers send the rest.
+    /// </summary>
+    public sealed class MSG_NOTEINSTANCEGOALCOUNT : IServerMessage {
+
+        public byte MessageOrder { get; } = 114;
+        public byte ServiceID { get; } = 102;
+
+        public ulong CharId;
+        public string QuestName;
+        public string GoalName;
+        public int Count;
+
+    }
+
+    /// <summary>
+    /// Sent to a Beastmoon arena zone (see below).
     /// </summary>
     public sealed class MSG_BATTLEGROUNDCONTROL : IServerMessage {
 

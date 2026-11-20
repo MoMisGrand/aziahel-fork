@@ -623,6 +623,7 @@ internal partial class QuestService(SessionActor sessionActor) : MessageService(
         }
 
         wizard.IncrementQuestGoal(qInstance.QuestName, gTemplate.m_goalName);
+        NoteInstanceGoalCount(wizard, qInstance, gTemplate.m_goalName);
 
         var goalMax = QuestMadlibs.GetGoalTotal(gTemplate);
         Logger.Information("Quest goal progress: {0} quest '{1}' goal '{2}' at {3}/{4} after a use.",
@@ -670,6 +671,7 @@ internal partial class QuestService(SessionActor sessionActor) : MessageService(
                 }
 
                 wizard.IncrementQuestGoal(qInstance.QuestName, goal.m_goalName);
+                NoteInstanceGoalCount(wizard, qInstance, goal.m_goalName);
                 Logger.Information("Quest goal progress: {0} quest '{1}' goal '{2}' at {3}/{4} after catching fish {5}.",
                     Logger.Args(wizard.CharId, qInstance.QuestName, goal.m_goalName, gInstance.CurrentProgress, goalMax, message.FishTemplateId));
                 if (gInstance.CurrentProgress >= goalMax) {
@@ -718,6 +720,8 @@ internal partial class QuestService(SessionActor sessionActor) : MessageService(
                     for (var i = 0; i < count && gInstance.CurrentProgress < goalMax; i++) {
                         wizard.IncrementQuestGoal(qInstance.QuestName, goal.m_goalName);
                     }
+
+                    NoteInstanceGoalCount(wizard, qInstance, goal.m_goalName);
 
                     Logger.Information("Quest goal progress: {0} quest '{1}' goal '{2}' at {3}/{4} after keeping {5} Animus.",
                         Logger.Args(wizard.CharId, qInstance.QuestName, goal.m_goalName, gInstance.CurrentProgress, goalMax, tally));
@@ -815,6 +819,7 @@ internal partial class QuestService(SessionActor sessionActor) : MessageService(
 
                     _photoCounted[key] = now;
                     wizard.IncrementQuestGoal(qInstance.QuestName, goal.m_goalName);
+                    NoteInstanceGoalCount(wizard, qInstance, goal.m_goalName);
                     Logger.Information("Quest goal progress: {0} quest '{1}' goal '{2}' at {3}/{4} after a photo ({5}).",
                         Logger.Args(wizard.CharId, qInstance.QuestName, goal.m_goalName, gInstance.CurrentProgress, goalMax,
                             counted != 0 ? counted.ToString() : "photo not readable, taken in the step's place"));
@@ -2460,6 +2465,8 @@ internal partial class QuestService(SessionActor sessionActor) : MessageService(
                 wizard.IncrementQuestGoal(qInstance.QuestName, goalTemplate.m_goalName);
             }
 
+            NoteInstanceGoalCount(wizard, qInstance, goalTemplate.m_goalName);
+
             Logger.Information("Quest goal progress: {0} quest '{1}' goal '{2}' at {3}/{4} after a won battle.",
                 Logger.Args(wizard.CharId, qInstance.QuestName, goalTemplate.m_goalName, gInstance?.CurrentProgress, goalMax));
 
@@ -2964,6 +2971,67 @@ internal partial class QuestService(SessionActor sessionActor) : MessageService(
                             completion: GoalCompletion.CatchUp);
                     }
                 }
+            }
+
+            // Back into the same copy (a lost battle put him out, a relog, a Dungeon Recall): a counted step keeps how far
+            // he got, as the copy keeps the things already used (bots' relogs reset Katzenstein's Lab crates to 0 of 3
+            // while the crates stayed used, 2026-11-20). A fresh copy has no counts, so it starts over as before.
+            if (inInstance) {
+                RestoreInstanceGoalCounts(wizard, questInstance, template, progress.GoalCounts);
+            }
+        }
+    }
+
+    // A counted step of a dungeon quest moved on: the copy keeps the count for this player (see RestoreInstanceGoalCounts).
+    private void NoteInstanceGoalCount(Wizard wizard, QuestInstance qInstance, string goalName) {
+        if (wizard is null || qInstance is null || string.IsNullOrEmpty(goalName) || !DungeonQuestIndex.IsDungeonQuest(qInstance.QuestName)) {
+            return;
+        }
+
+        var goal = qInstance.GoalProgress.FirstOrDefault(g => g.GoalName == goalName);
+        if (goal is null || goal.CurrentProgress <= 0 || goal.CurrentProgress == int.MaxValue) {
+            return;
+        }
+
+        SessionActor.GetZoneActor()?.Tell(new ZONE_102_PROTOCOL.MSG_NOTEINSTANCEGOALCOUNT {
+            CharId = wizard.CharId, QuestName = qInstance.QuestName, GoalName = goalName, Count = goal.CurrentProgress,
+        });
+    }
+
+    private void RestoreInstanceGoalCounts(Wizard wizard, QuestInstance qInstance, QuestTemplate template, Dictionary<string, int> counts) {
+        if (counts is null || counts.Count == 0) {
+            return;
+        }
+
+        foreach (var goalTemplate in template.m_goals.Where(g => g is not null)) {
+            if (!counts.TryGetValue($"{wizard.CharId}|{template.m_questName}|{goalTemplate.m_goalName}", out var count) || count <= 0
+                || !qInstance.IsGoalActive(goalTemplate.m_goalName)) {
+                continue;
+            }
+
+            var goal = qInstance.GoalProgress.FirstOrDefault(g => g.GoalName == goalTemplate.m_goalName);
+            if (goal is null || goal.CurrentProgress == int.MaxValue) {
+                continue;
+            }
+
+            var max = QuestMadlibs.GetGoalTotal(goalTemplate);
+            var target = max > 0 ? Math.Min(count, max) : count;
+            var had = Math.Max(0, goal.CurrentProgress);
+            for (var i = had; i < target; i++) {
+                wizard.IncrementQuestGoal(qInstance.QuestName, goalTemplate.m_goalName);
+            }
+
+            if (goal.CurrentProgress <= had) {
+                continue;
+            }
+
+            Logger.Information("Instance quest sync: {0} is back in the same copy: quest '{1}' goal '{2}' keeps its count, {3}/{4}.",
+                Logger.Args(wizard.CharId, qInstance.QuestName, goalTemplate.m_goalName, goal.CurrentProgress, max));
+            if (max > 0 && goal.CurrentProgress >= max) {
+                CompleteGoal(qInstance, goalTemplate, showCompletionDialogue: false, completion: GoalCompletion.CatchUp);
+            }
+            else {
+                SendGoalMessage(goalTemplate, qInstance, 2);
             }
         }
     }
