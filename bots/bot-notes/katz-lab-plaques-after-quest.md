@@ -1,0 +1,4 @@
+Fixed: Bots no longer get stuck at Katzenstein's Lab's plaque gate
+The plaques only count once the lab's first quest, Weird Science, is done. The bots clicked all four before that, so the plaques stayed set and the gate stayed shut, and Cyndr and Kurrent stood at it for over an hour. Now the bots finish that quest first. If a plaque puzzle is ever fully set and its gate is still shut, they click the first plaque back so it resets and start the order again. This works the same for any ordered puzzle that needs a quest done first.
+Where: Katzenstein's Lab in Marleybone (quest If You Build It..., Talk to Grunk), and any dungeon with an ordered puzzle like it.
+Test: Send a bot into a fresh Katzenstein's Lab and watch it beat Firegut and Clanker first, then click Sun, Bird, Tree and Bug, and walk through the open gate to Grunk.
