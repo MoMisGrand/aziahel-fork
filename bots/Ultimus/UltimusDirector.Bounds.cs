@@ -248,7 +248,8 @@ internal sealed partial class UltimusDirectorActor {
         // While he rests beside a set-aside step, the step is what counts (the rest itself names no quest): Idunn rested by
         // a Bellows that would not fight for 40 minutes, and the rest never counted as "its creature is not there".
         var step = _target?.Key?.StartsWith("aside|wait|", StringComparison.Ordinal) == true && _asideStep is { } aside ? aside : _target;
-        var noFoe = step is { } last && !string.IsNullOrEmpty(last.Quest)
+        var parked = ParkedInCopy(zone, now);
+        var noFoe = parked || step is { } last && !string.IsNullOrEmpty(last.Quest)
                     && (last.Problem == "no creature for this step is in the area"
                         || UseDud(zone, last, now)
                         || (last.Kind == UltimusPlanner.WAIT && last.What.StartsWith("resting while", StringComparison.Ordinal))
@@ -265,8 +266,8 @@ internal sealed partial class UltimusDirectorActor {
 
         // Things to use found all used up at the step's own spot is plain to see, so it waits 3 minutes, not 20: every bots
         // update restarts the 20 minutes, and Cyndr stood by Katz Lab's used crates through four updates (2026-11-20).
-        var quick = QuickReset(zone, now, step)
-                    || (UseDud(zone, step, now) && now - _noFoeSince >= TimeSpan.FromMinutes(3) && QuickLeft(zone, now));
+        var quick = !parked && QuickReset(zone, now, step)
+                    || (step is not null && UseDud(zone, step, now) && now - _noFoeSince >= TimeSpan.FromMinutes(3) && QuickLeft(zone, now));
         // Real progress only (a step, a quest, a level, XP, a won quest fight): a stuck fix that "got free" or a group check
         // counts as progress too, and kept Cyndr's Katz Lab copy from ever starting over (2026-11-20, two hours by used-up crates).
         if (!quick && (now - _noFoeSince < s_resetAfter || now - _realProgressAt < s_resetAfter)) {
@@ -283,6 +284,15 @@ internal sealed partial class UltimusDirectorActor {
         }
 
         _resetting = (zone, now);
+        if (parked) {
+            Note("Ultimus", $"ABNORMAL: in {UltimusText.Zone(zone)} every fix failed twice over for \"{step?.What ?? "his step"}\" and nothing moved on for " +
+                            $"{(now - _realProgressAt).TotalMinutes:0} minutes: walks out to {UltimusText.Zone(safe)} and back in for a fresh copy.", UltimusLink.ABNORMAL);
+            Think($"Nothing I tried in {UltimusText.Zone(zone)} got me on, twice over. A player walks out and comes back in, and the dungeon " +
+                  "starts fresh with its doors and creatures back, so I do that.", "resetcopy|" + zone);
+
+            return UltimusPlanner.Travel(leader, safe, $"leaving {UltimusText.Zone(zone)} to start it over (every fix failed here)", "resetcopy");
+        }
+
         Note("Ultimus", $"ABNORMAL: in {UltimusText.Zone(zone)} " + (UseDud(zone, step, now) ? "what is used" : "the creature") + $" for \"{step.What}\" " + (quick ? (UseDud(zone, step, now) ? "was all used up" : "stood still and started no battle") : $"has not been there to fight for {(now - _noFoeSince.Value).TotalMinutes:0} minutes") +
                         $": walks out to {UltimusText.Zone(safe)} and back in for a fresh copy.", UltimusLink.ABNORMAL);
         Think($"The creature my step needs in {UltimusText.Zone(zone)} has not been there to fight for a long time, and nothing else here is " +
@@ -334,6 +344,13 @@ internal sealed partial class UltimusDirectorActor {
     /// <summary>Whether this step's things to use were found used up in this dungeon in the last 10 minutes.</summary>
     private bool UseDud(string zone, UltimusPlanner.Target step, DateTime now)
         => _useDudAt is { } dud && OverlayQuestTracker.SameZone(dud.Zone, zone) && now - dud.At < TimeSpan.FromMinutes(10) && dud.Step == StepKey(step);
+
+    // When every fix failed twice over in a dungeon copy (ParkStep), for the fresh-copy check.
+    private (string Zone, DateTime At)? _parkedInCopyAt;
+
+    /// <summary>Whether every fix failed twice over in this dungeon copy in the last 30 minutes.</summary>
+    private bool ParkedInCopy(string zone, DateTime now)
+        => _parkedInCopyAt is { } p && OverlayQuestTracker.SameZone(p.Zone, zone) && now - p.At < TimeSpan.FromMinutes(30);
 
     /// <summary>The quest and goal a target belongs to, so a dud creature counts only for its own step.</summary>
     private static string StepKey(UltimusPlanner.Target target) => target is null ? "" : $"{target.Quest}|{target.Goal}";

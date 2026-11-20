@@ -170,6 +170,13 @@ internal sealed partial class UltimusDirectorActor {
         }
 
         StartBreak(what);
+        // In a dungeon copy, every fix failing twice over is also a reason for a fresh copy (ResetCopy, after the usual 20
+        // minutes with no real progress): Garm and Ra stood behind Big Ben's shut Door43 for over an hour, its Frog never
+        // out in that copy, and nothing but a fresh copy could open it (2026-11-20).
+        if (member.Wizard?.ZoneIsInstance == true && _team.Count > 0 && ReferenceEquals(member, _team[0])) {
+            _parkedInCopyAt = (member.Zone ?? "", DateTime.UtcNow);
+        }
+
         UltimusEffort.Note(UltimusEffort.Kind.StuckStep, $"could not get past \"{what}\" at {where} after every fix, twice over");
         var folder = times == 1 || times == 3
             ? SaveNeedsHelp($"Ultimus needs help: \"{what}\" for {UltimusText.Title(quest)} in {where}. He tried every way he knows, twice over." +
