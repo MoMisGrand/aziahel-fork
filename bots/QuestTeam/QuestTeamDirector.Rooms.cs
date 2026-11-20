@@ -79,6 +79,7 @@ internal sealed partial class QuestTeamDirectorActor {
             EncounterDone = BotFloors.EncounterDoneFor(leader.Wizard),
             HasEntry = BotFloors.HasEntryFor(leader.Wizard),
             StepEvents = BotFloors.StepEventsOf(target?.Quest, target?.Goal),
+            Step = target is null ? null : (target.X, target.Y),
         };
         if (BotFloors.Next(book, live, leader.X, leader.Y, _floorTries, leader.Z) is not { } duty) {
             _floorOn = null;

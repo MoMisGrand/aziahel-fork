@@ -198,6 +198,7 @@ internal sealed partial class UltimusDirectorActor {
             EncounterDone = BotFloors.EncounterDoneFor(leader.Wizard),
             HasEntry = BotFloors.HasEntryFor(leader.Wizard),
             StepEvents = BotFloors.StepEventsOf(target?.Quest, target?.Goal),
+            Step = target is null ? null : (target.X, target.Y),
         };
         // A person to talk to, standing here on his own ground, comes before the floor's puzzles: a player talks first, and
         // the dungeon's own quest says what the puzzles are for (the Calling of 7, 2026-11-18 19:28-22:20: Shalek the Wise

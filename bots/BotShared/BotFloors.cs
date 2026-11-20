@@ -843,6 +843,9 @@ internal static class BotFloors {
 
         /// <summary>The zone events his quest step waits on (its goal's generic events), for the area's event puzzles.</summary>
         internal IReadOnlyCollection<string> StepEvents { get; init; } = [];
+
+        /// <summary>Where his quest step is in this area, or null when unknown: a far puzzle is only his when its lock lies toward it.</summary>
+        internal (float X, float Y)? Step { get; init; }
     }
 
     /// <summary>The zone events a quest step waits on (the goal's generic events, "PuzzleComplete"), or none.</summary>
@@ -1045,7 +1048,13 @@ internal static class BotFloors {
         var stepPuzzles = (live?.StepEvents ?? []).Select(e => book.EventPuzzles.GetValueOrDefault(e)).Where(g => g is not null
                 && g.Needs.Any(n => !string.Equals(StateOf(n.Object), n.State, StringComparison.OrdinalIgnoreCase))
                 && !PastLocked(g.LX, g.LY) && !g.PieceSpots.Values.Any(p => PastLocked(p.X, p.Y)));
+        // A far puzzle is his only when its lock stands toward his step. The Calling of 7, 2026-11-19 23:44-00:03: Cyndr, Idunn
+        // and Kurrent, on "Weird Science" (Firegut and Clanker, in the lab's first wing), were sent every other second to
+        // Katzenstein's Lab's Sun plaque by Gate02, 26,000 away on the far side, and stood still flipping between the two.
+        bool TowardStep(Gate g) => live?.Step is not { } s || Far(x, y, g.LX, g.LY) <= PUZZLE
+                                   || Far(g.X, g.Y, s.X, s.Y) < Far(x, y, s.X, s.Y);
         foreach (var gate in book.Gates.Where(g => g.Pieces && Closed(g) && !(g.ChainTriggers.Count > 0 ? g.ChainTriggers.All(Off) : Off(g.Trigger)) && Here(g.LZ) && !Locked(g)
+                                                   && TowardStep(g)
                                                    && !PastLocked(g.LX, g.LY) && !g.PieceSpots.Values.Any(p => PastLocked(p.X, p.Y)))
                      .OrderBy(g => Far(x, y, g.LX, g.LY)).Concat(stepPuzzles)) {
             var wing = book.Circles.Where(c => Far(c.X, c.Y, gate.LX, gate.LY) <= ROOM).OrderBy(c => Far(c.X, c.Y, gate.LX, gate.LY)).FirstOrDefault();
