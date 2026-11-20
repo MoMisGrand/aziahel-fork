@@ -37,6 +37,10 @@ internal sealed partial class UltimusDirectorActor {
 
     // Steps and clicks made per floor duty, for this copy of the area.
     private readonly Dictionary<string, int> _floorTries = new(StringComparer.Ordinal);
+
+    // The floor duty spot he is on his way to, and since when (UnreachableFor).
+    private (string Key, DateTime Since) _floorChase;
+    private static readonly TimeSpan UnreachableFor = TimeSpan.FromMinutes(5);
     private string _floorBehindSaid;
     private string _floorZone = "";
     // The spot he stands on now (stepped on once); he steps off before stepping on it again.
@@ -272,6 +276,21 @@ internal sealed partial class UltimusDirectorActor {
             }
             case BotFloors.CLICK:
                 return new UltimusPlanner.Target(UltimusPlanner.SPOT, duty.X + 60, duty.Y, $"to {duty.What}", Key: "floor|" + duty.Key);
+        }
+
+        // A spot he has had for minutes and never reached counts as tried out: Katzenstein's Lab's "Gate 1 Open" lies past its own
+        // gate, a floor below, with no way to it from the entrance side; Cyndr stood 20 minutes on it, twice (2026-11-20).
+        if (far > BotFloors.ON_SPOT && _floorOn != duty.Key) {
+            if (_floorChase.Key != duty.Key) {
+                _floorChase = (duty.Key, DateTime.UtcNow);
+            }
+            else if (DateTime.UtcNow - _floorChase.Since > UnreachableFor) {
+                _floorTries[duty.Key] = BotFloors.TRIES;
+                _floorChase = default;
+                Note("Ultimus", $"{leader.Name} gives up on {duty.What}: no way there in {UnreachableFor.TotalMinutes:0} minutes, so it is not his to step on from here.", UltimusLink.ABNORMAL);
+
+                return null;
+            }
         }
 
         // A spot to step on: counted once on arrival; stepped off first when it has to be stepped on again.
