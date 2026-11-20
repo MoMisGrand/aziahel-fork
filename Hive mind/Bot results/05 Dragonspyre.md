@@ -26,14 +26,14 @@ What the bots did in Dragonspyre, from the server log: every quest finished, eve
   It took 12 rounds, about 10 minutes.
   Deck made for any fight (many of my fights lately had 2+ enemies).
 - Avoid, places bots got stuck:
-  - The Tower Archives near (12300, -7200) while Go to Dragonspyre,The Tower Archives ("Portal Combat"): stuck 14 time(s) (Ultimus); one bot tried every fix there.
+  - The Tower Archives near (12300, -7200) while Go to Dragonspyre,The Tower Archives ("Portal Combat"): stuck 28 time(s) (Ultimus); one bot tried every fix there.
+  - The Tower Archives near (13000, -11500) while Go to Dragonspyre,The Tower Archives ("Portal Combat"): stuck 18 time(s) (Ultimus); one bot tried every fix there.
   - The Tower Archives near (8400, -10300) while Use Blue Crystal here ("Portal Combat"): stuck 11 time(s) (Ultimus); one bot tried every fix there.
-  - The Tower Archives near (13000, -11500) while Go to Dragonspyre,The Tower Archives ("Portal Combat"): stuck 9 time(s) (Ultimus); one bot tried every fix there.
+  - The Tower Archives near (-31800, -14000) while resting while "Go to Dragonspyre,The Tower Archives" waits: stuck 7 time(s) (Ultimus); one bot tried every fix there.
+  - The Tower Archives near (12300, -7200) while a short break before trying "Go to Dragonspyre,The Tower Archives" again: stuck 3 time(s) (Ultimus); one bot tried every fix there.
+  - The Basilica near (200, -500) while a short break before trying "Go to Dragonspyre,The Tower Archives" again: stuck 3 time(s) (Ultimus).
+  - The Tower Archives near (13000, -11500) while a short break before trying "Go to Dragonspyre,The Tower Archives" again: stuck 3 time(s) (Ultimus); one bot tried every fix there.
   - The Tower Archives near (8400, -10300) while a short break before trying "Use Blue Crystal here" again: stuck 2 time(s) (Ultimus).
-  - The Tower Archives near (11500, -15900) while Use Blue Crystal here ("Portal Combat"): stuck 2 time(s) (Ultimus).
-  - The Basilica near (0, 0) while a short break before trying "Use Blue Crystal here" again: stuck 1 time(s) (Ultimus).
-  - The Tower Archives near (7400, -9400) while a short break before trying "Use Blue Crystal here" again: stuck 1 time(s) (Ultimus).
-  - The Tower Archives near (13700, -9400) while resting while "Go to Dragonspyre,The Tower Archives" waits: stuck 1 time(s) (Ultimus).
 
 ## Bad Blood
 - Finished by Ultimus (12 min).
