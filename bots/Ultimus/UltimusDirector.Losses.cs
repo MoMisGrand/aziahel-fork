@@ -69,6 +69,16 @@ internal sealed partial class UltimusDirectorActor {
 
     /// <summary>A fight lost at <paramref name="stepKey"/> for the <paramref name="losses"/>th time: the next remedy, reasoned out.</summary>
     private void PlanAfterLoss(UltimusMember.Status me, string stepKey, int losses) {
+        // A TCO7 (or Kitharas) member who keeps losing on the same quest asks a free teammate to come and help
+        // (UltimusDirector.Tco7.cs). Counted per quest: the step's key changes between tries (Idunn's Bellows losses
+        // counted 1, 2, 3, 1, 3 ... at "this step" on 2026-11-20), so a per-step count never reached the call.
+        if (_seat.IsTeamBot) {
+            var quest = _currentQuest ?? _target?.Quest ?? "";
+            if (quest.Length > 0 && NoteQuestLoss(quest) >= HELP_CALL_LOSSES) {
+                CallForHelp(quest);
+            }
+        }
+
         if (losses < 2 || string.IsNullOrEmpty(stepKey)) {
             return;
         }
@@ -98,11 +108,6 @@ internal sealed partial class UltimusDirectorActor {
             // Every remedy tried: start over with the best one, as a player tries again.
             plan.Tried.Clear();
             pick = scores.OrderByDescending(s => s.Score).First();
-        }
-
-        // A TCO7 (or Kitharas) member who keeps losing the same fight asks a free teammate to come and help (UltimusDirector.Tco7.cs).
-        if (_seat.IsTeamBot && losses >= HELP_CALL_LOSSES) {
-            CallForHelp(_currentQuest ?? _target?.Quest ?? "");
         }
 
         plan.Tried.Add(pick.Remedy);
