@@ -164,6 +164,12 @@ internal sealed partial class UltimusDirectorActor {
             return false;
         }
 
+        // A room whose own spawn files hold the creature of one of his open fight steps (the Tree of Life's Spirit World
+        // room holds Nomoonaga): his step is played here (BotShared/BotRoomFoes).
+        if (BotShared.BotRoomFoes.StepFoeRoom(wizard, zone) is not null) {
+            return false;
+        }
+
         var held = wizard.QuestBehavior?.CurrentQuestInstances?.Where(q => q is not null).Select(q => q.QuestName).ToList() ?? [];
         // A quest of this dungeon the story needs done first: the dungeon is on the story.
         var own = DungeonQuestIndex.GetQuestsForZones([zone]).Select(q => (string) q.m_questName).ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -374,6 +380,17 @@ internal sealed partial class UltimusDirectorActor {
         // Into another world, the one he meant (the Spiral Door sets travellers down where its door stands, not always
         // the world's main area): the right world, so he plans on from here instead of backing out.
         if (OverlayQuestRoute.SameWorld(meant, leader.Zone) && !OverlayQuestRoute.SameWorld(fromZone, leader.Zone)) {
+            return;
+        }
+
+        // A room of the same dungeon that his fight step's creature waits in (it comes out on the room's battle circle): the
+        // right way in, not a wrong turn. The Tree of Life, 2026-11-20: the Spirit World room holds Nomoonaga, and backing
+        // out of it each time sent him round in a loop for 20 minutes (BotShared/BotRoomFoes).
+        if (leader.Wizard?.ZoneIsInstance == true && OverlayQuestRoute.IsDungeon(fromZone)
+            && BotShared.BotRoomFoes.StepFoeRoom(leader.Wizard, leader.Zone) is { } fightQuest) {
+            Think($"I meant to stay in {UltimusText.Zone(meant)}, but this room ({UltimusText.Zone(leader.Zone)}) is where the creature " +
+                  $"of my fight step in {UltimusText.Title(fightQuest)} waits, so this is the right way in. I stay and find it.",
+                "room-foe|" + leader.Zone);
             return;
         }
 
