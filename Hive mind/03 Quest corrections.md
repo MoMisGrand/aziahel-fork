@@ -8,8 +8,8 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 - The plaques stand right beside the shut gate. A walk to a gate's own plaque never stops at that gate.
 - The second gate works the same way, with the Tree, Sun, Bird and Bug plaques in that order.
 - Weird Science: Firegut and Clanker are in the lab's first wing, nowhere near the plaques. A far puzzle only counts when its gate stands toward the bot's step, so these bots go straight for the fights.
-- The plaques are never clicked: they turn when a wizard walks onto them. Bots step right onto each one. This is the dungeon's own quest "Locked Door".
-- Confirmed November 20, 2026: Ra finished "Locked Door" and Mythis finished "If You Build It..." by walking over the plaques. Garm reached Grunk for "It's Alive!" another way.
+- The plaques hang on the wall and are clicked from the floor below them, not walked onto (the game's own plaque data, read November 20, 2026). Earlier notes here said to walk onto them; that was wrong, and walking at them only runs into the wall.
+- Correction November 20, 2026: the plaques could only be clicked while the dungeon's quest "Locked Door" asked for them. Ra and Mythis got through because they had that quest open. Bots on Weird Science or Gate is Enough without it found plaques that offered nothing. Fixed in the server along with the Counterweight East levers: the plaques can now be clicked any time, in the Sun, Bird, Tree, Bug order.
 
 ## Marleybone, The Ironworks
 - Purloin the Plans: Baxter only comes out once a wizard walks past the first gate. A bot that logs in beside his spot walks over the first gate first.
