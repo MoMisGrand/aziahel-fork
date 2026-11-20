@@ -67,3 +67,6 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 
 ## Marleybone, Counterweight West
 - Weights and Measures, Defeat Bellows: after losing to Bellows and coming back by Dungeon Recall, the Bellows in that copy can stand there and never start a battle again (Idunn, 2026-11-20, 40 minutes). Walking out and back in gives a fresh copy where Bellows fights. Bots now count a boss that won't fight as the step's own, even when they reached it as the room's fight, and walk out for a fresh copy.
+
+## Marleybone, Katzenstein's Lab
+- If You Build It, Collect Crates: the three crates (by (-15577,55521), (-13898,49858) and (-17044,52394)) can be used up in a copy while the quest still wants all three (a restart starts the dungeon's quest over). Nothing is offered at the crate spots then. Walk out and back in for a fresh copy with new crates.
