@@ -50,3 +50,6 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 
 ## MooShu, Tree of Life
 - Left Behind: the Go to Tree of Life step finishes inside the big circle round the dead tree itself, in the middle of the dungeon. The game files name that circle with a copy number, so the server did not count it and the step never finished (Ultimus stood at the tree for an hour). The small spot of the same name behind the tree is only the hidden oyster. Fixed in the server; walk up to the tree and the step finishes.
+
+## Marleybone, Counterweight East
+- Stolen Away: the levers that open the gates up to Sprockets could only be pulled during Metal Madness, so after that quest every new copy stayed shut and the bots waited for a Sprockets that never came (Garm and Tulkar, 20 November). Fixed in the server: the levers can now be pulled any time. Pull the first lever by the entrance, beat each floor's guard to free the next lever, and climb to Sprockets at the top.
