@@ -24,7 +24,10 @@ namespace Imlight.CoreLib.Game.Ultimus;
 /// <summary>The ground's height where a Ultimus wizard walks, so the game shows them on the ground, not in the air.</summary>
 internal static class UltimusGround {
 
-    /// <summary>The ground at (x, y) nearest to <paramref name="z"/> (a balcony or the hall under it), or <paramref name="z"/> when unknown.</summary>
+    // The highest step a wizard walks up or down in one go (the game's stairs are 50 high).
+    private const float CLIMB = 60f;
+
+    /// <summary>The ground at (x, y) the wizard walks on (stairs up, a balcony or the hall under it), or <paramref name="z"/> when unknown.</summary>
     internal static float HeightAt(string zonePath, float x, float y, float z) {
         try {
             if (ZoneGround.WalkOf(zonePath) is not { } ground) {
@@ -43,8 +46,11 @@ internal static class UltimusGround {
                 return z;
             }
 
-            // A cell's ground at two heights: the one nearer to where the wizard is (no jumping onto a roof).
-            var best = float.IsNaN(low) || MathF.Abs(high - z) <= MathF.Abs(low - z) ? high : low;
+            // A cell's ground at two heights: the upper one when it is a step up the wizard can take (stairs and
+            // ramps over a lower floor, like the Jade Palace's long stair to its throne room, where the nearer-height
+            // rule kept a bot on the hidden floor under the stairs, out of every battle); else the nearer one (a
+            // balcony over a hall, no jumping onto a roof).
+            var best = float.IsNaN(low) || (high - z is >= -CLIMB and <= CLIMB) || MathF.Abs(high - z) <= MathF.Abs(low - z) ? high : low;
 
             // A big jump is a cell the file reads wrong (a roof edge): keep the height for now.
             return MathF.Abs(best - z) > 400 ? z : best;

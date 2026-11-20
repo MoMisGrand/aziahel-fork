@@ -16,42 +16,13 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-using System;
-using Imlight.CoreLib.Game.Zone.Core;
-
 namespace Imlight.CoreLib.Game.QuestTeam;
 
 /// <summary>The ground's height where a Quest Team wizard walks, so the game shows them on the ground, not in the air.</summary>
 internal static class QuestTeamGround {
 
-    /// <summary>The ground at (x, y) nearest to <paramref name="z"/> (a balcony or the hall under it), or <paramref name="z"/> when unknown.</summary>
-    internal static float HeightAt(string zonePath, float x, float y, float z) {
-        try {
-            if (ZoneGround.WalkOf(zonePath) is not { } ground) {
-                return z;
-            }
-
-            var gx = (int) MathF.Floor((x - ground.Left) / ground.Cell);
-            var gy = (int) MathF.Floor((ground.Top - y) / ground.Cell);
-            if (gx < 0 || gy < 0 || gx >= ground.Width || gy >= ground.Height) {
-                return z;
-            }
-
-            var at = (gy * ground.Width) + gx;
-            var (high, low) = (ground.Heights[at], ground.Lows[at]);
-            if (float.IsNaN(high)) {
-                return z;
-            }
-
-            // A cell's ground at two heights: the one nearer to where the wizard is (no jumping onto a roof).
-            var best = float.IsNaN(low) || MathF.Abs(high - z) <= MathF.Abs(low - z) ? high : low;
-
-            // A big jump is a cell the file reads wrong (a roof edge): keep the height for now.
-            return MathF.Abs(best - z) > 400 ? z : best;
-        }
-        catch (Exception) {
-            return z;
-        }
-    }
+    /// <summary>The ground at (x, y) the wizard walks on (stairs up, a balcony or the hall under it), or <paramref name="z"/> when unknown.</summary>
+    internal static float HeightAt(string zonePath, float x, float y, float z)
+        => Imlight.CoreLib.Game.Ultimus.UltimusGround.HeightAt(zonePath, x, y, z);
 
 }
