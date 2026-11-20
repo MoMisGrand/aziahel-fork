@@ -200,10 +200,20 @@ internal static class QuestTeamPlanner {
     /// <summary>The next story quest (or quest the story needs) the team can get, and its giver (a story quest of this world first).</summary>
     internal static (QuestTemplate Quest, ulong Giver)? NextQuest(Wizard leader) {
         var world = (leader.Zone ?? "").Split('/')[0];
-        return QuestService.QuestFinderGivers()
-            .Where(g => IsMainStoryWorld(g.Quest) && BotShared.BotStory.Plays(g.Quest) && MapService.IsOfferedTo(g.Quest, leader))
+        var offered = QuestService.QuestFinderGivers()
+            .Where(g => IsMainStoryWorld(g.Quest) && MapService.IsOfferedTo(g.Quest, leader))
+            .ToList();
+        var story = offered.Where(g => BotShared.BotStory.Plays(g.Quest))
             .OrderByDescending(g => BotShared.BotStory.Rank(g.Quest))
             .ThenByDescending(g => string.Equals(QuestGuide.GiverZone(g.Quest).Split('/')[0], world, StringComparison.OrdinalIgnoreCase))
+            .Select(g => ((QuestTemplate, ulong)?) (g.Quest, g.Giver))
+            .FirstOrDefault();
+
+        // No story quest offered: a main quest of the furthest story world (as UltimusPlanner.NextQuest; Marleybone's
+        // "Fetch Bones!" is only handed over as a follow-on offer the bot can miss).
+        return story ?? offered.Where(g => QuestStory.IsMain(g.Quest) && !DungeonQuestIndex.IsDungeonQuest(g.Quest.m_questName)
+                                           && !Imlight.CoreLib.Game.Quests.QuestOptions.IsOff(g.Quest.m_questName))
+            .OrderByDescending(g => BotShared.MainWorlds.Number(QuestGuide.GiverZone(g.Quest).Split('/')[0]))
             .Select(g => ((QuestTemplate, ulong)?) (g.Quest, g.Giver))
             .FirstOrDefault();
     }
