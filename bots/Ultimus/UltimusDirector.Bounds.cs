@@ -78,6 +78,10 @@ internal sealed partial class UltimusDirectorActor {
             return null;
         }
 
+        if (ResetCopy(leader, zone) is { } reset) {
+            return reset;
+        }
+
         var side = IsSideDungeon(zone);
         if (OverlayQuestRoute.OnStory(zone) && !side) {
             _lastStoryZone = zone;
@@ -188,6 +192,70 @@ internal sealed partial class UltimusDirectorActor {
         }
 
         return true;
+    }
+
+    // ---------------------------------------------------------------------
+    // A dungeon copy that can't give his step any more: out and back in, for a fresh copy (Niduus, 2026-11-20, "Yes, leave
+    // and come back": Kurrent, Ra and Mythis stood 2 hours in The Ironworks by a Pops O'Leary that never fought them)
+    // ---------------------------------------------------------------------
+
+    // How long his step's creature must be missing (with no story progress) before he walks out to start the copy over.
+    private static readonly TimeSpan s_resetAfter = TimeSpan.FromMinutes(20);
+    private DateTime? _noFoeSince;
+    private string _noFoeZone;
+    private (string Zone, DateTime At)? _resetting;
+
+    /// <summary>
+    /// In a dungeon whose step's creature is not there to fight (none in the area, or only one that starts no battle) for
+    /// 20 minutes with no story progress: he walks out the way he came in, so walking in again makes a fresh copy, as a
+    /// player does. Not fleeing: no fight is left. Null otherwise.
+    /// </summary>
+    private UltimusPlanner.Target ResetCopy(UltimusMember.Status leader, string zone) {
+        var now = DateTime.UtcNow;
+        if (_resetting is { } going) {
+            if (!OverlayQuestTracker.SameZone(going.Zone, zone) || now - going.At > TimeSpan.FromMinutes(10)) {
+                _resetting = null;
+                _noFoeSince = null;
+            }
+            else if (leader.Wizard?.SafeZone is { Length: > 0 } outside
+                     && UltimusPlanner.Travel(leader, outside, $"leaving {UltimusText.Zone(zone)} to start it over (its creature for my step is not there)", "resetcopy") is { } walk) {
+                return walk;
+            }
+            else {
+                _resetting = null;
+            }
+        }
+
+        if (leader.Wizard?.ZoneIsInstance != true || _partyMate != 0 || CombatDuelComponent.IsInBattle(leader.GlobalId)) {
+            _noFoeSince = null;
+            return null;
+        }
+
+        var noFoe = _target is { } last && !string.IsNullOrEmpty(last.Quest)
+                    && (last.Problem == "no creature for this step is in the area"
+                        || (last.Kind == UltimusPlanner.WAIT && last.What.StartsWith("resting while", StringComparison.Ordinal))
+                        || last.Key.EndsWith("|spawns", StringComparison.Ordinal));
+        if (!noFoe) {
+            return null;
+        }
+
+        if (_noFoeSince is null || !string.Equals(_noFoeZone, zone, StringComparison.OrdinalIgnoreCase)) {
+            _noFoeSince = now;
+            _noFoeZone = zone;
+            return null;
+        }
+
+        if (now - _noFoeSince < s_resetAfter || now - _storyProgressAt < s_resetAfter || leader.Wizard.SafeZone is not { Length: > 0 } safe) {
+            return null;
+        }
+
+        _resetting = (zone, now);
+        Note("Ultimus", $"ABNORMAL: in {UltimusText.Zone(zone)} the creature for \"{_target.What}\" has not been there to fight for " +
+                        $"{(now - _noFoeSince.Value).TotalMinutes:0} minutes: walks out to {UltimusText.Zone(safe)} and back in for a fresh copy.", UltimusLink.ABNORMAL);
+        Think($"The creature my step needs in {UltimusText.Zone(zone)} has not been there to fight for a long time, and nothing else here is " +
+              "left to do. A player walks out and comes back in, and the dungeon starts fresh, so I do that.", "resetcopy|" + zone);
+
+        return UltimusPlanner.Travel(leader, safe, $"leaving {UltimusText.Zone(zone)} to start it over (its creature for my step is not there)", "resetcopy");
     }
 
     /// <summary>Out of a side dungeon: on foot toward his story step, as a player walks back out of the wrong dungeon.</summary>
