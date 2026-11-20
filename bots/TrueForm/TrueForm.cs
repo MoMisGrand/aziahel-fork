@@ -122,7 +122,7 @@ internal static class TrueForm {
         }
 
         // A typo in a mode word ("atack", "defned", "suport", "healler"): one letter off, for words of five letters or more.
-        foreach (var token in w.Split(' ', StringSplitOptions.RemoveEmptyEntries).Where(t => t.Length >= 5)) {
+        foreach (var token in w.Split(' ', StringSplitOptions.RemoveEmptyEntries).Where(t => t.Length >= 5 && !s_realWords.Contains(t))) {
             foreach (var (mode, names) in s_modeWords) {
                 if (names.Any(n => n.Length >= 5 && !n.Contains(' ') && OneOff(token, n))) {
                     return mode;
@@ -132,6 +132,10 @@ internal static class TrueForm {
 
         return null;
     }
+
+    // Real words one letter off a mode word, never read as its typo ("start a fight" was read as "smart", auto).
+    private static readonly System.Collections.Generic.HashSet<string> s_realWords = ["start", "stark", "smack", "heart", "heard", "hears",
+        "heals", "dealt", "tanks", "thank", "guards", "shied", "field", "yield", "buffs", "chase", "evils", "attach"];
 
     // "No damage spells", "don't attack", "without hits": what is said not to do is no order to do it (Niduus, 2026-11-20:
     // "setup your deck to focus on healing. No damage spells" was read as attack).
@@ -185,9 +189,15 @@ internal static class TrueForm {
     internal static DeckFocus? DeckFocusFrom(string words) {
         var w = (words ?? "").Trim().ToLowerInvariant();
         bool Is(string pattern) => System.Text.RegularExpressions.Regex.IsMatch(w, pattern);
-        var deck = Is(@"\b(deck|decks|cards|spells|spell list|kit)\b");
-        var noHits = Is(@"\b(no|not|without|don'?t|zero)\s+(any\s+|use\s+|using\s+)?(damage|attack|attacks|hits?|hitting|dmg|offensive)\b");
-        if (Is(@"\b(heals?|healing)\s+only\b") || Is(@"\bonly\s+(heals?|healing)\b") || (noHits && (deck || Is(@"\bheal")))
+        // "Pack", "bring", "carry", "load" are deck words too ("only pack heals and blades", "do not pack hits").
+        var deck = Is(@"\b(deck|decks|cards|spells|spell list|kit|pack|packs|packing|bring|carry|load)\b");
+        var noHits = Is(@"\b(no|not|without|don'?t|dont|zero|never)\s+(any\s+|use\s+|using\s+|pack\s+|packing\s+|bring\s+|carry\s+|cast\s+|casting\s+|do\s+)?(damage|attack|attacks|attacking|hits?|hitting|dmg|offensive)\b");
+        // Heals (and blades) only, however it is said: "heals only", "only blade or heal me", "your job is to only blade or
+        // heal", "blade or heal ONLY", "do not hit at all" (Niduus, 2026-11-20).
+        var healOnly = Is(@"\b(heals?|healing|blades?|blading)\s+(or|and|&)\s+(heals?|healing|blades?|blading)\s+only\b")
+                       || Is(@"\bonly\s+(pack\s+|bring\s+|use\s+|cast\s+|do\s+)?(heals?|healing|blades?|blade)\b(\s+(or|and|&)\s+(heals?|healing|blades?|blade))?")
+                       || Is(@"\b(heals?|healing)\s+only\b");
+        if (healOnly || noHits
             || (deck && Is(@"\b(heals?|healing|healer)\b") && Is(@"\b(focus|focused|set ?up|setup|build|make|fill|full|all|only|on|around|for)\b"))) {
             return DeckFocus.Heals;
         }
@@ -255,7 +265,7 @@ internal static class TrueForm {
     /// His setups beside his school's own: universal damage, full outgoing healing, full resist (Niduus, 2026-11-19: "make a
     /// full healing set where it's all outgoing and full tank set where it's full resist").
     /// </summary>
-    internal enum Setup { Own, Universal, FullHeal, FullTank, FullGlass }
+    internal enum Setup { Own, Universal, FullHeal, FullTank, FullGlass, Defensive }
 
     private static volatile SwapAsk s_swap;
 
@@ -287,7 +297,8 @@ internal static class TrueForm {
         Setup.FullHeal => "my full healing setup",
         Setup.FullTank => "my full tank setup",
         Setup.FullGlass => "my full glass setup",
-        _ => "my own setup",
+        Setup.Defensive => "my defensive setup",
+        _ => "my balanced setup",
     };
 
     /// <summary>The gear style for his setup now (full heal and full tank put everything on healing or resist).</summary>
@@ -296,8 +307,14 @@ internal static class TrueForm {
         Setup.FullHeal => BotShared.BotStyle.FullHealer,
         Setup.FullTank => BotShared.BotStyle.FullTank,
         Setup.FullGlass => BotShared.BotStyle.GlassCannon,
-        _ => StyleFor(school, Role),
+        Setup.Defensive => BotShared.BotStyle.Defensive,
+        // "Go myth": the most balanced set; a role said with it ("go ice and tank") still leans to that role.
+        _ => Role is null ? BotShared.BotStyle.Balanced : StyleFor(school, Role),
     };
+
+    /// <summary>"Go defensive", "defensive set(up)", "defensive variant", "go ice defensive": the defensive setup asked for.</summary>
+    internal static bool DefensiveFrom(string words) => System.Text.RegularExpressions.Regex.IsMatch((words ?? "").ToLowerInvariant(),
+        @"\b(go|be|switch( to)?|play|use|become)\s+(a\s+|an\s+)?(\w+\s+)?(defensive|defense|defence|tanky)\b|\b(defensive|tanky)\s+(set|setup|set up|build|loadout|gear|variant|version|kit)\b|\b(fire|ice|storm|myth|life|death|balance)\s+(defensive|tanky)\b");
 
     /// <summary>"Full heal(ing/er) set(up)", "go full healer": the full healing setup asked for.</summary>
     internal static bool FullHealFrom(string words) => System.Text.RegularExpressions.Regex.IsMatch((words ?? "").ToLowerInvariant(),
@@ -320,6 +337,36 @@ internal static class TrueForm {
 
     /// <summary>A full setup asked for without a school: waiting for the asker to pick one (3 minutes).</summary>
     internal static volatile SwapAsk PendingPick;
+
+    /// <summary>
+    /// A school asked for ("go myth") with its build still to pick: balanced, full damage or defensive. The commander has 30
+    /// seconds; then it is balanced (Niduus, 2026-11-20: "alert the commander of the options ... default timeout being
+    /// Balance build. The commander has to give the order within 30s or it defaults").
+    /// </summary>
+    internal static volatile SwapAsk BuildPick;
+
+    internal static DateTime BuildPickAt;
+
+    internal static readonly TimeSpan BuildPickWait = TimeSpan.FromSeconds(30);
+
+    /// <summary>The build picked in a commander's answer: balanced (Own), full damage (FullGlass), defensive or full healer; null for none.</summary>
+    internal static Setup? BuildFrom(string words) {
+        var w = (words ?? "").Trim().ToLowerInvariant();
+        bool Is(string pattern) => System.Text.RegularExpressions.Regex.IsMatch(w, pattern);
+        if (FullGlassFrom(w) || Is(@"\b(damage|dmg|glass|offensive|offense|offence|attack)\b")) {
+            return Setup.FullGlass;
+        }
+
+        if (FullHealFrom(w) || Is(@"\b(heal|heals|healing|healer)\b")) {
+            return Setup.FullHeal;
+        }
+
+        if (Is(@"\b(defensive|defense|defence|tanky|defend)\b")) {
+            return Setup.Defensive;
+        }
+
+        return Is(@"\b(balanced|balance build|balance set|balance it|normal|default|regular|even|mixed|the first)\b") ? Setup.Own : null;
+    }
 
     internal static DateTime PendingPickAt;
 
