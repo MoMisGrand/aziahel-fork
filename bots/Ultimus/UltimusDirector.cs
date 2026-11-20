@@ -1557,7 +1557,10 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
 
                 var option = member.Options[id].First(s => s.Service == "Interact");
                 Clicked(key);
-                BotCollect.Used(member.CharId, target.Quest, target.Goal, id, target.X, target.Y);
+                // Where he stands is where the thing he uses is (it is offered only in reach), not the arrow's spot: a crate
+                // passed on the way to the arrow marked the arrow's own crate as used, so Katzenstein's Lab's "Collect Crates"
+                // stopped at 1 of 3 (the Calling of 7, 2026-11-20: Cyndr and Kurrent, 25 minutes).
+                BotCollect.Used(member.CharId, target.Quest, target.Goal, id, member.X, member.Y);
                 Note(member.Role, $"{member.Name} uses something for {target.What}.");
                 _actors[index].Tell(new UltimusMember.Interact(id, option.Service, option.Index, target.What));
 

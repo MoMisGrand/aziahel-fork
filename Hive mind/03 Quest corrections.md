@@ -21,6 +21,7 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 
 ## Marleybone, Katzenstein's Lab
 - If You Build It..., the plaque gate (Gate02): the plaques only work after Weird Science is done (beat Firegut and Clanker in the first wing). Clicked before that, all four stay set and the gate never opens (Cyndr and Kurrent, 20 November, 05:53 to past 07:00). Do Weird Science first, then click Sun, Bird, Tree, Bug. If all four are set and the gate is still shut, click Sun back to reset them and start again.
+- If You Build It..., Collect Crates (0 of 3): the three crates are at (-17044, 52394) on the middle floor, (-15577, 55521) on the top floor by Grunk's lab, and (-13898, 49858). The quest is fine. Bots took the middle one on the way to the top one and then skipped the top one (20 November); fixed in the bots.
 
 ## Marleybone, Counterweight East
 - Metal Madness and Stolen Away are done in one run: pull the four levers floor by floor, then go straight up to Sprockets. A bot that leaves in between finds the levers no longer work for it in a fresh copy.
