@@ -5,8 +5,10 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 ## Best way to beat each creature
 - Ronin Keyholder: won 2 time(s) (2 Solo, 0 Team), lost 21. Fastest: Ultimus in 9 rounds, deck for a boss (Ice), hitting with Ice, Fire, Life; a rival that outlasts me, so more hits and blades to end it sooner (many of my fights lately had 2+ enemies), hits with Sandstorm, Locust Swarm, Helping Hands, Gearhead Destroyer.
 - Otomo Courier: won 1 time(s) (1 Solo, 0 Team), lost 21. Fastest: Ultimus in 5 rounds, deck for a boss (Ice), hitting with Ice, Fire; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Sandstorm, Balance, Fairy.
+- Tortured Kakeda Soul: won 5 time(s) (5 Solo, 0 Team), lost 0. Fastest: Ultimus in 5 rounds, deck for Death enemies, hitting with Death, Fire, Myth (most of my fights lately had 2+ enemies), hits with Sandstorm, Minor Crusade, Gearhead Destroyer.
 - Kakeda Spirit Slave: won 5 time(s) (5 Solo, 0 Team), lost 0. Fastest: Ultimus in 5 rounds, deck for Death enemies, hitting with Death, Fire, Myth (most of my fights lately had 2+ enemies), hits with Sandstorm, Scarab, Locust Swarm.
 - Infected Villager: won 2 time(s) (2 Solo, 0 Team), lost 1. Fastest: Ultimus in 7 rounds, deck for Balance enemies, hitting with Balance, Death, Ice (most of my fights lately had 2+ enemies), hits with Balance, Sandstorm, Banshee, Minor Crusade.
+- Jade Oni: won 1 time(s) (1 Solo, 0 Team), lost 2. Fastest: Ultimus in 40 rounds, deck for a boss (Life), hitting with Life, Fire, Storm; a rival that outlasts me, so more hits and blades to end it sooner (many of my fights lately had 2+ enemies), hits with Helping Hands, Fairy, Spirit Shield, Vampire.
 - Otomo Spotter: won 3 time(s) (1 Solo, 2 Team), lost 0. Fastest: Ultimus in 3 rounds, deck for Myth enemies, hitting with Myth, Fire, Storm (many of my fights lately had 2+ enemies), hits with Minor Crusade.
 - Imitsu Defouler: won 3 time(s) (3 Solo, 0 Team), lost 0. Fastest: Ultimus in 6 rounds, deck for Myth enemies, hitting with Myth, Storm, Fire (most of my fights lately had 2+ enemies), hits with Gearhead Destroyer, Minor Crusade.
 - Cursed Ronin: won 3 time(s) (3 Solo, 0 Team), lost 0. Fastest: Ultimus in 7 rounds, deck for Myth enemies, hitting with Myth, Storm, Fire (many of my fights lately had 2+ enemies), hits with Minor Crusade, Gearhead Destroyer.
@@ -22,7 +24,6 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Haru: won 2 time(s) (2 Solo, 0 Team), lost 0. Fastest: Ultimus in 9 rounds, deck for a boss (Myth), hitting with Myth, Balance, Storm (many of my fights lately had 2+ enemies), hits with Locust Swarm.
 - Walking Dead: won 2 time(s) (2 Solo, 0 Team), lost 0. Fastest: Ultimus in 6 rounds, deck for Death enemies, hitting with Death, Fire, Myth (most of my fights lately had 2+ enemies), hits with Sandstorm, Minor Crusade, Gearhead Destroyer.
 - Oyotomi the Defiler: won 2 time(s) (2 Solo, 0 Team), lost 0. Fastest: Ultimus in 9 rounds, deck for any fight (many of my fights lately had 2+ enemies), hits with Minor Crusade, Locust Swarm.
-- Tortured Kakeda Soul: won 2 time(s) (2 Solo, 0 Team), lost 0. Fastest: Ultimus in 5 rounds, deck for Death enemies, hitting with Death, Fire, Myth (most of my fights lately had 2+ enemies), hits with Sandstorm, Minor Crusade, Gearhead Destroyer.
 - Maito: never beaten yet, lost 1 time(s). Most common reason: it simply hit harder than I could heal.
 - Diseased Water Spirit: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 12 rounds, deck for Storm enemies, hitting with Storm, Death, Myth (most of my fights lately had 2+ enemies), hits with Seraph, Sandstorm, Storm Hound, Minor Crusade.
 - Plague Oni: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 25 rounds, deck for a boss (Balance), hitting with Balance, Death, Ice (most of my fights lately had 2+ enemies), hits with Balance, Sandstorm, Helping Hands, Vampire.
@@ -179,6 +180,25 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
   Spells that landed the hits: Storm Hound x2, Seraph.
 - Avoid, fights lost:
   - Usunoki: lost 1 time(s) (Ultimus). Why: the fight ran 7 minutes, so I ran out of good cards. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
+
+## An Imperial Cure
+- Finished by Ultimus (63 min).
+- Won by Ultimus (Solo) against Jade Oni (rank 10, 6,000 health, Life, a boss) on 2026-11-20 at 06:54:23.
+  It took 40 rounds, about 22 minutes.
+  Deck made for a boss (Life), hitting with Life, Fire, Storm; a rival that outlasts me, so more hits and blades to end it sooner (many of my fights lately had 2+ enemies).
+  Spells that landed the hits: Helping Hands x2, Fairy, Spirit Shield, Vampire.
+- Avoid, fights lost:
+  - Jade Oni: lost 1 time(s) (Ultimus). Why: the fight ran 18 minutes, so I ran out of good cards. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
+  - Jade Oni: lost 1 time(s) (Ultimus). Why: the fight ran 14 minutes, so I ran out of good cards. Do instead: fight other creatures for XP first, up to the quest's level.
+- Avoid, places bots got stuck:
+  - Throne Room near (-5500, 0) while looking around for: Defeat Jade Oni: stuck 4 time(s) (Ultimus).
+  - Throne Room near (-5500, 0) while resting while "Defeat Jade Oni" waits: stuck 3 time(s) (Ultimus).
+  - Throne Room near (-5500, 0) while stuck: Defeat Jade Oni: no creature for this step is in the area: stuck 2 time(s) (Ultimus); one bot tried every fix there.
+  - Throne Room near (-5500, 0) while a short break before trying "Defeat Jade Oni" again: stuck 2 time(s) (Ultimus).
+  - Jade Palace near (8000, 200) while waiting to be in the game: stuck 2 time(s) (Ultimus); one bot tried every fix there.
+  - Throne Room near (-5500, -100) while looking around for: Defeat Jade Oni: stuck 1 time(s) (Ultimus).
+  - Throne Room near (-5600, 100) while looking around for: Defeat Jade Oni: stuck 1 time(s) (Ultimus).
+  - Throne Room near (-5400, -600) while a short break before trying "Defeat Jade Oni" again: stuck 1 time(s) (Ultimus).
 
 ## is a Good Defense
 - Finished by Ultimus (80 s).
@@ -518,6 +538,7 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Finished by Ultimus (87 s).
 
 ## Oni No Death
+- Finished by Ultimus (6 min).
 - Won by Ultimus (Solo) against Oyotomi the Defiler (rank 7, 1,840 health, Death, a boss) on 2026-11-20 at 01:52:47.
   It took 9 rounds, about 4 minutes.
   Deck made for any fight (many of my fights lately had 2+ enemies).
@@ -550,6 +571,18 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
   It took 5 rounds, about 3 minutes.
   Deck made for Death enemies, hitting with Death, Fire, Myth (most of my fights lately had 2+ enemies).
   Spells that landed the hits: Sandstorm, Scarab, Locust Swarm.
+- Won by Ultimus (Solo) against Tortured Kakeda Soul (rank 6, 760 health, Death) on 2026-11-20 at 04:26:03.
+  It took 10 rounds, about 6 minutes.
+  Deck made for Death enemies, hitting with Death, Fire, Myth (most of my fights lately had 2+ enemies).
+  Spells that landed the hits: Gearhead Destroyer x2, Minor Crusade x2, Sandstorm, Helping Hands.
+- Won by Ultimus (Solo) against Tortured Kakeda Soul (rank 6, 760 health, Death) on 2026-11-20 at 04:32:36.
+  It took 10 rounds, about 6 minutes.
+  Deck made for Death enemies, hitting with Death, Fire, Myth (most of my fights lately had 2+ enemies).
+  Spells that landed the hits: Helping Hands, Fairy, Sandstorm, Locust Swarm, Gearhead Destroyer, Heck Hound, Minor Crusade.
+- Won by Ultimus (Solo) against Tortured Kakeda Soul (rank 6, 760 health, Death) on 2026-11-20 at 05:00:43.
+  It took 5 rounds, about 3 minutes.
+  Deck made for any fight (many of my fights lately had 2+ enemies).
+  Spells that landed the hits: Scarab, Gearhead Destroyer.
 
 ## Question of Faith
 - Won by Ultimus (Solo) against Kakeda Spirit Slave (rank 5, 675 health, Fire) on 2026-11-20 at 03:59:39.
