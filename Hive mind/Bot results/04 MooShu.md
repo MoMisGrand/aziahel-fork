@@ -37,6 +37,8 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Kakeda Shadow: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 5 rounds, deck for Storm enemies, hitting with Storm, Death, Myth (most of my fights lately had 2+ enemies), hits with Minor Crusade.
 - Tomugawa the Evil: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 11 rounds, deck for a boss (Death), hitting with Death, Ice, Storm (many of my fights lately had 2+ enemies), hits with Scarab, Fairy, Minor Crusade.
 - Sorrow Whisperer: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 8 rounds, deck for Death enemies, hitting with Death, Fire, Myth (most of my fights lately had 2+ enemies), hits with Minor Crusade, Sandstorm, Fairy.
+- Death Oni: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 12 rounds, deck for a boss (Death), hitting with Death, Ice, Storm (most of my fights lately had 2+ enemies), hits with Minor Crusade, Helping Hands, Fairy, Locust Swarm.
+- Tortured Kakeda Soul: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 5 rounds, deck for Death enemies, hitting with Death, Fire, Myth (most of my fights lately had 2+ enemies), hits with Sandstorm, Minor Crusade, Gearhead Destroyer.
 
 ## Never Again
 - Finished by Ultimus (15 min).
@@ -228,6 +230,12 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
   Spells that landed the hits: Helping Hands x2, Elemental Shield x2, Sandstorm, Vampire, Minor Crusade.
 - Avoid, places bots got stuck:
   - Crimson Fields near (-5900, 21800) while Talk to Rikugun Mikawa ("Warlord Katsumori"): stuck 1 time(s) (Ultimus).
+
+## Left Behind
+- Avoid, places bots got stuck:
+  - Tree of Life near (100, 8300) while Go to MooShu,Tree of Life ("Left Behind"): stuck 4 time(s) (Ultimus); one bot tried every fix there.
+  - Tree of Life near (100, 8300) while a short break before trying "Go to MooShu,Tree of Life" again: stuck 1 time(s) (Ultimus).
+  - Tree of Life near (-400, 8400) while a short break before trying "Go to MooShu,Tree of Life" again: stuck 1 time(s) (Ultimus).
 
 ## Spies Like Us
 - Finished by Ultimus (16 s).
@@ -508,3 +516,11 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
   It took 9 rounds, about 4 minutes.
   Deck made for any fight (many of my fights lately had 2+ enemies).
   Spells that landed the hits: Minor Crusade, Locust Swarm.
+- Won by Ultimus (Solo) against Death Oni (rank 6, 2,000 health, Death, a boss) on 2026-11-20 at 01:59:36.
+  It took 12 rounds, about 6 minutes.
+  Deck made for a boss (Death), hitting with Death, Ice, Storm (most of my fights lately had 2+ enemies).
+  Spells that landed the hits: Minor Crusade, Helping Hands, Fairy, Locust Swarm.
+- Won by Ultimus (Solo) against Tortured Kakeda Soul (rank 6, 760 health, Death) on 2026-11-20 at 02:08:51.
+  It took 5 rounds, about 2 minutes.
+  Deck made for Death enemies, hitting with Death, Fire, Myth (most of my fights lately had 2+ enemies).
+  Spells that landed the hits: Sandstorm, Minor Crusade, Gearhead Destroyer.
