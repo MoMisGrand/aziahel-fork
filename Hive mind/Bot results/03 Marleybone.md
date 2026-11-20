@@ -4,17 +4,17 @@ What the bots did in Marleybone, from the server log: every quest finished, ever
 
 ## Best way to beat each creature
 - O'Leary Napper: won 39 time(s) (20 Solo, 19 Team), lost 6. Fastest: Ra in 1 rounds, deck for any fight (many of my fights lately had 2+ enemies), hits with Gearhead Destroyer.
+- Firegut: won 19 time(s) (15 Solo, 4 Team), lost 10. Fastest: Cyndr in 4 rounds, deck for a boss (Fire), hitting with Fire, Death, Life; a rival that outlasts me, so more hits and blades to end it sooner (many of my fights lately had 2+ enemies), hits with Fire Shield, Sunbird.
 - Jacques the Scratcher: won 21 time(s) (19 Solo, 2 Team), lost 7. Fastest: Cyndr in 4 rounds, deck for a boss (Ice), hitting with Ice, Fire; a rival that outlasts me, so more hits and blades to end it sooner (many of my fights lately had 2+ enemies), hits with Immolate.
-- Firegut: won 19 time(s) (15 Solo, 4 Team), lost 9. Fastest: Cyndr in 4 rounds, deck for a boss (Fire), hitting with Fire, Death, Life; a rival that outlasts me, so more hits and blades to end it sooner (many of my fights lately had 2+ enemies), hits with Fire Shield, Sunbird.
 - Deadly Scratcher: won 24 time(s) (13 Solo, 11 Team), lost 3. Fastest: Kurrent in 1 rounds, deck for any fight (many of my fights lately had 2+ enemies), hits with Storm Shark.
 - Nails O'Leary: won 16 time(s) (10 Solo, 6 Team), lost 2. Fastest: Kurrent in 2 rounds, plan "hit now", deck for any fight (many of my fights lately had 2+ enemies), hits with Storm Shark, Thunder Snake.
 - Agony Wraith: won 12 time(s) (10 Solo, 2 Team), lost 5. Fastest: Cyndr in 2 rounds, deck for a boss (Death), hitting with Death, Storm, Fire; a rival that outlasts me, so more hits and blades to end it sooner (many of my fights lately had 2+ enemies), hits with Fairy, Minor Fire Scorch.
 - Gearhead: won 13 time(s) (3 Solo, 10 Team), lost 3. Fastest: Tulkar in 3 rounds, deck for a boss (Storm), hitting with Storm, Fire, Death (most of my fights lately had 2+ enemies).
 - O'Leary Scurrier: won 13 time(s) (11 Solo, 2 Team), lost 0. Fastest: Tulkar in 1 rounds, deck for Ice enemies, hitting with Ice, Death, Fire (many of my fights lately had 2+ enemies).
 - Brady the Sneak: won 12 time(s) (4 Solo, 8 Team), lost 1. Fastest: Idunn in 1 rounds, deck for a boss (Myth), hitting with Death, Myth, Fire (many of my fights lately had 2+ enemies).
+- Clanker: won 11 time(s) (11 Solo, 0 Team), lost 2. Fastest: Mythis in 2 rounds, deck for a boss (Life), hitting with Storm, Life, Fire (most of my fights lately had 2+ enemies), hits with Humongofrog.
 - Hooligan: won 13 time(s) (4 Solo, 9 Team), lost 0. Fastest: Tulkar in 3 rounds, deck for Myth enemies, hitting with Myth, Storm, Fire (most of my fights lately had 2+ enemies).
 - Gibson O'Leary: won 9 time(s) (5 Solo, 4 Team), lost 3. Fastest: Tulkar in 5 rounds, deck for any fight (many of my fights lately had 2+ enemies).
-- Clanker: won 10 time(s) (10 Solo, 0 Team), lost 2. Fastest: Mythis in 2 rounds, deck for a boss (Life), hitting with Storm, Life, Fire (most of my fights lately had 2+ enemies), hits with Humongofrog.
 - Clockwork Warrior: won 10 time(s) (10 Solo, 0 Team), lost 1. Fastest: Cyndr in 1 rounds, deck for Balance enemies, hitting with Balance, Storm, Ice; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Sunbird.
 - Willie Marks: won 7 time(s) (7 Solo, 0 Team), lost 2. Fastest: Kurrent in 1 rounds, plan "hit now", deck for any fight (many of my fights lately had 2+ enemies), hits with Storm Shark.
 - Scrounger: won 9 time(s) (9 Solo, 0 Team), lost 0. Fastest: Kurrent in 1 rounds, deck for Life enemies, hitting with Life, Storm, Myth (most of my fights lately had 2+ enemies), hits with Storm Shark.
@@ -28,8 +28,8 @@ What the bots did in Marleybone, from the server log: every quest finished, ever
 - O'Leary Brute: won 6 time(s) (6 Solo, 0 Team), lost 0. Fastest: Kurrent in 1 rounds, deck for any fight (many of my fights lately had 2+ enemies), hits with Storm Shark.
 - Midnighter: won 5 time(s) (5 Solo, 0 Team), lost 0. Fastest: Mythis in 5 rounds, plan "hit now", deck for a boss (Death), hitting with Fire, Death, Ice (most of my fights lately had 2+ enemies), hits with Dark Sprite, Blood Bat, Minor Heroic Hit, Sunbird.
 - O'Leary Thug: won 5 time(s) (3 Solo, 2 Team), lost 0. Fastest: Kurrent in 3 rounds, plan "hit now", deck for any fight (many of my fights lately had 2+ enemies), hits with Thunder Snake.
-- Clockwork Wizard: won 3 time(s) (3 Solo, 0 Team), lost 0. Fastest: Garm in 5 rounds, plan "hit now", deck for a boss (Life), hitting with Life, Fire, Storm; a rival that keeps beating me, so more shields and heals (many of my fights lately had 2+ enemies), hits with Banshee, Poison, Minor Dark Blow, Dark Sprite.
-- Gear Spinner: won 1 time(s) (1 Solo, 0 Team), lost 1. Fastest: Garm in 5 rounds, deck for a boss (Myth), hitting with Myth, Fire, Ice; a rival that keeps beating me, so more shields and heals (most of my fights lately had 2+ enemies), hits with Poison.
+- Clockwork Wizard: won 4 time(s) (4 Solo, 0 Team), lost 0. Fastest: Garm in 5 rounds, plan "hit now", deck for a boss (Life), hitting with Life, Fire, Storm; a rival that keeps beating me, so more shields and heals (many of my fights lately had 2+ enemies), hits with Banshee, Poison, Minor Dark Blow, Dark Sprite.
+- Gear Spinner: won 2 time(s) (2 Solo, 0 Team), lost 2. Fastest: Garm in 5 rounds, deck for a boss (Myth), hitting with Myth, Fire, Ice; a rival that keeps beating me, so more shields and heals (most of my fights lately had 2+ enemies), hits with Poison.
 - Kettlehead: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Tulkar in 11 rounds, deck for any fight (many of my fights lately had 2+ enemies), hits with Frostbite, Fairy, Minor Nova.
 
 ## Springing the Snitch
@@ -181,7 +181,7 @@ What the bots did in Marleybone, from the server log: every quest finished, ever
 ## No Entry
 - Finished by Tulkar (4 min, 6 min).
 - Finished by Cyndr (2 min, 6 min).
-- Finished by Mythis (5 min, 5 min, 5 min, 6 min, 5 min, 72 s, 4 min).
+- Finished by Mythis (5 min, 5 min, 72 s, 4 min).
 - Finished by Kurrent (3 min, 5 min, 5 min, 4 min).
 - Finished by Garm (3 min, 5 min).
 - Finished by Idunn (5 min, 5 min).
@@ -880,7 +880,7 @@ What the bots did in Marleybone, from the server log: every quest finished, ever
   - Knight's Tower near (-100, 0) while resting while "Defeat Jacques the Scratcher" waits: stuck 2 time(s) (Tulkar).
 
 ## The Right Combination
-- Finished by Cyndr (7 min, 6 min, 0 s, 0 s, 11 min, 15 min, 18 min, 5 min, 3 min, 13 min, 5 min, 7 min).
+- Finished by Cyndr (7 min, 6 min, 0 s, 0 s, 5 min, 7 min, 3 min, 7 min).
 - Finished by Tulkar (6 min).
 - Finished by Garm (23 min).
 - Finished by Kurrent (11 min).
@@ -959,6 +959,7 @@ What the bots did in Marleybone, from the server log: every quest finished, ever
   - Firegut: lost 1 time(s) (Cyndr). Why: its biggest hit took 63% of my health, the fight ran 10 minutes, so I ran out of good cards. Do instead: look for better gear in this world's shops and the Bazaar, then try again.
   - Firegut: lost 1 time(s) (Idunn). Why: its biggest hit took 63% of my health, the fight ran 5 minutes, so I ran out of good cards. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
   - Firegut: lost 1 time(s) (Cyndr). Why: its biggest hit took 63% of my health, the fight ran 5 minutes, so I ran out of good cards. Do instead: fight other creatures for XP first, up to the quest's level.
+  - Firegut: lost 1 time(s) (Cyndr). Why: its biggest hit took 63% of my health, the fight ran 10 minutes, so I ran out of good cards. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
 
 ## Wildcat Woes
 - Finished by Tulkar (9 min).
@@ -1220,6 +1221,11 @@ What the bots did in Marleybone, from the server log: every quest finished, ever
   It took 13 rounds, about 7 minutes.
   Deck made for a boss (Storm), hitting with Storm, Death, Myth; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies).
   Spells that landed the hits: Frostbite x2, Fairy x2, Evil Snowman, Frost Beetle.
+- Won by Ra (Solo) against Clanker (rank 5, 1,200 health, Life, a boss) on 2026-11-20 at 02:00:27.
+  It took 14 rounds, about 5 minutes.
+  Deck made for a boss (Life), hitting with Storm, Life, Fire (most of my fights lately had 2+ enemies).
+  Plan: "hit now" (2 enemies, even).
+  Spells that landed the hits: Balance x11, Scarab x4, Gearhead Destroyer x3, Minor Crusade x3, Helping Hands x2, Sandstorm x2, Locust Swarm x2, Sun Shield, Fairy.
 - Avoid, fights lost:
   - Dr. Von Katzenstein: lost 2 time(s) (Tulkar). Why: its biggest hit took 62% of my health. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
   - Dr. Von Katzenstein: lost 1 time(s) (Tulkar). Why: its biggest hit took 62% of my health, the fight ran 8 minutes, so I ran out of good cards. Do instead: fight other creatures for XP first, up to the quest's level.
@@ -1233,13 +1239,14 @@ What the bots did in Marleybone, from the server log: every quest finished, ever
   - Katzenstein's Lab near (3000, 11300) while to Katzenstein's Lab (Defeat Firegut): stuck 20 time(s) (Cyndr, Idunn, Mythis, Ra); one bot tried every fix there.
   - Katzenstein's Lab near (2500, 11300) while to the puzzle piece "DynaTrigger_MB_Plaque_Tree instance" (now Off, needs On) (): stuck 18 time(s) (Garm, Mythis); one bot tried every fix there.
   - Katzenstein's Lab near (2900, 11700) while to the puzzle piece "DynaTrigger_MB_Plaque_Bird instance" (now Off, needs On) (): stuck 15 time(s) (Cyndr, Idunn, Mythis, Ra); one bot tried every fix there.
+  - Katzenstein's Lab near (3000, 11300) while to Katzenstein's Lab (Defeat Clanker): stuck 14 time(s) (Idunn, Ra); one bot tried every fix there.
   - Katzenstein's Lab near (2700, 10700) while at the puzzle piece "DynaTrigger_MB_Plaque_Tree instance" (now Off, needs On) (): stuck 12 time(s) (Cyndr, Garm, Idunn, Mythis, Ra, Tulkar); one bot tried every fix there.
   - Katzenstein's Lab near (2500, 11400) while to the puzzle piece "DynaTrigger_MB_Plaque_Bird instance" back (set before its turn) (): stuck 11 time(s) (Tulkar); one bot tried every fix there.
   - Katzenstein's Lab near (2500, 11300) while to the puzzle piece "DynaTrigger_MB_Plaque_Bird instance" back (set before its turn) (): stuck 9 time(s) (Tulkar); one bot tried every fix there.
-  - Katzenstein's Lab near (2900, 11700) while to the puzzle piece "DynaTrigger_MB_Plaque_Bird instance" back (set before its turn) (): stuck 8 time(s) (Tulkar); one bot tried every fix there.
 
 ## Metal Madness
 - Finished by Garm (18 min).
+- Finished by Tulkar (24 min).
 - Won by Garm (Solo) against Clockwork Wizard (rank 4, 560 health, Life, a boss) on 2026-11-20 at 00:51:46.
   It took 5 rounds, about 3 minutes.
   Deck made for a boss (Life), hitting with Life, Fire, Storm; a rival that keeps beating me, so more shields and heals (many of my fights lately had 2+ enemies).
@@ -1257,8 +1264,18 @@ What the bots did in Marleybone, from the server log: every quest finished, ever
   It took 7 rounds, about 4 minutes.
   Deck made for a boss (Life), hitting with Life, Fire, Storm; a rival that outlasts me, so more hits and blades to end it sooner (many of my fights lately had 2+ enemies).
   Spells that landed the hits: Frostbite x2, Frost Beetle.
+- Won by Tulkar (Solo) against Clockwork Wizard (rank 4, 560 health, Life, a boss) on 2026-11-20 at 01:58:02.
+  It took 16 rounds, about 9 minutes.
+  Deck made for a boss (Life), hitting with Life, Fire, Storm; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies).
+  Plan: "hit now" (3+ enemies, even).
+  Spells that landed the hits: Frostbite x4, Minor Nova x3, Frost Beetle x2, Evil Snowman, Pixie, Fairy, Vampire.
+- Won by Tulkar (Solo) against Gear Spinner (rank 5, 675 health, Myth, a boss) on 2026-11-20 at 02:07:16.
+  It took 10 rounds, about 5 minutes.
+  Deck made for a boss (Myth), hitting with Myth, Fire, Ice; a rival that keeps beating me, so more shields and heals (most of my fights lately had 2+ enemies).
+  Spells that landed the hits: Vampire, Pixie, Frostbite, Frost Beetle.
 - Avoid, fights lost:
   - Gear Spinner: lost 1 time(s) (Garm). Why: I went in at 30% health. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
+  - Gear Spinner: lost 1 time(s) (Tulkar). Why: I went in at 42% health. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
 
 ## A Private Meeting
 - Finished by Tulkar (3 min).
@@ -1335,9 +1352,9 @@ What the bots did in Marleybone, from the server log: every quest finished, ever
 ## Stolen Away
 - Avoid, places bots got stuck:
   - Counterweight East near (-1100, -3800) while Defeat Sprockets (where they spawn) ("Stolen Away"): stuck 9 time(s) (Garm); one bot tried every fix there.
-  - Counterweight East near (-900, -3400) while Defeat Sprockets (where they spawn) ("Stolen Away"): stuck 7 time(s) (Garm).
-  - Counterweight East near (-1000, -3800) while Defeat Sprockets (where they spawn) ("Stolen Away"): stuck 3 time(s) (Garm); one bot tried every fix there.
-  - Counterweight East near (-1000, -3300) while Defeat Sprockets (where they spawn) ("Stolen Away"): stuck 2 time(s) (Garm).
+  - Counterweight East near (-900, -3400) while Defeat Sprockets (where they spawn) ("Stolen Away"): stuck 8 time(s) (Garm).
+  - Counterweight East near (-1000, -3800) while Defeat Sprockets (where they spawn) ("Stolen Away"): stuck 5 time(s) (Garm); one bot tried every fix there.
+  - Counterweight East near (-1000, -3300) while Defeat Sprockets (where they spawn) ("Stolen Away"): stuck 4 time(s) (Garm).
   - Counterweight East near (-1000, -3400) while Defeat Sprockets (where they spawn) ("Stolen Away"): stuck 1 time(s) (Garm).
   - Counterweight East near (0, -2100) while onto the lever "MB_CE_Lever 01", which opens "DynaTrigger_MB_BigBen_Gate instance" (it turns when stepped on) (): stuck 1 time(s) (Garm).
   - Counterweight East near (-1100, -3800) while a short break before trying "Defeat Sprockets (where they spawn)" again: stuck 1 time(s) (Garm).
@@ -1790,7 +1807,7 @@ What the bots did in Marleybone, from the server log: every quest finished, ever
   Spells that landed the hits: Sandstorm x4, Helping Hands x3, Gearhead Destroyer x2, Minor Crusade, Elemental Shield, Fairy, Locust Swarm.
 
 ## The Second Door
-- Finished by Cyndr (5 s, 0 s, 0 s, 0 s, 5 min, 4 s, 0 s).
+- Finished by Cyndr (5 s, 5 min, 0 s).
 - Finished by Tulkar (6 s).
 - Finished by Garm (5 s).
 - Finished by Mythis (0 s).
