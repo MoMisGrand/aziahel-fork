@@ -90,6 +90,13 @@ internal static class BotFloors {
         /// any other gate.
         /// </summary>
         internal List<List<(string Object, string State)>> Sequence { get; init; } = [];
+
+        /// <summary>
+        /// The pieces of a <see cref="Pieces"/> puzzle count only when clicked in the order of <see cref="Needs"/>: each
+        /// check is enabled by the one before and fires when its piece turns (Katzenstein's Lab: Sun, Bird, Tree, then Bug
+        /// open Gate02). A piece set too early is clicked back first, so the chain starts over.
+        /// </summary>
+        internal bool InOrder { get; init; }
     }
 
     /// <summary>What the area's files say about its floors.</summary>
@@ -295,6 +302,27 @@ internal static class BotFloors {
             return chain;
         }
 
+        // The pieces of a chain of checks that each fire when a piece turns ("DynaTrigger_MB_Plaque_Sun instance.On.EnterState")
+        // and enable the next ("Enable_Trigger Puzzle01 part 2"), first to last, with the state each piece is turned to; empty
+        // when the last check is enabled by nothing.
+        List<(string Object, string State)> ClickChain(Trigger last) {
+            var chain = new List<(string Object, string State)>();
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            for (var t = last; t is not null && seen.Add((string) t.m_triggerName ?? "") && chain.Count < 8;) {
+                var turn = Fires(t).Select(f => f.Split('.')).FirstOrDefault(b => b.Length == 3 && b[2].Equals("EnterState", StringComparison.OrdinalIgnoreCase));
+                if (turn is null) {
+                    break;
+                }
+
+                chain.Insert(0, (turn[0], turn[1]));
+                var name = (string) t.m_triggerName ?? "";
+                t = triggers.FirstOrDefault(p => Results(p).OfType<ResPostEvent>()
+                    .Any(r => string.Equals((string) r.m_eventName, "Enable_" + name, StringComparison.OrdinalIgnoreCase)));
+            }
+
+            return chain;
+        }
+
         // Start states: the trigger objects, then the area's object list.
         var starts = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var spots = new Dictionary<string, (float X, float Y, float Z)>(StringComparer.OrdinalIgnoreCase);
@@ -390,6 +418,19 @@ internal static class BotFloors {
 
                     // "Lever.Down.EnterState": the lever itself turned.
                     var bits = fire.Split('.');
+                    // ... unless it is the last of a chain of such checks, each enabling the next: then every piece of the
+                    // chain is clicked in turn (Katzenstein's Lab: Sun, Bird, Tree, then Bug open Gate02; Cyndr clicked the Bug
+                    // alone and stood at the shut gate for half an hour, 2026-11-19).
+                    if (bits.Length == 3 && bits[2].Equals("EnterState", StringComparison.OrdinalIgnoreCase) && ClickChain(t) is { Count: >= 2 } chain
+                        && chain.All(n => spots.ContainsKey(n.Object))) {
+                        gate = gate with {
+                            By = Opener.Click, LX = chain.Average(n => spots[n.Object].X), LY = chain.Average(n => spots[n.Object].Y),
+                            LZ = chain.Average(n => spots[n.Object].Z), Needs = chain, Pieces = true, InOrder = true,
+                            PieceSpots = chain.Select(n => n.Object).Distinct(StringComparer.OrdinalIgnoreCase).ToDictionary(o => o, o => spots[o], StringComparer.OrdinalIgnoreCase),
+                        };
+                        break;
+                    }
+
                     if (bits.Length == 3 && bits[2].Equals("EnterState", StringComparison.OrdinalIgnoreCase) && spots.TryGetValue(bits[0], out var lever)) {
                         gate = gate with { By = Opener.Click, Lever = bits[0], LX = lever.X, LY = lever.Y, LZ = lever.Z };
                         break;
@@ -998,6 +1039,17 @@ internal static class BotFloors {
             if (wing is not null && live?.FoesNear?.Invoke(wing.X, wing.Y) == true) {
                 return new Duty(FIGHT, wing.X, wing.Y, $"the creatures by the puzzle that opens \"{gate.Object}\"", "room|" + wing.Trigger,
                     "the puzzle comes out once they are beaten");
+            }
+
+            // In-order pieces: one set ahead of an earlier one that isn't is clicked back first, so the chain starts over.
+            if (gate.InOrder && gate.Needs.FindIndex(n => !string.Equals(StateOf(n.Object), n.State, StringComparison.OrdinalIgnoreCase)) is var open and >= 0
+                && gate.Needs.Skip(open + 1).FirstOrDefault(n => string.Equals(StateOf(n.Object), n.State, StringComparison.OrdinalIgnoreCase)) is { Object: { } early }
+                && gate.PieceSpots.TryGetValue(early, out var earlyAt)) {
+                var backKey = $"piece|{early}|{StateOf(early)}|back";
+                if (Tried(backKey) < TRIES + 2) {
+                    return new Duty(CLICK, earlyAt.X, earlyAt.Y, $"the puzzle piece \"{early}\" back (set before its turn)", backKey,
+                        $"\"{gate.Object}\" opens only once {string.Join(", then ", gate.Needs.Select(n => n.Object))} are set in that order, so it starts over");
+                }
             }
 
             foreach (var (obj, state) in gate.Needs) {
