@@ -50,6 +50,7 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 
 ## MooShu, Jade Palace
 - An Imperial Cure, Defeat Jade Oni: the quest is fine. The throne room sits at the top of a long stair, and bots stayed on a hidden floor under the stair, so the Oni never started the fight with Ultimus (20 November, 05:08 onward; Mindy beat it normally). Fixed in the bots: they now climb stairs and ramps like a player. Walk up the long stair to the throne and the Oni comes out to fight.
+- An Imperial Cure, fighting the Jade Oni: once the stairs were fixed Ultimus reached it at once but lost twice solo at level 35 (18 and 14 minutes). Each time his 20-card deck ran out around round 20 with the Oni at about 1,600 to 2,100 of 6,000 health, and it healed while he passed. Bring a bigger deck with more hits and heals; the bots now pack more cards for a long boss fight they have lost before.
 
 ## MooShu, Tree of Life
 - Left Behind: the Go to Tree of Life step finishes inside the big circle round the dead tree itself, in the middle of the dungeon. The game files name that circle with a copy number, so the server did not count it and the step never finished (Ultimus stood at the tree for an hour). The small spot of the same name behind the tree is only the hidden oyster. Fixed in the server; walk up to the tree and the step finishes.
