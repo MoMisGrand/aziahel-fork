@@ -8,7 +8,7 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 - The plaques stand right beside the shut gate. A walk to a gate's own plaque never stops at that gate.
 - The second gate works the same way, with the Tree, Sun, Bird and Bug plaques in that order.
 - Weird Science: Firegut and Clanker are in the lab's first wing, nowhere near the plaques. A far puzzle only counts when its gate stands toward the bot's step, so these bots go straight for the fights.
-- Confirmed November 20, 2026: Garm opened the gate and reached Grunk for "It's Alive!", Ra and Mythis went through too.
+- Not confirmed yet: as of November 20, 2026 no bot has been able to click a plaque (the game offers nothing to press), so the gate has not opened for them. Garm reached Grunk for "It's Alive!" another way. A bot now leaves a plaque that offers nothing after about a minute.
 
 ## Marleybone, The Ironworks
 - Purloin the Plans: Baxter only comes out once a wizard walks past the first gate. A bot that logs in beside his spot walks over the first gate first.
