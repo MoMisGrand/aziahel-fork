@@ -1,0 +1,4 @@
+Changed: A bot whose dungeon boss stands still and starts no battle now walks out for a fresh copy right away.
+Before, a bot that lost to a dungeon boss and came back by Dungeon Recall, or whose teammate had already beaten the boss, could find the boss standing there without ever starting a fight. It waited 20 minutes before leaving to start the dungeon over, and every bot update started that wait again, so bots stood there for hours. Now, once the bot has stood on its own quest boss for 20 seconds with no battle, it walks out and back in at once. This happens at most twice an hour per dungeon, after that it goes back to the 20-minute wait.
+Where: Bots in dungeons, for example Knight's Tower (Jacques the Scratcher) and The Ironworks (Pops O'Leary).
+Test: Watch a bot that lost to a dungeon boss, or one that stands by a boss that won't fight; within a minute or two it should walk out and come back in to a new copy.

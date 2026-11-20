@@ -3075,6 +3075,10 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
                 // Left alone for a while, so the next look picks another (BotShared.DudCreatures).
                 if (!BotShared.DudCreatures.IsDud(fight.GlobalId)) {
                     BotShared.DudCreatures.Mark(fight.GlobalId);
+                    // His own step's creature in a dungeon copy that starts no battle: that copy can't give the step.
+                    if (!string.IsNullOrEmpty(fight.Quest) && me.Wizard?.ZoneIsInstance == true) {
+                        _dudStepAt = (me.Zone ?? "", DateTime.UtcNow);
+                    }
                     Think($"I stood on this {TemplateName(fight.Template)} for 20 seconds and no battle started, so it can't be fought right now. " +
                           $"I leave it alone for {BotShared.DudCreatures.LeaveFor.TotalMinutes:0} minutes and pick another.", "dud|" + fight.GlobalId);
                 }
