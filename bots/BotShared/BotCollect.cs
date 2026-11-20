@@ -67,6 +67,17 @@ internal static class BotCollect {
         }
     }
 
+    /// <summary>The spots of a step start over; the things already used stay used.</summary>
+    internal static void ResetSpots(ulong charId, string quest, string goal) {
+        if (!s_steps.TryGetValue(Key(charId, quest, goal), out var step)) {
+            return;
+        }
+
+        lock (step) {
+            step.Spots.Clear();
+        }
+    }
+
     /// <summary>Whether the wizard already used this object for this step.</summary>
     internal static bool HasUsed(ulong charId, string quest, string goal, ulong objectId) {
         if (!s_steps.TryGetValue(Key(charId, quest, goal), out var step)) {
@@ -98,6 +109,17 @@ internal static class BotCollect {
         float fromX, float fromY, IReadOnlyList<(float X, float Y)> creatures) {
         bool Guarded((float X, float Y) s) => creatures.Any(c => Far(c.X, c.Y, s.X, s.Y) < 450);
         var open = spots.Where(s => holders.Any(h => !HasDone(h, quest, goal, s.X, s.Y))).ToList();
+        if (open.Count == 0 && spots.Count > 1) {
+            // Every spot done and the step still wants more: a spot was written off by mistake (or before the things there
+            // came back), so the spots start over; what was already used stays used (the Calling of 7, 2026-11-20, Katzenstein's
+            // Lab's crates).
+            foreach (var holder in holders) {
+                ResetSpots(holder, quest, goal);
+            }
+
+            open = [.. spots];
+        }
+
         var pool = open.Count > 0 ? open : spots.ToList();
 
         return [.. pool.OrderBy(s => Far(fromX, fromY, s.X, s.Y) + (Guarded(s) ? 3000 : 0))];
