@@ -56,7 +56,7 @@ internal static class UltimusTco7 {
     internal sealed record Line(UltimusSeat From, ulong FromCharId, string FromName, UltimusSeat To, string Kind, string Text, string Quest, DateTime At);
 
     internal const string HELLO = "hello", ASK_QUEST = "ask-quest", TELL_QUEST = "tell-quest", TEAM_ASK = "team-ask", TEAM_YES = "team-yes",
-        TEAM_NO = "team-no", BYE = "bye";
+        TEAM_NO = "team-no", BYE = "bye", HELP_ASK = "help-ask";
 
     private static readonly SeatLocal<ConcurrentQueue<Line>> s_heard = new(() => new ConcurrentQueue<Line>());
 
@@ -222,6 +222,10 @@ internal sealed partial class UltimusDirectorActor {
         }
 
         _tco7NextLook = DateTime.UtcNow.AddSeconds(5);
+        if (AskForHelp(me, grouped, squad)) {
+            return;
+        }
+
         // His own team only: a TCO7 member with the TCO7, a Kitharas Family member with the family.
         foreach (var other in _seat.Mates.Where(s => s != _seat)) {
             if (UltimusDirector.MembersOf(other) is not { Count: > 0 } them || them[0] is not { Wizard: not null } mate
@@ -331,6 +335,41 @@ internal sealed partial class UltimusDirectorActor {
                 break;
             }
 
+            case UltimusTco7.HELP_ASK: {
+                string no = null;
+                if (UltimusTco7.InSquad(_seat)) {
+                    no = "I'm questing with my squad";
+                }
+                else if (!UltimusTco7.TeamUp) {
+                    no = "teaming up is switched off for us right now";
+                }
+                else if (inBattle) {
+                    no = "I'm in a fight";
+                }
+                else if (grouped || _partyMate != 0) {
+                    no = "I'm already in a group";
+                }
+                else if (_paused) {
+                    no = "I'm paused for now";
+                }
+                else if (me.Wizard?.ZoneIsInstance == true) {
+                    no = "I'm in the middle of a dungeon";
+                }
+
+                if (no is null) {
+                    UltimusTco7.ExpectInvite(line.FromCharId);
+                    Think($"{line.FromName} keeps losing a fight on {UltimusText.Title(line.Quest)} and asked me to help. I'm free, so I go: " +
+                          "my own story waits until we win it.", "tco7-help-yes|" + line.From.Key + "|" + line.Quest);
+                    SayAfter(me, line.From, UltimusTco7.TEAM_YES, $"On my way, {line.FromName}! Send me the invite.", line.Quest, 2);
+                }
+                else {
+                    Think($"{line.FromName} asked for help in a fight, but {no}.", "tco7-help-no|" + line.From.Key + "|" + line.Quest);
+                    SayAfter(me, line.From, UltimusTco7.TEAM_NO, $"Sorry, {line.FromName}, {no}. Good luck!", line.Quest, 2);
+                }
+
+                break;
+            }
+
             case UltimusTco7.TEAM_YES:
                 // The one who asked sends the invitation, as a player does from the friends list.
                 if (!inBattle && _partyMate == 0 && UltimusDirector.MembersOf(line.From) is { Count: > 0 } them && _actors.Count > 0) {
@@ -376,7 +415,7 @@ internal sealed partial class UltimusDirectorActor {
         // A squad never splits: its mates come along on every quest, the leader's story is theirs too (they catch up on it).
         var squadGroup = UltimusTco7.InSquad(_seat) && mates.All(m => UltimusSeat.OfCharacter(m.CharId) is { } s && UltimusTco7.InSquad(s));
         var shared = quest.Length > 0 && mates.Any(m => PlayerCheats.LiveWizard(m.CharId)?.QuestBehavior?.HasQuest(quest) == true);
-        if (shared || quest.Length == 0 || squadGroup) {
+        if (shared || quest.Length == 0 || squadGroup || HelpCallActive()) {
             _tco7SplitSince = DateTime.MaxValue;
             return null;
         }
@@ -397,6 +436,89 @@ internal sealed partial class UltimusDirectorActor {
         }
 
         return null;
+    }
+
+    // ---------------------------------------------------------------------
+    // Calling a teammate for a fight he keeps losing (Idunn lost to Bellows in Counterweight West 50 times on 2026-11-20 while
+    // her teammates quested alone; Niduus wants them to "quest either alone or with someone")
+    // ---------------------------------------------------------------------
+
+    private const int HELP_CALL_LOSSES = 4;
+    private static readonly TimeSpan s_helpCallFor = TimeSpan.FromMinutes(40);
+    private static readonly TimeSpan s_helpAskAgain = TimeSpan.FromMinutes(3);
+
+    private string _helpCallQuest = "";
+    private DateTime _helpCallUntil = DateTime.MinValue;
+    private DateTime _helpCallNextAsk = DateTime.MinValue;
+    private int _helpCallAsked;
+
+    /// <summary>He lost the same fight several times: he wants a teammate's help for a while.</summary>
+    private void CallForHelp(string quest) {
+        if (string.IsNullOrEmpty(quest)) {
+            return;
+        }
+
+        if (!HelpCallActive()) {
+            _helpCallAsked = 0;
+            _helpCallNextAsk = DateTime.MinValue;
+        }
+
+        _helpCallQuest = quest;
+        _helpCallUntil = DateTime.UtcNow + s_helpCallFor;
+    }
+
+    /// <summary>Whether he is still calling for help with the fight on his quest now.</summary>
+    private bool HelpCallActive() {
+        if (DateTime.UtcNow >= _helpCallUntil || _helpCallQuest.Length == 0) {
+            return false;
+        }
+
+        var quest = _currentQuest ?? _target?.Quest ?? "";
+        if (quest.Length > 0 && !string.Equals(quest, _helpCallQuest, StringComparison.OrdinalIgnoreCase)) {
+            _helpCallUntil = DateTime.MinValue;
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>A fight won while help was called: the help has done its job (the group splits as usual).</summary>
+    private void HelpCallWon() {
+        if (HelpCallActive()) {
+            Think($"We won it together. Thanks to my teammate, {UltimusText.Title(_helpCallQuest)} goes on.", "tco7-help-won|" + _helpCallQuest);
+        }
+
+        _helpCallUntil = DateTime.MinValue;
+    }
+
+    /// <summary>Calling for help: one free teammate (not in a dungeon, not grouped) is asked to come. True when he asked.</summary>
+    private bool AskForHelp(UltimusMember.Status me, bool grouped, bool squad) {
+        if (!HelpCallActive() || grouped || squad || _partyMate != 0 || !UltimusTco7.TeamUp || DateTime.UtcNow < _helpCallNextAsk) {
+            return false;
+        }
+
+        var mates = _seat.Mates.Where(s => s != _seat && UltimusTco7.FreeOf(s) && !UltimusTco7.InSquad(s)).ToList();
+        if (mates.Count == 0) {
+            return false;
+        }
+
+        // Each free teammate in turn, so one who says no is not asked again straight away.
+        for (var i = 0; i < mates.Count; i++) {
+            var other = mates[(_helpCallAsked + i) % mates.Count];
+            if (UltimusDirector.MembersOf(other) is not { Count: > 0 } them || them[0] is not { Wizard: not null } mate
+                || mate.Wizard.ZoneIsInstance || CombatDuelComponent.IsInBattle(mate.GlobalId)) {
+                continue;
+            }
+
+            _helpCallAsked += i + 1;
+            _helpCallNextAsk = DateTime.UtcNow + s_helpAskAgain;
+            Tco7Say(me, other, UltimusTco7.HELP_ASK, $"{other.Name}, I keep losing a fight on {UltimusText.Title(_helpCallQuest)}. Can you come and help?", _helpCallQuest);
+            Think($"I lost this fight again and again alone. {other.Name} is free, so I ask them to come and help, as a player asks a friend.",
+                "tco7-help-ask|" + other.Key + "|" + _helpCallQuest);
+            return true;
+        }
+
+        return false;
     }
 
     // ---------------------------------------------------------------------
