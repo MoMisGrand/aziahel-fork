@@ -2050,6 +2050,16 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
     private bool _battleCompany;
     private int _companyCount;
     private List<(ulong CharId, string Name)> _battlePlayers = [];
+    // The step he was on when the battle began. A long fight can end after the off-track alarm or a zone change has
+    // already dropped his target (his log, 2026-11-21 5:53 AM: three Zarathax losses each counted "1 time(s) at this
+    // step", the second as "this step"), so the loss is counted against the fight he went in for.
+    private UltimusPlanner.Target _battleTarget;
+
+    /// <summary>The key a loss counts under: quest and goal when known (they stay the same between tries), else the step's key.</summary>
+    internal static string LossKey(UltimusPlanner.Target fought) =>
+        fought is null ? null
+        : !string.IsNullOrEmpty(fought.Quest) && !string.IsNullOrEmpty(fought.Goal) ? fought.Quest + "|" + fought.Goal
+        : fought.Key;
 
     private bool HandleBattle() {
         var me = _team[0];
@@ -2060,6 +2070,7 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
 
         if (!_wasInBattle[0] && now) {
             _battleSince = DateTime.UtcNow;
+            _battleTarget = _target;
             NoteFightKit(me);
             FightStarted(me);
             var others = DuelBots.UltimusBattleCompany(me.GlobalId);
@@ -2096,6 +2107,15 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
 
         _doing = "in a battle";
         _lastProgress = DateTime.UtcNow;
+        // A fight for his story step is the step itself, not time lost: a 15-minute boss fight must not set off the
+        // off-track alarm or the step's time budget the moment it ends (Zarathax, 2026-11-21 5:53 AM).
+        if ((_battleTarget ?? _target) is { Kind: UltimusPlanner.FIGHT }) {
+            StoryProgress(real: false);
+            if (_targetSince != DateTime.MinValue) {
+                _targetSince = DateTime.UtcNow;
+            }
+        }
+
         UltimusDirector.SetBusy(me.ZoneActor, me.X, me.Y);
         // How the fight goes for him, for what he trains next (BotTrainingPlan).
         if (me.Wizard?.GameStats is { } watched) {
@@ -2162,7 +2182,8 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
             return;
         }
 
-        var key = _target?.Key ?? member.Zone;
+        var lostTo = _battleTarget ?? _target;
+        var key = LossKey(lostTo) ?? member.Zone;
         _losses[key] = _losses.GetValueOrDefault(key) + 1;
         Note("Ultimus", $"lost the battle ({_losses[key]} time(s) at this step).", UltimusLink.MINOR);
         // Fallen in a dungeon copy: Dungeon Recall takes him back to it (UltimusDirector.Comeback.cs).
@@ -2178,8 +2199,8 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
 
         // Learning from it (Niduus, 2026-11-12: "Both documenting mistakes for future learning").
         var level = member.Wizard?.MagicSchoolBehavior?.Level ?? 0;
-        UltimusLink.Learned("lost-fight", _target?.Quest ?? "", _target?.Goal ?? "", member.Zone ?? "",
-            $"Lost the fight for \"{_target?.What ?? "this step"}\" alone at level {level} ({_losses[key]} time(s)).",
+        UltimusLink.Learned("lost-fight", lostTo?.Quest ?? "", lostTo?.Goal ?? "", member.Zone ?? "",
+            $"Lost the fight for \"{lostTo?.What ?? "this step"}\" alone at level {level} ({_losses[key]} time(s)).",
             _losses[key] == 1
                 ? "Goes in at full health and mana with a deck made for these creatures, and fights fewer at once."
                 : "Waits for a player to join or asks for help through an issue; the step may need a group.");
@@ -2189,7 +2210,7 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
         if (_losses[key] >= UltimusWire.LossesBeforeIssue) {
             // A fight he keeps losing is too hard for him now, not broken: he flags it and keeps going at it as a player would
             // (rested, careful), never skipping it (Niduus, 2026-11-14).
-            Issue("quest", _target?.Quest, $"The team lost the fight for \"{_target?.What ?? "this step"}\" {_losses[key]} times. He rests and tries again; nothing is skipped.",
+            Issue("quest", lostTo?.Quest, $"The team lost the fight for \"{lostTo?.What ?? "this step"}\" {_losses[key]} times. He rests and tries again; nothing is skipped.",
                 key: key + "|losses" + (_losses[key] > UltimusWire.LossesBeforeIssue ? "|again" : ""), broken: false,
                 level: _losses[key] > UltimusWire.LossesBeforeIssue ? UltimusLink.CRITICAL : null);
         }
