@@ -10,11 +10,11 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Otomo Quartermaster: won 6 time(s) (6 Solo, 0 Team), lost 3. Fastest: Garm in 4 rounds, deck for a boss (Fire), hitting with Fire, Myth, Death (most of my fights lately had 2+ enemies), hits with Dark Sprite.
 - War Oni: won 5 time(s) (3 Solo, 2 Team), lost 4. Fastest: Cyndr in 7 rounds, deck for a boss (Fire), hitting with Fire, Myth; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Banshee, Heck Hound.
 - Imitsu Defouler: won 9 time(s) (9 Solo, 0 Team), lost 0. Fastest: Cyndr in 6 rounds, plan "hit now", deck for Myth enemies, hitting with Myth, Storm, Fire (most of my fights lately had 2+ enemies), hits with Scald, Fire Cat, Minor Fire Scorch, Immolate.
+- Infected Villager: won 6 time(s) (6 Solo, 0 Team), lost 2. Fastest: Garm in 5 rounds, plan "hit now", deck for Balance enemies, hitting with Balance, Death, Ice; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Minor Dark Blow, Poison, Dark Sprite, Banshee.
 - Sanzoku Bandit: won 8 time(s) (6 Solo, 2 Team), lost 0. Fastest: Ra in 6 rounds, plan "hit now", deck for Myth enemies, hitting with Myth, Storm, Fire (most of my fights lately had 2+ enemies), hits with Minor Crusade, Scarab, Sandstorm, Helping Hands.
 - Yochimo: won 8 time(s) (6 Solo, 2 Team), lost 0. Fastest: Cyndr in 1 rounds, deck for a boss (Storm), hitting with Storm, Life, Death (most of my fights lately had 2+ enemies), hits with Immolate.
 - Do-Daga: won 6 time(s) (4 Solo, 2 Team), lost 1. Fastest: Cyndr in 5 rounds, plan "hit now", deck for a boss (Ice), hitting with Ice, Fire, Death (many of my fights lately had 2+ enemies), hits with Minor Fire Scorch, Immolate, Sunbird.
 - Kanago: won 4 time(s) (4 Solo, 0 Team), lost 3. Fastest: Ultimus in 10 rounds, plan "hit now", deck for a boss (Storm), hitting with Storm, Balance, Death (most of my fights lately had 2+ enemies), hits with Minor Crusade, Scarab, Sandstorm, Gearhead Destroyer.
-- Infected Villager: won 5 time(s) (5 Solo, 0 Team), lost 2. Fastest: Garm in 5 rounds, plan "hit now", deck for Balance enemies, hitting with Balance, Death, Ice; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Minor Dark Blow, Poison, Dark Sprite, Banshee.
 - Otomo Spotter: won 7 time(s) (5 Solo, 2 Team), lost 0. Fastest: Ultimus in 3 rounds, deck for Myth enemies, hitting with Myth, Fire, Storm (many of my fights lately had 2+ enemies), hits with Minor Crusade.
 - Maito: won 3 time(s) (3 Solo, 0 Team), lost 3. Fastest: Cyndr in 3 rounds, plan "hit now", deck for a boss (Ice), hitting with Ice, Fire, Life; a rival that outlasts me, so more hits and blades to end it sooner (many of my fights lately had 2+ enemies), hits with Sunbird, Immolate.
 - Grum Foultooth: won 5 time(s) (5 Solo, 0 Team), lost 1. Fastest: Cyndr in 4 rounds, deck for a boss (Myth), hitting with Myth, Storm, Fire; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Immolate.
@@ -31,6 +31,7 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Ideyoshi: won 1 time(s) (1 Solo, 0 Team), lost 2. Fastest: Ra in 18 rounds, plan "hit now", deck for a boss (Myth), hitting with Myth, Balance, Storm (most of my fights lately had 2+ enemies), hits with Minor Crusade, Scarab, Sandstorm, Helping Hands.
 - Tamauji: won 2 time(s) (2 Solo, 0 Team), lost 1. Fastest: Ra in 8 rounds, plan "hit now", deck for a boss (Myth), hitting with Myth, Death, Storm (most of my fights lately had 2+ enemies), hits with Sandstorm, Scarab, Minor Crusade, Gearhead Destroyer.
 - Jade Oni: won 1 time(s) (1 Solo, 0 Team), lost 2. Fastest: Ultimus in 40 rounds, deck for a boss (Life), hitting with Life, Fire, Storm; a rival that outlasts me, so more hits and blades to end it sooner (many of my fights lately had 2+ enemies), hits with Helping Hands, Fairy, Spirit Shield, Vampire.
+- Tomugawa the Evil: won 2 time(s) (2 Solo, 0 Team), lost 1. Fastest: Ra in 9 rounds, deck for a boss (Death), hitting with Death, Ice, Storm (many of my fights lately had 2+ enemies).
 - Otomo Grappler: won 3 time(s) (3 Solo, 0 Team), lost 0. Fastest: Ra in 8 rounds, deck for Balance enemies, hitting with Balance, Death, Ice (many of my fights lately had 2+ enemies), hits with Balance, Storm Hound, Sandstorm, Ghoul.
 - Otomo Soldier: won 3 time(s) (3 Solo, 0 Team), lost 0. Fastest: Cyndr in 4 rounds, deck for Ice enemies, hitting with Ice, Fire, Myth (most of my fights lately had 2+ enemies), hits with Scald.
 - Haru: won 3 time(s) (3 Solo, 0 Team), lost 0. Fastest: Ultimus in 9 rounds, deck for a boss (Myth), hitting with Myth, Balance, Storm (many of my fights lately had 2+ enemies), hits with Locust Swarm.
@@ -43,7 +44,6 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Oyotomi the Defiler: won 2 time(s) (2 Solo, 0 Team), lost 0. Fastest: Ultimus in 9 rounds, deck for any fight (many of my fights lately had 2+ enemies), hits with Minor Crusade, Locust Swarm.
 - Diseased Water Spirit: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 12 rounds, deck for Storm enemies, hitting with Storm, Death, Myth (most of my fights lately had 2+ enemies), hits with Seraph, Sandstorm, Storm Hound, Minor Crusade.
 - Ember Everburn: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ra in 12 rounds, plan "hit now", deck for a boss (Fire), hitting with Fire, Death, Myth (most of my fights lately had 2+ enemies), hits with Sandstorm, Elemental Shield, Judgement, Scarab.
-- Tomugawa the Evil: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 11 rounds, deck for a boss (Death), hitting with Death, Ice, Storm (many of my fights lately had 2+ enemies), hits with Scarab, Fairy, Minor Crusade.
 - Sorrow Whisperer: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 8 rounds, deck for Death enemies, hitting with Death, Fire, Myth (most of my fights lately had 2+ enemies), hits with Minor Crusade, Sandstorm, Fairy.
 - Death Oni: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 12 rounds, deck for a boss (Death), hitting with Death, Ice, Storm (most of my fights lately had 2+ enemies), hits with Minor Crusade, Helping Hands, Fairy, Locust Swarm.
 
@@ -150,6 +150,7 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Finished by Garm (10 min).
 - Finished by Cyndr (3 min).
 - Finished by Tulkar (25 min).
+- Finished by Mythis (12 min).
 - Won by Ultimus (Solo) against Ronin Keyholder (rank 6, 760 health, Ice, a boss) on 2026-11-19 at 15:25:11.
   It took 9 rounds, about 5 minutes.
   Deck made for a boss (Ice), hitting with Ice, Fire, Life; a rival that outlasts me, so more hits and blades to end it sooner (many of my fights lately had 2+ enemies).
@@ -288,6 +289,7 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 ## Stolen Food
 - Finished by Ultimus (14 min).
 - Finished by Ra (19 min).
+- Finished by Garm (8 min).
 - Won by Ultimus (Solo) against Infected Villager (rank 5, 675 health, Balance) on 2026-11-19 at 19:56:15.
   It took 7 rounds, about 4 minutes.
   Deck made for Balance enemies, hitting with Balance, Death, Ice (most of my fights lately had 2+ enemies).
@@ -310,6 +312,11 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
   Deck made for Balance enemies, hitting with Balance, Death, Ice; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies).
   Plan: "hit now" (mine and every other bot's).
   Spells that landed the hits: Minor Dark Blow x2, Poison, Dark Sprite, Banshee.
+- Won by Garm (Solo) against Infected Villager (rank 5, 675 health, Balance) on 2026-11-21 at 03:48:22.
+  It took 6 rounds, about 3 minutes.
+  Deck made for Balance enemies, hitting with Balance, Death, Ice; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies).
+  Plan: "hit now" (mine and every other bot's).
+  Spells that landed the hits: Minor Dark Blow x2, Banshee, Dark Sprite, Vampire.
 - Avoid, fights lost:
   - Infected Villager: lost 1 time(s) (Ultimus). Why: I went in at 59% health, the fight ran 6 minutes, so I ran out of good cards. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
   - Infected Villager: lost 1 time(s) (Ra). Why: I went in at 67% health. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
@@ -746,6 +753,18 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Avoid, fights lost:
   - Usegi: lost 1 time(s) (Cyndr). Why: its biggest hit took 62% of my health. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
 
+## To the Great Beyond
+- Finished by Ultimus (7 min).
+- Won by Ultimus (Solo) against Tomugawa the Evil (rank 7, 1,560 health, Death, a boss) on 2026-11-20 at 00:16:23.
+  It took 11 rounds, about 6 minutes.
+  Deck made for a boss (Death), hitting with Death, Ice, Storm (many of my fights lately had 2+ enemies).
+  Spells that landed the hits: Scarab, Fairy, Minor Crusade.
+- Won by Ra (Solo) against Tomugawa the Evil (rank 7, 1,560 health, Death, a boss) on 2026-11-21 at 03:59:49.
+  It took 9 rounds, about 4 minutes.
+  Deck made for a boss (Death), hitting with Death, Ice, Storm (many of my fights lately had 2+ enemies).
+- Avoid, fights lost:
+  - Tomugawa the Evil: lost 1 time(s) (Ra). Why: the fight ran 8 minutes, so I ran out of good cards. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
+
 ## is a Good Defense
 - Finished by Ultimus (80 s).
 - Finished by Ra (81 s).
@@ -1029,36 +1048,43 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Finished by Ultimus (33 s).
 - Finished by Ra (33 s).
 - Finished by Garm (36 s).
+- Finished by Cyndr (34 s).
 
 ## Jade Scepter
 - Finished by Ultimus (35 s).
 - Finished by Ra (14 s).
 - Finished by Garm (38 s).
+- Finished by Cyndr (14 s).
 
 ## Due Diligence
 - Finished by Ultimus (61 s).
 - Finished by Ra (62 s).
 - Finished by Garm (62 s).
+- Finished by Cyndr (2 min).
 
 ## Earth Day
 - Finished by Ultimus (5 s).
 - Finished by Ra (6 s).
 - Finished by Garm (6 s).
+- Finished by Cyndr (5 s).
 
 ## Crazy for You
 - Finished by Ultimus (24 s).
 - Finished by Ra (23 s).
 - Finished by Garm (23 s).
+- Finished by Cyndr (79 s).
 
 ## Shrining Example
 - Finished by Ultimus (10 s).
 - Finished by Ra (11 s).
 - Finished by Garm (11 s).
+- Finished by Cyndr (10 s).
 
 ## Happy Earth Spirits
 - Finished by Ultimus (31 s).
 - Finished by Ra (54 s).
 - Finished by Garm (5 min).
+- Finished by Cyndr (32 s).
 
 ## Water Everywhere...
 - Finished by Ultimus (50 s).
@@ -1121,6 +1147,7 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 ## Monk Follies
 - Finished by Ultimus (46 s).
 - Finished by Ra (45 s).
+- Finished by Garm (46 s).
 
 ## Worthy Acts
 - Finished by Ultimus (7 min).
@@ -1221,13 +1248,6 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 ## A Dirty Job
 - Finished by Ultimus (42 s).
 - Finished by Ra (41 s).
-
-## To the Great Beyond
-- Finished by Ultimus (7 min).
-- Won by Ultimus (Solo) against Tomugawa the Evil (rank 7, 1,560 health, Death, a boss) on 2026-11-20 at 00:16:23.
-  It took 11 rounds, about 6 minutes.
-  Deck made for a boss (Death), hitting with Death, Ice, Storm (many of my fights lately had 2+ enemies).
-  Spells that landed the hits: Scarab, Fairy, Minor Crusade.
 
 ## Grandpa Says Hi!
 - Finished by Ultimus (39 s).
