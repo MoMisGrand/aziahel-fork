@@ -158,6 +158,15 @@ internal sealed partial class UltimusDirectorActor {
             return null;
         }
 
+        // Leaving the copy to start it over (its creature is not there, or every fix failed): this run's puzzles no longer
+        // matter. Before, the floor's next piece and the way out took turns every second (2026-11-21 5:59-6:28 AM,
+        // AlchemiZist of Kitharas and Lamia in Katzenstein's Lab: the Gate02 Tree plaque, then the way out, for 30 minutes).
+        if (target?.Key?.StartsWith("resetcopy", StringComparison.Ordinal) == true) {
+            _floorOn = null;
+
+            return null;
+        }
+
         // A quest fight in this room goes first; one on another floor or further on waits until this floor is done: its
         // creatures, its lever, then up (Niduus, 2026-11-16: he beat Counterweight East's boss a floor up first).
         if (target?.Kind == UltimusPlanner.FIGHT && UltimusPlanner.Far(leader.X, leader.Y, target.X, target.Y) <= BotFloors.ROOM
