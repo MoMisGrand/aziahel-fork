@@ -798,6 +798,8 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
             _doing = $"stuck: {target.What}: {target.Problem}";
             StopWalking(0);
             Issue("quest", target.Quest, $"{target.What}: {target.Problem}.", key: target.Key + "|problem");
+            // No way out of this area on record (UltimusDirector.NoWayOut.cs): the Commons button, as a player does.
+            NoWayOut(leader, target);
 
             return;
         }
