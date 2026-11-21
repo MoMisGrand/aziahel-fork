@@ -145,3 +145,6 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 ## Not quest faults (server outage)
 
 - From 12:31 AM on 21 November every door, teleporter and dungeon sigil failed for everyone ("the exit never takes" lines, sigil waits timing out), until Niduus stopped the server at 1:12 AM; it came back at 1:24 AM on v0.10.944 with no more door or teleporter failures. It was a server fault from the v0.10.941 live install (v0.10.942 could not install while it ran). Bots should not learn "this way goes nowhere" from any exit that failed in that window, and quest blames from it (Tomb of Storms in The Oasis, The Tower Archives from The Atheneum, and others) are not quest faults.
+
+## Not quest faults (trainer hall door)
+- The Key to the Temple (Krokotopia) was flagged by Kitharas Hydra, but the quest was fine. The trainer hall door spot in the Commons sits on the bots' path to the Shopping District, and each bot that walked over it was sent toward a house its game client cannot load, then stood still for 90 seconds ("The house could not be prepared"). This happened 43 times on 21 November up to 2 AM. Fixed 21 November 2 AM: the door lets bots walk past. (2026-11-21 2:00 AM Bot Update)
