@@ -8,7 +8,7 @@ What the bots did in Marleybone, from the server log: every quest finished, ever
 - Gearhead: won 55 time(s) (37 Solo, 18 Team), lost 31. Fastest: Tulkar in 3 rounds, deck for a boss (Storm), hitting with Storm, Fire, Death (most of my fights lately had 2+ enemies).
 - Clockwork Warrior: won 49 time(s) (47 Solo, 2 Team), lost 24. Fastest: Cyndr in 1 rounds, deck for Balance enemies, hitting with Balance, Storm, Ice; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Sunbird.
 - Clockwork Wizard: won 53 time(s) (43 Solo, 10 Team), lost 17. Fastest: Kurrent in 2 rounds, plan "hit now", deck for a boss (Life), hitting with Life, Fire, Storm; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Storm Shark, Thunder Snake.
-- Meowiarty: won 44 time(s) (16 Solo, 28 Team), lost 16. Fastest: Cyndr in 2 rounds, plan "hit now", deck for any fight (many of my fights lately had 2+ enemies), hits with Fire Cat, Immolate.
+- Meowiarty: won 45 time(s) (17 Solo, 28 Team), lost 16. Fastest: Cyndr in 2 rounds, plan "hit now", deck for any fight (many of my fights lately had 2+ enemies), hits with Fire Cat, Immolate.
 - Filcher: won 40 time(s) (33 Solo, 7 Team), lost 17. Fastest: Tulkar in 2 rounds, plan "hit now", deck for a boss (Ice), hitting with Ice, Death (most of my fights lately had 2+ enemies), hits with Minor Nova, Banshee.
 - O'Leary Napper: won 39 time(s) (20 Solo, 19 Team), lost 6. Fastest: Ra in 1 rounds, deck for any fight (many of my fights lately had 2+ enemies), hits with Gearhead Destroyer.
 - Gear Spinner: won 30 time(s) (26 Solo, 4 Team), lost 15. Fastest: Kurrent in 1 rounds, deck for a boss (Myth), hitting with Myth, Fire, Ice; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Storm Shark.
@@ -39,11 +39,12 @@ What the bots did in Marleybone, from the server log: every quest finished, ever
 - Shakes O'Leary: won 7 time(s) (7 Solo, 0 Team), lost 0. Fastest: Cyndr in 5 rounds, deck for a boss (Myth), hitting with Fire, Myth, Ice (most of my fights lately had 2+ enemies), hits with Heck Hound, Minor Fire Scorch, Immolate.
 - O'Leary Burglar: won 6 time(s) (6 Solo, 0 Team), lost 0. Fastest: Cyndr in 3 rounds, deck for Balance enemies, hitting with Balance, Death, Myth (most of my fights lately had 2+ enemies), hits with Sunbird.
 - O'Leary Brute: won 6 time(s) (6 Solo, 0 Team), lost 0. Fastest: Kurrent in 1 rounds, deck for any fight (many of my fights lately had 2+ enemies), hits with Storm Shark.
+- Shrieker: won 4 time(s) (2 Solo, 2 Team), lost 1. Fastest: Tulkar in 9 rounds, deck for a boss (Myth), hitting with Myth, Storm, Fire; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Frost Beetle, Frostbite.
 - O'Leary Thug: won 5 time(s) (3 Solo, 2 Team), lost 0. Fastest: Kurrent in 3 rounds, plan "hit now", deck for any fight (many of my fights lately had 2+ enemies), hits with Thunder Snake.
-- Shrieker: won 3 time(s) (1 Solo, 2 Team), lost 1. Fastest: Tulkar in 9 rounds, deck for a boss (Myth), hitting with Myth, Storm, Fire; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Frost Beetle, Frostbite.
 - Ronin Mutineer: won 2 time(s) (2 Solo, 0 Team), lost 0. Fastest: Garm in 2 rounds, plan "hit now", deck for Myth enemies, hitting with Myth, Storm, Fire (most of my fights lately had 2+ enemies), hits with Dark Sprite, Vampire.
 - Street Sweeper: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Mythis in 6 rounds, plan "hit now", deck for Myth enemies, hitting with Myth, Storm, Death (most of my fights lately had 2+ enemies), hits with Storm Hound, Minor Heroic Hit, Cyclops, Ghoul.
 - Kanago: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Garm in 10 rounds, deck for a boss (Storm), hitting with Storm, Balance, Death (most of my fights lately had 2+ enemies), hits with Poison.
+- Otomo Spotter: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Mythis in 15 rounds, plan "hit now", deck for Balance enemies, hitting with Balance, Death, Ice (most of my fights lately had 2+ enemies), hits with Ghoul, Minor Heroic Hit, Storm Hound, Fairy.
 
 ## Springing the Snitch
 - Finished by Cyndr (9 min).
@@ -3889,6 +3890,15 @@ What the bots did in Marleybone, from the server log: every quest finished, ever
   Deck made for a boss (Balance), hitting with Balance, Storm, Myth (most of my fights lately had 2+ enemies).
   Plan: "hit now" (mine and every other bot's).
   Spells that landed the hits: Minor Wrath x3, Banshee x2, Imp x2, Vampire x2, Fairy.
+- Won by Idunn (Solo) against Shrieker (rank 5, 675 health, Death, a boss) on 2026-11-21 at 06:37:30.
+  It took 13 rounds, about 7 minutes.
+  Deck made for a boss (Myth), hitting with Myth, Fire, Ice; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies).
+  Plan: "hit now" (mine and every other bot's).
+  Spells that landed the hits: Imp x3, Banshee x2, Minor Wrath x2, Fairy x2, Nature's Wrath.
+- Won by Kurrent (Solo) against Meowiarty (rank 6, 2,000 health, Myth, a boss) on 2026-11-21 at 06:41:13.
+  It took 15 rounds, about 11 minutes.
+  Deck made for a boss (Myth), hitting with Myth, Storm, Fire (most of my fights lately had 2+ enemies).
+  Spells that landed the hits: Thunder Snake, Helping Hands, Dream Shield, Fairy.
 - Avoid, fights lost:
   - Clockwork Wizard: lost 1 time(s) (Tulkar). Why: the fight ran 9 minutes, so I ran out of good cards. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
   - Filcher: lost 1 time(s) (Tulkar). Why: I went in at 76% health, its biggest hit took 67% of my health. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
@@ -4613,3 +4623,10 @@ What the bots did in Marleybone, from the server log: every quest finished, ever
   It took 10 rounds, about 7 minutes.
   Deck made for a boss (Storm), hitting with Storm, Balance, Death (most of my fights lately had 2+ enemies).
   Spells that landed the hits: Poison x2.
+
+## To the Front!
+- Won by Mythis (Solo) against Otomo Spotter (rank 5, 675 health, Myth) on 2026-11-21 at 06:41:12.
+  It took 15 rounds, about 11 minutes.
+  Deck made for Balance enemies, hitting with Balance, Death, Ice (most of my fights lately had 2+ enemies).
+  Plan: "hit now" (mine and every other bot's).
+  Spells that landed the hits: Ghoul x3, Minor Heroic Hit x2, Storm Hound x2, Fairy, Pixie.

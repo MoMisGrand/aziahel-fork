@@ -7,6 +7,7 @@ What the bots did in Dragonspyre, from the server log: every quest finished, eve
 - Zarathax: won 1 time(s) (1 Solo, 0 Team), lost 3. Fastest: Ultimus in 24 rounds, deck for a boss (Balance), hitting with Balance, Fire, Death; a rival that outlasts me, so more hits and blades to end it sooner (many of my fights lately had 2+ enemies), hits with Balance, Elemental Shield, Fairy, Helping Hands.
 - Wandering Wizard: won 2 time(s) (2 Solo, 0 Team), lost 0. Fastest: Ultimus in 2 rounds, deck for Life enemies, hitting with Life, Fire, Storm (most of my fights lately had 2+ enemies).
 - Loathsome Creeper: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 10 rounds, plan "hit now", deck for Death enemies, hitting with Death, Fire, Myth (many of my fights lately had 2+ enemies), hits with Minor Crusade, Gearhead Destroyer, Scarab, Helping Hands.
+- Sysiphan: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 23 rounds, deck for a boss (Ice), hitting with Ice, Fire, Death (many of my fights lately had 2+ enemies), hits with Helping Hands, Scarab, Elemental Shield, Fairy.
 
 ## Wizard and Crystal
 - Finished by Ultimus (19 min).
@@ -328,4 +329,14 @@ What the bots did in Dragonspyre, from the server log: every quest finished, eve
 - Finished by Ultimus (17 s).
 
 ## General Recommendation
+- Finished by Ultimus (20 s).
+
+## Battle On
+- Finished by Ultimus (15 min).
+- Won by Ultimus (Solo) against Sysiphan (rank 7, 2,560 health, Ice) on 2026-11-21 at 06:43:59.
+  It took 23 rounds, about 12 minutes.
+  Deck made for a boss (Ice), hitting with Ice, Fire, Death (many of my fights lately had 2+ enemies).
+  Spells that landed the hits: Helping Hands x2, Scarab, Elemental Shield, Fairy, Minor Crusade.
+
+## Blood From a Stone
 - Finished by Ultimus (20 s).
