@@ -2894,6 +2894,7 @@ What the bots did in Marleybone, from the server log: every quest finished, ever
 - Finished by Garm (82 s).
 - Finished by Tulkar (40 min).
 - Finished by Mythis (46 min).
+- Finished by Kurrent (16 min).
 - Won by Tulkar (Solo) against Potbelly (rank 5, 575 health, Storm, a boss) on 2026-11-20 at 05:20:49.
   It took 7 rounds, about 4 minutes.
   Deck made for a boss (Storm), hitting with Storm, Myth, Life (most of my fights lately had 2+ enemies).
