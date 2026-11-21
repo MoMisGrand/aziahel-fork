@@ -74,6 +74,26 @@ internal sealed partial class ZoneTriggerSupervisor {
     private bool HoldsEventPeopleSpawners()
         => _eventPeopleSpawners is { } spawners && _eventPeopleWoken is { } woken && spawners.Count > woken.Count;
 
+    /*
+     * A boss an earlier step summons is the same: the Summoning Crystal in Dragonspyre's Plaza of Conquests switches on the
+     * spawner of the Earth Elemental or the Sea Lord, and a server restart switches it off again while the wizard's quest
+     * already has the crystal step done. Ultimus stood at the Sea Lord's spot with "no creature for this step" after the
+     * 12:55 restart on 2026-11-21. A "defeat" step for one foe whose creature is held by exactly one switched-off spawner
+     * here gets it switched on the same way. Only a step for a single foe: "defeat 4" of a kind is never a summoned boss.
+     */
+    private ulong OneFoeOfStep(BountyGoalTemplate foe) {
+        if (foe.m_bountyTotal > 1 || foe.m_npcAdjectives is not { Count: > 0 } wanted) {
+            return 0;
+        }
+
+        var kinds = wanted.Select(a => (string) a).Where(a => !string.IsNullOrEmpty(a)).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var matches = _eventPeopleSpawners.Keys.Where(template =>
+            (Imlight.CoreLib.Shared.Resources.CoreObjectFactory.GetCoreTemplate((uint) template) as GameObjectTemplate)?.m_adjectiveList?
+            .Any(a => kinds.Contains(a.ToString())) == true).Take(2).ToList();
+
+        return matches.Count == 1 ? matches[0] : 0;
+    }
+
     private void WakeEventPeopleForTalkSteps(WaitingSpawnWizard message) {
         if (!HoldsEventPeopleSpawners()) {
             return;
@@ -91,13 +111,13 @@ internal sealed partial class ZoneTriggerSupervisor {
                         continue;
                     }
 
-                    var goal = template.m_goals.OfType<PersonaGoalTemplate>()
-                        .FirstOrDefault(g => string.Equals(g.m_goalName, progress.GoalName, StringComparison.Ordinal));
-                    if (goal is null) {
-                        continue;
-                    }
-
-                    var person = QuestMadlibs.SpeakerTemplateOf(goal.m_personaName, 0);
+                    var goal = template.m_goals.FirstOrDefault(g => g is not null
+                        && string.Equals(g.m_goalName, progress.GoalName, StringComparison.Ordinal));
+                    var person = goal switch {
+                        PersonaGoalTemplate talk => QuestMadlibs.SpeakerTemplateOf(talk.m_personaName, 0),
+                        BountyGoalTemplate foe => OneFoeOfStep(foe),
+                        _ => 0UL,
+                    };
                     if (person == 0 || _eventPeopleWoken.Contains(person) || !_eventPeopleSpawners.TryGetValue(person, out var spawner)) {
                         continue;
                     }
