@@ -18,6 +18,7 @@ What the bots did in Dragonspyre, from the server log: every quest finished, eve
   - Petrov Gloomstrider: lost 1 time(s) (Ultimus). Why: its biggest hit took 54% of my health, the fight ran 6 minutes, so I ran out of good cards. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
 
 ## Portal Combat
+- Finished by Ultimus (45 min).
 - Won by Ultimus (Solo) against Petrov Gloomstrider (rank 7, 2,000 health, Ice) on 2026-11-20 at 09:54:26.
   It took 12 rounds, about 10 minutes.
   Deck made for any fight (many of my fights lately had 2+ enemies).
@@ -322,3 +323,9 @@ What the bots did in Dragonspyre, from the server log: every quest finished, eve
 
 ## The Dragon's Claw
 - Finished by Ultimus (53 s).
+
+## Warkeeper
+- Finished by Ultimus (17 s).
+
+## General Recommendation
+- Finished by Ultimus (20 s).
