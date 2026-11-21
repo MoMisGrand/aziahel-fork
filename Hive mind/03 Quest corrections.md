@@ -3,6 +3,7 @@
 Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus, the seven TCO7 wizards and the Quest Team all share one brain for this, so a correction learned by one of them is known by all of them at once. A new correction is added here the same day it goes out in a bots update.
 
 ## Krokotopia, Grand Arena
+- Stonechin: Kitharas Wraith walked to Kitharas Rock's fight with Krag Stonechin (494, -328) and was not let in; he stood there 4 minutes, flagged stuck 6 times, then lost to Krag Stonechin himself. Fix (bots): after 30 seconds at a group mate's battle without being let in, wait beside it until it ends. Bot fault, not quest. (2026-11-20 11:00 PM Bot Update)
 - Gladiator Games (Talk to Arena Master): the way is the teleporter at (-1715, 3325), which lands at (-5209, 22207) beside the stairs up to the Arena Master. Solo Kitharas (Hart, Wraith, Moon) did it in 40 seconds; the ones busy forming or leaving a group (Jackle, Shade, Consumer, Lumeria) took 3 to 4 minutes on the same walk. Quest is fine; group shuffling is the slow part. (2026-11-20 10:45 PM Bot Update)
 - Taking it to the Tuts: 9 Kitharas finished in 50 seconds to 8 minutes; the slow ones were in fights with the tomb's creatures, not stuck. (2026-11-20 10:45 PM Bot Update)
 
@@ -17,7 +18,11 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 - Worked: Kurrent bought single potions at 22:37 (two, 0 to 2 of 4) and one more at 22:44 when he had the gold. The Fill One fix is confirmed on the live server. (2026-11-20 10:45 PM Bot Update)
 
 ## Krokotopia, The Vault of Ice
+- Worked: AlchemiZist pulled Brazier3 from Ice to Storm at 22:50 and finished Breaking the Vault at 22:57 (11 minutes), after sitting at the shut Frost door for over an hour earlier. (2026-11-20 11:00 PM Bot Update)
 - Breaking the Vault / Find the Fang: the Frost door (DynaTrigger_KT_Door_Frost) opens when the MoonLock braziers read Fire, Ice, Storm. Brazier3 needs two pulls (Fire to Ice, then Ice to Storm), and after the first pull it offers nothing until the wizard walks out of reach and back in. Kitharas Lamia got it at 20:48 by walking off and back; AlchemiZist stood on it at 21:34, gave up, and sat at the shut Frost door for 10 minutes. Fix (bots): after pulling a piece that still needs another pull, step about 360 away and come back. Bot fault, not quest. (2026-11-20 9:45 PM Bot Update)
+
+## Marleybone, Counterweight West (and every dungeon fight)
+- More Metal Madness: Kurrent (level 26) lost to Clockwork Warrior and Clockwork Wizard over and over, going in at 28% to 64% health; each loss puts him out of the dungeon and the dungeon starts over. Across all bots on 2026-11-20, 97 of 291 losses were put down to going in hurt (38 under half health), and 118 times a bot in a dungeon went on at low health rather than walk out. Bots keep their potions for the boss (Niduus's rule), so this is his call: asked whether a potion may be used before any dungeon fight when under half health. (2026-11-20 11:00 PM Bot Update)
 
 ## Marleybone, Big Ben (every dungeon with battle circles)
 - The Last Meow: after losing a room's fight (Mythis to Filcher on room 8, Idunn to Gearhead on room 9) and coming back by Dungeon Recall, the room's creatures stand there but walking into them starts no battle; the bots marked them unfightable and sat at the shut door (Door16). Fix (bots): a battle circle whose fight was started but not won, with its door still shut and no creature that will fight, is stepped on again (up to 2 times per visit). Bot fault, not quest. (2026-11-20 9:45 PM Bot Update)
