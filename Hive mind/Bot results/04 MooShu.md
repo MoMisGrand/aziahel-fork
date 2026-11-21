@@ -8,13 +8,13 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Maito: won 5 time(s) (5 Solo, 0 Team), lost 13. Fastest: Cyndr in 3 rounds, plan "hit now", deck for a boss (Ice), hitting with Ice, Fire, Life; a rival that outlasts me, so more hits and blades to end it sooner (many of my fights lately had 2+ enemies), hits with Sunbird, Immolate.
 - Otomo Supply Runner: won 12 time(s) (10 Solo, 2 Team), lost 2. Fastest: Ultimus in 4 rounds, deck for Fire enemies, hitting with Fire, Death, Myth (most of my fights lately had 2+ enemies), hits with Gearhead Destroyer, Locust Swarm.
 - Sanzoku Outlaw: won 12 time(s) (8 Solo, 4 Team), lost 1. Fastest: Cyndr in 3 rounds, plan "hit now", deck for Balance enemies, hitting with Balance, Ice, Death; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Sunbird, Immolate.
-- Imitsu Defouler: won 11 time(s) (11 Solo, 0 Team), lost 0. Fastest: Cyndr in 5 rounds, plan "hit now", deck for any fight (many of my fights lately had 2+ enemies), hits with Fire Cat, Scald, Immolate.
+- Imitsu Defouler: won 12 time(s) (12 Solo, 0 Team), lost 0. Fastest: Cyndr in 5 rounds, plan "hit now", deck for any fight (many of my fights lately had 2+ enemies), hits with Fire Cat, Scald, Immolate.
+- War Oni: won 5 time(s) (3 Solo, 2 Team), lost 6. Fastest: Cyndr in 7 rounds, deck for a boss (Fire), hitting with Fire, Myth; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Banshee, Heck Hound.
 - Infected Villager: won 8 time(s) (8 Solo, 0 Team), lost 2. Fastest: Garm in 5 rounds, plan "hit now", deck for Balance enemies, hitting with Balance, Death, Ice; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Minor Dark Blow, Poison, Dark Sprite, Banshee.
 - Otomo Spotter: won 10 time(s) (8 Solo, 2 Team), lost 0. Fastest: Ultimus in 3 rounds, deck for Myth enemies, hitting with Myth, Fire, Storm (many of my fights lately had 2+ enemies), hits with Minor Crusade.
 - Otomo Quartermaster: won 6 time(s) (6 Solo, 0 Team), lost 3. Fastest: Garm in 4 rounds, deck for a boss (Fire), hitting with Fire, Myth, Death (most of my fights lately had 2+ enemies), hits with Dark Sprite.
-- War Oni: won 5 time(s) (3 Solo, 2 Team), lost 4. Fastest: Cyndr in 7 rounds, deck for a boss (Fire), hitting with Fire, Myth; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Banshee, Heck Hound.
+- Grum Foultooth: won 7 time(s) (7 Solo, 0 Team), lost 2. Fastest: Cyndr in 4 rounds, deck for a boss (Myth), hitting with Myth, Storm, Fire; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Immolate.
 - Sanzoku Bandit: won 8 time(s) (6 Solo, 2 Team), lost 0. Fastest: Ra in 6 rounds, plan "hit now", deck for Myth enemies, hitting with Myth, Storm, Fire (most of my fights lately had 2+ enemies), hits with Minor Crusade, Scarab, Sandstorm, Helping Hands.
-- Grum Foultooth: won 6 time(s) (6 Solo, 0 Team), lost 2. Fastest: Cyndr in 4 rounds, deck for a boss (Myth), hitting with Myth, Storm, Fire; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Immolate.
 - Yochimo: won 8 time(s) (6 Solo, 2 Team), lost 0. Fastest: Cyndr in 1 rounds, deck for a boss (Storm), hitting with Storm, Life, Death (most of my fights lately had 2+ enemies), hits with Immolate.
 - Do-Daga: won 6 time(s) (4 Solo, 2 Team), lost 1. Fastest: Cyndr in 5 rounds, plan "hit now", deck for a boss (Ice), hitting with Ice, Fire, Death (many of my fights lately had 2+ enemies), hits with Minor Fire Scorch, Immolate, Sunbird.
 - Kanago: won 4 time(s) (4 Solo, 0 Team), lost 3. Fastest: Ultimus in 10 rounds, plan "hit now", deck for a boss (Storm), hitting with Storm, Balance, Death (most of my fights lately had 2+ enemies), hits with Minor Crusade, Scarab, Sandstorm, Gearhead Destroyer.
@@ -31,22 +31,22 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Cursed Ronin: won 5 time(s) (5 Solo, 0 Team), lost 0. Fastest: Ultimus in 7 rounds, deck for Myth enemies, hitting with Myth, Storm, Fire (many of my fights lately had 2+ enemies), hits with Minor Crusade, Gearhead Destroyer.
 - Plague Oni: won 3 time(s) (3 Solo, 0 Team), lost 1. Fastest: Garm in 9 rounds, deck for a boss (Balance), hitting with Balance, Death, Ice (most of my fights lately had 2+ enemies), hits with Vampire, Minor Dark Blow, Sacrifice, Banshee.
 - Tamauji: won 3 time(s) (3 Solo, 0 Team), lost 1. Fastest: Ra in 8 rounds, plan "hit now", deck for a boss (Myth), hitting with Myth, Death, Storm (most of my fights lately had 2+ enemies), hits with Sandstorm, Scarab, Minor Crusade, Gearhead Destroyer.
+- Tomugawa the Evil: won 3 time(s) (3 Solo, 0 Team), lost 1. Fastest: Ra in 9 rounds, deck for a boss (Death), hitting with Death, Ice, Storm (many of my fights lately had 2+ enemies).
 - Otomo Soldier: won 3 time(s) (3 Solo, 0 Team), lost 1. Fastest: Cyndr in 4 rounds, deck for Ice enemies, hitting with Ice, Fire, Myth (most of my fights lately had 2+ enemies), hits with Scald.
 - Ronin Mutineer: won 4 time(s) (4 Solo, 0 Team), lost 0. Fastest: Ra in 6 rounds, plan "hit now", deck for Myth enemies, hitting with Myth, Storm, Fire (most of my fights lately had 2+ enemies), hits with Scarab, Minor Crusade, Sandstorm, Locust Swarm.
 - Ronin Warrior: won 4 time(s) (4 Solo, 0 Team), lost 0. Fastest: Cyndr in 5 rounds, plan "hit now", deck for Myth enemies, hitting with Myth, Storm, Fire (most of my fights lately had 2+ enemies), hits with Immolate, Scald, Fire Cat.
 - Kyuto: won 4 time(s) (4 Solo, 0 Team), lost 0. Fastest: Cyndr in 5 rounds, deck for a boss (Ice), hitting with Ice, Balance, Fire; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Immolate.
 - Usunoki: won 2 time(s) (2 Solo, 0 Team), lost 1. Fastest: Ra in 8 rounds, plan "hit now", deck for a boss (Fire), hitting with Fire, Death, Myth (most of my fights lately had 2+ enemies), hits with Sandstorm, Scarab, Helping Hands, Elemental Shield.
 - Jade Oni: won 1 time(s) (1 Solo, 0 Team), lost 2. Fastest: Ultimus in 40 rounds, deck for a boss (Life), hitting with Life, Fire, Storm; a rival that outlasts me, so more hits and blades to end it sooner (many of my fights lately had 2+ enemies), hits with Helping Hands, Fairy, Spirit Shield, Vampire.
-- Tomugawa the Evil: won 2 time(s) (2 Solo, 0 Team), lost 1. Fastest: Ra in 9 rounds, deck for a boss (Death), hitting with Death, Ice, Storm (many of my fights lately had 2+ enemies).
 - Otomo Grappler: won 3 time(s) (3 Solo, 0 Team), lost 0. Fastest: Ra in 8 rounds, deck for Balance enemies, hitting with Balance, Death, Ice (many of my fights lately had 2+ enemies), hits with Balance, Storm Hound, Sandstorm, Ghoul.
 - Kakeda Shadow: won 3 time(s) (3 Solo, 0 Team), lost 0. Fastest: Ultimus in 5 rounds, deck for Storm enemies, hitting with Storm, Death, Myth (most of my fights lately had 2+ enemies), hits with Minor Crusade.
 - Imitsu Retainer: won 1 time(s) (1 Solo, 0 Team), lost 1. Fastest: Ultimus in 11 rounds, deck for Balance enemies, hitting with Balance, Death, Ice (most of my fights lately had 2+ enemies), hits with Balance, Banshee, Sandstorm, Fairy.
 - Oyotomi the Defiler: won 2 time(s) (2 Solo, 0 Team), lost 0. Fastest: Ultimus in 9 rounds, deck for any fight (many of my fights lately had 2+ enemies), hits with Minor Crusade, Locust Swarm.
+- Death Oni: won 1 time(s) (1 Solo, 0 Team), lost 1. Fastest: Ultimus in 12 rounds, deck for a boss (Death), hitting with Death, Ice, Storm (most of my fights lately had 2+ enemies), hits with Minor Crusade, Helping Hands, Fairy, Locust Swarm.
+- Kagemoosha: won 1 time(s) (1 Solo, 0 Team), lost 1. Fastest: Ra in 12 rounds, deck for a boss (Death), hitting with Death, Ice, Storm; a rival that keeps beating me, so more shields and heals (most of my fights lately had 2+ enemies), hits with Helping Hands, Spirit Shield.
 - Ember Everburn: won 2 time(s) (2 Solo, 0 Team), lost 0. Fastest: Garm in 10 rounds, plan "hit now", deck for a boss (Myth), hitting with Myth, Death, Storm (most of my fights lately had 2+ enemies), hits with Poison, Minor Dark Blow, Vampire.
 - Sorrow Whisperer: won 2 time(s) (2 Solo, 0 Team), lost 0. Fastest: Ra in 6 rounds, plan "hit now", deck for Death enemies, hitting with Death, Fire, Myth (most of my fights lately had 2+ enemies), hits with Scarab, Sandstorm, Gearhead Destroyer.
 - Diseased Water Spirit: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 12 rounds, deck for Storm enemies, hitting with Storm, Death, Myth (most of my fights lately had 2+ enemies), hits with Seraph, Sandstorm, Storm Hound, Minor Crusade.
-- Death Oni: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 12 rounds, deck for a boss (Death), hitting with Death, Ice, Storm (most of my fights lately had 2+ enemies), hits with Minor Crusade, Helping Hands, Fairy, Locust Swarm.
-- Kagemoosha: never beaten yet, lost 1 time(s). Most common reason: I went in at 33% health, its biggest hit took 59% of my health.
 
 ## Never Again
 - Finished by Ultimus (15 min).
@@ -396,6 +396,11 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
   It took 6 rounds, about 4 minutes.
   Deck made for a boss (Myth), hitting with Myth, Balance, Storm (most of my fights lately had 2+ enemies).
   Spells that landed the hits: Pixie.
+- Won by Cyndr (Solo) against Imitsu Defouler (rank 5, 675 health, Myth) on 2026-11-21 at 05:55:20.
+  It took 7 rounds, about 4 minutes.
+  Deck made for any fight (many of my fights lately had 2+ enemies).
+  Plan: "hit now" (mine and every other bot's).
+  Spells that landed the hits: Pixie x2, Fire Cat, Minor Fire Scorch, Scald, Sun Shield.
 - Avoid, fights lost:
   - Ideyoshi: lost 1 time(s) (Ultimus). Why: I went in at 80% health, the fight ran 7 minutes, so I ran out of good cards. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
   - Ideyoshi: lost 1 time(s) (Ultimus). Why: I went in at 47% health. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
@@ -406,11 +411,11 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
   - Shirataki Temple near (0, 100) while stuck: Defeat Plague Oni: no creature for this step is in the area: stuck 4 time(s) (Ultimus); one bot tried every fix there.
   - Jade Palace near (11800, 14100) while to Shoshun Village (Talk to Din Ho): stuck 2 time(s) (Ra).
   - Shirataki Temple near (3900, 3800) while Go to MooShu,Shirataki Temple ("River Temple"): stuck 2 time(s) (Cyndr).
+  - Shirataki Temple near (4100, 3700) while a short break before trying "Go to MooShu,Shirataki Temple" again: stuck 2 time(s) (Cyndr).
   - Shirataki Temple near (0, 100) while a short break before trying "Defeat Plague Oni" again: stuck 1 time(s) (Ultimus).
   - Shirataki Temple near (-400, 200) while a short break before trying "Defeat Plague Oni" again: stuck 1 time(s) (Ultimus).
   - Shirataki Temple near (3400, 3000) while at the lever "MS_Lever_Plague3 instance", which opens "MSGate1" (): stuck 1 time(s) (Ultimus).
   - Shoshun Village near (-200, 16100) while to Shirataki Temple (Talk to Din Ho): stuck 1 time(s) (Ra).
-  - Jade Palace near (11800, 14100) while resting while "to Shoshun Village (Talk to Din Ho)" waits: stuck 1 time(s) (Ra).
 
 ## Third Time's the Charm
 - Finished by Ultimus (73 s).
@@ -703,9 +708,12 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
   - War Oni: lost 1 time(s) (Garm). Why: it simply hit harder than I could heal. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
   - War Oni: lost 1 time(s) (Garm). Why: its biggest hit took 65% of my health, the fight ran 6 minutes, so I ran out of good cards. Do instead: fight other creatures for XP first, up to the quest's level.
   - War Oni: lost 1 time(s) (Cyndr). Why: its biggest hit took 65% of my health. Do instead: fight other creatures for XP first, up to the quest's level.
+  - War Oni: lost 1 time(s) (Tulkar). Why: its biggest hit took 65% of my health. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
+  - War Oni: lost 1 time(s) (Tulkar). Why: its biggest hit took 65% of my health, the fight ran 7 minutes, so I ran out of good cards. Do instead: fight other creatures for XP first, up to the quest's level.
 - Avoid, places bots got stuck:
   - Crimson Fields near (-3700, 17100) while resting while "Clear 5 Otomo Spotter or Otomo Soldier (where they spawn)" waits: stuck 1 time(s) (Cyndr).
   - Crimson Fields near (-100, -3800) while to Hametsu Village (leaving Crimson Fields to start it over (its creature for my step is not there)): stuck 1 time(s) (Cyndr).
+  - Jade Palace near (8000, 200) while waiting to be in the game: stuck 1 time(s) (Tulkar).
 
 ## Stone Cold
 - Finished by Ultimus (8 min).
@@ -713,6 +721,7 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Finished by Garm (4 min).
 - Finished by Cyndr (9 min, 5 min).
 - Finished by Tulkar (9 min).
+- Finished by Mythis (6 min).
 - Won by Ultimus (Solo) against Grum Foultooth (rank 6, 1,240 health, Myth, a boss) on 2026-11-19 at 16:05:39.
   It took 10 rounds, about 5 minutes.
   Deck made for a boss (Myth), hitting with Myth, Storm, Fire (many of my fights lately had 2+ enemies).
@@ -740,6 +749,10 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
   Deck made for a boss (Myth), hitting with Myth, Storm, Fire; a rival that outlasts me, so more hits and blades to end it sooner (many of my fights lately had 2+ enemies).
   Plan: "hit now" (mine and every other bot's).
   Spells that landed the hits: Frost Beetle x3, Minor Nova x2, Frostbite x2, Pixie x2, Vampire.
+- Won by Mythis (Solo) against Grum Foultooth (rank 6, 1,240 health, Myth, a boss) on 2026-11-21 at 05:54:19.
+  It took 11 rounds, about 5 minutes.
+  Deck made for a boss (Myth), hitting with Myth, Storm, Fire; a rival that outlasts me, so more hits and blades to end it sooner (many of my fights lately had 2+ enemies).
+  Spells that landed the hits: Ghoul.
 - Avoid, fights lost:
   - Grum Foultooth: lost 1 time(s) (Cyndr). Why: its biggest hit took 59% of my health. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
   - Grum Foultooth: lost 1 time(s) (Mythis). Why: its biggest hit took 63% of my health, the fight ran 8 minutes, so I ran out of good cards. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
@@ -839,6 +852,7 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 ## To the Great Beyond
 - Finished by Ultimus (7 min).
 - Finished by Ra (15 min).
+- Finished by Garm (12 min).
 - Won by Ultimus (Solo) against Tomugawa the Evil (rank 7, 1,560 health, Death, a boss) on 2026-11-20 at 00:16:23.
   It took 11 rounds, about 6 minutes.
   Deck made for a boss (Death), hitting with Death, Ice, Storm (many of my fights lately had 2+ enemies).
@@ -846,6 +860,11 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Won by Ra (Solo) against Tomugawa the Evil (rank 7, 1,560 health, Death, a boss) on 2026-11-21 at 03:59:49.
   It took 9 rounds, about 4 minutes.
   Deck made for a boss (Death), hitting with Death, Ice, Storm (many of my fights lately had 2+ enemies).
+- Won by Garm (Solo) against Tomugawa the Evil (rank 7, 1,560 health, Death, a boss) on 2026-11-21 at 05:57:37.
+  It took 22 rounds, about 11 minutes.
+  Deck made for a boss (Death), hitting with Death, Ice, Storm (many of my fights lately had 2+ enemies).
+  Plan: "hit now" (mine and every other bot's).
+  Spells that landed the hits: Poison x3, Sacrifice x2, Dark Sprite, Vampire, Kraken, Fairy, Seraph.
 - Avoid, fights lost:
   - Tomugawa the Evil: lost 1 time(s) (Ra). Why: the fight ran 8 minutes, so I ran out of good cards. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
 
@@ -951,7 +970,7 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Avoid, fights lost:
   - Otomo Soldier: lost 1 time(s) (Tulkar). Why: its biggest hit took 51% of my health, the fight ran 8 minutes, so I ran out of good cards. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
 - Avoid, places bots got stuck:
-  - Crimson Fields near (-5900, 21800) while Talk to Rikugun Mikawa ("Battle of Evermore"): stuck 7 time(s) (Cyndr, Garm, Ra, Tulkar, Ultimus); one bot tried every fix there.
+  - Crimson Fields near (-5900, 21800) while Talk to Rikugun Mikawa ("Battle of Evermore"): stuck 9 time(s) (Cyndr, Garm, Mythis, Ra, Tulkar, Ultimus); one bot tried every fix there.
   - Crimson Fields near (-3700, 16900) while Clear 5 Otomo Spotter or Otomo Soldier (where they spawn) ("Battle of Evermore"): stuck 1 time(s) (Cyndr).
   - Crimson Fields near (-3800, 15900) while resting while "Clear 5 Otomo Spotter or Otomo Soldier" waits: stuck 1 time(s) (Cyndr).
 
@@ -1011,7 +1030,9 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Avoid, fights lost:
   - Shoji: lost 1 time(s) (Cyndr). Why: it simply hit harder than I could heal. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
 - Avoid, places bots got stuck:
-  - Shirataki Temple near (4200, 3800) while Go to MooShu,Shirataki Temple ("River Temple"): stuck 2 time(s) (Cyndr); one bot tried every fix there.
+  - Shirataki Temple near (4200, 3800) while Go to MooShu,Shirataki Temple ("River Temple"): stuck 5 time(s) (Cyndr); one bot tried every fix there.
+  - Shirataki Temple near (4200, 3800) while a short break before trying "Go to MooShu,Shirataki Temple" again: stuck 1 time(s) (Cyndr).
+  - Shirataki Temple near (4100, 3700) while a short break before trying "Go to MooShu,Shirataki Temple" again: stuck 1 time(s) (Cyndr).
 
 ## Oni No Death
 - Finished by Ultimus (6 min).
@@ -1064,8 +1085,13 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
   Deck made for Death enemies, hitting with Death, Fire, Myth; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies).
   Plan: "hit now" (mine and every other bot's).
   Spells that landed the hits: Sandstorm x2, Scarab x2, Minor Crusade x2, Helping Hands, Gearhead Destroyer.
+- Won by Ra (Solo) against Kagemoosha (rank 7, 1,560 health, Death, a boss) on 2026-11-21 at 05:51:38.
+  It took 12 rounds, about 6 minutes.
+  Deck made for a boss (Death), hitting with Death, Ice, Storm; a rival that keeps beating me, so more shields and heals (most of my fights lately had 2+ enemies).
+  Spells that landed the hits: Helping Hands x2, Spirit Shield.
 - Avoid, fights lost:
   - Kagemoosha: lost 1 time(s) (Ra). Why: I went in at 33% health, its biggest hit took 59% of my health. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
+  - Death Oni: lost 1 time(s) (Ra). Why: the fight ran 5 minutes, so I ran out of good cards. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
 
 ## is a Good Defense
 - Finished by Ultimus (80 s).
@@ -1105,8 +1131,9 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Finished by Garm (2 min).
 - Finished by Cyndr (2 min, 2 min).
 - Finished by Tulkar (2 min).
+- Finished by Mythis (2 min).
 - Avoid, places bots got stuck:
-  - Crimson Fields near (-10200, 20800) while Talk to Bricktop ("Passing Stones"): stuck 7 time(s) (Cyndr, Garm, Ra, Tulkar, Ultimus); one bot tried every fix there.
+  - Crimson Fields near (-10200, 20800) while Talk to Bricktop ("Passing Stones"): stuck 8 time(s) (Cyndr, Garm, Mythis, Ra, Tulkar, Ultimus); one bot tried every fix there.
   - Crimson Fields near (-10200, 20900) while Talk to Bricktop ("Passing Stones"): stuck 2 time(s) (Ra, Ultimus).
 
 ## Left Behind
@@ -1514,6 +1541,7 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 ## Grandpa Says Hi!
 - Finished by Ultimus (39 s).
 - Finished by Ra (41 s).
+- Finished by Garm (40 s).
 
 ## Desperate Measures
 - Finished by Ultimus (6 min).
