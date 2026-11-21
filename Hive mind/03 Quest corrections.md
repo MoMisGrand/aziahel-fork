@@ -3,11 +3,13 @@
 Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus, the seven TCO7 wizards and the Quest Team all share one brain for this, so a correction learned by one of them is known by all of them at once. A new correction is added here the same day it goes out in a bots update.
 
 ## Krokotopia, Grand Arena
+- Stonechin: Kitharas Umbella found no Krag Stonechin in his Grand Arena copy at 23:40 (2026-11-20), most likely a copy where a family member had already beaten him; after trying every move he leaves and comes back in for a fresh copy (23:45), as a player would. Watching that it clears. (2026-11-20 11:45 PM Bot Update)
 - Stonechin: Kitharas Wraith walked to Kitharas Rock's fight with Krag Stonechin (494, -328) and was not let in; he stood there 4 minutes, flagged stuck 6 times, then lost to Krag Stonechin himself. Fix (bots): after 30 seconds at a group mate's battle without being let in, wait beside it until it ends. Bot fault, not quest. (2026-11-20 11:00 PM Bot Update)
 - Gladiator Games (Talk to Arena Master): the way is the teleporter at (-1715, 3325), which lands at (-5209, 22207) beside the stairs up to the Arena Master. Solo Kitharas (Hart, Wraith, Moon) did it in 40 seconds; the ones busy forming or leaving a group (Jackle, Shade, Consumer, Lumeria) took 3 to 4 minutes on the same walk. Quest is fine; group shuffling is the slow part. (2026-11-20 10:45 PM Bot Update)
 - Taking it to the Tuts: 9 Kitharas finished in 50 seconds to 8 minutes; the slow ones were in fights with the tomb's creatures, not stuck. (2026-11-20 10:45 PM Bot Update)
 
 ## Dragonspyre, The Tower Archives
+- At 23:42, right after the bots update logged him back in at (7753, 13565), he marked his spot and left for treasure cards at the Bazaar; this trip marks and Recalls back to the spot, so the climb is kept (unlike the 23:14 selling trip, now fixed). (2026-11-20 11:45 PM Bot Update)
 - At 23:14 his backpack filled and he left the Tower Archives for the Wizard City Bazaar to sell one piece (about 1,700 gold over a quick sell, with 59,160 gold held), then came back in at the bottom (-31770, -14011) at 23:23, losing 70 minutes of climbing. Fix (bots): from another world, a Bazaar sale must bring at least a tenth of the gold he holds over a quick sell. Bot fault, not quest. (2026-11-20 11:30 PM Bot Update)
 - Portal Combat: Ultimus has been in the Tower Archives since 22:11 (2026-11-20) following the game's walk map toward the raised teleporter at (9177, -7685); the way winds far round (he passed (12650, 11220) and (25407, 27105)) and creatures catch him about every 5 minutes. He wins them, but each two-enemy fight ran up to 13 rounds because he cast 1-pip hits (about 121) every round while Locust Swarm and Gearhead Destroyer waited for pips. Fix (bots): with only a small hit castable and a hit 2.5 times bigger waiting, he builds pips first. Bot fault, not quest. (2026-11-20 11:15 PM Bot Update)
 
@@ -88,6 +90,9 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 
 ## MooShu, trips away from the story
 - A trip that takes a bot into an area and then leaves it walking straight back out, twice within a quarter of an hour, is set aside for an hour so the bot gets on with the story. First seen with Ultimus going between Hametsu Village and Jade Palace.
+
+## MooShu, Crimson Fields and Emperor's Retreat
+- Garm at Rikugun Mikawa (Warlord Katsumori, A Soldier's Duty) and Kitharas Hydra at Shalek the Wise (Overpower the Overseer) were told "no options" for a few minutes, then the talk went through each time (23:04, 23:30, 23:39). Nothing to fix yet; flagged if it lasts. (2026-11-20 11:45 PM Bot Update)
 
 ## MooShu, Jade Palace
 - An Imperial Cure, Defeat Jade Oni: the quest is fine. The throne room sits at the top of a long stair, and bots stayed on a hidden floor under the stair, so the Oni never started the fight with Ultimus (20 November, 05:08 onward; Mindy beat it normally). Fixed in the bots: they now climb stairs and ramps like a player. Walk up the long stair to the throne and the Oni comes out to fight.
