@@ -101,6 +101,9 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 ## Krokotopia, Emperor's Retreat
 - The pad to the second tower that the area's files give sits inside a wall. The bots use the real pad, which is a different one nearby, and prefer a way out they can actually reach.
 
+## MooShu, Tatakai Outpost
+- You're Fired!, Burn Scout Tower (0 of 3): the first tower Mythis reached had nothing to use, and he flagged the step broken at 3:38 AM before moving on to the next tower; he finished the quest 2 minutes later. Not a quest fault. Bot fix: a step with several spots goes on to the other spots before anything is flagged. (2026-11-21 3:45 AM Bot Update)
+
 ## MooShu, trips away from the story
 - A trip that takes a bot into an area and then leaves it walking straight back out, twice within a quarter of an hour, is set aside for an hour so the bot gets on with the story. First seen with Ultimus going between Hametsu Village and Jade Palace.
 
@@ -141,6 +144,7 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 - Portal Combat, 21 November 2:37 AM: after the Commons button put him back at the area's door, Ultimus chose the ToWizT teleporter (9177, -7685) as his way for the first time that day and set off toward it. Robe swapping stopped once bots-v95 was in (none after 2:36 AM). (2026-11-21 2:45 AM Bot Update)
 
 - Portal Combat, 21 November 3:04-3:13 AM: after a Bazaar stop for treasure cards (Ice Hound, Judgement x3) Ultimus walked the far north-east way again, and at 3:12 AM the stuck fix chose the "To The Tower Archives" teleporter at (29029, 27396); a street fight with a Pirate Ravager came first. (2026-11-21 3:15 AM Bot Update)
+- Portal Combat, 21 November 3:30-3:45 AM: Ultimus left the far north-east for a potion trip to Wizard City at 3:33, came back, and rested on purpose at (26640, 28569) with the step set aside. His no-progress timer counted the rest as stuck at 3:40, pressed the Commons button, and the walk back put him at the area's start (-31770, -14011), far from the Tower 11 platform again. Bot fix: a planned rest no longer counts as no progress. Not a quest fault. (2026-11-21 3:45 AM Bot Update)
 
 ## Marleybone, Scotland Yard
 - After Weird Science, Watson offers "Fetch Bones!" right at the hand-in. That offer is the only hint; the game does not mark Fetch Bones! as story. A bot that misses it must go back to Watson and take it, never go back to Wizard City for other quests (Cyndr, 20 November).
