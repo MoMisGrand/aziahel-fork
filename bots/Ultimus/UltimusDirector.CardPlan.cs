@@ -187,12 +187,20 @@ internal sealed partial class UltimusDirectorActor {
     private UltimusPlanner.Target BazaarCardsTarget(List<UltimusMember.Status> group) {
         var leader = group[0];
         var tripElsewhere = _bazaarCardTrip is not null && !string.Equals(_bazaarCardTripZone, leader.Zone, StringComparison.OrdinalIgnoreCase);
-        // On the way: only the way on from this area is worked out again, not whether to go.
-        if (tripElsewhere && DateTime.UtcNow - _bazaarCardTripSince < s_bazaarCardTripHold
-            && !OverlayQuestTracker.SameZone(leader.Zone ?? "", BAZAAR_ZONE)) {
-            _bazaarCardTripZone = leader.Zone;
-            _bazaarCardTrip = UltimusPlanner.Travel(leader, BAZAAR_ZONE, "the Bazaar, for treasure cards", "bazaarcards");
-            _nextBazaarCardLook = DateTime.UtcNow.AddSeconds(10);
+        // On the way: only the way on from this area is worked out again, not whether to go. In the same area too: more
+        // than 10 seconds in one area on the way (a long walk across The Commons) weighed the trip afresh, and the 20 minute
+        // gap between trips (set when this one began) then ended it before the Bazaar, so he recalled back with nothing bought
+        // (his log, 2026-11-21 09:37: The Commons, 14 seconds, recall; three losses to Earth Elemental without the cards).
+        var underway = _bazaarCardTrip is not null && _bazaarCardTripSince != DateTime.MinValue
+                       && DateTime.UtcNow - _bazaarCardTripSince < s_bazaarCardTripHold
+                       && !OverlayQuestTracker.SameZone(leader.Zone ?? "", BAZAAR_ZONE);
+        if (underway) {
+            if (tripElsewhere || DateTime.UtcNow >= _nextBazaarCardLook) {
+                _bazaarCardTripZone = leader.Zone;
+                _bazaarCardTrip = UltimusPlanner.Travel(leader, BAZAAR_ZONE, "the Bazaar, for treasure cards", "bazaarcards") ?? _bazaarCardTrip;
+                _nextBazaarCardLook = DateTime.UtcNow.AddSeconds(10);
+            }
+
             return _bazaarCardTrip;
         }
 
