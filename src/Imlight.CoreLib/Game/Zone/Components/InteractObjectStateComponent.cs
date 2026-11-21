@@ -115,12 +115,24 @@ internal sealed class InteractObjectStateComponent(ZoneEntity entity)
         try {
             var chosen = ChooseOption(GetOfferedOptions(playerCharacter).ToList(), CurrentState());
 
-            return Results(chosen)?.m_results?.Any(r => r is ResTeleport) == true;
+            // Only a teleport that knows where it goes: its own destination, or one stored under the object's name (as the
+            // teleport handler looks it up). The cathedral arches' own use names none, so keeping it over the door left every
+            // wizard standing at the Basilica's arch to The Atheneum (v0.10.936; Ultimus pressed LibraryPort1 for 9 minutes,
+            // "A teleport in DragonSpire/DS_Hub_Cathedral names no destination zone").
+            return Results(chosen)?.m_results?.Any(r => r is ResTeleport t
+                && (!string.IsNullOrEmpty(t.m_destinationZone) || StoredDestination())) == true;
         }
         catch (Exception) {
             return false;
         }
     }
+
+    // Whether the zone's teleport table has a teleport with a destination under this object's name.
+    private bool StoredDestination()
+        => Entity.Zone?.ZonePath is { Length: > 0 } zone
+           && Imlight.CoreLib.WizardData.Collections.ZoneDataCollection.GetZoneData(zone)?.Teleports?
+               .Any(t => string.Equals(t?.TriggerName, ObjectName, StringComparison.Ordinal)
+                         && !string.IsNullOrEmpty(t.Teleport?.m_destinationZone)) == true;
 
     /// <summary>
     /// The option one use applies. Options with requirements are the specific ones (the offered list already
