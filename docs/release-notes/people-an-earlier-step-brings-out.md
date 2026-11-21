@@ -1,0 +1,4 @@
+Fixed: People an earlier step brings out now come back in a new copy of a dungeon
+In Big Ben, Travis Pawman only moves up to floor 5 after you talk to him in the first room, and that move happened only in the copy of Big Ben you were in at the time. After a relog, a server restart or a fresh copy of the dungeon, floor 5 stayed empty and "Stealthy Stuff" could never be finished. Now, when you enter a dungeon and one of your quest steps needs someone that only an earlier step brings out there, that person comes out for you. This works in every dungeon built this way, not only Big Ben.
+Where: Big Ben, floor 5, quest "Stealthy Stuff", and any dungeon where a person appears after an earlier step.
+Test: Talk to Travis Pawman in Big Ben's first room, leave Big Ben and come back in (or relog), climb to floor 5, and check that Travis Pawman is there to talk to.
