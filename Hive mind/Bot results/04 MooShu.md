@@ -4,7 +4,7 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 
 ## Best way to beat each creature
 - Ronin Keyholder: won 8 time(s) (6 Solo, 2 Team), lost 24. Fastest: Cyndr in 4 rounds, plan "hit now", deck for a boss (Ice), hitting with Ice, Fire, Life; a rival that outlasts me, so more hits and blades to end it sooner (many of my fights lately had 2+ enemies), hits with Immolate.
-- Otomo Courier: won 7 time(s) (5 Solo, 2 Team), lost 21. Fastest: Ultimus in 5 rounds, deck for a boss (Ice), hitting with Ice, Fire; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Sandstorm, Balance, Fairy.
+- Otomo Courier: won 8 time(s) (6 Solo, 2 Team), lost 21. Fastest: Ultimus in 5 rounds, deck for a boss (Ice), hitting with Ice, Fire; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Sandstorm, Balance, Fairy.
 - Imitsu Defouler: won 20 time(s) (20 Solo, 0 Team), lost 0. Fastest: Cyndr in 4 rounds, plan "hit now", deck for Myth enemies, hitting with Myth, Storm, Fire (most of my fights lately had 2+ enemies), hits with Immolate.
 - Maito: won 5 time(s) (5 Solo, 0 Team), lost 13. Fastest: Cyndr in 3 rounds, plan "hit now", deck for a boss (Ice), hitting with Ice, Fire, Life; a rival that outlasts me, so more hits and blades to end it sooner (many of my fights lately had 2+ enemies), hits with Sunbird, Immolate.
 - Sanzoku Outlaw: won 14 time(s) (10 Solo, 4 Team), lost 1. Fastest: Cyndr in 3 rounds, plan "hit now", deck for Balance enemies, hitting with Balance, Ice, Death; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Sunbird, Immolate.
@@ -16,11 +16,11 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Walking Dead: won 8 time(s) (8 Solo, 0 Team), lost 2. Fastest: Ultimus in 6 rounds, deck for Death enemies, hitting with Death, Fire, Myth (most of my fights lately had 2+ enemies), hits with Sandstorm, Minor Crusade, Gearhead Destroyer.
 - Otomo Quartermaster: won 6 time(s) (6 Solo, 0 Team), lost 3. Fastest: Garm in 4 rounds, deck for a boss (Fire), hitting with Fire, Myth, Death (most of my fights lately had 2+ enemies), hits with Dark Sprite.
 - Grum Foultooth: won 7 time(s) (7 Solo, 0 Team), lost 2. Fastest: Cyndr in 4 rounds, deck for a boss (Myth), hitting with Myth, Storm, Fire; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Immolate.
+- Shoji: won 8 time(s) (8 Solo, 0 Team), lost 1. Fastest: Cyndr in 5 rounds, deck for a boss (Balance), hitting with Balance, Life, Death (most of my fights lately had 2+ enemies), hits with Immolate.
 - Yochimo: won 9 time(s) (7 Solo, 2 Team), lost 0. Fastest: Cyndr in 1 rounds, deck for a boss (Storm), hitting with Storm, Life, Death (most of my fights lately had 2+ enemies), hits with Immolate.
-- Shoji: won 7 time(s) (7 Solo, 0 Team), lost 1. Fastest: Cyndr in 5 rounds, deck for a boss (Balance), hitting with Balance, Life, Death (most of my fights lately had 2+ enemies), hits with Immolate.
+- Kanago: won 5 time(s) (5 Solo, 0 Team), lost 3. Fastest: Ultimus in 10 rounds, plan "hit now", deck for a boss (Storm), hitting with Storm, Balance, Death (most of my fights lately had 2+ enemies), hits with Minor Crusade, Scarab, Sandstorm, Gearhead Destroyer.
 - Do-Daga: won 6 time(s) (4 Solo, 2 Team), lost 1. Fastest: Cyndr in 5 rounds, plan "hit now", deck for a boss (Ice), hitting with Ice, Fire, Death (many of my fights lately had 2+ enemies), hits with Minor Fire Scorch, Immolate, Sunbird.
 - Koto: won 5 time(s) (5 Solo, 0 Team), lost 2. Fastest: Cyndr in 4 rounds, plan "hit now", deck for a boss (Ice), hitting with Ice, Balance, Fire (most of my fights lately had 2+ enemies), hits with Fire Cat, Scald.
-- Kanago: won 4 time(s) (4 Solo, 0 Team), lost 3. Fastest: Ultimus in 10 rounds, plan "hit now", deck for a boss (Storm), hitting with Storm, Balance, Death (most of my fights lately had 2+ enemies), hits with Minor Crusade, Scarab, Sandstorm, Gearhead Destroyer.
 - Katsumori: won 5 time(s) (5 Solo, 0 Team), lost 2. Fastest: Tulkar in 8 rounds, deck for a boss (Fire), hitting with Fire, Myth (most of my fights lately had 2+ enemies), hits with Frostbite.
 - Kakeda Spirit Slave: won 7 time(s) (7 Solo, 0 Team), lost 0. Fastest: Ultimus in 5 rounds, deck for Death enemies, hitting with Death, Fire, Myth (most of my fights lately had 2+ enemies), hits with Sandstorm, Scarab, Locust Swarm.
 - Cursed Ronin: won 7 time(s) (7 Solo, 0 Team), lost 0. Fastest: Ultimus in 7 rounds, deck for Myth enemies, hitting with Myth, Storm, Fire (many of my fights lately had 2+ enemies), hits with Minor Crusade, Gearhead Destroyer.
@@ -56,6 +56,7 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Finished by Cyndr (4 min).
 - Finished by Tulkar (18 min).
 - Finished by Mythis (14 min).
+- Finished by Kurrent (7 min).
 - Won by Ultimus (Solo) against Otomo Courier (rank 5, 625 health, Ice, a boss) on 2026-11-19 at 10:31:20.
   It took 5 rounds, about 4 minutes.
   Deck made for a boss (Ice), hitting with Ice, Fire; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies).
@@ -93,6 +94,11 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
   Deck made for a boss (Ice), hitting with Ice, Fire, Death (most of my fights lately had 2+ enemies).
   Plan: "hit now" (mine and every other bot's).
   Spells that landed the hits: Banshee x2, Blood Bat, Sunbird, Minor Heroic Hit.
+- Won by Kurrent (Solo) against Otomo Courier (rank 5, 625 health, Ice, a boss) on 2026-11-21 at 07:44:17.
+  It took 6 rounds, about 3 minutes.
+  Deck made for a boss (Ice), hitting with Ice, Fire; a rival that outlasts me, so more hits and blades to end it sooner (many of my fights lately had 2+ enemies).
+  Plan: "hit now" (mine and every other bot's).
+  Spells that landed the hits: Thunder Snake x2, Banshee x2, Minor Surge.
 - Avoid, fights lost:
   - Otomo Courier: lost 2 time(s) (Ultimus). Why: its biggest hit took 69% of my health. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
   - Otomo Courier: lost 3 time(s) (Ultimus). Why: its biggest hit took 69% of my health. Do instead: fight other creatures for XP first, up to the quest's level.
@@ -296,6 +302,7 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Finished by Ra (8 min).
 - Finished by Garm (34 min).
 - Finished by Cyndr (9 min).
+- Finished by Tulkar (7 min).
 - Won by Ultimus (Solo) against Kanago (rank 6, 1,360 health, Storm, a boss) on 2026-11-19 at 18:34:31.
   It took 10 rounds, about 4 minutes.
   Deck made for a boss (Storm), hitting with Storm, Balance, Death (most of my fights lately had 2+ enemies).
@@ -316,6 +323,11 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
   Deck made for a boss (Storm), hitting with Storm, Balance, Death (most of my fights lately had 2+ enemies).
   Plan: "hit now" (mine and every other bot's).
   Spells that landed the hits: Immolate x2, Pixie x2, Sunbird, Fire Cat.
+- Won by Tulkar (Solo) against Kanago (rank 6, 1,360 health, Storm, a boss) on 2026-11-21 at 07:31:34.
+  It took 11 rounds, about 6 minutes.
+  Deck made for a boss (Fire), hitting with Fire, Balance, Death (most of my fights lately had 2+ enemies).
+  Plan: "hit now" (mine and every other bot's).
+  Spells that landed the hits: Frostbite x4, Frost Beetle x2, Minor Nova, Pixie.
 - Avoid, fights lost:
   - Kanago: lost 1 time(s) (Ultimus). Why: its biggest hit took 56% of my health, the fight ran 6 minutes, so I ran out of good cards. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
   - Kanago: lost 1 time(s) (Garm). Why: its biggest hit took 64% of my health, the fight ran 6 minutes, so I ran out of good cards. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
@@ -528,6 +540,7 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Finished by Cyndr (63 s).
 - Finished by Tulkar (24 min).
 - Finished by Mythis (29 min).
+- Finished by Kurrent (20 min).
 - Won by Ra (Solo) against Sanzoku Bandit (rank 5, 575 health, Myth) on 2026-11-20 at 18:09:04.
   It took 7 rounds, about 4 minutes.
   Deck made for Myth enemies, hitting with Myth, Storm, Fire (most of my fights lately had 2+ enemies).
@@ -1140,6 +1153,11 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
   Deck made for a boss (Balance), hitting with Balance, Life, Death (most of my fights lately had 2+ enemies).
   Plan: "hit now" (mine and every other bot's).
   Spells that landed the hits: Immolate x2, Fairy x2, Fire Cat x2, Pixie, Sunbird.
+- Won by Cyndr (Solo) against Shoji (rank 6, 1,360 health, Balance, a boss) on 2026-11-21 at 07:31:34.
+  It took 7 rounds, about 4 minutes.
+  Deck made for a boss (Balance), hitting with Balance, Life, Death (most of my fights lately had 2+ enemies).
+  Plan: "hit now" (mine and every other bot's).
+  Spells that landed the hits: Sunbird, Minor Fire Scorch, Scald, Immolate.
 - Avoid, fights lost:
   - Shoji: lost 1 time(s) (Cyndr). Why: it simply hit harder than I could heal. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
 - Avoid, places bots got stuck:
@@ -1481,30 +1499,35 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Finished by Ra (63 s).
 - Finished by Garm (2 min).
 - Finished by Cyndr (59 s).
+- Finished by Tulkar (82 s).
 
 ## Spiritual Offering
 - Finished by Ultimus (33 s).
 - Finished by Ra (33 s).
 - Finished by Garm (36 s).
 - Finished by Cyndr (34 s).
+- Finished by Tulkar (33 s).
 
 ## Jade Scepter
 - Finished by Ultimus (35 s).
 - Finished by Ra (14 s).
 - Finished by Garm (38 s).
 - Finished by Cyndr (14 s).
+- Finished by Tulkar (5 min).
 
 ## Due Diligence
 - Finished by Ultimus (61 s).
 - Finished by Ra (62 s).
 - Finished by Garm (62 s).
 - Finished by Cyndr (2 min).
+- Finished by Tulkar (62 s).
 
 ## Earth Day
 - Finished by Ultimus (5 s).
 - Finished by Ra (6 s).
 - Finished by Garm (6 s).
 - Finished by Cyndr (5 s).
+- Finished by Tulkar (6 s).
 
 ## Crazy for You
 - Finished by Ultimus (24 s).

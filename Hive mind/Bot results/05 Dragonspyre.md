@@ -6,6 +6,7 @@ What the bots did in Dragonspyre, from the server log: every quest finished, eve
 - Petrov Gloomstrider: won 52 time(s) (52 Solo, 0 Team), lost 1. Fastest: Ultimus in 5 rounds, plan "hit now", deck for any fight (many of my fights lately had 2+ enemies), hits with Judgement, Elemental Shield, Gearhead Destroyer, Minor Crusade.
 - Zarathax: won 1 time(s) (1 Solo, 0 Team), lost 3. Fastest: Ultimus in 24 rounds, deck for a boss (Balance), hitting with Balance, Fire, Death; a rival that outlasts me, so more hits and blades to end it sooner (many of my fights lately had 2+ enemies), hits with Balance, Elemental Shield, Fairy, Helping Hands.
 - Wandering Wizard: won 2 time(s) (2 Solo, 0 Team), lost 0. Fastest: Ultimus in 2 rounds, deck for Life enemies, hitting with Life, Fire, Storm (most of my fights lately had 2+ enemies).
+- Burning Hate: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 10 rounds, deck for any fight (many of my fights lately had 2+ enemies), hits with Gearhead Destroyer, Locust Swarm.
 - Loathsome Creeper: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 10 rounds, plan "hit now", deck for Death enemies, hitting with Death, Fire, Myth (many of my fights lately had 2+ enemies), hits with Minor Crusade, Gearhead Destroyer, Scarab, Helping Hands.
 - Sysiphan: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 23 rounds, deck for a boss (Ice), hitting with Ice, Fire, Death (many of my fights lately had 2+ enemies), hits with Helping Hands, Scarab, Elemental Shield, Fairy.
 
@@ -281,6 +282,10 @@ What the bots did in Dragonspyre, from the server log: every quest finished, eve
   - The Tower Archives near (12300, -7200) while Use Yellow Crystal here ("The Towering Crystal"): stuck 1 time(s) (Ultimus).
 
 ## The Art of War
+- Won by Ultimus (Solo) against Burning Hate (rank 6, 670 health, Fire) on 2026-11-21 at 07:45:48.
+  It took 10 rounds, about 6 minutes.
+  Deck made for any fight (many of my fights lately had 2+ enemies).
+  Spells that landed the hits: Gearhead Destroyer, Locust Swarm.
 - Avoid, places bots got stuck:
   - The Basilica near (0, 0) while stuck: Go to Dragonspyre,Plaza of Conquests: no way from The Basilica to Plaza of Conquests could be found: stuck 10 time(s) (Ultimus); one bot tried every fix there.
   - The Basilica near (-100, -300) while stuck: Go to Dragonspyre,Plaza of Conquests: no way from The Basilica to Plaza of Conquests could be found: stuck 2 time(s) (Ultimus).
