@@ -4,10 +4,12 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 
 ## Dragonspyre, The Basilica
 - Portal Combat: Ultimus sat resting at the Basilica's arch to The Atheneum for hours (the arch offered no way through). After the arch fix reached the server at 22:08 (2026-11-20) he walked straight through at 22:09 and took the teleporter at (9177, -7685) toward the Tower Archives. Success. (2026-11-20 10:15 PM Bot Update)
+- After the arch, Ultimus is crossing The Atheneum toward the Tower Archives but is caught by side fights he tries to walk round (22:12, 22:18, 22:24, 22:29), each a long one of 5 minutes or more against Loathsome Creepers. He wins them; slow, not stuck. Watching. (2026-11-20 10:30 PM Bot Update)
 
 ## Wizard City, The Commons potion shop (every bot's potion trip)
 - The shop's "Fill All" is refused unless the gold covers every missing potion. Kurrent (4 missing, 390 each, 1115 gold) asked for Fill All every 12 seconds at the counter from 21:53 to 21:58 and was flagged stuck 37 times; Tulkar the same at 02:15. Fix (bots): with too little gold for all, buy single potions, as many as the gold pays for. Bot fault, not quest. (2026-11-20 10:00 PM Bot Update)
 - Still stuck at 22:16 (flagged 41 times) because the fix only reaches the server with the 10:15 PM bots update; watch that it clears. (2026-11-20 10:15 PM Bot Update)
+- The bots update at 22:28 logged Kurrent back in at the shop counter, and he recalled straight to Regent's Square with 0 of 4 potions (the trip was not remembered over the restart, only the mark), then set off for the shop again. Fix (bots): the potion trip is kept over a restart, so he buys first and recalls after. Bot fault, not quest. (2026-11-20 10:30 PM Bot Update)
 
 ## Krokotopia, The Vault of Ice
 - Breaking the Vault / Find the Fang: the Frost door (DynaTrigger_KT_Door_Frost) opens when the MoonLock braziers read Fire, Ice, Storm. Brazier3 needs two pulls (Fire to Ice, then Ice to Storm), and after the first pull it offers nothing until the wizard walks out of reach and back in. Kitharas Lamia got it at 20:48 by walking off and back; AlchemiZist stood on it at 21:34, gave up, and sat at the shut Frost door for 10 minutes. Fix (bots): after pulling a piece that still needs another pull, step about 360 away and come back. Bot fault, not quest. (2026-11-20 9:45 PM Bot Update)
