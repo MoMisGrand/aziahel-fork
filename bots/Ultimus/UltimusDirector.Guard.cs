@@ -404,6 +404,13 @@ internal sealed partial class UltimusDirectorActor {
                   "another step is open, and the next fix in my unstick round.", "check-switch|" + target?.Key);
             Ban(target?.Key, TimeSpan.FromMinutes(10));
             Unstick(0, "was no closer to the goal at two progress checks in a row");
+            // The fix sent him to a teleporter that lands nearer the step: that walk is the new strategy, so the step is not
+            // set aside, or the set-aside rest takes over the second after and he sits by the teleporter instead. The Tower
+            // Archives, 2026-11-21 05:03: the fix chose the north pad at (29029, 27396), which lands by the ToWizT teleporter,
+            // and he rested 5 minutes 1,200 away from it, then walked off the wrong way.
+            if (DateTime.UtcNow - _anotherWayAt < TimeSpan.FromSeconds(2)) {
+                UltimusPlanner.EndAside(target?.Key);
+            }
         }
     }
 
