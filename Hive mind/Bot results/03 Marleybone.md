@@ -3963,12 +3963,12 @@ What the bots did in Marleybone, from the server log: every quest finished, ever
   - Meowiarty: lost 1 time(s) (Kurrent). Why: its biggest hit took 75% of my health. Do instead: fight other creatures for XP first, up to the quest's level.
 - Avoid, places bots got stuck:
   - Big Ben near (-9600, 21000) while Defeat 1 creatures ("The Last Meow"): stuck 34 time(s) (Ra); one bot tried every fix there.
-  - Big Ben near (-4200, 10600) while Defeat 1 creatures ("The Last Meow"): stuck 30 time(s) (Idunn); one bot tried every fix there.
+  - Big Ben near (-4200, 10600) while Defeat 1 creatures ("The Last Meow"): stuck 33 time(s) (Idunn); one bot tried every fix there.
   - Big Ben near (-9700, 21000) while Defeat 1 creatures ("The Last Meow"): stuck 27 time(s) (Ra); one bot tried every fix there.
-  - Big Ben near (-3600, 12000) while Defeat 1 creatures ("The Last Meow"): stuck 22 time(s) (Idunn); one bot tried every fix there.
+  - Big Ben near (-3600, 12000) while Defeat 1 creatures ("The Last Meow"): stuck 24 time(s) (Idunn); one bot tried every fix there.
+  - Big Ben near (-3700, 12000) while Defeat 1 creatures ("The Last Meow"): stuck 21 time(s) (Idunn); one bot tried every fix there.
   - Big Ben near (-3600, 12000) while to Regent's Square (leaving Big Ben to start it over (its creature for my step is not there)): stuck 20 time(s) (Idunn).
-  - Big Ben near (-3700, 12000) while Defeat 1 creatures ("The Last Meow"): stuck 18 time(s) (Idunn); one bot tried every fix there.
-  - Big Ben near (-3700, 12000) while to Regent's Square (leaving Big Ben to start it over (its creature for my step is not there)): stuck 14 time(s) (Idunn); one bot tried every fix there.
+  - Big Ben near (-3700, 12000) while to Regent's Square (leaving Big Ben to start it over (its creature for my step is not there)): stuck 15 time(s) (Idunn); one bot tried every fix there.
   - Big Ben near (-4200, 10600) while to Regent's Square (leaving Big Ben to start it over (its creature for my step is not there)): stuck 14 time(s) (Idunn); one bot tried every fix there.
 
 ## Bad News...
