@@ -137,7 +137,7 @@ internal static class BotFloors {
     internal const string FIGHT = "fight";
     internal const string CLICK = "click";
 
-    /// <summary>Another wizard in this copy is setting an in-order puzzle: wait out of the way of its pieces.</summary>
+    /// <summary>Another wizard in this copy is setting a puzzle of pieces: wait out of the way of them.</summary>
     internal const string WAIT = "wait";
 
     // Who sets each in-order puzzle in a copy ("copy|gate" -> wizard, until when). Pieces that turn when stepped on count in
@@ -900,7 +900,7 @@ internal static class BotFloors {
         internal (float X, float Y)? Step { get; init; }
 
         /// <summary>
-        /// Whether an in-order puzzle (by the gate it opens) is his to set in this copy, and who sets it if not; null when he
+        /// Whether a puzzle of pieces (by the gate it opens) is his to set in this copy, and who sets it if not; null when he
         /// is the only one here.
         /// </summary>
         internal Func<string, (bool Mine, string Holder)> ChainMine { get; init; }
@@ -1157,12 +1157,16 @@ internal static class BotFloors {
                     "the puzzle comes out once they are beaten");
             }
 
-            // An in-order puzzle another wizard in this copy is setting: he waits out of the way of its pieces, as players
-            // in one group let one of them step the plates.
-            if (gate.InOrder && live?.ChainMine?.Invoke(gate.Object) is { Mine: false } other) {
+            // A puzzle another wizard in this copy is setting: he waits out of the way of its pieces, as players in one group
+            // let one of them step the plates. Any puzzle of pieces, not only an in-order one: a piece turns each time it is
+            // stepped on or pulled, so two wizards on it turn it back (Temple of Storms' moons, 2026-11-21 14:03-14:06:
+            // Kitharas Libra, Hydra and Crimes stood 4 minutes on "Part2Moon2" in one copy).
+            if (live?.ChainMine?.Invoke(gate.Object) is { Mine: false } other) {
                 var (wx, wy) = OffPieces(gate, x, y) ?? (x, y);
                 return new Duty(WAIT, wx, wy, $"out of the way while {other.Holder} sets the puzzle that opens \"{gate.Object}\"", "wait|" + gate.Object,
-                    $"\"{gate.Object}\" opens only once {string.Join(", then ", gate.Needs.Select(n => n.Object))} are set in that order, and two wizards stepping them undo each other");
+                    gate.InOrder
+                        ? $"\"{gate.Object}\" opens only once {string.Join(", then ", gate.Needs.Select(n => n.Object))} are set in that order, and two wizards stepping them undo each other"
+                        : $"each of its pieces turns every time a wizard steps on or pulls it, so two wizards on it undo each other");
             }
 
             // In-order pieces all set while the gate stays shut (set before the chain could count them, as before its quest
