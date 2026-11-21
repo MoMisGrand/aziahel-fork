@@ -59,7 +59,16 @@ internal sealed partial class UltimusDirectorActor {
     /// <summary>Not full right after a win: to the middle of the circle, where its wisps fall, walking through them.</summary>
     private UltimusPlanner.Target WispCenter(UltimusMember.Status leader, bool health, bool mana) {
         if (_wispCenter is not { } c || DateTime.UtcNow > c.Until || !string.Equals(c.Zone, leader.Zone, StringComparison.OrdinalIgnoreCase)
-            || (!health && !mana) || UltimusPlanner.Far(leader.X, leader.Y, c.X, c.Y) <= 40) {
+            || (!health && !mana)) {
+            return null;
+        }
+
+        // Reached once is enough: the wisps there are walked through. Before, stepping off toward the next step made the
+        // middle "not reached" again, so he turned back each second until the wisps' time ran out (3,435 such turns in the
+        // log of 2026-11-21, Cyndr and Mythis flipping every second).
+        if (UltimusPlanner.Far(leader.X, leader.Y, c.X, c.Y) <= 40) {
+            _wispCenter = null;
+
             return null;
         }
 
