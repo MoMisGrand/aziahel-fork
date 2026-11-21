@@ -108,8 +108,14 @@ internal sealed partial class UltimusDirectorActor {
                 mine ? "the round before my big hit, while I gather pips" : $"not for me: it only boosts {card.BladeSchool}");
         }
 
+        // A trap only boosts hits of its own school (Storm Trap: Storm hits): one of another school is a dead card in his deck
+        // that also stops him drawing (Ultimus vs Earth Elemental, 2026-11-21: Storm Trap x3 and Ice Trap in a Balance
+        // wizard's deck, held unplayed for 13 rounds while he ran out of hits).
         if (card.Trap) {
-            return new TcUseOf("trap", 35 + card.TrapPercent / 2, "on the boss the round before my big hit");
+            var mine = string.IsNullOrEmpty(card.TrapSchool) || string.Equals(card.TrapSchool, school, StringComparison.OrdinalIgnoreCase)
+                       || string.Equals(card.TrapSchool, "All", StringComparison.OrdinalIgnoreCase);
+            return new TcUseOf("trap", mine ? 35 + card.TrapPercent / 2 : 5,
+                mine ? "on the boss the round before my big hit" : $"not for me: it only boosts {card.TrapSchool} hits");
         }
 
         if (card.Weakness || card.Stun || card.RemovesCharms) {
