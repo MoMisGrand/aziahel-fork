@@ -262,7 +262,9 @@ internal sealed partial class DuelBots {
     }
 
     // The card he throws away to make room for a treasure card: one his solo play would discard anyway, else the least
-    // useful (no hit, no heal, then the lowest rank).
+    // useful (no hit, no heal, no shield against what the enemies hit with, then the lowest rank). A shield that guards
+    // against the enemies' schools is kept like a heal: against the Sea Lord (Storm, its biggest hit 90% of his health) he
+    // threw away his Elemental Shield in round 1 to draw a treasure card (2026-11-21, his 10th try).
     private static (int Index, string Why)? UltimusRoomForTreasure(CombatDuelSubCircle me, IReadOnlyList<CombatDuelSubCircle> circles) {
         var threat = UltimusScout.InBattle(circles.Where(c => c.OccupiedTeam != me.OccupiedTeam));
         var cards = new List<(int Index, RewrittenAI.Card Card)>();
@@ -276,7 +278,9 @@ internal sealed partial class DuelBots {
             .Where(i => cards.Any(c => c.Index == i)).ToList();
         var pick = useless.Count > 0
             ? cards.First(c => c.Index == useless[0])
-            : cards.OrderBy(c => c.Card.Hit ? 1 : 0).ThenBy(c => c.Card.Heal ? 1 : 0).ThenBy(c => c.Card.Rank).FirstOrDefault();
+            : cards.OrderBy(c => c.Card.Hit ? 1 : 0)
+                .ThenBy(c => c.Card.Heal || (c.Card.Shield && !UltimusTactics.UselessShield(c.Card, threat)) ? 1 : 0)
+                .ThenBy(c => c.Card.Rank).FirstOrDefault();
 
         return pick.Card is null ? null : (pick.Index, $"discards {pick.Card.Shown}");
     }
