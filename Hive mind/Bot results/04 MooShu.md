@@ -878,6 +878,7 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Finished by Cyndr (21 min).
 - Finished by Tulkar (46 min).
 - Finished by Mythis (2 min).
+- Finished by Kurrent (35 min).
 - Won by Ultimus (Solo) against War Oni (rank 7, 1,600 health, Fire, a boss) on 2026-11-19 at 16:49:29.
   It took 10 rounds, about 5 minutes.
   Deck made for a boss (Fire), hitting with Fire, Myth (many of my fights lately had 2+ enemies).
@@ -1670,7 +1671,7 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 
 ## The Towering Crystal
 - Avoid, places bots got stuck:
-  - Crimson Fields near (0, -2100) while waiting to be in the game: stuck 8 time(s) (Ra); one bot tried every fix there.
+  - Crimson Fields near (0, -2100) while waiting to be in the game: stuck 9 time(s) (Ra); one bot tried every fix there.
 
 ## Spies Like Us
 - Finished by Ultimus (16 s).
@@ -1751,6 +1752,7 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Finished by Cyndr (27 s).
 - Finished by Tulkar (28 s).
 - Finished by Mythis (27 s).
+- Finished by Kurrent (27 s).
 
 ## Clear Waters
 - Finished by Ultimus (6 min).
@@ -1759,6 +1761,7 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Finished by Cyndr (46 s).
 - Finished by Tulkar (46 s).
 - Finished by Mythis (14 s).
+- Finished by Kurrent (14 s).
 
 ## Patience
 - Finished by Ultimus (30 s).
@@ -1767,6 +1770,7 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Finished by Cyndr (30 s).
 - Finished by Tulkar (30 s).
 - Finished by Mythis (30 s).
+- Finished by Kurrent (30 s).
 
 ## No Disassemble
 - Finished by Ultimus (6 min).
