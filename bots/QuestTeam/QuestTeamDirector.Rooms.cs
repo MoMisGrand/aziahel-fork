@@ -44,6 +44,9 @@ internal sealed partial class QuestTeamDirectorActor {
     private string _floorZone = "";
     // The spot the leader stands on now (stepped on once); it steps off before stepping on it again.
     private string _floorOn;
+    // Pieces the leader has pulled in this copy, and the one it is stepping back from to have it offered again (StepOutFrom).
+    private readonly HashSet<string> _floorPulled = new(StringComparer.Ordinal);
+    private string _floorOut;
     private readonly HashSet<string> _floorSaid = new(StringComparer.Ordinal);
 
     private QuestTeamPlanner.Target FloorDuty(QuestTeamMember.Status leader, QuestTeamPlanner.Target target) {
@@ -62,6 +65,8 @@ internal sealed partial class QuestTeamDirectorActor {
         if (zoneKey != _floorZone) {
             _floorZone = zoneKey;
             _floorTries.Clear();
+            _floorPulled.Clear();
+            _floorOut = null;
             _floorOn = null;
             _floorSaid.Clear();
         }
@@ -101,6 +106,15 @@ internal sealed partial class QuestTeamDirectorActor {
             Note(leader.Role, $"The team does this floor first, as players play it: {duty.What}, because {duty.Why}.", QuestTeamLink.NOTABLE);
         }
 
+        // Stepping back from a piece it pulled, until out of its reach; then it walks in again and the pull is offered anew.
+        if (_floorOut is not null && (_floorOut != duty.Key || far >= STEP_OUT)) {
+            _floorOut = null;
+        }
+
+        if (_floorOut == duty.Key && StepOutFrom(leader, duty, live) is { } back) {
+            return back;
+        }
+
         switch (duty.Kind) {
             case BotFloors.FIGHT: {
                 var foe = BotUseGuards.Near(leader.ZoneActor, duty.X, duty.Y)
@@ -120,6 +134,7 @@ internal sealed partial class QuestTeamDirectorActor {
                     Clicked("floor|" + duty.Key);
                     _floorTries[duty.Key] = _floorTries.GetValueOrDefault(duty.Key) + 1;
                     Note(leader.Role, $"{leader.Name} pulls {duty.What}: {duty.Why}.", QuestTeamLink.NOTABLE);
+                    _floorPulled.Add(duty.Key);
                     _actors[0].Tell(new QuestTeamMember.Interact(lever, "Interact", 0, duty.What));
                 }
                 else if (lever == 0 && CanClick("floor|" + duty.Key + "|none")) {
@@ -131,6 +146,13 @@ internal sealed partial class QuestTeamDirectorActor {
                 // Nothing to pull: a piece like Katzenstein's Lab's plaques turns when a wizard walks onto it, so he steps right
                 // onto it instead of standing beside it (the Calling of 7, 2026-11-20: the plaques never offered a click, and
                 // turned only when a bot happened to walk over one).
+                // A piece pulled already that needs another pull offers nothing while the wizard stands by it; the game gives
+                // the pull again on coming back into reach (The Vault of Ice Brazier3, 2026-11-20, Ultimus's StepOutFrom).
+                if (lever == 0 && _floorPulled.Contains(duty.Key) && StepOutFrom(leader, duty, live) is { } stepOut) {
+                    _floorOut = duty.Key;
+                    return stepOut;
+                }
+
                 if (lever == 0) {
                     return new QuestTeamPlanner.Target(QuestTeamPlanner.SPOT, duty.X, duty.Y, $"onto {duty.What} (it turns when stepped on)", Key: "floor|" + duty.Key + "|onto");
                 }
@@ -198,4 +220,26 @@ internal sealed partial class QuestTeamDirectorActor {
         }
     }
 
+
+    // How far the leader steps back from a pulled piece to be out of its reach (a pull is offered within about 220).
+    private const float STEP_OUT = 320f;
+
+    // A spot out of a pulled piece's reach, on the leader's own ground: away on its own side first, then the other ways round.
+    private QuestTeamPlanner.Target StepOutFrom(QuestTeamMember.Status leader, BotFloors.Duty duty, BotFloors.Live live) {
+        var dx = leader.X - duty.X;
+        var dy = leader.Y - duty.Y;
+        var len = MathF.Sqrt((dx * dx) + (dy * dy));
+        var start = len < 30 ? MathF.PI : MathF.Atan2(dy, dx);
+        for (var i = 0; i < 8; i++) {
+            var a = start + (i % 2 == 0 ? 1 : -1) * ((i + 1) / 2) * (MathF.PI / 4);
+            var x = duty.X + (MathF.Cos(a) * (STEP_OUT + 40));
+            var y = duty.Y + (MathF.Sin(a) * (STEP_OUT + 40));
+            if (live?.SameGround is null || live.SameGround(x, y)) {
+                return new QuestTeamPlanner.Target(QuestTeamPlanner.SPOT, x, y,
+                    $"a few steps back from {duty.What} (it offers its pull again when it comes back in reach)", Key: "floor|" + duty.Key + "|out");
+            }
+        }
+
+        return null;
+    }
 }

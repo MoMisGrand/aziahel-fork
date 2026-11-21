@@ -182,6 +182,8 @@ internal static class BotFloors {
     private const float LOCKED_NEAR_SHARE = 0.25f;
     // Tries per spot or lever before it is left be.
     internal const int TRIES = 3;
+    // Times a battle circle whose fight was lost is stepped on again, per visit to the area.
+    internal const int RESTEPS = 2;
 
     private static readonly ConcurrentDictionary<string, Book> s_books = new(StringComparer.OrdinalIgnoreCase);
 
@@ -947,8 +949,23 @@ internal static class BotFloors {
         // 1. The room's battle circle, when it has not started its fight in this copy of the area.
         foreach (var circle in book.Circles.Where(c => Far(x, y, c.X, c.Y) <= ROOM && HereCircle(c)).OrderBy(c => Far(x, y, c.X, c.Y))) {
             var key = "circle|" + circle.Trigger;
-            if ((live?.FiresOf?.Invoke(circle.Trigger) ?? 0) > 0 || Tried(key) >= 1 || Off(circle.Trigger)) {
+            if (Off(circle.Trigger)) {
                 continue;
+            }
+
+            if ((live?.FiresOf?.Invoke(circle.Trigger) ?? 0) > 0 || Tried(key) >= 1) {
+                // Its fight was started before and lost (or left by Dungeon Recall): the room's creatures stand there again and
+                // walking into them starts nothing; the circle does. Big Ben, 2026-11-20 21:39-21:44: Mythis lost to Filcher on
+                // room 8, came back by Dungeon Recall, stood 20 seconds on each creature with no battle, then sat at the shut
+                // Door16 ("Defeat 1 creatures", flagged for Niduus); Idunn the same on room 9 (Gearhead).
+                var again = key + "|again";
+                if (live?.FoesNear is not { } foesNear || foesNear(circle.X, circle.Y) || Tried(again) >= RESTEPS
+                    || !book.Gates.Any(g => g.By == Opener.Beat && Closed(g) && Here(g.Z) && Far(circle.X, circle.Y, g.X, g.Y) <= ROOM)) {
+                    continue;
+                }
+
+                return new Duty(STEP, circle.X, circle.Y, $"the room's battle circle \"{circle.Volume}\" again", again,
+                    "its fight was not won, its creatures start nothing when walked into, and the way on opens only once it is won");
             }
 
             // The fight is only there to open the floor's door, and that door is open already: a player walks past the

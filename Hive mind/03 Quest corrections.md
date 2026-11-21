@@ -2,6 +2,12 @@
 
 Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus, the seven TCO7 wizards and the Quest Team all share one brain for this, so a correction learned by one of them is known by all of them at once. A new correction is added here the same day it goes out in a bots update.
 
+## Krokotopia, The Vault of Ice
+- Breaking the Vault / Find the Fang: the Frost door (DynaTrigger_KT_Door_Frost) opens when the MoonLock braziers read Fire, Ice, Storm. Brazier3 needs two pulls (Fire to Ice, then Ice to Storm), and after the first pull it offers nothing until the wizard walks out of reach and back in. Kitharas Lamia got it at 20:48 by walking off and back; AlchemiZist stood on it at 21:34, gave up, and sat at the shut Frost door for 10 minutes. Fix (bots): after pulling a piece that still needs another pull, step about 360 away and come back. Bot fault, not quest. (2026-11-20 9:45 PM Bot Update)
+
+## Marleybone, Big Ben (every dungeon with battle circles)
+- The Last Meow: after losing a room's fight (Mythis to Filcher on room 8, Idunn to Gearhead on room 9) and coming back by Dungeon Recall, the room's creatures stand there but walking into them starts no battle; the bots marked them unfightable and sat at the shut door (Door16). Fix (bots): a battle circle whose fight was started but not won, with its door still shut and no creature that will fight, is stepped on again (up to 2 times per visit). Bot fault, not quest. (2026-11-20 9:45 PM Bot Update)
+
 ## Wizard City, Ravenwood (tutorial copy)
 - WizardCity/WC_Ravenwood_Lite (the Ravenwood a new wizard sees) has no exits in its game file (only its look). A bot that follows a teammate in there finds "no way from Ravenwood" to anything. Way out: the Commons button, then on from The Commons (2026-11-21). Kitharas Sentence stood there 15 hours on Sinister Skeleton before this.
 
