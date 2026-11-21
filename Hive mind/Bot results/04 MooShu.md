@@ -5,8 +5,8 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 ## Best way to beat each creature
 - Ronin Keyholder: won 11 time(s) (9 Solo, 2 Team), lost 26. Fastest: Cyndr in 4 rounds, plan "hit now", deck for a boss (Ice), hitting with Ice, Fire, Life; a rival that outlasts me, so more hits and blades to end it sooner (many of my fights lately had 2+ enemies), hits with Immolate.
 - Otomo Courier: won 8 time(s) (6 Solo, 2 Team), lost 21. Fastest: Ultimus in 5 rounds, deck for a boss (Ice), hitting with Ice, Fire; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Sandstorm, Balance, Fairy.
-- Imitsu Defouler: won 22 time(s) (22 Solo, 0 Team), lost 0. Fastest: Cyndr in 4 rounds, plan "hit now", deck for Myth enemies, hitting with Myth, Storm, Fire (most of my fights lately had 2+ enemies), hits with Immolate.
-- Maito: won 5 time(s) (5 Solo, 0 Team), lost 13. Fastest: Cyndr in 3 rounds, plan "hit now", deck for a boss (Ice), hitting with Ice, Fire, Life; a rival that outlasts me, so more hits and blades to end it sooner (many of my fights lately had 2+ enemies), hits with Sunbird, Immolate.
+- Imitsu Defouler: won 23 time(s) (23 Solo, 0 Team), lost 0. Fastest: Cyndr in 4 rounds, plan "hit now", deck for Myth enemies, hitting with Myth, Storm, Fire (most of my fights lately had 2+ enemies), hits with Immolate.
+- Maito: won 5 time(s) (5 Solo, 0 Team), lost 15. Fastest: Cyndr in 3 rounds, plan "hit now", deck for a boss (Ice), hitting with Ice, Fire, Life; a rival that outlasts me, so more hits and blades to end it sooner (many of my fights lately had 2+ enemies), hits with Sunbird, Immolate.
 - Otomo Supply Runner: won 14 time(s) (12 Solo, 2 Team), lost 4. Fastest: Ultimus in 4 rounds, deck for Fire enemies, hitting with Fire, Death, Myth (most of my fights lately had 2+ enemies), hits with Gearhead Destroyer, Locust Swarm.
 - War Oni: won 6 time(s) (4 Solo, 2 Team), lost 11. Fastest: Cyndr in 7 rounds, deck for a boss (Fire), hitting with Fire, Myth; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Banshee, Heck Hound.
 - Haru: won 15 time(s) (15 Solo, 0 Team), lost 1. Fastest: Cyndr in 5 rounds, deck for a boss (Myth), hitting with Myth, Balance, Storm (most of my fights lately had 2+ enemies).
@@ -19,12 +19,12 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Katsumori: won 7 time(s) (7 Solo, 0 Team), lost 3. Fastest: Tulkar in 8 rounds, deck for a boss (Fire), hitting with Fire, Myth (most of my fights lately had 2+ enemies), hits with Frostbite.
 - Grum Foultooth: won 8 time(s) (8 Solo, 0 Team), lost 2. Fastest: Cyndr in 4 rounds, deck for a boss (Myth), hitting with Myth, Storm, Fire; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Immolate.
 - Walking Dead: won 8 time(s) (8 Solo, 0 Team), lost 2. Fastest: Ultimus in 6 rounds, deck for Death enemies, hitting with Death, Fire, Myth (most of my fights lately had 2+ enemies), hits with Sandstorm, Minor Crusade, Gearhead Destroyer.
+- Death Oni: won 3 time(s) (3 Solo, 0 Team), lost 7. Fastest: Ra in 6 rounds, plan "hit now", deck for a boss (Death), hitting with Death, Ice, Storm (most of my fights lately had 2+ enemies), hits with Sandstorm, Minor Crusade, Scarab, Helping Hands.
 - Yochimo: won 9 time(s) (7 Solo, 2 Team), lost 0. Fastest: Cyndr in 1 rounds, deck for a boss (Storm), hitting with Storm, Life, Death (most of my fights lately had 2+ enemies), hits with Immolate.
 - Do-Daga: won 7 time(s) (5 Solo, 2 Team), lost 1. Fastest: Cyndr in 5 rounds, plan "hit now", deck for a boss (Ice), hitting with Ice, Fire, Death (many of my fights lately had 2+ enemies), hits with Minor Fire Scorch, Immolate, Sunbird.
 - Koto: won 6 time(s) (6 Solo, 0 Team), lost 2. Fastest: Cyndr in 4 rounds, plan "hit now", deck for a boss (Ice), hitting with Ice, Balance, Fire (most of my fights lately had 2+ enemies), hits with Fire Cat, Scald.
 - Kanago: won 5 time(s) (5 Solo, 0 Team), lost 3. Fastest: Ultimus in 10 rounds, plan "hit now", deck for a boss (Storm), hitting with Storm, Balance, Death (most of my fights lately had 2+ enemies), hits with Minor Crusade, Scarab, Sandstorm, Gearhead Destroyer.
 - Jade Oni: won 2 time(s) (2 Solo, 0 Team), lost 6. Fastest: Ra in 37 rounds, deck for a boss (Life), hitting with Life, Fire, Storm; a rival that outlasts me, so more hits and blades to end it sooner (many of my fights lately had 2+ enemies), hits with Elemental Shield, Helping Hands, Spirit Shield.
-- Death Oni: won 3 time(s) (3 Solo, 0 Team), lost 5. Fastest: Ra in 6 rounds, plan "hit now", deck for a boss (Death), hitting with Death, Ice, Storm (most of my fights lately had 2+ enemies), hits with Sandstorm, Minor Crusade, Scarab, Helping Hands.
 - Aiuchi: won 5 time(s) (5 Solo, 0 Team), lost 2. Fastest: Ultimus in 4 rounds, deck for a boss (Fire), hitting with Fire, Balance, Death (many of my fights lately had 2+ enemies), hits with Gearhead Destroyer.
 - Kakeda Spirit Slave: won 7 time(s) (7 Solo, 0 Team), lost 0. Fastest: Ultimus in 5 rounds, deck for Death enemies, hitting with Death, Fire, Myth (most of my fights lately had 2+ enemies), hits with Sandstorm, Scarab, Locust Swarm.
 - Cursed Ronin: won 7 time(s) (7 Solo, 0 Team), lost 0. Fastest: Ultimus in 7 rounds, deck for Myth enemies, hitting with Myth, Storm, Fire (many of my fights lately had 2+ enemies), hits with Minor Crusade, Gearhead Destroyer.
@@ -271,11 +271,12 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
   - Maito: lost 1 time(s) (Tulkar). Why: its biggest hit took 63% of my health, the fight ran 7 minutes, so I ran out of good cards. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
   - Maito: lost 1 time(s) (Mythis). Why: its biggest hit took 63% of my health, the fight ran 10 minutes, so I ran out of good cards. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
   - Maito: lost 1 time(s) (Tulkar). Why: its biggest hit took 63% of my health, the fight ran 6 minutes, so I ran out of good cards. Do instead: fight other creatures for XP first, up to the quest's level.
-  - Maito: lost 2 time(s) (Mythis). Why: its biggest hit took 74% of my health, the fight ran 7 minutes, so I ran out of good cards. Do instead: fight other creatures for XP first, up to the quest's level.
+  - Maito: lost 3 time(s) (Kurrent, Mythis). Why: its biggest hit took 74% of my health, the fight ran 7 minutes, so I ran out of good cards. Do instead: fight other creatures for XP first, up to the quest's level.
   - Maito: lost 1 time(s) (Mythis). Why: its biggest hit took 74% of my health, the fight ran 6 minutes, so I ran out of good cards. Do instead: look for better gear in this world's shops and the Bazaar, then try again.
   - Maito: lost 2 time(s) (Mythis). Why: its biggest hit took 74% of my health, the fight ran 5 minutes, so I ran out of good cards. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
   - Maito: lost 1 time(s) (Mythis). Why: its biggest hit took 74% of my health. Do instead: fight other creatures for XP first, up to the quest's level.
   - Maito: lost 1 time(s) (Mythis). Why: its biggest hit took 74% of my health. Do instead: look for better gear in this world's shops and the Bazaar, then try again.
+  - Maito: lost 1 time(s) (Kurrent). Why: its biggest hit took 74% of my health. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
 - Avoid, places bots got stuck:
   - Jade Palace near (8000, 200) while waiting to be in the game: stuck 1 time(s) (Mythis).
 
@@ -285,6 +286,7 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Finished by Garm (27 min).
 - Finished by Cyndr (4 min).
 - Finished by Tulkar (15 min).
+- Finished by Mythis (17 min).
 - Won by Ultimus (Solo) against Koto (rank 6, 1,200 health, Ice, a boss) on 2026-11-19 at 17:36:55.
   It took 14 rounds, about 2 minutes.
   Deck made for a boss (Ice), hitting with Ice, Balance, Fire (most of my fights lately had 2+ enemies).
@@ -1402,6 +1404,8 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
   - Death Oni: lost 1 time(s) (Garm). Why: I went in at 34% health. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
   - Death Oni: lost 1 time(s) (Garm). Why: the fight ran 9 minutes, so I ran out of good cards. Do instead: fight other creatures for XP first, up to the quest's level.
   - Death Oni: lost 1 time(s) (Garm). Why: the fight ran 9 minutes, so I ran out of good cards. Do instead: look for better gear in this world's shops and the Bazaar, then try again.
+  - Death Oni: lost 1 time(s) (Garm). Why: the fight ran 11 minutes, so I ran out of good cards. Do instead: look for better gear in this world's shops and the Bazaar, then try again.
+  - Death Oni: lost 1 time(s) (Garm). Why: the fight ran 6 minutes, so I ran out of good cards. Do instead: look for better gear in this world's shops and the Bazaar, then try again.
 
 ## Smells Like Spirit
 - Finished by Ultimus (50 s).
@@ -1714,6 +1718,11 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
   Deck made for Balance enemies, hitting with Balance, Death, Ice (most of my fights lately had 2+ enemies).
   Plan: "hit now" (mine and every other bot's).
   Spells that landed the hits: Frost Beetle x2, Minor Nova x2, Storm Hound x2, Evil Snowman, Frostbite.
+- Won by Mythis (Solo) against Imitsu Defouler (rank 5, 675 health, Myth) on 2026-11-21 at 09:57:28.
+  It took 13 rounds, about 8 minutes.
+  Deck made for Myth enemies, hitting with Myth, Storm, Fire (most of my fights lately had 2+ enemies).
+  Plan: "hit now" (mine and every other bot's).
+  Spells that landed the hits: Minor Heroic Hit x3, Ghoul x2, Cyclops, Fairy, Heck Hound, Pixie, Banshee.
 
 ## Forest Flowers
 - Finished by Ultimus (65 s).
