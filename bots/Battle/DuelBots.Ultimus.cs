@@ -208,6 +208,18 @@ internal sealed partial class DuelBots {
         }
     }
 
+    // No hit left in his hand (his deck ran dry in a long fight): a treasure card he holds but won't play (a shield, a trap
+    // of another school) no longer stops him drawing the next one (Ultimus vs Earth Elemental, 2026-11-21: 9 rounds passed
+    // with 7 pips and a card in hand, while it healed back up).
+    private static bool UltimusOutOfHits(CombatDuelSubCircle me) {
+        try {
+            return !UltimusTactics.Hand(me).Any(h => h.Card.Hit && !h.Card.Natural);
+        }
+        catch (Exception) {
+            return false;
+        }
+    }
+
     // A tough fight: a boss, three or more enemies, his health under half, or the enemies' habits say they take 40% of it this round.
     private bool UltimusToughFight(CombatDuelSubCircle me, IReadOnlyList<CombatDuelSubCircle> circles) {
         var enemies = circles.Where(c => c.OccupiedTeam != me.OccupiedTeam && c.IsAlive).ToList();
@@ -430,7 +442,7 @@ internal sealed partial class DuelBots {
             // he had never drawn one (Niduus, 2026-11-16: "if he's not using Treasure cards in battle, have him use them";
             // his logs: no draw in any fight). As a player does, he throws away his least useful card first, then draws.
             var digging = !trueForm && UltimusDigForEnchant(member, circles);
-            if (!trueForm && !message.Deadline && ((UltimusToughFight(member, circles) && member.VaultRemainingCount > 0 && member.TreasureCardsInHand == 0) || digging)
+            if (!trueForm && !message.Deadline && ((UltimusToughFight(member, circles) && member.VaultRemainingCount > 0 && (member.TreasureCardsInHand == 0 || UltimusOutOfHits(member))) || digging)
                 && member.HandCount >= 7 && !_ultimusDrew.Contains((D.Duel.m_roundNum, member.SlotIndex))
                 && UltimusRoomForTreasure(member, circles) is { } room && _ultimusRoomMade.Add((D.Duel.m_roundNum, member.SlotIndex))
                 && UltimusDirector.ActorOf(UltimusRole(member)) is { } maker) {
@@ -447,7 +459,7 @@ internal sealed partial class DuelBots {
             // Niduus, 2026-11-15: "Let him buy a few treasure cards and play them in tough fights". In a tough fight, with
             // treasure cards in his deck, none in hand and room for one, he presses Draw (his own game's button, once a
             // round) and looks at the hand again a moment later, when the card is in it.
-            if (!trueForm && !message.Deadline && ((UltimusToughFight(member, circles) && member.VaultRemainingCount > 0 && member.TreasureCardsInHand == 0) || digging)
+            if (!trueForm && !message.Deadline && ((UltimusToughFight(member, circles) && member.VaultRemainingCount > 0 && (member.TreasureCardsInHand == 0 || UltimusOutOfHits(member))) || digging)
                 && member.HandCount < 7 && _ultimusDrew.Add((D.Duel.m_roundNum, member.SlotIndex))
                 && UltimusDirector.ActorOf(UltimusRole(member)) is { } drawer) {
                 if (digging) {
