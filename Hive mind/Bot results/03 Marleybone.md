@@ -3965,11 +3965,11 @@ What the bots did in Marleybone, from the server log: every quest finished, ever
   - Big Ben near (-9600, 21000) while Defeat 1 creatures ("The Last Meow"): stuck 34 time(s) (Ra); one bot tried every fix there.
   - Big Ben near (-9700, 21000) while Defeat 1 creatures ("The Last Meow"): stuck 27 time(s) (Ra); one bot tried every fix there.
   - Big Ben near (-9600, 21100) while Defeat 1 creatures ("The Last Meow"): stuck 9 time(s) (Ra); one bot tried every fix there.
-  - Big Ben near (-3600, 12000) while Defeat 1 creatures ("The Last Meow"): stuck 8 time(s) (Idunn).
-  - Big Ben near (-4200, 10600) while to Regent's Square (leaving Big Ben to start it over (its creature for my step is not there)): stuck 8 time(s) (Idunn); one bot tried every fix there.
+  - Big Ben near (-3600, 12000) while Defeat 1 creatures ("The Last Meow"): stuck 9 time(s) (Idunn).
+  - Big Ben near (-3700, 12000) while Defeat 1 creatures ("The Last Meow"): stuck 9 time(s) (Idunn); one bot tried every fix there.
+  - Big Ben near (-3600, 12000) while to Regent's Square (leaving Big Ben to start it over (its creature for my step is not there)): stuck 9 time(s) (Idunn).
+  - Big Ben near (-4200, 10600) while to Regent's Square (leaving Big Ben to start it over (its creature for my step is not there)): stuck 9 time(s) (Idunn); one bot tried every fix there.
   - Big Ben near (14400, 21000) while Defeat 1 creatures ("The Last Meow"): stuck 7 time(s) (Mythis); one bot tried every fix there.
-  - Big Ben near (-3700, 12000) while Defeat 1 creatures ("The Last Meow"): stuck 7 time(s) (Idunn); one bot tried every fix there.
-  - Big Ben near (-3600, 12000) while to Regent's Square (leaving Big Ben to start it over (its creature for my step is not there)): stuck 7 time(s) (Idunn).
 
 ## Bad News...
 - Won by Ra (Solo) against Meowiarty (rank 6, 2,000 health, Myth, a boss) on 2026-11-20 at 17:45:56.
