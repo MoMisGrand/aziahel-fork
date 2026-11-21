@@ -53,7 +53,10 @@ internal sealed partial class UltimusDirectorActor {
         var partyIdle = _target?.Key is { } partyKey && partyKey.StartsWith(PARTY_KEY, StringComparison.Ordinal)
                         && (partyKey.StartsWith(PARTY_KEY + "with|", StringComparison.Ordinal) || partyKey.StartsWith(PARTY_KEY + "away|", StringComparison.Ordinal)
                             || partyKey.StartsWith(PARTY_KEY + "loading|", StringComparison.Ordinal) || partyKey.StartsWith(PARTY_KEY + "watch|", StringComparison.Ordinal)
-                            || partyKey.StartsWith(PARTY_KEY + "stay|", StringComparison.Ordinal));
+                            || partyKey.StartsWith(PARTY_KEY + "stay|", StringComparison.Ordinal)
+                            // Waiting where he is for the teammate he called for help: stepping aside or taking another way
+                            // walked Kurrent off through Ravenwood and The Commons while Mythis came after him (2026-11-21 12:41).
+                            || partyKey.StartsWith(PARTY_KEY + "helper|", StringComparison.Ordinal));
         var resting = _healWaiting || _asideWaiting || partyIdle;
         for (var i = 0; i < _team.Count; i++) {
             var member = _team[i];

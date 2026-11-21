@@ -172,6 +172,13 @@ internal sealed class UltimusMember : ReceiveActor, IWithTimers {
 
     private sealed record Retry;
 
+    // A sent attach that never got in: the server lets the connection go after its attach timeout, and nothing tells the
+    // bot. TCO7 Ra sat "waiting to be in the game" in Crimson Fields for 40 minutes after one (2026-11-21 12:12).
+    private sealed record AttachWatch(int No);
+
+    private int _attachNo;
+    private static readonly TimeSpan ATTACH_WATCH = TimeSpan.FromSeconds(90);
+
     private const string TICK = "tick";
     private const double TICK_SECONDS = BotShared.BotWalk.TICK_SECONDS;
 
@@ -255,6 +262,19 @@ internal sealed class UltimusMember : ReceiveActor, IWithTimers {
             if (_wantOnline && _session is null) {
                 Open(_transfer);
             }
+        });
+        Receive<AttachWatch>(m => {
+            if (m.No != _attachNo || _attached || !_wantOnline || _session is null) {
+                return;
+            }
+
+            // As a player whose loading screen hangs closes the game and logs in again: a fresh login, where a player's would start.
+            var zone = View.Zone;
+            UltimusLink.Abnormal($"never got into {zone} after {ATTACH_WATCH.TotalSeconds:0} seconds: the server let its connection go; it logs in again.");
+            Note($"never got into {zone}: the loading screen hung, so it logs in again");
+            Close("never got in");
+            _transfer = null;
+            Timers.StartSingleTimer("retry", new Retry(), TimeSpan.FromSeconds(5));
         });
         Receive<Opened>(OnOpened);
         Receive<Attached>(OnAttached);
@@ -723,6 +743,7 @@ internal sealed class UltimusMember : ReceiveActor, IWithTimers {
             Reattach = 0,
             Retry = 0,
         });
+        Timers.StartSingleTimer("attach-watch", new AttachWatch(++_attachNo), ATTACH_WATCH);
     }
 
     private void OnLoginComplete(GAME_5_PROTOCOL.MSG_LOGINCOMPLETE message) {
