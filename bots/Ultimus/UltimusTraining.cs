@@ -167,7 +167,7 @@ internal static class UltimusTraining {
         return trainer?.SpellInventory?.FindIndex(e => (uint) e.TemplateID == spellId) ?? -1;
     }
 
-    private static string SchoolOfSpell(uint id)
+    internal static string SchoolOfSpell(uint id)
         => CoreObjectFactory.GetCoreTemplate(id) is SpellTemplate template ? (string) template.m_sMagicSchoolName ?? "" : "";
 
 }

@@ -681,7 +681,12 @@ internal sealed partial class UltimusDirectorActor {
         }
 
         if (lessons.Count > 0) {
-            Think($"My training plan for {world}: {string.Join("; ", lessons.Take(4).Select(l => $"{l.Spell} ({s_spellWhy.GetValueOrDefault(l.Spell) ?? "my school"})"))}.",
+            // A spell of another school is only ever there as a step of his training points plan, never "my school".
+            var goal = leader.Wizard is { } w ? BotTrainingPlan.For(w, leader.CharId)?.Goal : null;
+            string Why(UltimusTraining.Lesson l) => s_spellWhy.GetValueOrDefault(l.Spell)
+                ?? (string.Equals(UltimusTraining.SchoolOfSpell(l.SpellId), UltimusSeat.Current.Role, StringComparison.OrdinalIgnoreCase) ? "my school"
+                    : goal is null ? "for my training points plan" : $"on the way to {goal}");
+            Think($"My training plan for {world}: {string.Join("; ", lessons.Take(4).Select(l => $"{l.Spell} ({Why(l)})"))}.",
                 "trainplan|" + world);
         }
     }

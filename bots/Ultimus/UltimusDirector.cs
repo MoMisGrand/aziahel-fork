@@ -1005,7 +1005,11 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
         // Side trips each have a time budget, and close for a while after one runs over it or an off-track alarm
         // (UltimusDirector.Guard.cs).
         // His planned spell just opened up (pinned in Ahziael or not): he goes now, even while side trips wait (once for it).
-        if ((SideTripsOpen || PlannedTrainingReady(group)) && SideTrip(TrainingTarget(group), "training") is { } training) {
+        // Inside a school house with a teacher of a waiting lesson: he trains there and then (a school house is a private
+        // copy, which closes side trips like a dungeon; his log, 2026-11-21 13:56 and 14:22: he walked into the Life school
+        // for Imp, side trips were closed in there, so the story walked him straight out again, twice, and the trip bounce
+        // set training aside for an hour).
+        if ((SideTripsOpen || PlannedTrainingReady(group) || InTrainerRoom(group)) && SideTrip(TrainingTarget(group), "training") is { } training) {
             MarkBeforeTrip(leader, training);
             return Source("training", training);
         }
@@ -1254,6 +1258,30 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
 
         return DateTime.UtcNow < _plannedBypassUntil;
     }
+
+    /// <summary>
+    /// He stands in a private copy that is not a dungeon (a school house) where the teacher of a lesson waiting for one of
+    /// the team stands: training there is not a trip out of anything, so it goes ahead even while side trips are closed.
+    /// </summary>
+    private bool InTrainerRoom(List<UltimusMember.Status> group) {
+        var me = group.Count > 0 ? group[0] : null;
+        if (me?.Wizard?.ZoneIsInstance != true || string.IsNullOrEmpty(me.Zone) || OverlayQuestRoute.IsDungeon(me.Zone)
+            || DateTime.UtcNow - _healingAt < TimeSpan.FromSeconds(5)) {
+            return false;
+        }
+
+        // Looked up again every 10 seconds at most (the trainers' lists are long).
+        if (_trainerRoomLook is { } look && look.Zone == me.Zone && DateTime.UtcNow < look.Until) {
+            return look.Yes;
+        }
+
+        var yes = group.Any(m => UltimusTraining.Learnable(m).Any(x => OverlayQuestTracker.SameZone(x.Zone, me.Zone)));
+        _trainerRoomLook = (me.Zone, yes, DateTime.UtcNow.AddSeconds(10));
+
+        return yes;
+    }
+
+    private (string Zone, bool Yes, DateTime Until)? _trainerRoomLook;
 
     private UltimusPlanner.Target TrainingTarget(List<UltimusMember.Status> group) {
         SayTrainingPlan(group[0]);
