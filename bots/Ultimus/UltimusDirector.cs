@@ -1205,6 +1205,9 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
         });
     }
 
+    // The training trip goes to another world (Krokotopia's Balance school from Dragonspyre): it gets twice the side-trip time.
+    private bool _trainingFar;
+
     private uint _plannedReadyId;
     private DateTime _plannedCheckAt = DateTime.MinValue;
     private DateTime _plannedBypassUntil = DateTime.MinValue;
@@ -1283,8 +1286,14 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
             return null;
         }
 
-        if (here.Lesson is null && !OverlayQuestTracker.SameZone(UltimusTraining.TRAINER_ZONE, leader.Zone)) {
-            return UltimusPlanner.Travel(leader, UltimusTraining.TRAINER_ZONE, "training");
+        // No trainer here: to the area of the lessons waiting (a school house, Krokotopia's Balance school), not always
+        // Ravenwood's square, where most teachers don't stand.
+        if (here.Lesson is null) {
+            var tripZone = UltimusTraining.TripZone(lessons.SelectMany(l => l.Lessons).Select(x => x.Zone), leader.Zone);
+            _trainingFar = !string.Equals(tripZone.Split('/')[0], (leader.Zone ?? "").Split('/')[0], StringComparison.OrdinalIgnoreCase);
+            if (!OverlayQuestTracker.SameZone(tripZone, leader.Zone)) {
+                return UltimusPlanner.Travel(leader, tripZone, "training");
+            }
         }
 
         // The first lesson in the team's order here; its trainer's spot.

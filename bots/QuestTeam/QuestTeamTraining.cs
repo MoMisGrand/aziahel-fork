@@ -90,6 +90,10 @@ internal static class QuestTeamTraining {
             zones.Add(TRAINER_ZONE);
         }
 
+        // Every other area a trainer stands in that it can reach: most school teachers stand inside their school houses,
+        // not in Ravenwood's square (Ultimus.UltimusTraining.TrainerZones).
+        zones.AddRange(Ultimus.UltimusTraining.TrainerZones(member.Zone).Where(z => !zones.Contains(z, StringComparer.OrdinalIgnoreCase)));
+
         try {
             foreach (var zone in zones) {
                 Add(zone);

@@ -1,0 +1,4 @@
+Fixed: Ultimus now finds real gear upgrades at the Bazaar and shops
+The Bazaar and shop checks rated each piece on its own, while the choice of what he wears rates his whole outfit against his needs. Because the two disagreed, he found no "clear upgrade" for two days at level 37, with 2% resist (he wants 19%) and 49,000 spare gold, and the pieces he did buy earlier went back into his backpack. Now the Bazaar and shops use the same whole-outfit measure, so he buys what fills his gaps (resist, accuracy, health first, then damage) and keeps it on. He also skips pieces already in his backpack, and after losing a fight twice he looks at the Bazaar right away.
+Where: Ultimus and every bot built on him, on Bazaar and gear shop trips.
+Test: Watch Ultimus's log for "The Bazaar has ... a clear upgrade for my whole outfit" and check that his resist goes up in Ahziael.
