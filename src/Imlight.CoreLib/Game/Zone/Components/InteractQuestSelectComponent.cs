@@ -69,6 +69,9 @@ internal sealed class InteractQuestSelectComponent(ZoneEntity entity)
 
     private readonly Dictionary<string, List<GoalTemplate>> _usageGoalsByQuest = [];
 
+    // The wizards who picked this collection object up (a gemstone, a cog): it is gone for them and stays for everyone else.
+    private readonly HashSet<ulong> _collectedBy = [];
+
     public static bool ShouldAttachToEntity(CoreTemplate template)
         => template is GameObjectTemplate gameObjectTemplate
         && (HasBehavior(template, "WizardSelectBehavior") || IsNamedByAnyUsageGoal(gameObjectTemplate));
@@ -93,7 +96,7 @@ internal sealed class InteractQuestSelectComponent(ZoneEntity entity)
         // used (the staff stands in the Throne Room of Fire's map platform) stays usable for a wizard whose own step
         // still needs it: its state is shared by the whole instance, so the step that came later, or a teammate's,
         // could never be done (Niduus, 2026-11-04).
-        if (HasActiveMatchingUsageGoal(playerCharacter)) {
+        if (!_collectedBy.Contains(playerCharacter.CharId) && HasActiveMatchingUsageGoal(playerCharacter)) {
             yield return new InteractableOption { m_serviceName = ServiceName };
         }
     }
@@ -122,7 +125,7 @@ internal sealed class InteractQuestSelectComponent(ZoneEntity entity)
         // One use completes every active usage goal that matches this object, across all of the
         // player's quests, each through the normal goal-completion path.
         var activeGoals = FindActiveMatchingGoals(playerCharacter);
-        if (activeGoals.Count == 0) {
+        if (activeGoals.Count == 0 || (playerCharacter is not null && _collectedBy.Contains(playerCharacter.CharId))) {
             return;
         }
 
@@ -156,16 +159,24 @@ internal sealed class InteractQuestSelectComponent(ZoneEntity entity)
         var goalMax = activeGoals.Max(g => g.Goal.m_tallyCounter?.m_count ?? 1);
 
         // Collection goals (tally count > 1, e.g. the Triton cogs) consume the object:
-        // each use removes that instance from the world. Single-use objects (levers,
+        // each use takes that instance away. Single-use objects (levers,
         // fairy cages) persist and manage their own post-use state via the goal's
         // completeResults (dyna-mods).
+        // Only for the wizard who picked it up, as in the live game: every other wizard on the quest still finds it there.
+        // Taken from the whole area, a gemstone in Krokotopia's Hall of Champions ("Get Some Bling") came back only when
+        // the area emptied, which a busy area never does: with fifteen wizards there, no gem was left for 45 minutes and
+        // nobody could finish the step (Niduus's log, 2026-11-20 20:45-21:30).
         if (goalMax > 1 && !InteractObjectStateComponent.KeepsStateAfterGoalUse(Entity.Template as GameObjectTemplate)) {
             var leaveServiceRangeMsg = new GAME_5_PROTOCOL.MSG_LEAVESERVICERANGE {
                 MobileID = Entity.ActiveGameObject.m_globalID.Full
             };
             playerActor.Tell(leaveServiceRangeMsg);
 
-            Entity.DeleteObject();
+            if (playerCharacter is not null) {
+                _collectedBy.Add(playerCharacter.CharId);
+            }
+
+            Entity.DeleteObjectFor(playerActor);
         }
         else {
             ShowUsedLook(playerActor, activeGoals);

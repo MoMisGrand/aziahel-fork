@@ -48,6 +48,7 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 
 ## Krokotopia, Hall of Champions
 - Get Some Bling: the gemstones are spread over many spots in the hall, and not every spot has one at a time. A bot that finds nothing to click at a gem spot for 20 seconds goes on to the next spot instead of waiting there.
+- Get Some Bling gems: a gem picked up was deleted for the whole area and only came back when the area emptied; with 15 bots in the Hall no gem was left from 20:45 to 21:30 (2026-11-20) and every bot flagged the step broken. Fixed 2026-11-21: collected items now disappear only for the wizard who picked them up (every collect step, every world).
 
 ## Krokotopia, Emperor's Retreat
 - The pad to the second tower that the area's files give sits inside a wall. The bots use the real pad, which is a different one nearby, and prefer a way out they can actually reach.

@@ -156,6 +156,37 @@ public class ZoneEntity(
     }
 
     /// <summary>
+    /// Takes this entity away for one player only (a collection object they picked up): their game deletes it, while the
+    /// entity stays in the zone for everyone else.
+    /// </summary>
+    /// <param name="player">The player's actor.</param>
+    /// <param name="effectName">The name of the despawn effect to play.</param>
+    public void DeleteObjectFor(IActorRef player, string effectName = "") {
+        if (player is null) {
+            return;
+        }
+
+        var despawnEffects = new DespawnInfo {
+            m_killer = (GID) 0UL,
+            m_despawnEffect = StringHash.Compute(effectName),
+        };
+
+        var serializer = new ObjectSerializer(
+            Behaviors: SerializerFlags.None
+        );
+        if (!serializer.Serialize(despawnEffects, 1, out var serializedData)) {
+            Logger.Error("Failed to serialize despawn");
+
+            return;
+        }
+
+        player.Tell(new GAME_5_PROTOCOL.MSG_DELETEOBJECT {
+            GameObjectID = ActiveGameObject.m_globalID,
+            Data = serializedData,
+        });
+    }
+
+    /// <summary>
     /// Despawns this entity from the zone, without destroying it.
     /// </summary>
     public void DespawnObject() {
