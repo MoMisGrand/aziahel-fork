@@ -157,6 +157,33 @@ internal sealed partial class UltimusDirectorActor {
         return side;
     }
 
+    /// <summary>
+    /// Whether two areas are rooms of the same gauntlet (".../DS_Plaza_Gauntlet_7Room" and
+    /// ".../DS_Plaza_Gauntlet_7Room_Sub/DS_Plaza_Gauntlet_7Room_7"). Kept here rather than calling the server's own helper
+    /// (OverlayQuestRoute.SameGauntlet), because a live-patched server can't show the bots a helper it gained in the patch
+    /// (bots-v106 did not build on v0.10.951, 2026-11-21).
+    /// </summary>
+    private static bool SameGauntletRooms(string zone, string goal) {
+        var a = GauntletRoot(zone);
+        return a.Length > 0 && string.Equals(a, GauntletRoot(goal), StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string GauntletRoot(string zone) {
+        if (string.IsNullOrWhiteSpace(zone) || OverlayQuestRoute.EventArea(zone)) {
+            return "";
+        }
+
+        var parts = zone.Trim().Split('/');
+        for (var i = 0; i < parts.Length; i++) {
+            if (parts[i].Contains("Gauntlet", StringComparison.OrdinalIgnoreCase)) {
+                var name = parts[i].EndsWith("_Sub", StringComparison.OrdinalIgnoreCase) ? parts[i][..^4] : parts[i];
+                return string.Join('/', parts[..i].Append(name));
+            }
+        }
+
+        return "";
+    }
+
     private bool SideDungeonNow(string zone, Imlight.CoreLib.WizardData.Models.Player.Wizard wizard) {
         // A dungeon quest started in a room his story sent him to goes on in the dungeon's other rooms (Ironworks and
         // Nail's Hideout, 2026-11-15).
@@ -187,7 +214,7 @@ internal sealed partial class UltimusDirectorActor {
             var template = QuestTemplateCollection.GetQuestByName(name);
             if ((template?.m_goals ?? []).Where(g => g is not null).Any(g => OverlayQuestTracker.StepZone(g) is { Length: > 0 } stepZone
                     && (OverlayQuestTracker.SameZone(stepZone, zone) || OverlayQuestTracker.SameZone(zone, stepZone)
-                        || OverlayQuestRoute.SameGauntlet(zone, stepZone)))) {
+                        || SameGauntletRooms(zone, stepZone)))) {
                 // A gauntlet's rooms are one dungeon: room 2 of Halina Warhawk's Tower is on the way to the book in room 7
                 // ("The Art of War", 2026-11-21), not a side trip.
                 return false;
@@ -196,7 +223,7 @@ internal sealed partial class UltimusDirectorActor {
             // Where the step really is; when that can't be told, he stays (no leaving on a guess).
             var step = UltimusPlanner.ForQuest(_team, name);
             if (step is null || step.Problem.Length > 0 || string.IsNullOrEmpty(step.To) || OverlayQuestTracker.SameZone(step.To, zone)
-                || OverlayQuestRoute.SameGauntlet(zone, step.To)) {
+                || SameGauntletRooms(zone, step.To)) {
                 return false;
             }
         }
