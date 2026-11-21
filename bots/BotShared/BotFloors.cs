@@ -957,7 +957,8 @@ internal static class BotFloors {
         // Emperor's Retreat's Snake obelisk stands 3,400 from the locked Keymaster's door and 20,000 from them; from one spot
         // the straight line missed the door by more than 500 and floor duty sent them there, from a step beside it not, and
         // they flipped between it and Shalek the Wise every second for two hours.
-        bool PastLocked(float tx, float ty) => book.Gates.Any(g => Locked(g) && Closed(g) && Far(x, y, g.X, g.Y) < Far(x, y, tx, ty)
+        bool PastLocked(float tx, float ty, Gate puzzle = null) => book.Gates.Any(g => Locked(g) && Closed(g) && !SamePieces(g, puzzle)
+                                                                  && Far(x, y, g.X, g.Y) < Far(x, y, tx, ty)
                                                                   && (ToSegment(g.X, g.Y, x, y, tx, ty) <= LOCKED_DOOR
                                                                       || Far(g.X, g.Y, tx, ty) <= Far(x, y, tx, ty) * LOCKED_NEAR_SHARE));
 
@@ -1082,7 +1083,7 @@ internal static class BotFloors {
         // for "Get Smart"), until its pieces are all right.
         var stepPuzzles = (live?.StepEvents ?? []).Select(e => book.EventPuzzles.GetValueOrDefault(e)).Where(g => g is not null
                 && g.Needs.Any(n => !string.Equals(StateOf(n.Object), n.State, StringComparison.OrdinalIgnoreCase))
-                && !PastLocked(g.LX, g.LY) && !g.PieceSpots.Values.Any(p => PastLocked(p.X, p.Y)));
+                && !PastLocked(g.LX, g.LY, g) && !g.PieceSpots.Values.Any(p => PastLocked(p.X, p.Y, g)));
         // A far puzzle is his only when its lock stands toward his step. The Calling of 7, 2026-11-19 23:44-00:03: Cyndr, Idunn
         // and Kurrent, on "Weird Science" (Firegut and Clanker, in the lab's first wing), were sent every other second to
         // Katzenstein's Lab's Sun plaque by Gate02, 26,000 away on the far side, and stood still flipping between the two.
@@ -1090,7 +1091,7 @@ internal static class BotFloors {
                                    || Far(g.X, g.Y, s.X, s.Y) < Far(x, y, s.X, s.Y);
         foreach (var gate in book.Gates.Where(g => g.Pieces && Closed(g) && !(g.ChainTriggers.Count > 0 ? g.ChainTriggers.All(Off) : Off(g.Trigger)) && Here(g.LZ) && !Locked(g)
                                                    && TowardStep(g)
-                                                   && !PastLocked(g.LX, g.LY) && !g.PieceSpots.Values.Any(p => PastLocked(p.X, p.Y)))
+                                                   && !PastLocked(g.LX, g.LY, g) && !g.PieceSpots.Values.Any(p => PastLocked(p.X, p.Y, g)))
                      .OrderBy(g => Far(x, y, g.LX, g.LY)).Concat(stepPuzzles)) {
             var wing = book.Circles.Where(c => Far(c.X, c.Y, gate.LX, gate.LY) <= ROOM).OrderBy(c => Far(c.X, c.Y, gate.LX, gate.LY)).FirstOrDefault();
             if (wing is not null && (live?.FiresOf?.Invoke(wing.Trigger) ?? 0) == 0 && Tried("circle|" + wing.Trigger) < 1 && !Off(wing.Trigger)) {
@@ -1173,5 +1174,17 @@ internal static class BotFloors {
         // On the door's side of its teleporter, not already past it (the next room's landing is near the same door).
         bool Before(Gate g) => ((x - g.TX) * (g.TX - g.X)) + ((y - g.TY) * (g.TY - g.Y)) < 0;
     }
+
+    /// <summary>
+    /// Whether a locked gate is opened by the same puzzle pieces as the puzzle being worked: such a gate can never bar the way
+    /// to those pieces, as they are set from its near side. Katzenstein's Lab (2026-11-21, after bots-v107): Gate02 and Gate02 (2)
+    /// stand 145 apart and open from the same four plaques (the second time round, after Clanker); Gate02 (2), still locked by
+    /// "Gate is Enough", counted as a locked door in front of the plaques whenever a Kitharas stood east of x 2030, so the plaque
+    /// for Gate02 was dropped, and two steps west it came back: AlchemiZist, Consumer, Jackle and Lumeria turned between the
+    /// plaque and "Defeat Clanker" every second for hours.
+    /// </summary>
+    internal static bool SamePieces(Gate gate, Gate puzzle) =>
+        gate is not null && puzzle is not null && !ReferenceEquals(gate, puzzle) && gate.Pieces && puzzle.Pieces
+        && gate.PieceSpots.Keys.Any(k => puzzle.PieceSpots.ContainsKey(k));
 
 }
