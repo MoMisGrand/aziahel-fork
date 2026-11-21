@@ -954,6 +954,14 @@ internal static class BotFloors {
         }
 
         try {
+            // A dungeon copy runs its quests afresh: when this copy handed the quest out again, the wizard holds it, and the
+            // zone judges it by this copy (not done yet), whatever an earlier run left in the registry. AlchemiZist pulled the
+            // Katzenstein's Lab plaques in order for a whole run while "If You Build It..." was open again in his copy, so
+            // Gate02 never opened (2026-11-21 14:21-14:46).
+            if (wizard.HasQuest(name)) {
+                return false;
+            }
+
             return wizard.HasCompletedQuest(name) || wizard.HasQuestRegistryValue(name, "Complete");
         }
         catch (Exception) {
