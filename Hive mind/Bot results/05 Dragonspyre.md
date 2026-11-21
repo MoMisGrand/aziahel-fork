@@ -8,6 +8,7 @@ What the bots did in Dragonspyre, from the server log: every quest finished, eve
 - Wandering Wizard: won 2 time(s) (2 Solo, 0 Team), lost 0. Fastest: Ultimus in 2 rounds, deck for Life enemies, hitting with Life, Fire, Storm (most of my fights lately had 2+ enemies).
 - Burning Hate: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 10 rounds, deck for any fight (many of my fights lately had 2+ enemies), hits with Gearhead Destroyer, Locust Swarm.
 - Irate Banshee: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 12 rounds, plan "hit now", deck for Fire enemies, hitting with Fire, Death, Myth (most of my fights lately had 2+ enemies), hits with Minor Crusade, Scarab, Gearhead Destroyer, Fairy.
+- Silver Servant: never beaten yet, lost 1 time(s). Most common reason: I went in at 63% health, the fight ran 5 minutes, so I ran out of good cards.
 - Loathsome Creeper: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 10 rounds, plan "hit now", deck for Death enemies, hitting with Death, Fire, Myth (many of my fights lately had 2+ enemies), hits with Minor Crusade, Gearhead Destroyer, Scarab, Helping Hands.
 - Sysiphan: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 23 rounds, deck for a boss (Ice), hitting with Ice, Fire, Death (many of my fights lately had 2+ enemies), hits with Helping Hands, Scarab, Elemental Shield, Fairy.
 
@@ -277,11 +278,6 @@ What the bots did in Dragonspyre, from the server log: every quest finished, eve
   - The Tower Archives near (12300, -7200) while a short break before trying "Go to Dragonspyre,The Tower Archives" again: stuck 6 time(s) (Ultimus); one bot tried every fix there.
   - The Tower Archives near (13000, -11500) while a short break before trying "Go to Dragonspyre,The Tower Archives" again: stuck 6 time(s) (Ultimus); one bot tried every fix there.
 
-## The Towering Crystal
-- Finished by Ultimus (16 min).
-- Avoid, places bots got stuck:
-  - The Tower Archives near (12300, -7200) while Use Yellow Crystal here ("The Towering Crystal"): stuck 1 time(s) (Ultimus).
-
 ## The Art of War
 - Won by Ultimus (Solo) against Burning Hate (rank 6, 670 health, Fire) on 2026-11-21 at 07:45:48.
   It took 10 rounds, about 6 minutes.
@@ -292,15 +288,22 @@ What the bots did in Dragonspyre, from the server log: every quest finished, eve
   Deck made for Fire enemies, hitting with Fire, Death, Myth (most of my fights lately had 2+ enemies).
   Plan: "hit now" (mine and every other bot's).
   Spells that landed the hits: Minor Crusade x3, Scarab x2, Gearhead Destroyer x2, Fairy, Locust Swarm, Spirit Armor.
+- Avoid, fights lost:
+  - Silver Servant: lost 1 time(s) (Ultimus). Why: I went in at 63% health, the fight ran 5 minutes, so I ran out of good cards. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
 - Avoid, places bots got stuck:
   - The Basilica near (0, 0) while stuck: Go to Dragonspyre,Plaza of Conquests: no way from The Basilica to Plaza of Conquests could be found: stuck 10 time(s) (Ultimus); one bot tried every fix there.
-  - Plaza of Conquests near (-2100, -200) while to Plaza of Conquests (leaving Plaza of Conquests: a side dungeon, my story is in Plaza of Conquests): stuck 4 time(s) (Ultimus); one bot tried every fix there.
-  - Plaza of Conquests near (-2100, -200) while a short break before trying "to Plaza of Conquests (leaving Plaza of Conquests: a side du..." again: stuck 3 time(s) (Ultimus).
+  - Plaza of Conquests near (-2100, -200) while to Plaza of Conquests (leaving Plaza of Conquests: a side dungeon, my story is in Plaza of Conquests): stuck 5 time(s) (Ultimus); one bot tried every fix there.
+  - Plaza of Conquests near (-2100, -200) while a short break before trying "to Plaza of Conquests (leaving Plaza of Conquests: a side du..." again: stuck 4 time(s) (Ultimus).
   - The Basilica near (-100, -300) while stuck: Go to Dragonspyre,Plaza of Conquests: no way from The Basilica to Plaza of Conquests could be found: stuck 2 time(s) (Ultimus).
   - The Basilica near (0, 0) while a short break before trying "Go to Dragonspyre,Plaza of Conquests" again: stuck 2 time(s) (Ultimus).
   - Plaza of Conquests near (-100, 1300) while to Plaza of Conquests (leaving Plaza of Conquests: a side dungeon, my story is in Plaza of Conquests): stuck 2 time(s) (Ultimus).
   - The Basilica near (200, -500) while stuck: Go to Dragonspyre,Plaza of Conquests: no way from The Basilica to Plaza of Conquests could be found: stuck 1 time(s) (Ultimus).
   - The Basilica near (-1000, -100) while stuck: Go to Dragonspyre,Plaza of Conquests: no way from The Basilica to Plaza of Conquests could be found: stuck 1 time(s) (Ultimus).
+
+## The Towering Crystal
+- Finished by Ultimus (16 min).
+- Avoid, places bots got stuck:
+  - The Tower Archives near (12300, -7200) while Use Yellow Crystal here ("The Towering Crystal"): stuck 1 time(s) (Ultimus).
 
 ## Bad Blood
 - Finished by Ultimus (12 min).
