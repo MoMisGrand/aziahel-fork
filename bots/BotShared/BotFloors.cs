@@ -167,6 +167,11 @@ internal static class BotFloors {
         return claim.Owner == owner;
     }
 
+    /// <summary>What a puzzle's claim is kept under: its pieces (two gates opened by the same pieces are one puzzle), else its gate.</summary>
+    internal static string PuzzleKey(Gate gate) => gate?.PieceSpots is { Count: > 0 } spots
+        ? string.Join("+", spots.Keys.Select(k => k.ToLowerInvariant()).OrderBy(k => k, StringComparer.Ordinal))
+        : gate?.Object ?? "";
+
     /// <summary>A spot near (x, y) out of the reach of every piece of an in-order puzzle (stepping on one turns it), or null when (x, y) already is.</summary>
     internal static (float X, float Y)? OffPieces(Gate gate, float x, float y) {
         const float CLEAR = 260f;
@@ -1161,7 +1166,9 @@ internal static class BotFloors {
             // let one of them step the plates. Any puzzle of pieces, not only an in-order one: a piece turns each time it is
             // stepped on or pulled, so two wizards on it turn it back (Temple of Storms' moons, 2026-11-21 14:03-14:06:
             // Kitharas Libra, Hydra and Crimes stood 4 minutes on "Part2Moon2" in one copy).
-            if (live?.ChainMine?.Invoke(gate.Object) is { Mine: false } other) {
+            // Claimed by its pieces, not its gate: Gate02 and Gate02 (2) open from the same four plaques, and Kitharas Consumer
+            // set them for "Gate02 (2)" while Rock and Andromeda set them for "Gate02" (2026-11-21 14:22).
+            if (live?.ChainMine?.Invoke(PuzzleKey(gate)) is { Mine: false } other) {
                 var (wx, wy) = OffPieces(gate, x, y) ?? (x, y);
                 return new Duty(WAIT, wx, wy, $"out of the way while {other.Holder} sets the puzzle that opens \"{gate.Object}\"", "wait|" + gate.Object,
                     gate.InOrder
