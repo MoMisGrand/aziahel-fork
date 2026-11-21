@@ -2,6 +2,9 @@
 
 Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus, the seven TCO7 wizards and the Quest Team all share one brain for this, so a correction learned by one of them is known by all of them at once. A new correction is added here the same day it goes out in a bots update.
 
+## Wizard City, The Commons potion shop (every bot's potion trip)
+- The shop's "Fill All" is refused unless the gold covers every missing potion. Kurrent (4 missing, 390 each, 1115 gold) asked for Fill All every 12 seconds at the counter from 21:53 to 21:58 and was flagged stuck 37 times; Tulkar the same at 02:15. Fix (bots): with too little gold for all, buy single potions, as many as the gold pays for. Bot fault, not quest. (2026-11-20 10:00 PM Bot Update)
+
 ## Krokotopia, The Vault of Ice
 - Breaking the Vault / Find the Fang: the Frost door (DynaTrigger_KT_Door_Frost) opens when the MoonLock braziers read Fire, Ice, Storm. Brazier3 needs two pulls (Fire to Ice, then Ice to Storm), and after the first pull it offers nothing until the wizard walks out of reach and back in. Kitharas Lamia got it at 20:48 by walking off and back; AlchemiZist stood on it at 21:34, gave up, and sat at the shut Frost door for 10 minutes. Fix (bots): after pulling a piece that still needs another pull, step about 360 away and come back. Bot fault, not quest. (2026-11-20 9:45 PM Bot Update)
 

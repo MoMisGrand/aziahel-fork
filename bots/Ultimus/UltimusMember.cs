@@ -66,7 +66,8 @@ internal sealed class UltimusMember : ReceiveActor, IWithTimers {
     internal sealed record UsePotion;
     /// <summary>Cast a cantrip from the Cantrips tab, as a player clicks it (a healing radiance between fights).</summary>
     internal sealed record CastCantrip(uint SpellTemplateId);
-    internal sealed record BuyPotions;
+    // Fill all (One = 0), or this many single potions when the gold only covers some (the shop's "Fill One").
+    internal sealed record BuyPotions(int One = 0);
 
     /// <summary>Say a Menu Chat phrase by its chat ID, as a player picks it from the menu.</summary>
     internal sealed record SayMenuChat(uint PhraseId);
@@ -338,7 +339,16 @@ internal sealed class UltimusMember : ReceiveActor, IWithTimers {
         Receive<UsePotion>(_ => Send(new WIZARD_12_PROTOCOL.MSG_USEPOTION()));
         Receive<CastCantrip>(m => Send(new CANTRIPSMESSAGES_57_PROTOCOL.MSG_CANTRIPSSPELLCAST { SpellTemplateID = m.SpellTemplateId }));
         // "Fill All" at a potion shop, as a player presses it in the shop's window.
-        Receive<BuyPotions>(_ => Send(new WIZARD_12_PROTOCOL.MSG_POTIONBUYREQUEST { AmountEnum = 1 }));
+        Receive<BuyPotions>(m => {
+            if (m.One <= 0) {
+                Send(new WIZARD_12_PROTOCOL.MSG_POTIONBUYREQUEST { AmountEnum = 1 });
+                return;
+            }
+
+            for (var i = 0; i < m.One; i++) {
+                Send(new WIZARD_12_PROTOCOL.MSG_POTIONBUYREQUEST { AmountEnum = 0 });
+            }
+        });
         Receive<WorldTeleport>(m => Send(new WIZARD_12_PROTOCOL.MSG_WORLDTELEPORTREQUEST { TeleportID = m.DoorGlobalId, World = m.World }));
         Receive<CloseDialog>(m => FinishDialog(m.Number));
         Receive<Invite>(m => Send(new GAME_5_PROTOCOL.MSG_PARTYREQUESTINVITE {
