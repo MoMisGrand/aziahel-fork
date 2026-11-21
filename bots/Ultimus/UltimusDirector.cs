@@ -1588,7 +1588,13 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
                     return;
                 }
 
-                if (DateTime.UtcNow - _targetSince > TimeSpan.FromSeconds(45)) {
+                // A step with several spots goes on to the next one first (the empty-spot check above, 20 seconds at the spot):
+                // Mythis flagged "You're Fired!" broken at a burnt Scout Tower, moved on 20 seconds later and finished it in 2
+                // minutes (2026-11-21 3:38 AM). Only a spot with nowhere else to go is written up.
+                var otherSpots = !target.Key.EndsWith("|order", StringComparison.Ordinal)
+                                 && QuestStepSpots.UsageObjects(member.Zone ?? "", target.Quest, target.Goal) is { Count: > 1 }
+                                 && !BotCollect.HasDone(member.CharId, target.Quest, target.Goal, target.X, target.Y);
+                if (!otherSpots && DateTime.UtcNow - _targetSince > TimeSpan.FromSeconds(45)) {
                     NoteUseDud(index, member, target);
                     Issue("quest", target.Quest, $"{target.What}: at the quest arrow's spot there is nothing {member.Name} can use.",
                         key: target.Key + "|nothingtouse");
@@ -2322,6 +2328,13 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
         var signature = string.Join(';', parts);
         if (signature != _signature) {
             _signature = signature;
+            _lastProgress = DateTime.UtcNow;
+        }
+
+        // Resting on purpose from a step set aside (at most 5 minutes, UltimusDirector.Aside.cs) is not being stuck: the
+        // no-progress timer pressed the Commons button on him mid-rest in the far north-east of the Tower Archives
+        // (2026-11-21 3:40 AM) and the walk back put him at the area's start, far from the Tower 11 platform again.
+        if (_asideWaiting) {
             _lastProgress = DateTime.UtcNow;
         }
 
