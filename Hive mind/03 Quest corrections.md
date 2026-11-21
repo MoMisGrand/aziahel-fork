@@ -2,8 +2,12 @@
 
 Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus, the seven TCO7 wizards and the Quest Team all share one brain for this, so a correction learned by one of them is known by all of them at once. A new correction is added here the same day it goes out in a bots update.
 
+## Dragonspyre, The Basilica
+- Portal Combat: Ultimus sat resting at the Basilica's arch to The Atheneum for hours (the arch offered no way through). After the arch fix reached the server at 22:08 (2026-11-20) he walked straight through at 22:09 and took the teleporter at (9177, -7685) toward the Tower Archives. Success. (2026-11-20 10:15 PM Bot Update)
+
 ## Wizard City, The Commons potion shop (every bot's potion trip)
 - The shop's "Fill All" is refused unless the gold covers every missing potion. Kurrent (4 missing, 390 each, 1115 gold) asked for Fill All every 12 seconds at the counter from 21:53 to 21:58 and was flagged stuck 37 times; Tulkar the same at 02:15. Fix (bots): with too little gold for all, buy single potions, as many as the gold pays for. Bot fault, not quest. (2026-11-20 10:00 PM Bot Update)
+- Still stuck at 22:16 (flagged 41 times) because the fix only reaches the server with the 10:15 PM bots update; watch that it clears. (2026-11-20 10:15 PM Bot Update)
 
 ## Krokotopia, The Vault of Ice
 - Breaking the Vault / Find the Fang: the Frost door (DynaTrigger_KT_Door_Frost) opens when the MoonLock braziers read Fire, Ice, Storm. Brazier3 needs two pulls (Fire to Ice, then Ice to Storm), and after the first pull it offers nothing until the wizard walks out of reach and back in. Kitharas Lamia got it at 20:48 by walking off and back; AlchemiZist stood on it at 21:34, gave up, and sat at the shut Frost door for 10 minutes. Fix (bots): after pulling a piece that still needs another pull, step about 360 away and come back. Bot fault, not quest. (2026-11-20 9:45 PM Bot Update)
@@ -61,6 +65,7 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 ## Krokotopia, Hall of Champions
 - Get Some Bling: the gemstones are spread over many spots in the hall, and not every spot has one at a time. A bot that finds nothing to click at a gem spot for 20 seconds goes on to the next spot instead of waiting there.
 - Get Some Bling gems: a gem picked up was deleted for the whole area and only came back when the area emptied; with 15 bots in the Hall no gem was left from 20:45 to 21:30 (2026-11-20) and every bot flagged the step broken. Fixed 2026-11-21: collected items now disappear only for the wizard who picked them up (every collect step, every world).
+- Get Some Bling worked after that fix: from 22:10 to 22:15 (2026-11-20) 16 of the Kitharas finished it in 86 seconds to 6 minutes each, after 17 of them had sat there for up to 7 hours. Some still flag "nothing at the quest arrow's spot" for a moment, then find a gem at the next spot. Success, nothing more to change. (2026-11-20 10:15 PM Bot Update)
 
 ## Krokotopia, Emperor's Retreat
 - The pad to the second tower that the area's files give sits inside a wall. The bots use the real pad, which is a different one nearby, and prefer a way out they can actually reach.

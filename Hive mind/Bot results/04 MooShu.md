@@ -5,7 +5,7 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 ## Best way to beat each creature
 - Ronin Keyholder: won 3 time(s) (3 Solo, 0 Team), lost 22. Fastest: Ra in 7 rounds, plan "hit now", deck for a boss (Ice), hitting with Ice, Fire, Life; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Minor Crusade, Gearhead Destroyer, Scarab.
 - Otomo Courier: won 3 time(s) (3 Solo, 0 Team), lost 21. Fastest: Ultimus in 5 rounds, deck for a boss (Ice), hitting with Ice, Fire; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Sandstorm, Balance, Fairy.
-- Sanzoku Outlaw: won 6 time(s) (6 Solo, 0 Team), lost 1. Fastest: Cyndr in 4 rounds, plan "hit now", deck for Balance enemies, hitting with Balance, Ice, Death; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Sunbird, Immolate.
+- Sanzoku Outlaw: won 8 time(s) (8 Solo, 0 Team), lost 1. Fastest: Cyndr in 3 rounds, plan "hit now", deck for Balance enemies, hitting with Balance, Ice, Death; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Sunbird, Immolate.
 - Sanzoku Bandit: won 6 time(s) (6 Solo, 0 Team), lost 0. Fastest: Ra in 6 rounds, plan "hit now", deck for Myth enemies, hitting with Myth, Storm, Fire (most of my fights lately had 2+ enemies), hits with Minor Crusade, Scarab, Sandstorm, Helping Hands.
 - Otomo Supply Runner: won 6 time(s) (6 Solo, 0 Team), lost 0. Fastest: Ultimus in 4 rounds, deck for Fire enemies, hitting with Fire, Death, Myth (most of my fights lately had 2+ enemies), hits with Gearhead Destroyer, Locust Swarm.
 - Tortured Kakeda Soul: won 5 time(s) (5 Solo, 0 Team), lost 0. Fastest: Ultimus in 5 rounds, deck for Death enemies, hitting with Death, Fire, Myth (most of my fights lately had 2+ enemies), hits with Sandstorm, Minor Crusade, Gearhead Destroyer.
@@ -243,6 +243,7 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 ## Sneak Attack
 - Finished by Ra (4 min).
 - Finished by Garm (8 min).
+- Finished by Cyndr (63 s).
 - Won by Ra (Solo) against Sanzoku Bandit (rank 5, 575 health, Myth) on 2026-11-20 at 18:09:04.
   It took 7 rounds, about 4 minutes.
   Deck made for Myth enemies, hitting with Myth, Storm, Fire (most of my fights lately had 2+ enemies).
@@ -300,12 +301,23 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
   Deck made for Balance enemies, hitting with Balance, Ice, Death; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies).
   Plan: "hit now" (mine and every other bot's).
   Spells that landed the hits: Minor Fire Scorch x2, Immolate x2, Storm Hound, Elemental Shield, Pixie.
+- Won by Cyndr (Solo) against Sanzoku Outlaw (rank 5, 575 health, Balance) on 2026-11-20 at 22:04:57.
+  It took 5 rounds, about 5 minutes.
+  Deck made for Balance enemies, hitting with Balance, Ice, Death; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies).
+  Plan: "hit now" (mine and every other bot's).
+  Spells that landed the hits: Scald x3, Fire Cat, Minor Fire Scorch.
+- Won by Cyndr (Solo) against Sanzoku Outlaw (rank 5, 575 health, Balance) on 2026-11-20 at 22:07:40.
+  It took 3 rounds, about 2 minutes.
+  Deck made for Balance enemies, hitting with Balance, Ice, Death; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies).
+  Plan: "hit now" (mine and every other bot's).
+  Spells that landed the hits: Sunbird, Immolate.
 - Avoid, fights lost:
   - Sanzoku Outlaw: lost 1 time(s) (Ra). Why: it simply hit harder than I could heal. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
 
 ## No Quarter
 - Finished by Ultimus (11 min).
 - Finished by Ra (15 min).
+- Finished by Garm (2 min).
 - Won by Ultimus (Solo) against Otomo Quartermaster (rank 6, 1,000 health, Fire, a boss) on 2026-11-19 at 11:39:23.
   It took 16 rounds, about 9 minutes.
   Deck made for a boss (Fire), hitting with Fire, Myth, Death (most of my fights lately had 2+ enemies).
@@ -471,10 +483,12 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 ## A Fighting Chance
 - Finished by Ultimus (17 s).
 - Finished by Ra (17 s).
+- Finished by Garm (17 s).
 
 ## You're Fired!
 - Finished by Ultimus (2 min).
 - Finished by Ra (2 min).
+- Finished by Garm (2 min).
 
 ## A Tale of Two Brothers
 - Finished by Ultimus (18 s).
