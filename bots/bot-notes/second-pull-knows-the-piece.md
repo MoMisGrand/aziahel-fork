@@ -1,0 +1,4 @@
+Fixed: Bots step back for a puzzle piece's second pull every time
+The third brazier by the Frost door in The Vault of Ice needs two pulls in a row, and after the first pull it offers nothing until a wizard walks out of reach and back. Bots were taught to step back for it, but they kept track of the piece by the setting it showed, and that setting changes with the first pull. So they forgot they had just pulled it, stood on it until they gave up, and then waited at the shut Frost door. Now they know the piece itself, whatever it shows, and step back and come in again for the second pull.
+Where: Krokotopia, The Vault of Ice, the braziers by the Frost door, and any puzzle piece that needs more than one pull.
+Test: Watch a Kitharas in The Vault of Ice set Brazier3 to Storm: after the first pull it should take a few steps back, walk in again, pull again, and the Frost door should open.

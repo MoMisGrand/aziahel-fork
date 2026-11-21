@@ -107,11 +107,11 @@ internal sealed partial class QuestTeamDirectorActor {
         }
 
         // Stepping back from a piece it pulled, until out of its reach; then it walks in again and the pull is offered anew.
-        if (_floorOut is not null && (_floorOut != duty.Key || far >= STEP_OUT)) {
+        if (_floorOut is not null && (_floorOut != BotFloors.PieceOf(duty.Key) || far >= STEP_OUT)) {
             _floorOut = null;
         }
 
-        if (_floorOut == duty.Key && StepOutFrom(leader, duty, live) is { } back) {
+        if (_floorOut == BotFloors.PieceOf(duty.Key) && StepOutFrom(leader, duty, live) is { } back) {
             return back;
         }
 
@@ -134,7 +134,7 @@ internal sealed partial class QuestTeamDirectorActor {
                     Clicked("floor|" + duty.Key);
                     _floorTries[duty.Key] = _floorTries.GetValueOrDefault(duty.Key) + 1;
                     Note(leader.Role, $"{leader.Name} pulls {duty.What}: {duty.Why}.", QuestTeamLink.NOTABLE);
-                    _floorPulled.Add(duty.Key);
+                    _floorPulled.Add(BotFloors.PieceOf(duty.Key));
                     _actors[0].Tell(new QuestTeamMember.Interact(lever, "Interact", 0, duty.What));
                 }
                 else if (lever == 0 && CanClick("floor|" + duty.Key + "|none")) {
@@ -148,8 +148,8 @@ internal sealed partial class QuestTeamDirectorActor {
                 // turned only when a bot happened to walk over one).
                 // A piece pulled already that needs another pull offers nothing while the wizard stands by it; the game gives
                 // the pull again on coming back into reach (The Vault of Ice Brazier3, 2026-11-20, Ultimus's StepOutFrom).
-                if (lever == 0 && _floorPulled.Contains(duty.Key) && StepOutFrom(leader, duty, live) is { } stepOut) {
-                    _floorOut = duty.Key;
+                if (lever == 0 && _floorPulled.Contains(BotFloors.PieceOf(duty.Key)) && StepOutFrom(leader, duty, live) is { } stepOut) {
+                    _floorOut = BotFloors.PieceOf(duty.Key);
                     return stepOut;
                 }
 
