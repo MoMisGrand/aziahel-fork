@@ -455,18 +455,22 @@ internal sealed partial class CombatDuelComponent(ZoneEntity entity)
         Message = message
     });
 
+    // A circle whose wizard has just left the area has no actor any more. Telling it threw, and the creature's death after
+    // a lost battle stopped half done: it was never taken out of the battle or removed, and stood there for good, never
+    // fighting again (Maito in Maito's Dojo, 2026-11-21 04:39; 9 times that day, King Uro's battle among them). So the
+    // broadcasts skip a circle with no actor.
     internal void DuelBroadcast(IMessage message)
-        => EnactActionOnSubCircles(circle => circle.ParticipantActor.Tell(message));
+        => EnactActionOnSubCircles(circle => circle.ParticipantActor?.Tell(message));
 
     internal void CreatureBroadcast(IMessage message) => EnactActionOnSubCircles(circle => {
         if (circle.OccupiedTeam == CombatTeam.Monster) {
-            circle.ParticipantActor.Tell(message);
+            circle.ParticipantActor?.Tell(message);
         }
     });
 
     internal new void PlayerBroadcast(IMessage message) => EnactActionOnSubCircles(circle => {
         if (circle.OccupiedTeam == CombatTeam.Player) {
-            circle.ParticipantActor.Tell(message);
+            circle.ParticipantActor?.Tell(message);
         }
     });
 
@@ -476,13 +480,13 @@ internal sealed partial class CombatDuelComponent(ZoneEntity entity)
     /// </summary>
     internal void HumanBroadcast(IMessage message) => EnactActionOnSubCircles(circle => {
         if (!circle.IsAiCreature) {
-            circle.ParticipantActor.Tell(message);
+            circle.ParticipantActor?.Tell(message);
         }
     });
 
     internal void TeamBroadcast(CombatTeam team, IMessage message) => EnactActionOnSubCircles(circle => {
         if (circle.OccupiedTeam == team) {
-            circle.ParticipantActor.Tell(message);
+            circle.ParticipantActor?.Tell(message);
         }
     });
 
@@ -731,7 +735,7 @@ internal sealed partial class CombatDuelComponent(ZoneEntity entity)
             BeginPvPHalfTurn();
         } else {
             // Echo the new round message to all actors.
-            EnactActionOnSubCircles(circle => circle.ParticipantActor.Tell(message));
+            EnactActionOnSubCircles(circle => circle.ParticipantActor?.Tell(message));
         }
 
         // Pre-planning phase just wants to send who is up first.
