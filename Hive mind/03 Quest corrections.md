@@ -259,3 +259,13 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 
 ## MooShu, War Oni (To the Front! line)
 - 2026-11-21 12:00 (Kurrent, level 29, solo): FAILURE: lost 'Defeat War Oni' 3 times in 10 minutes (11:47, 11:52, 11:56); Mythis lost it 4 times this morning. With bots update v111 the loss count survives updates, so his 4th loss should call a free teammate for help. Avoid: going back in at once; heal to full and ask for help.
+
+## Krokotopia, Earth Elemental (No Weaklings Allowed)
+- 2026-11-21 12:15 (Ultimus, level 37, solo): SUCCESS: beat the Earth Elemental at 12:06 on his 7th try and finished "No Weaklings Allowed" (34 minutes), then "Fighting With Dishonor". What worked: healing to near full before going back in, and drawing a treasure card every round once his deck ran out of hits. Lesson: a boss that wins twice is beaten by healing first and keeping hits coming, not by rushing back in.
+
+## Wizard City, Headmistress's house (Colossal Trouble)
+- 2026-11-21 12:15 (Kitharas Andromeda): FAILURE (not a quest fault): came to Ambrose for "Colossal Trouble" and was handed Katzenstein's Lab's "The Right Combination" (Defeat Firegut) inside the house, because teammates were still in her Lab copy; walking out took it away and she came back, 439 times since 9:25 AM. Fix PR #1525 (server, v0.10.955): rooms that are not a dungeon only give their own quests. Confidence High.
+
+## Not quest faults (training and gear)
+- 2026-11-21 12:15: bots update v113 is in (12:11). Ultimus's training plan now finds teachers in the school houses and in Krokotopia (Spectral Blast, Judgement, Spirit Trap, Elemental Blade, Spirit Blade, Imp); he trains once he is out of Spearcaller's Tower. Mythis trained Draw Power and Mend Minion at 12:13. Bazaar and shop trips now rate his whole outfit (PR #1517).
+
