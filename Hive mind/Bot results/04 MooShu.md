@@ -5,8 +5,8 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 ## Best way to beat each creature
 - Ronin Keyholder: won 11 time(s) (9 Solo, 2 Team), lost 26. Fastest: Cyndr in 4 rounds, plan "hit now", deck for a boss (Ice), hitting with Ice, Fire, Life; a rival that outlasts me, so more hits and blades to end it sooner (many of my fights lately had 2+ enemies), hits with Immolate.
 - Otomo Courier: won 8 time(s) (6 Solo, 2 Team), lost 21. Fastest: Ultimus in 5 rounds, deck for a boss (Ice), hitting with Ice, Fire; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Sandstorm, Balance, Fairy.
-- Imitsu Defouler: won 25 time(s) (25 Solo, 0 Team), lost 1. Fastest: Cyndr in 4 rounds, plan "hit now", deck for Myth enemies, hitting with Myth, Storm, Fire (most of my fights lately had 2+ enemies), hits with Immolate.
-- War Oni: won 7 time(s) (5 Solo, 2 Team), lost 19. Fastest: Cyndr in 7 rounds, deck for a boss (Fire), hitting with Fire, Myth; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Banshee, Heck Hound.
+- War Oni: won 8 time(s) (6 Solo, 2 Team), lost 20. Fastest: Cyndr in 7 rounds, deck for a boss (Fire), hitting with Fire, Myth; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Banshee, Heck Hound.
+- Imitsu Defouler: won 26 time(s) (26 Solo, 0 Team), lost 1. Fastest: Cyndr in 4 rounds, plan "hit now", deck for Myth enemies, hitting with Myth, Storm, Fire (most of my fights lately had 2+ enemies), hits with Immolate.
 - Maito: won 6 time(s) (6 Solo, 0 Team), lost 17. Fastest: Cyndr in 3 rounds, plan "hit now", deck for a boss (Ice), hitting with Ice, Fire, Life; a rival that outlasts me, so more hits and blades to end it sooner (many of my fights lately had 2+ enemies), hits with Sunbird, Immolate.
 - Otomo Supply Runner: won 14 time(s) (12 Solo, 2 Team), lost 4. Fastest: Ultimus in 4 rounds, deck for Fire enemies, hitting with Fire, Death, Myth (most of my fights lately had 2+ enemies), hits with Gearhead Destroyer, Locust Swarm.
 - Haru: won 15 time(s) (15 Solo, 0 Team), lost 1. Fastest: Cyndr in 5 rounds, deck for a boss (Myth), hitting with Myth, Balance, Storm (most of my fights lately had 2+ enemies).
@@ -926,6 +926,10 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
   It took 14 rounds, about 10 minutes.
   Deck made for a boss (Fire), hitting with Fire, Myth (most of my fights lately had 2+ enemies).
   Spells that landed the hits: Thunder Snake x2, Storm Shark.
+- Won by Kurrent (Solo) against War Oni (rank 7, 1,600 health, Fire, a boss) on 2026-11-21 at 12:34:42.
+  It took 7 rounds, about 6 minutes.
+  Deck made for a boss (Fire), hitting with Fire, Myth (most of my fights lately had 2+ enemies).
+  Spells that landed the hits: Thunder Snake.
 - Avoid, fights lost:
   - War Oni: lost 1 time(s) (Garm). Why: it simply hit harder than I could heal. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
   - War Oni: lost 1 time(s) (Garm). Why: its biggest hit took 65% of my health, the fight ran 6 minutes, so I ran out of good cards. Do instead: fight other creatures for XP first, up to the quest's level.
@@ -938,7 +942,7 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
   - War Oni: lost 1 time(s) (Mythis). Why: its biggest hit took 65% of my health, the fight ran 6 minutes, so I ran out of good cards. Do instead: look for better gear in this world's shops and the Bazaar, then try again.
   - Katsumori: lost 1 time(s) (Kurrent). Why: its biggest hit took 68% of my health, the fight ran 8 minutes, so I ran out of good cards. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
   - War Oni: lost 3 time(s) (Kurrent). Why: its biggest hit took 76% of my health. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
-  - War Oni: lost 2 time(s) (Kurrent). Why: its biggest hit took 76% of my health. Do instead: fight other creatures for XP first, up to the quest's level.
+  - War Oni: lost 3 time(s) (Kurrent). Why: its biggest hit took 76% of my health. Do instead: fight other creatures for XP first, up to the quest's level.
   - War Oni: lost 3 time(s) (Kurrent). Why: its biggest hit took 76% of my health. Do instead: look for better gear in this world's shops and the Bazaar, then try again.
   - Katsumori: lost 1 time(s) (Kurrent). Why: its biggest hit took 68% of my health. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
   - Katsumori: lost 1 time(s) (Kurrent). Why: its biggest hit took 68% of my health. Do instead: fight other creatures for XP first, up to the quest's level.
@@ -1574,6 +1578,10 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
   Deck made for any fight (many of my fights lately had 2+ enemies).
   Plan: "hit now" (mine and every other bot's).
   Spells that landed the hits: Ghoul x4, Minor Heroic Hit, Fairy, Cyclops.
+- Won by Mythis (Solo) against Imitsu Defouler (rank 5, 675 health, Myth) on 2026-11-21 at 12:34:41.
+  It took 9 rounds, about 6 minutes.
+  Deck made for any fight (many of my fights lately had 2+ enemies).
+  Spells that landed the hits: Minor Heroic Hit, Blood Bat.
 - Avoid, fights lost:
   - Imitsu Defouler: lost 1 time(s) (Mythis). Why: the fight ran 5 minutes, so I ran out of good cards. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
 
@@ -1662,7 +1670,7 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 
 ## The Towering Crystal
 - Avoid, places bots got stuck:
-  - Crimson Fields near (0, -2100) while waiting to be in the game: stuck 4 time(s) (Ra); one bot tried every fix there.
+  - Crimson Fields near (0, -2100) while waiting to be in the game: stuck 8 time(s) (Ra); one bot tried every fix there.
 
 ## Spies Like Us
 - Finished by Ultimus (16 s).
