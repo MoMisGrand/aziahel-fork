@@ -3,7 +3,7 @@
 What the bots did in Wizard City, from the server log: every quest finished, every fight won (to copy), every fight lost and every place they got stuck (to avoid). Solo means the bot fought alone; Team means another of our bots won the same fight with it. Updated after each bots update.
 
 ## Best way to beat each creature
-- Cyrus Drake: won 2 time(s) (2 Solo, 0 Team), lost 0. Fastest: Ra in 20 rounds, deck for a boss (Myth), hitting with Myth, Storm, Fire (many of my fights lately had 2+ enemies), hits with Helping Hands, Fairy, Judgement.
+- Cyrus Drake: won 3 time(s) (3 Solo, 0 Team), lost 0. Fastest: Garm in 19 rounds, deck for a boss (Myth), hitting with Myth, Storm, Fire (many of my fights lately had 2+ enemies), hits with Sacrifice, Fairy, Poison, Dream Shield.
 - Loathsome Creeper: won 2 time(s) (2 Solo, 0 Team), lost 0. Fastest: Ra in 6 rounds, plan "hit now", deck for any fight (many of my fights lately had 2+ enemies), hits with Gearhead Destroyer, Locust Swarm, Scarab.
 
 ## De-Cipher the Ahnics
@@ -61,6 +61,10 @@ What the bots did in Wizard City, from the server log: every quest finished, eve
   It took 20 rounds, about 11 minutes.
   Deck made for a boss (Myth), hitting with Myth, Storm, Fire (many of my fights lately had 2+ enemies).
   Spells that landed the hits: Helping Hands, Fairy, Judgement.
+- Won by Garm (Solo) against Cyrus Drake (rank 7, 4,000 health, Myth, a boss) on 2026-11-21 at 11:03:14.
+  It took 19 rounds, about 10 minutes.
+  Deck made for a boss (Myth), hitting with Myth, Storm, Fire (many of my fights lately had 2+ enemies).
+  Spells that landed the hits: Sacrifice, Fairy, Poison, Dream Shield.
 
 ## The Towering Crystal
 - Won by Ra (Solo) against Loathsome Creeper (rank 6, 695 health, Death) on 2026-11-21 at 10:07:16.
