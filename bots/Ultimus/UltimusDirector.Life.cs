@@ -297,7 +297,12 @@ internal sealed partial class UltimusDirectorActor {
         var inWizardCity = string.Equals((leader.Zone ?? "").Split('/')[0], BAZAAR_ZONE.Split('/')[0], StringComparison.OrdinalIgnoreCase);
         var (items, pays, shopPays) = BazaarJunk(wizard, StyleOf(leader));
         var worth = UltimusPlaybook.Value("Gold.BazaarSellGain") * (atBazaar || inWizardCity ? 1 : BAZAAR_FAR_FACTOR);
-        if (items.Count == 0 || pays - shopPays < worth) {
+        // From another world the extra gold must also matter to him: Ultimus, with 59,160 gold, left the Tower Archives after
+        // 70 minutes of climbing for about 1,700 gold more than the Quick Sell gave (2026-11-20 23:14) and came back in at the
+        // bottom. Under a tenth of what he holds, he quick sells where he is instead.
+        var held = wizard.GameStats?.m_currentGold ?? 0;
+        var tooSmall = !atBazaar && !inWizardCity && pays - shopPays < held * BAZAAR_FAR_SHARE_OF_GOLD;
+        if (items.Count == 0 || pays - shopPays < worth || tooSmall) {
             // Nothing (left) worth selling here: the trip is over, so it no longer pulls him back to the Bazaar.
             _bazaarSellTripUntil = DateTime.MinValue;
             return null;
@@ -429,6 +434,9 @@ internal sealed partial class UltimusDirectorActor {
     // ---------------------------------------------------------------------
     // Gear check at each new world: shops and the Bazaar
     // ---------------------------------------------------------------------
+
+    // From another world, a Bazaar sale must bring at least this share of the gold he holds over the Quick Sell.
+    private const double BAZAAR_FAR_SHARE_OF_GOLD = 0.10;
 
     internal const string BAZAAR_ZONE = "WizardCity/WC_Streets/Interiors/WC_OldeTown_AuctionHouse";
     private const ulong BAZAAR_ITEM = 9UL << 40;

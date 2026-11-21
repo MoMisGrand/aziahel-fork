@@ -8,6 +8,7 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 - Taking it to the Tuts: 9 Kitharas finished in 50 seconds to 8 minutes; the slow ones were in fights with the tomb's creatures, not stuck. (2026-11-20 10:45 PM Bot Update)
 
 ## Dragonspyre, The Tower Archives
+- At 23:14 his backpack filled and he left the Tower Archives for the Wizard City Bazaar to sell one piece (about 1,700 gold over a quick sell, with 59,160 gold held), then came back in at the bottom (-31770, -14011) at 23:23, losing 70 minutes of climbing. Fix (bots): from another world, a Bazaar sale must bring at least a tenth of the gold he holds over a quick sell. Bot fault, not quest. (2026-11-20 11:30 PM Bot Update)
 - Portal Combat: Ultimus has been in the Tower Archives since 22:11 (2026-11-20) following the game's walk map toward the raised teleporter at (9177, -7685); the way winds far round (he passed (12650, 11220) and (25407, 27105)) and creatures catch him about every 5 minutes. He wins them, but each two-enemy fight ran up to 13 rounds because he cast 1-pip hits (about 121) every round while Locust Swarm and Gearhead Destroyer waited for pips. Fix (bots): with only a small hit castable and a hit 2.5 times bigger waiting, he builds pips first. Bot fault, not quest. (2026-11-20 11:15 PM Bot Update)
 
 ## Dragonspyre, The Basilica
