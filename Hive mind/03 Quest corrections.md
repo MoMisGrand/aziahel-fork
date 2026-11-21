@@ -2,6 +2,9 @@
 
 Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus, the seven TCO7 wizards and the Quest Team all share one brain for this, so a correction learned by one of them is known by all of them at once. A new correction is added here the same day it goes out in a bots update.
 
+## Wizard City, Ravenwood (tutorial copy)
+- WizardCity/WC_Ravenwood_Lite (the Ravenwood a new wizard sees) has no exits in its game file (only its look). A bot that follows a teammate in there finds "no way from Ravenwood" to anything. Way out: the Commons button, then on from The Commons (2026-11-21). Kitharas Sentence stood there 15 hours on Sinister Skeleton before this.
+
 ## Marleybone, Katzenstein's Lab
 - If You Build It...: the gate past the first lab room opens only after the Sun, Bird, Tree and Bug plaques are clicked in that order. A plaque clicked too early is clicked back first and the order starts over.
 - The game only switches on the check for the last plaque after the earlier ones are clicked, so the puzzle counts as not started until all of them are off.
