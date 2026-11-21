@@ -65,6 +65,15 @@ internal sealed partial class UltimusDirectorActor {
     // off again: every 6 seconds for two hours, until the watchdog stopped him.
     private DateTime _bazaarCardTripSince = DateTime.MinValue;
     private static readonly TimeSpan s_bazaarCardTripHold = TimeSpan.FromMinutes(20);
+    // The creatures the trip was for, kept until he buys at the Bazaar. Ultimus, 2026-11-21 04:39: he set off from the
+    // Tower Archives with a fight in view (creatures of Ice, Storm, Fire, Myth: 4 cards missing), but at the Bazaar no fight
+    // was in view, the plan read 3 schools, nothing was missing, and he recalled back after a 3.5 minute walk with nothing.
+    private List<string> _bazaarCardTripFoes;
+    // When the last card trip set off: the next waits this long, unless a lost fight asks for cards (CardsRemedy). Ultimus,
+    // 2026-11-21 04:31 and 04:39: each fight used a few cards, so after each fight he walked to the Bazaar again, and each
+    // Recall back landed him by the creatures that had come back where he fought (3 of 4 recalls that night started a fight).
+    private DateTime _lastBazaarCardTripAt = DateTime.MinValue;
+    private static readonly TimeSpan s_bazaarCardTripGap = TimeSpan.FromMinutes(20);
     private readonly Dictionary<uint, DateTime> _bazaarCardSkipped = [];
     private static readonly TimeSpan s_bazaarCardSkip = TimeSpan.FromHours(1);
     private string _cardPlanSaid = "";
@@ -149,10 +158,10 @@ internal sealed partial class UltimusDirectorActor {
     }
 
     /// <summary>The plan for his fights ahead now, with what he still lacks of each card.</summary>
-    private List<(PlannedCard Card, int Missing)> CardPlanNow(Wizard wizard, out IReadOnlyCollection<string> foes) {
+    private List<(PlannedCard Card, int Missing)> CardPlanNow(Wizard wizard, out IReadOnlyCollection<string> foes, IReadOnlyCollection<string> tripFoes = null) {
         var school = BotGear.SchoolOf(wizard);
         var level = BotGear.LevelOf(wizard);
-        foes = FoeSchools();
+        foes = tripFoes ?? FoeSchools();
         var plan = PlanCards(school, level, foes, PlanRoom(wizard), AllTreasureCards());
         var owned = OwnedCopies(wizard);
 
@@ -195,6 +204,17 @@ internal sealed partial class UltimusDirectorActor {
         _bazaarCardTrip = null;
         _bazaarCardTripSince = DateTime.MinValue;
         _bazaarCardTripZone = leader.Zone;
+        // At the Bazaar the trip's own creatures count; anywhere else he weighs it afresh.
+        var inBazaar = OverlayQuestTracker.SameZone(leader.Zone ?? "", BAZAAR_ZONE);
+        if (!inBazaar) {
+            _bazaarCardTripFoes = null;
+        }
+
+        var tripFoes = inBazaar ? _bazaarCardTripFoes : null;
+        if (!inBazaar && DateTime.UtcNow - _lastBazaarCardTripAt < s_bazaarCardTripGap) {
+            return null;
+        }
+
         if (leader.Wizard is not { } wizard || wizard.ZoneIsInstance || _leaderLastTarget?.Key?.StartsWith(PARTY_KEY, StringComparison.Ordinal) == true) {
             return null;
         }
@@ -204,7 +224,7 @@ internal sealed partial class UltimusDirectorActor {
             return null;
         }
 
-        var plan = CardPlanNow(wizard, out var foes);
+        var plan = CardPlanNow(wizard, out var foes, tripFoes);
         SayCardPlan(plan, foes);
         var missing = plan.Where(p => p.Missing > 0
                                       && !(_bazaarCardSkipped.TryGetValue(p.Card.Id, out var at) && DateTime.UtcNow - at < s_bazaarCardSkip)).ToList();
@@ -229,6 +249,8 @@ internal sealed partial class UltimusDirectorActor {
                       "spot, buy them there and Recall back, as a player does before a boss.", "tc-bazaar|" + string.Join(",", missing.Select(p => p.Card.Id)));
                 _bazaarCardTrip = UltimusPlanner.Travel(leader, BAZAAR_ZONE, "the Bazaar, for treasure cards", "bazaarcards");
                 _bazaarCardTripSince = DateTime.UtcNow;
+                _lastBazaarCardTripAt = DateTime.UtcNow;
+                _bazaarCardTripFoes = [.. foes];
                 _nextBazaarCardLook = DateTime.UtcNow.AddSeconds(10);
                 return _bazaarCardTrip;
             case BazaarState.Closed:
@@ -278,6 +300,8 @@ internal sealed partial class UltimusDirectorActor {
                   "I mark my spot, buy them there and Recall back, as a player does before a boss.", "tc-bazaar|" + string.Join(",", buys.Select(b => b.Id)));
             _bazaarCardTrip = UltimusPlanner.Travel(leader, BAZAAR_ZONE, "the Bazaar, for treasure cards", "bazaarcards");
             _bazaarCardTripSince = DateTime.UtcNow;
+            _lastBazaarCardTripAt = DateTime.UtcNow;
+            _bazaarCardTripFoes = [.. foes];
         }
 
         if (_bazaarCardTrip is not null) {
@@ -349,6 +373,7 @@ internal sealed partial class UltimusDirectorActor {
         Count("treasure cards bought", list.Sum(c => c.Count));
         _bazaarCardTrip = null;
         _bazaarCardTripSince = DateTime.MinValue;
+        _bazaarCardTripFoes = null;
         // A few seconds later the new cards go into his deck (UltimusDirector.Cards.cs).
         _nextCardLook = DateTime.UtcNow.AddSeconds(6);
         _nextBazaarCardLook = DateTime.UtcNow.AddMinutes(2);
@@ -358,6 +383,7 @@ internal sealed partial class UltimusDirectorActor {
     private void CardsRemedy() {
         _nextBazaarCardLook = DateTime.UtcNow;
         _nextCardLook = DateTime.UtcNow;
+        _lastBazaarCardTripAt = DateTime.MinValue;
         _bazaarCardSkipped.Clear();
         _gearPushUntil = DateTime.UtcNow.AddMinutes(30);
     }
