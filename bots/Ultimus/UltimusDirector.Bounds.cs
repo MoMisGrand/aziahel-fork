@@ -186,13 +186,17 @@ internal sealed partial class UltimusDirectorActor {
         foreach (var name in story) {
             var template = QuestTemplateCollection.GetQuestByName(name);
             if ((template?.m_goals ?? []).Where(g => g is not null).Any(g => OverlayQuestTracker.StepZone(g) is { Length: > 0 } stepZone
-                    && (OverlayQuestTracker.SameZone(stepZone, zone) || OverlayQuestTracker.SameZone(zone, stepZone)))) {
+                    && (OverlayQuestTracker.SameZone(stepZone, zone) || OverlayQuestTracker.SameZone(zone, stepZone)
+                        || OverlayQuestRoute.SameGauntlet(zone, stepZone)))) {
+                // A gauntlet's rooms are one dungeon: room 2 of Halina Warhawk's Tower is on the way to the book in room 7
+                // ("The Art of War", 2026-11-21), not a side trip.
                 return false;
             }
 
             // Where the step really is; when that can't be told, he stays (no leaving on a guess).
             var step = UltimusPlanner.ForQuest(_team, name);
-            if (step is null || step.Problem.Length > 0 || string.IsNullOrEmpty(step.To) || OverlayQuestTracker.SameZone(step.To, zone)) {
+            if (step is null || step.Problem.Length > 0 || string.IsNullOrEmpty(step.To) || OverlayQuestTracker.SameZone(step.To, zone)
+                || OverlayQuestRoute.SameGauntlet(zone, step.To)) {
                 return false;
             }
         }
