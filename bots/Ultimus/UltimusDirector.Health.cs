@@ -171,9 +171,17 @@ internal sealed partial class UltimusDirectorActor {
         var huntBelow = UltimusPlaybook.Value("Quest.HuntHealBelow");
         // A boss is never started at low health (Niduus, 2026-11-14: at 34% right after a battle he set off for Krokenkahmen):
         // under half health, he heals first before a boss, whatever the 25% hunt rule says for ordinary steps.
-        var bossNext = BossNext(leader, target) && share < 0.5;
+        // A creature that beat him twice or more is met like a boss, at his tough-foe health: after a bots update his own
+        // "full health first" remedy is forgotten, and he walked into Earth Elemental at 54% after three losses to it
+        // (2026-11-21 10:34; the game's map does not mark it as a boss).
+        var rival = target?.Kind == UltimusPlanner.FIGHT && target.Template != 0
+                    && UltimusFoes.Of((uint) Math.Min(target.Template, uint.MaxValue)) is { Lost: >= 2 }
+                    && share < UltimusPlaybook.Value("Quest.ToughFoeHealth");
+        var bossNext = (BossNext(leader, target) && share < 0.5) || rival;
         if (bossNext && !InDungeon(leader)) {
-            Think($"I'm at {share:P0} health and my next fight is a boss. I don't start a boss under half health, so I heal first.",
+            Think(rival
+                    ? $"I'm at {share:P0} health and my next fight is one that has beaten me before. I meet it at full health, so I heal first."
+                    : $"I'm at {share:P0} health and my next fight is a boss. I don't start a boss under half health, so I heal first.",
                 "boss-heal|" + (target?.Key ?? ""));
         }
 
@@ -187,7 +195,7 @@ internal sealed partial class UltimusDirectorActor {
 
         // Niduus, 2026-11-14 ("he's not low??" at 875 of 1099): with nothing right here, the extra care is not worth a
         // trip or a wait. He is over his normal ready health, so he goes on.
-        if (onlyPrep && RemedyFor(target?.Key) != "full") {
+        if (onlyPrep && !rival && RemedyFor(target?.Key) != "full") {
             Think($"I'd like full health for this, but I have {stats.m_currentHitpoints * 100 / maxHealth}% and nothing to heal from right here, " +
                   "which is enough by my normal rule. I go on instead of travelling or waiting.", "prepgo|" + leader.Zone);
             _hurtSince = DateTime.MaxValue;
