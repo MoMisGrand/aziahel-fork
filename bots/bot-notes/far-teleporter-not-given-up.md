@@ -1,0 +1,4 @@
+Fixed: Bots no longer give up on a teleporter before they reach it
+A bot heading for a teleporter wrote it off as broken after three minutes, even when it was still on the long walk there and had been stopped by creature fights on the way. In the Tower Archives, Ultimus gave up on the teleporter halfway across the hall, wandered to the far end, and was caught in five fights in half an hour. Now the three minutes only count once the bot is next to the teleporter, and a teleporter it never manages to reach is given up after twelve minutes of walking.
+Where: any area where a bot walks a long way to a teleporter, first seen in Dragonspyre's Tower Archives (quest Portal Combat)
+Test: watch Ultimus in the Tower Archives on Portal Combat walk all the way to the teleporter he chose instead of turning back halfway.
