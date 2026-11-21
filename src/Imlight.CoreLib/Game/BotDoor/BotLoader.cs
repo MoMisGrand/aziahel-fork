@@ -245,6 +245,24 @@ public static class BotLoader {
         }
     }
 
+    // The battles that hold one of Ultimus's or the teams' wizards now (BotDoor.Side.IsRosterWizard: a wizard's character
+    // id is its object id less 2).
+    private static System.Collections.Generic.HashSet<Zone.Components.CombatDuelComponent> RosterBattles() {
+        var side = BotDoor.Side;
+        if (side is null) {
+            return [];
+        }
+
+        try {
+            return Zone.Components.CombatDuelComponent.s_playerBattles
+                .Where(p => p.Key > 2 && p.Value.Battle is not null && p.Value.Battle.HoldsPlayer(p.Key) && side.IsRosterWizard(p.Key - 2))
+                .Select(p => p.Value.Battle).ToHashSet();
+        }
+        catch (Exception) {
+            return [];
+        }
+    }
+
     /// <summary>
     /// Swaps the running bots for <paramref name="version"/>: it is built and loaded first (a failure keeps the bots as they
     /// are), then the bots wait for their battles to end (up to 15 minutes), save and log out, and the new ones come in.
@@ -271,6 +289,18 @@ public static class BotLoader {
             while (BotDoor.Side?.BusyWhy() is { } busy && DateTime.UtcNow < waitUntil) {
                 BotUpdates.Note($"waiting to swap the bots: {busy}");
                 await Task.Delay(TimeSpan.FromSeconds(10));
+            }
+
+            // With many bots one is nearly always fighting, so the wait above runs out; a long boss fight it began during
+            // the wait was then cut off near its end (Ultimus vs Earth Elemental, 2026-11-21 10:12: round 32, it at 945 of
+            // 5,600 health, a lost battle). The battles Ultimus's and the teams' wizards are in at that moment still get to
+            // finish (up to 20 more minutes); battles begun after it don't hold the swap.
+            var stillRunning = RosterBattles();
+            var lastUntil = DateTime.UtcNow.AddMinutes(20);
+            while (stillRunning.Count > 0 && DateTime.UtcNow < lastUntil) {
+                BotUpdates.Note($"waiting to swap the bots: {stillRunning.Count} battle(s) begun before the wait ran out still going");
+                await Task.Delay(TimeSpan.FromSeconds(10));
+                stillRunning.IntersectWith(RosterBattles());
             }
 
             Logger.Information("Bots: swapping to {0} ({1}); the bots log out and come back, players stay in.", Logger.Args(Label(version), why));
