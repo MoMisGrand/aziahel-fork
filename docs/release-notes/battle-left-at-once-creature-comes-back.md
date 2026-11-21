@@ -1,0 +1,4 @@
+Fixed: A creature could vanish for good when a battle was left in its first seconds
+If every wizard left a battle in its first few seconds, before the creatures had taken their places, the battle counted as won by the wizards and the creature was never sent back. It stayed out of the world, so its spot never brought a new one. This is what kept King Uro Ahnic away from the Ahnic Family Tomb after 2:53 AM on 21 November. Now such a battle counts as the creatures' win, and the creature comes back as it does after any flee.
+Where: Every battle on the streets and in dungeons; seen in Krokotopia, Ahnic Family Tomb.
+Test: Start a battle and leave it at once (flee or log out in the first seconds), then check the creature is back at its spot a few seconds later. King Uro Ahnic himself comes back after the server restarts.
