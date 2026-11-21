@@ -1,0 +1,4 @@
+Fixed: Bots go on to the next spot when a pick-up spot is empty
+When a step asks you to pick things up at several spots, a bot that found nothing to click at its spot stayed there and waited. Most of the Kitharas Family stood at one empty gem spot in the Hall of Champions for seven hours this way, with none of the four gemstones found. Now a bot that finds nothing at a spot for 20 seconds goes on to the step's next spot, and once every spot is checked it starts the round again, as a player walks from one gem to the next.
+Where: any step where you collect or click several things, first seen in Krokotopia's Hall of Champions (quest Get Some Bling, Collect Gemstones)
+Test: watch a Kitharas bot on Get Some Bling walk from gem spot to gem spot in the Hall of Champions and collect all four gemstones.
