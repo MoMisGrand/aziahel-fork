@@ -280,6 +280,15 @@ What the bots did in Dragonspyre, from the server log: every quest finished, eve
 - Avoid, places bots got stuck:
   - The Tower Archives near (12300, -7200) while Use Yellow Crystal here ("The Towering Crystal"): stuck 1 time(s) (Ultimus).
 
+## The Art of War
+- Avoid, places bots got stuck:
+  - The Basilica near (0, 0) while stuck: Go to Dragonspyre,Plaza of Conquests: no way from The Basilica to Plaza of Conquests could be found: stuck 4 time(s) (Ultimus); one bot tried every fix there.
+  - The Basilica near (0, 0) while a short break before trying "Go to Dragonspyre,Plaza of Conquests" again: stuck 2 time(s) (Ultimus).
+  - The Basilica near (200, -500) while stuck: Go to Dragonspyre,Plaza of Conquests: no way from The Basilica to Plaza of Conquests could be found: stuck 1 time(s) (Ultimus).
+  - The Basilica near (-1000, -100) while stuck: Go to Dragonspyre,Plaza of Conquests: no way from The Basilica to Plaza of Conquests could be found: stuck 1 time(s) (Ultimus).
+  - The Basilica near (-100, -300) while stuck: Go to Dragonspyre,Plaza of Conquests: no way from The Basilica to Plaza of Conquests could be found: stuck 1 time(s) (Ultimus).
+  - The Basilica near (-100, 700) while stuck: Go to Dragonspyre,Plaza of Conquests: no way from The Basilica to Plaza of Conquests could be found: stuck 1 time(s) (Ultimus).
+
 ## Bad Blood
 - Finished by Ultimus (12 min).
 
@@ -340,3 +349,6 @@ What the bots did in Dragonspyre, from the server log: every quest finished, eve
 
 ## Blood From a Stone
 - Finished by Ultimus (20 s).
+
+## Recommend This
+- Finished by Ultimus (6 s).

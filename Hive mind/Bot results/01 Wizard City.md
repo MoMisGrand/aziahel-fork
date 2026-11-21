@@ -44,6 +44,7 @@ What the bots did in Wizard City, from the server log: every quest finished, eve
 - Finished by Cyndr (11 min).
 - Finished by Tulkar (5 s).
 - Finished by Mythis (5 s).
+- Finished by Kurrent (5 s).
 
 ## Bad Blood
 - Won by Ultimus (Solo) against Cyrus Drake (rank 7, 4,000 health, Myth, a boss) on 2026-11-20 at 07:21:54.

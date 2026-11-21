@@ -670,12 +670,6 @@ internal static class UltimusPlanner {
                     if (Far(leader.X, leader.Y, ax, ay) > 300) {
                         return new Target(SPOT, ax, ay, $"{step} (where they spawn)", questName, goalName, Key: key + "|spawns");
                     }
-
-                    // Already there: he waits for the next one there. Falling through sent him to the quest arrow's spot, and
-                    // 300 away from the spawn spot it sent him back, every half second (Mythis, Crimson Fields, 2026-11-21,
-                    // "Clear 5 Otomo Spotter or Otomo Soldier": two hours with no fight). The same key, so a dungeon copy
-                    // with none left is still seen as one (ResetCopy).
-                    return new Target(WAIT, leader.X, leader.Y, $"{step} (waits where they spawn)", questName, goalName, Key: key + "|spawns");
                 }
 
                 break;
