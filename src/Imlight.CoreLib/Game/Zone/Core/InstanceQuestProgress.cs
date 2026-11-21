@@ -119,6 +119,30 @@ public sealed class InstanceQuestProgress {
     }
 
     /// <summary>
+    /// The zones of the container whose dungeon quests apply in <paramref name="here"/>. A dungeon's rooms share its quests,
+    /// but one owner's container also holds his rooms that are not a dungeon at all (a school house, the Headmistress's
+    /// house): such a room only has its own quests. Before, Katzenstein's Lab's quests went to anyone in the owner's
+    /// Headmistress House while his teammates were still in his Lab copy, and walking out took them away again: Kitharas
+    /// Andromeda came for Ambrose's "Colossal Trouble" and was sent out after Firegut, 439 times from 09:25 on 2026-11-21.
+    /// A zone the zone list does not know keeps every zone, as before.
+    /// </summary>
+    internal static string[] ZonesSharingQuests(string here, IEnumerable<string> zones) {
+        var all = (zones ?? []).ToArray();
+        if (string.IsNullOrEmpty(here) || !NotADungeon(here)) {
+            return all;
+        }
+
+        return [here];
+    }
+
+    // The zone list marks the zone as a street or a room ("S", "T"), not a dungeon ("D").
+    private static bool NotADungeon(string zone) {
+        var known = World.ZoneNames.All.FirstOrDefault(z => z.Code.Equals(zone, StringComparison.OrdinalIgnoreCase));
+
+        return known is not null && (known.Type == "S" || known.Type == "T");
+    }
+
+    /// <summary>
     /// The quests this instance finished and, per quest, the goals it completed in order.
     /// </summary>
     public ZONE_102_PROTOCOL.MSG_QUERYINSTANCEQUESTSRSP Snapshot() {
