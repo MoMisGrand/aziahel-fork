@@ -260,6 +260,7 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 ## MooShu, War Oni (To the Front! line)
 - 2026-11-21 12:00 (Kurrent, level 29, solo): FAILURE: lost 'Defeat War Oni' 3 times in 10 minutes (11:47, 11:52, 11:56); Mythis lost it 4 times this morning. With bots update v111 the loss count survives updates, so his 4th loss should call a free teammate for help. Avoid: going back in at once; heal to full and ask for help.
 - 2026-11-21 12:45 (Kurrent, with Mythis): SUCCESS: the help call worked: Mythis came and they beat War Oni at 12:34. FAILURE: Kurrent lost War Oni again alone at 12:38 and called Mythis again, but while waiting his stuck check walked him off through Ravenwood and The Commons. Fix PR #1531 (bots, sent 12:50): waiting for a called helper is not being stuck. Confidence High.
+- 2026-11-21 13:00 (Kurrent): SUCCESS: finished "To the Front!" at 12:47 (35 min, after the help call with Mythis), then "Sword of Omens", "Clear Waters" and "Patience" within 4 minutes. Lesson: calling a teammate after repeated losses works; the 4th-loss help call is the right rule.
 
 ## Krokotopia, Earth Elemental (No Weaklings Allowed)
 - 2026-11-21 12:15 (Ultimus, level 37, solo): SUCCESS: beat the Earth Elemental at 12:06 on his 7th try and finished "No Weaklings Allowed" (34 minutes), then "Fighting With Dishonor". What worked: healing to near full before going back in, and drawing a treasure card every round once his deck ran out of hits. Lesson: a boss that wins twice is beaten by healing first and keeping hits coming, not by rushing back in.
@@ -267,6 +268,7 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 
 ## Wizard City, Headmistress's house (Colossal Trouble)
 - 2026-11-21 12:15 (Kitharas Andromeda): FAILURE (not a quest fault): came to Ambrose for "Colossal Trouble" and was handed Katzenstein's Lab's "The Right Combination" (Defeat Firegut) inside the house, because teammates were still in her Lab copy; walking out took it away and she came back, 439 times since 9:25 AM. Fix PR #1525 (server, v0.10.955): rooms that are not a dungeon only give their own quests. Confidence High.
+- 2026-11-21 13:00: the server restarted for its update at about 12:55 (v0.10.955 with PR #1525). Andromeda's loop stopped: she started "Colossal Trouble" at 13:00.
 
 ## Not quest faults (training and gear)
 - 2026-11-21 12:15: bots update v113 is in (12:11). Ultimus's training plan now finds teachers in the school houses and in Krokotopia (Spectral Blast, Judgement, Spirit Trap, Elemental Blade, Spirit Blade, Imp); he trains once he is out of Spearcaller's Tower. Mythis trained Draw Power and Mend Minion at 12:13. Bazaar and shop trips now rate his whole outfit (PR #1517).
@@ -274,6 +276,7 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 
 ## Marleybone, Katzenstein's Lab (If You Build It...)
 - 2026-11-21 12:30 (Kitharas Hart, Lamia): SUCCESS: finished "If You Build It..." at 12:30 (Hart 14 min, Lamia 86 s). Wraith finished "More Metal Madness", Jackle "Gate is Enough". Hexation still stuck following Rock at (2478, 11290).
+- 2026-11-21 13:00: SUCCESS: Kitharas Hart FINISHED "Weird Science" at 12:53 (the plaque quest that held the Kitharas all morning). Moon and Wraith finished "More Metal Madness"; Consumer and Jackle "Gate is Enough"; Consumer "The Second Door".
 
 ## MooShu, Crimson Fields (For the Emperor!)
 - 2026-11-21 12:45 (Ra): FAILURE (not a quest fault): Ra's load into Crimson Fields hung at 12:12 (the server closed it after its attach timeout) and Ra sat "waiting to be in the game" for 40 minutes, offline to everyone. Fix PR #1531 (bots, sent 12:50): a bot not in after 90 seconds logs in again. Confidence High. Mythis walked out of the Crimson Fields copy fine at 12:35.
