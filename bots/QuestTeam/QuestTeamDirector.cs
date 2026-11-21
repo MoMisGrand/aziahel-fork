@@ -1055,8 +1055,12 @@ internal sealed partial class QuestTeamDirectorActor : ReceiveActor, IWithTimers
             return null;
         }
 
-        if (here.Lesson is null && !OverlayQuestTracker.SameZone(QuestTeamTraining.TRAINER_ZONE, leader.Zone)) {
-            return QuestTeamPlanner.Travel(leader, QuestTeamTraining.TRAINER_ZONE, "training");
+        // No trainer here: to the area of the lessons waiting (a school house), not always Ravenwood's square.
+        if (here.Lesson is null) {
+            var tripZone = Ultimus.UltimusTraining.TripZone(lessons.SelectMany(l => l.Lessons).Select(x => x.Zone), leader.Zone);
+            if (!OverlayQuestTracker.SameZone(tripZone, leader.Zone)) {
+                return QuestTeamPlanner.Travel(leader, tripZone, "training");
+            }
         }
 
         // The first lesson in the team's order here; its trainer's spot.

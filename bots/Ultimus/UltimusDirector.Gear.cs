@@ -472,9 +472,11 @@ internal sealed partial class UltimusDirectorActor {
             // "why is Ultimus wearing this instead of Adept robe?": the Adept Sorcerer's Robe costs 21,880 gold, more than
             // he had, so he kept a dropped Cloak of the Watchful). Ahziael gives the difference, as it gives gold so
             // shopping never holds the quests up.
-            var affordable = BotGear.ShopUpgrades(wizard, StyleOf(member), gold);
+            // Weighed on his whole outfit by his goals, as what he wears is (BotGear.OutfitUpgrades).
+            var goals = GearGoals(wizard);
+            var affordable = BotGear.ShopUpgrades(wizard, StyleOf(member), gold, goals);
             var upgrades = affordable.Count > 0 || !GoldGifts ? affordable
-                : BotGear.ShopUpgrades(wizard, StyleOf(member), MAX_GEAR_TOP_UP).Where(u => u.Gain >= BIG_GAIN).ToList();
+                : BotGear.ShopUpgrades(wizard, StyleOf(member), MAX_GEAR_TOP_UP, goals).Where(u => u.Gain >= BIG_GAIN).ToList();
             foreach (var (piece, vendors, _) in upgrades) {
                 if (owned.Contains(piece.Id) || _shopSkipped.Contains(piece.Id) || NotSold().Contains(piece.Id)) {
                     continue;

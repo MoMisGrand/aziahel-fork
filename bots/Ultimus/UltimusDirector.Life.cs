@@ -504,20 +504,13 @@ internal sealed partial class UltimusDirectorActor {
 
         _bazaarWakeAllowed = false;
         var actual = BazaarBook.Mode == BazaarMode.Actual;
-        var style = StyleOf(leader);
-        var school = BotGear.SchoolOf(wizard);
         var gainNeeded = UltimusPlaybook.Value("Gear.BazaarGain");
-        foreach (var (slot, piece) in BotGear.BestFor(school, BotGear.LevelOf(wizard), style, p => !p.CrownsOnly && !BotGear.Forbidden(p.Id))) {
-            if (_bazaarSkipped.Contains(piece.Id)) {
-                continue;
-            }
-
-            var (_, wearing) = BotGear.Wearing(wizard, slot, style);
-            var gain = BotGear.Score(piece, school, style) - wearing;
-            if (gain < gainNeeded) {
-                continue;
-            }
-
+        // Weighed on his whole outfit by his goals (enough resist, accuracy and health, then damage), the very measure
+        // that picks what he wears, so a piece he buys is one he keeps on (BotGear.OutfitUpgrades). Pieces already in his
+        // backpack are not bought again.
+        var owned = (wizard.InventoryBehavior?.Items ?? []).Select(i => (uint) Math.Min((ulong) i.m_templateID, uint.MaxValue)).ToHashSet();
+        foreach (var (_, piece, gain) in BotGear.OutfitUpgrades(wizard, GearGoals(wizard),
+                     p => !p.CrownsOnly && !BotGear.Forbidden(p.Id) && !owned.Contains(p.Id) && !_bazaarSkipped.Contains(p.Id), gainNeeded)) {
             BazaarQuote quote;
             try {
                 quote = BazaarLink.Find(piece.Id);
@@ -536,7 +529,7 @@ internal sealed partial class UltimusDirectorActor {
                 continue;
             }
 
-            Think($"The Bazaar has {piece.Name} for {quote.BuyPrice:N0} gold, a clear upgrade (+{gain:0}). I can pay for it and keep my reserve.",
+            Think($"The Bazaar has {piece.Name} for {quote.BuyPrice:N0} gold, a clear upgrade for my whole outfit (+{gain:0}). I can pay for it and keep my reserve.",
                 "bazaar|" + piece.Id);
             var live = MinimapIndex.In(leader.ZoneActor);
             var keeper = live.FirstOrDefault(m => m.Entity?.GetComponentOfType<InteractAuctionHouseComponent>() is not null);

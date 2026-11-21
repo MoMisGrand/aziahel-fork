@@ -97,7 +97,7 @@ internal sealed partial class UltimusDirectorActor {
             _sideTripSince = DateTime.UtcNow;
         }
 
-        var budget = TimeSpan.FromMinutes(Math.Max(1, UltimusPlaybook.Value("Guard.SideTripMinutes")));
+        var budget = TimeSpan.FromMinutes(Math.Max(1, UltimusPlaybook.Value("Guard.SideTripMinutes")) * (kind == "training" && _trainingFar ? 2 : 1));
         if (DateTime.UtcNow - _sideTripSince <= budget) {
             return trip;
         }

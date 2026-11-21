@@ -128,6 +128,8 @@ internal sealed partial class UltimusDirectorActor {
             case "gear":
                 _gearPushUntil = DateTime.UtcNow.AddMinutes(20);
                 _nextShopping = DateTime.UtcNow;
+                // The Bazaar looked again now too, not up to 10 minutes later.
+                _nextBazaarLook = DateTime.UtcNow;
                 break;
             case "deck":
                 PrepareDeck(0, _target?.Kind == UltimusPlanner.FIGHT ? UltimusScout.SituationOf(_target.Template) : BotCards.Situation.Unknown, force: true);

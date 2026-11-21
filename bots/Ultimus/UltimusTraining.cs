@@ -60,6 +60,9 @@ internal static class UltimusTraining {
             zones.Add(TRAINER_ZONE);
         }
 
+        // Every other area a trainer stands in that he can reach (TrainerZones).
+        zones.AddRange(TrainerZones(member.Zone).Where(z => !zones.Contains(z, StringComparer.OrdinalIgnoreCase)));
+
         try {
             foreach (var zone in zones) {
                 Add(zone);
@@ -101,6 +104,59 @@ internal static class UltimusTraining {
                 }
             }
         }
+    }
+
+    private static readonly Dictionary<int, (DateTime At, List<string> Zones)> s_trainerZones = [];
+
+    /// <summary>
+    /// The areas the real game's trainers stand in that a wizard in <paramref name="fromZone"/> can reach: the main worlds up
+    /// to the one it stands in (Wizard City always), from the NPC location book. Only Ravenwood's square and the area he
+    /// stood in were looked at before, but most school teachers stand inside their school houses (Moolinda Wu in
+    /// WC_SchoolLife, Lydia Greyrose in WC_SchoolFrost, Dworgyn in WC_SchoolDeath) and the Balance ones in Krokotopia
+    /// (Alhazred, Niles): in two days Ultimus never once trained a spell from them, kept 10 training points, wanted Satyr
+    /// 570 times, and at level 37 still lacked Power Play, Spectral Blast, Tri Blade, Spirit Blade and the Balance traps
+    /// (Niduus, 2026-11-21: "Ultimus seems to had forgot to train spells that he deems are required").
+    /// </summary>
+    internal static List<string> TrainerZones(string fromZone) {
+        var reach = Math.Max(1, MainWorlds.Number(fromZone));
+        lock (s_trainerZones) {
+            if (s_trainerZones.TryGetValue(reach, out var known) && (known.Zones.Count > 0 || DateTime.UtcNow - known.At < TimeSpan.FromMinutes(2))) {
+                return known.Zones;
+            }
+        }
+
+        var zones = new List<string>();
+        foreach (var trainer in VanillaTrainers.All) {
+            foreach (var place in UltimusNpcBook.Of(trainer.TemplateId, fromZone)) {
+                var world = MainWorlds.Number(place.Zone);
+                if (world < 1 || world > reach || place.Zone.Contains("_Instanced", StringComparison.OrdinalIgnoreCase)
+                    || zones.Contains(place.Zone, StringComparer.OrdinalIgnoreCase)) {
+                    continue;
+                }
+
+                zones.Add(place.Zone);
+            }
+        }
+
+        lock (s_trainerZones) {
+            s_trainerZones[reach] = (DateTime.UtcNow, zones);
+        }
+
+        return zones;
+    }
+
+    /// <summary>
+    /// Where a training trip goes when no trainer stands here: the area with a lesson in this world first (a shorter trip),
+    /// then the one with the most lessons waiting.
+    /// </summary>
+    internal static string TripZone(IEnumerable<string> lessonZones, string fromZone) {
+        var world = (fromZone ?? "").Split('/')[0];
+
+        return lessonZones.Where(z => !string.IsNullOrEmpty(z))
+            .GroupBy(z => z, StringComparer.OrdinalIgnoreCase)
+            .OrderByDescending(g => string.Equals(g.Key.Split('/')[0], world, StringComparison.OrdinalIgnoreCase))
+            .ThenByDescending(g => g.Count())
+            .Select(g => g.Key).FirstOrDefault() ?? TRAINER_ZONE;
     }
 
     /// <summary>The index of a spell in a trainer's list (as its training window shows it), or -1.</summary>

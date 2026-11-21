@@ -877,6 +877,54 @@ internal static class BotGear {
         return best;
     }
 
+    /// <summary>
+    /// Pieces from the catalog that bring the wizard's whole outfit toward its goals, by the very measure that picks what it
+    /// wears (BestSwap): up to <paramref name="perSlot"/> a slot, best gain first. The Bazaar and shop trips weighed a
+    /// piece on its own against the worn one, while what he wears is weighed on the whole outfit: at level 37 Ultimus wore
+    /// his starter Adept Sorcerer's set with 2% resist (wanting 19%) and 49,000 gold to spare, the Bazaar never had a
+    /// "clear upgrade" for two days, and the Wysteria Stone and Hingen's Dirk he bought on 2026-11-19 went back into his
+    /// backpack (Niduus, 2026-11-21: "neglecting to go to the Bazaar for gear upgrades").
+    /// </summary>
+    internal static List<(EquipmentSlotType Slot, Piece Piece, double Gain)> OutfitUpgrades(Wizard wizard, Goals goals, Func<Piece, bool> allowed,
+                                                                                         double least, int perSlot = 4) {
+        var found = new List<(EquipmentSlotType Slot, Piece Piece, double Gain)>();
+        if (wizard is null || goals is null) {
+            return found;
+        }
+
+        var school = SchoolOf(wizard);
+        var level = LevelOf(wizard);
+        var outfit = Outfit(wizard);
+        var now = Value(TotalsOf(outfit.Values, school), goals);
+        foreach (var slot in Slots) {
+            var worn = outfit.GetValueOrDefault(slot);
+            // A worn piece whose stats can't all be read stays on: unknown is not worthless.
+            if (worn is not null && PartlyRead(worn.Id)) {
+                continue;
+            }
+
+            var name = slot.ToString();
+            var trial = new Dictionary<EquipmentSlotType, Piece>(outfit);
+            var best = new List<(EquipmentSlotType, Piece, double)>();
+            foreach (var piece in Catalog) {
+                if (piece.Slot != name || (worn is not null && worn.Id == piece.Id) || !CanWear(piece, school, level) || PartlyRead(piece.Id)
+                    || !(allowed?.Invoke(piece) ?? true)) {
+                    continue;
+                }
+
+                trial[slot] = piece;
+                var gain = Value(TotalsOf(trial.Values, school), goals) - now;
+                if (gain >= least) {
+                    best.Add((slot, piece, gain));
+                }
+            }
+
+            found.AddRange(best.OrderByDescending(b => b.Item3).ThenByDescending(b => b.Item2.Level).Take(Math.Max(1, perSlot)));
+        }
+
+        return [.. found.OrderByDescending(f => f.Gain)];
+    }
+
     // What a swap changes, in words: the needs it meets first, then damage and pierce.
     private static string Reason(Totals a, Totals b, Goals g) {
         var parts = new List<string>();
@@ -942,10 +990,19 @@ internal static class BotGear {
     /// What a shop sells that is better than what the wizard wears and that it can pay for, best gain first: the piece, the
     /// shops that sell it (by NPC template) and how much better it is.
     /// </summary>
-    internal static List<(Piece Piece, IReadOnlyList<uint> Vendors, double Gain)> ShopUpgrades(Wizard wizard, BotStyle style, int gold) {
+    internal static List<(Piece Piece, IReadOnlyList<uint> Vendors, double Gain)> ShopUpgrades(Wizard wizard, BotStyle style, int gold, Goals goals = null) {
         var school = SchoolOf(wizard);
         var level = LevelOf(wizard);
         var found = new List<(Piece, IReadOnlyList<uint>, double)>();
+        // With goals (Ultimus): weighed on the whole outfit, as what he wears is (OutfitUpgrades), one best piece a slot.
+        if (goals is not null) {
+            foreach (var (_, piece, gain) in OutfitUpgrades(wizard, goals, p => p.Gold > 0 && p.Gold <= gold && ItemSources.VendorsOf(p.Id).Count > 0, 2, 1)) {
+                found.Add((piece, ItemSources.VendorsOf(piece.Id), gain));
+            }
+
+            return [.. found.OrderByDescending(f => f.Item3)];
+        }
+
         foreach (var (slot, piece) in BestFor(school, level, style, p => p.Gold > 0 && p.Gold <= gold && ItemSources.VendorsOf(p.Id).Count > 0)) {
             var (_, wearing) = Wearing(wizard, slot, style);
             var gain = Score(piece, school, style) - wearing;
