@@ -722,10 +722,13 @@ internal sealed partial class UltimusDirectorActor {
             why.Add("it simply hit harder than I could heal");
         }
 
-        // A new plan each time: careful deck and full health; then level first; then better gear.
+        // A new plan each time: careful deck and full health; then the spells his training plan calls for and treasure cards;
+        // then better gear. Never XP from other creatures (Niduus, 2026-11-14: no XP farming, XP only from quest fights): the
+        // old second plan said "fight other creatures for XP first" even at level 37 against a level 30 quest's Sea Lord, and
+        // it went into the shared brain for every bot (2026-11-21 14:54).
         var change = times switch {
             1 => "full health and mana first, a deck with more shields and heals for it, and its healers hit first",
-            2 => "fight other creatures for XP first, up to the quest's level",
+            2 => "train the spells my fights call for (a heal or shield of my own) and bring treasure cards made for it",
             _ => "look for better gear in this world's shops and the Bazaar, then try again",
         };
         if (times == 1) {
