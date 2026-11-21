@@ -102,6 +102,14 @@ internal sealed partial class UltimusDirectorActor {
             return false;
         }
 
+        // A stuck fix just sent him to a teleporter that lands nearer the step: that is the new way, not the loop, so it is
+        // given its few minutes. The Tower Archives, 2026-11-21 02:28: the fix chose "To The Tower Archives" at (7387, 18847),
+        // which lands by the ToWizT teleporter (it took him there at 00:45), and the loop guard set the step aside four
+        // milliseconds later and walked him off to a quiet spot instead.
+        if (DateTime.UtcNow - _anotherWayAt < s_anotherWayRuns) {
+            return false;
+        }
+
         var loop = _loopTrail.GroupBy(t => t.What).Where(g => g.Count() >= LOOP_REPEATS).OrderByDescending(g => g.Count()).FirstOrDefault();
         if (loop is null) {
             return false;

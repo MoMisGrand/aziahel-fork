@@ -42,6 +42,10 @@ internal sealed partial class UltimusDirectorActor {
     private UltimusPads.Pad _viaPad;
     // The door or stone "another way" walked it to, pressed once it is there.
     private (UltimusPads.Pad Pad, string Zone, DateTime At)? _otherWayPad;
+    // When a stuck fix last sent him to a teleporter that lands nearer the step: the loop guard leaves that walk alone for a
+    // while (UltimusDirector.Safety.cs).
+    private DateTime _anotherWayAt = DateTime.MinValue;
+    private static readonly TimeSpan s_anotherWayRuns = TimeSpan.FromMinutes(3);
 
     /// <summary>The door or stone to press on the way now: the way's own, else the one "another way" walked it to.</summary>
     private UltimusPads.Pad PadToPress(UltimusMember.Status member) {
@@ -370,6 +374,7 @@ internal sealed partial class UltimusDirectorActor {
         }
 
         _padsLeft[pad] = DateTime.UtcNow;
+        _anotherWayAt = DateTime.UtcNow;
         if (pad.Click != 0) {
             _otherWayPad = (pad, member.Zone, DateTime.UtcNow);
         }
