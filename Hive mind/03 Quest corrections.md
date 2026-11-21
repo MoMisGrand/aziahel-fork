@@ -273,11 +273,20 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 ## Not quest faults (training and gear)
 - 2026-11-21 12:15: bots update v113 is in (12:11). Ultimus's training plan now finds teachers in the school houses and in Krokotopia (Spectral Blast, Judgement, Spirit Trap, Elemental Blade, Spirit Blade, Imp); he trains once he is out of Spearcaller's Tower. Mythis trained Draw Power and Mend Minion at 12:13. Bazaar and shop trips now rate his whole outfit (PR #1517).
 - 2026-11-21 12:30 (Ultimus, level 37): FAILURE: his first training trip went Dragonspyre to Krokotopia to Wizard City, then into the Life school for Imp twice, and each time the school (a private copy) counted like a dungeon, so he walked straight out; training was set aside for an hour, 10 points still unspent. Fix PR #1528 (bots, bots update sent 12:33): a school house with a teacher he needs is a place to train. Confidence High. He did sell 2 pieces (3,313 gold) and bought Judgement, Dark Tribute and 2 Elemental Shield cards at the Bazaar.
+- 2026-11-21 13:15 (Ultimus, level 37): SUCCESS: trained 6 spells at 13:00 to 13:01 (Spirit Trap, Elemental Blade, Spirit Blade, Spectral Blast, Judgement, Donate Power) once the new teacher list from PR #1517 was in. FAILURE: Imp in the Life school was still bounced at 13:02, because the server restart brought back the bots built with the server, which lack PR #1528; bots update v115 carries it.
 
 ## Marleybone, Katzenstein's Lab (If You Build It...)
 - 2026-11-21 12:30 (Kitharas Hart, Lamia): SUCCESS: finished "If You Build It..." at 12:30 (Hart 14 min, Lamia 86 s). Wraith finished "More Metal Madness", Jackle "Gate is Enough". Hexation still stuck following Rock at (2478, 11290).
 - 2026-11-21 13:00: SUCCESS: Kitharas Hart FINISHED "Weird Science" at 12:53 (the plaque quest that held the Kitharas all morning). Moon and Wraith finished "More Metal Madness"; Consumer and Jackle "Gate is Enough"; Consumer "The Second Door".
+- 2026-11-21 13:15: SUCCESS: Lamia finished "Weird Science" at 13:01; Moon and Wraith finished "More Metal Madness".
 
 ## MooShu, Crimson Fields (For the Emperor!)
 - 2026-11-21 12:45 (Ra): FAILURE (not a quest fault): Ra's load into Crimson Fields hung at 12:12 (the server closed it after its attach timeout) and Ra sat "waiting to be in the game" for 40 minutes, offline to everyone. Fix PR #1531 (bots, sent 12:50): a bot not in after 90 seconds logs in again. Confidence High. Mythis walked out of the Crimson Fields copy fine at 12:35.
 - 2026-11-21 12:45 (Ultimus): lost Sea Lord once on "Foe of Foes" (12:39, went in at 100%), healing and trying again.
+- 2026-11-21 13:15 (Mythis): SUCCESS: finished "For the Emperor!" at 13:10.
+
+## Krokotopia, Plaza of Conquests (Foe of Foes)
+- 2026-11-21 13:15 (Ultimus, level 37, solo): FAILURE (not a quest fault): he had already used the Summoning Crystal, but the server restart at 12:55 sent the Sea Lord away and nothing brought it back, so he stood at (-1270, 4473) with "no creature for this step" until he asked for help at 13:13. Fix PR #1535 (server, v0.10.956 sent 13:20): when a step needs one boss that an earlier step summoned, it is brought out again. Confidence Medium-High: it depends on the Sea Lord being the only switched-off creature of its kind in the Plaza.
+
+## Krokotopia and Wizard City, Kitharas story (13:15)
+- 2026-11-21 13:15: SUCCESS: Kitharas Mordiael, Sentence, Crimes and Devourer finished "De-Cipher the Ahnics" and "De-Cipher the Djeserits"; Hydra finished "Key to the Temple", "Test of Strength" and "Get Smart"; Libra finished "Key to the Temple".
