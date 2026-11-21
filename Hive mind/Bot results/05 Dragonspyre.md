@@ -10,6 +10,7 @@ What the bots did in Dragonspyre, from the server log: every quest finished, eve
 - Burning Hate: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 10 rounds, deck for any fight (many of my fights lately had 2+ enemies), hits with Gearhead Destroyer, Locust Swarm.
 - Irate Banshee: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 12 rounds, plan "hit now", deck for Fire enemies, hitting with Fire, Death, Myth (most of my fights lately had 2+ enemies), hits with Minor Crusade, Scarab, Gearhead Destroyer, Fairy.
 - Beghastion Crowcaller: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 5 rounds, deck for Death enemies, hitting with Death, Ice, Storm (many of my fights lately had 2+ enemies), hits with Helping Hands, Spirit Shield, Gearhead Destroyer.
+- Mavra Flamewing: never beaten yet, lost 1 time(s). Most common reason: its biggest hit took 75% of my health, the fight ran 7 minutes, so I ran out of good cards.
 - Loathsome Creeper: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 10 rounds, plan "hit now", deck for Death enemies, hitting with Death, Fire, Myth (many of my fights lately had 2+ enemies), hits with Minor Crusade, Gearhead Destroyer, Scarab, Helping Hands.
 - Sysiphan: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 23 rounds, deck for a boss (Ice), hitting with Ice, Fire, Death (many of my fights lately had 2+ enemies), hits with Helping Hands, Scarab, Elemental Shield, Fairy.
 
@@ -310,6 +311,10 @@ What the bots did in Dragonspyre, from the server log: every quest finished, eve
   - Plaza of Conquests near (-100, 1300) while to Plaza of Conquests (leaving Plaza of Conquests: a side dungeon, my story is in Plaza of Conquests): stuck 2 time(s) (Ultimus).
   - Plaza of Conquests near (-2200, 200) while a short break before trying "to Plaza of Conquests (leaving Plaza of Conquests: a side du..." again: stuck 2 time(s) (Ultimus).
 
+## The Best Defense
+- Avoid, fights lost:
+  - Mavra Flamewing: lost 1 time(s) (Ultimus). Why: its biggest hit took 75% of my health, the fight ran 7 minutes, so I ran out of good cards. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
+
 ## The Towering Crystal
 - Finished by Ultimus (16 min).
 - Avoid, places bots got stuck:
@@ -381,3 +386,6 @@ What the bots did in Dragonspyre, from the server log: every quest finished, eve
 
 ## Stone Soup
 - Finished by Ultimus (10 s).
+
+## Application Procedures
+- Finished by Ultimus (3 min).
