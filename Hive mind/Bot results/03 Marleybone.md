@@ -3,13 +3,13 @@
 What the bots did in Marleybone, from the server log: every quest finished, every fight won (to copy), every fight lost and every place they got stuck (to avoid). Solo means the bot fought alone; Team means another of our bots won the same fight with it. Updated after each bots update.
 
 ## Best way to beat each creature
-- Bellows: won 6 time(s) (6 Solo, 0 Team), lost 86. Fastest: Tulkar in 7 rounds, deck for a boss (Balance), hitting with Balance, Storm, Myth; a rival that keeps beating me, so more shields and heals (most of my fights lately had 2+ enemies).
+- Bellows: won 7 time(s) (7 Solo, 0 Team), lost 86. Fastest: Tulkar in 7 rounds, deck for a boss (Balance), hitting with Balance, Storm, Myth; a rival that keeps beating me, so more shields and heals (most of my fights lately had 2+ enemies).
+- O'Leary Conniver: won 68 time(s) (54 Solo, 14 Team), lost 13. Fastest: Garm in 2 rounds, plan "hit now", deck for any fight (many of my fights lately had 2+ enemies), hits with Vampire, Minor Dark Blow.
 - Gearhead: won 50 time(s) (32 Solo, 18 Team), lost 29. Fastest: Tulkar in 3 rounds, deck for a boss (Storm), hitting with Storm, Fire, Death (most of my fights lately had 2+ enemies).
-- O'Leary Conniver: won 67 time(s) (53 Solo, 14 Team), lost 12. Fastest: Garm in 2 rounds, plan "hit now", deck for any fight (many of my fights lately had 2+ enemies), hits with Vampire, Minor Dark Blow.
 - Clockwork Warrior: won 49 time(s) (47 Solo, 2 Team), lost 24. Fastest: Cyndr in 1 rounds, deck for Balance enemies, hitting with Balance, Storm, Ice; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Sunbird.
 - Clockwork Wizard: won 52 time(s) (42 Solo, 10 Team), lost 16. Fastest: Kurrent in 2 rounds, plan "hit now", deck for a boss (Life), hitting with Life, Fire, Storm; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Storm Shark, Thunder Snake.
 - Meowiarty: won 44 time(s) (16 Solo, 28 Team), lost 14. Fastest: Cyndr in 2 rounds, plan "hit now", deck for any fight (many of my fights lately had 2+ enemies), hits with Fire Cat, Immolate.
-- Filcher: won 33 time(s) (26 Solo, 7 Team), lost 15. Fastest: Tulkar in 2 rounds, plan "hit now", deck for a boss (Ice), hitting with Ice, Death (most of my fights lately had 2+ enemies), hits with Minor Nova, Banshee.
+- Filcher: won 34 time(s) (27 Solo, 7 Team), lost 15. Fastest: Tulkar in 2 rounds, plan "hit now", deck for a boss (Ice), hitting with Ice, Death (most of my fights lately had 2+ enemies), hits with Minor Nova, Banshee.
 - O'Leary Napper: won 39 time(s) (20 Solo, 19 Team), lost 6. Fastest: Ra in 1 rounds, deck for any fight (many of my fights lately had 2+ enemies), hits with Gearhead Destroyer.
 - Gear Spinner: won 30 time(s) (26 Solo, 4 Team), lost 15. Fastest: Kurrent in 1 rounds, deck for a boss (Myth), hitting with Myth, Fire, Ice; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Storm Shark.
 - Firegut: won 31 time(s) (25 Solo, 6 Team), lost 11. Fastest: Kurrent in 2 rounds, plan "hit now", deck for a boss (Fire), hitting with Fire, Death, Life; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Storm Shark, Thunder Snake.
@@ -43,6 +43,7 @@ What the bots did in Marleybone, from the server log: every quest finished, ever
 - Shrieker: won 2 time(s) (0 Solo, 2 Team), lost 0. Fastest: Tulkar in 9 rounds, deck for a boss (Myth), hitting with Myth, Storm, Fire; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Frost Beetle, Frostbite.
 - Ronin Mutineer: won 2 time(s) (2 Solo, 0 Team), lost 0. Fastest: Garm in 2 rounds, plan "hit now", deck for Myth enemies, hitting with Myth, Storm, Fire (most of my fights lately had 2+ enemies), hits with Dark Sprite, Vampire.
 - Street Sweeper: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Mythis in 6 rounds, plan "hit now", deck for Myth enemies, hitting with Myth, Storm, Death (most of my fights lately had 2+ enemies), hits with Storm Hound, Minor Heroic Hit, Cyclops, Ghoul.
+- Kanago: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Garm in 10 rounds, deck for a boss (Storm), hitting with Storm, Balance, Death (most of my fights lately had 2+ enemies), hits with Poison.
 
 ## Springing the Snitch
 - Finished by Cyndr (9 min).
@@ -2275,6 +2276,16 @@ What the bots did in Marleybone, from the server log: every quest finished, ever
   Deck made for a boss (Balance), hitting with Balance, Storm, Life (most of my fights lately had 2+ enemies).
   Plan: "hit now" (mine and every other bot's).
   Spells that landed the hits: Imp x4, Minor Wrath x2, Nature's Wrath, Banshee.
+- Won by Idunn (Solo) against O'Leary Conniver (rank 5, 675 health, Balance, a boss) on 2026-11-21 at 02:39:22.
+  It took 9 rounds, about 6 minutes.
+  Deck made for a boss (Balance), hitting with Balance, Storm, Life (most of my fights lately had 2+ enemies).
+  Plan: "hit now" (mine and every other bot's).
+  Spells that landed the hits: Minor Wrath x2, Banshee x2, Nature's Wrath, Imp, Elemental Shield, Fairy.
+- Won by Idunn (Solo) against Filcher (rank 5, 675 health, Ice, a boss) on 2026-11-21 at 02:45:15.
+  It took 9 rounds, about 5 minutes.
+  Deck made for a boss (Death), hitting with Fire, Death, Ice (most of my fights lately had 2+ enemies).
+  Plan: "hit now" (mine and every other bot's).
+  Spells that landed the hits: Imp x3, Fairy x2, Nature's Wrath, Banshee.
 - Avoid, fights lost:
   - Gearhead: lost 3 time(s) (Mythis, Tulkar). Why: its biggest hit took 68% of my health. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
   - Midnighter: lost 1 time(s) (Tulkar). Why: I went in at 27% health. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
@@ -2318,6 +2329,7 @@ What the bots did in Marleybone, from the server log: every quest finished, ever
   - Kettlehead: lost 1 time(s) (Idunn). Why: its biggest hit took 67% of my health. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
   - Gearhead: lost 1 time(s) (Idunn). Why: its biggest hit took 75% of my health, the fight ran 5 minutes, so I ran out of good cards. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
   - O'Leary Conniver: lost 1 time(s) (Idunn). Why: I went in at 33% health. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
+  - O'Leary Conniver: lost 1 time(s) (Idunn). Why: I went in at 55% health. Do instead: fight other creatures for XP first, up to the quest's level.
 - Avoid, places bots got stuck:
   - Big Ben near (-9700, 21000) while Talk to Travis Pawman ("Stealthy Stuff"): stuck 94 time(s) (Garm, Idunn); one bot tried every fix there.
   - Big Ben near (-9600, 21100) while Talk to Travis Pawman ("Stealthy Stuff"): stuck 58 time(s) (Garm, Idunn); one bot tried every fix there.
@@ -2583,6 +2595,7 @@ What the bots did in Marleybone, from the server log: every quest finished, ever
 - Finished by Garm (20 min).
 - Finished by Cyndr (29 min).
 - Finished by Idunn (48 min).
+- Finished by Kurrent (59 min).
 - Won by Tulkar (Solo) against Bellows (rank 6, 1,600 health, Storm, a boss) on 2026-11-20 at 04:31:25.
   It took 7 rounds, about 6 minutes.
   Deck made for a boss (Balance), hitting with Balance, Storm, Myth; a rival that keeps beating me, so more shields and heals (most of my fights lately had 2+ enemies).
@@ -2718,6 +2731,10 @@ What the bots did in Marleybone, from the server log: every quest finished, ever
   Deck made for Balance enemies, hitting with Balance, Storm, Ice; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies).
   Plan: "hit now" (mine and every other bot's).
   Spells that landed the hits: Storm Shark, Thunder Snake.
+- Won by Kurrent (Solo) against Bellows (rank 6, 1,600 health, Storm, a boss) on 2026-11-21 at 02:42:28.
+  It took 10 rounds, about 7 minutes.
+  Deck made for a boss (Storm), hitting with Storm, Fire, Death (most of my fights lately had 2+ enemies).
+  Spells that landed the hits: Storm Shark, Vampire, Pixie.
 - Avoid, fights lost:
   - Bellows: lost 1 time(s) (Garm). Why: it simply hit harder than I could heal. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
   - Bellows: lost 1 time(s) (Garm). Why: it simply hit harder than I could heal. Do instead: fight other creatures for XP first, up to the quest's level.
@@ -4385,3 +4402,9 @@ What the bots did in Marleybone, from the server log: every quest finished, ever
   Deck made for Myth enemies, hitting with Myth, Storm, Fire (most of my fights lately had 2+ enemies).
   Plan: "hit now" (mine and every other bot's).
   Spells that landed the hits: Vampire.
+
+## The Final Peace
+- Won by Garm (Solo) against Kanago (rank 6, 1,360 health, Storm, a boss) on 2026-11-21 at 02:42:26.
+  It took 10 rounds, about 7 minutes.
+  Deck made for a boss (Storm), hitting with Storm, Balance, Death (most of my fights lately had 2+ enemies).
+  Spells that landed the hits: Poison x2.
