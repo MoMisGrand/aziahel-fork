@@ -1822,6 +1822,16 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
         if (deepPad is not null) {
             points = [(member.X, member.Y), (toX, toY)];
         }
+        // The step on a piece of our ground map cut apart from his (a drop and a ramp the map does not join): the game's own
+        // walk map's way round, walked as planned (UltimusDirector.NavAcross.cs; the Tower Archives' "ToWizT" teleporter).
+        float[] navHeights = null;
+        if (deepPad is null && !known && NavAcross(member.Zone, member.X, member.Y, member.Z, toX, toY, toZ) is { } across) {
+            points = across.Points;
+            navHeights = across.Heights;
+            if (index == 0) {
+                Think($"My map shows \"{what}\" cut off from where I stand, but the game's own paths go round to it. I follow them.", "navacross|" + what);
+            }
+        }
         // A walk that goes nowhere while the step is far: said once per step, with the spots, so the log shows where the
         // map gives no way (Niduus's log, 2026-11-13: it stood at The Oasis's start for an hour with nothing said).
         // No way: the walk goes nowhere, or the step is on ground walls or water cut off and no known teleporter leads
@@ -1829,7 +1839,7 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
         // south wall under Meowiarty for an hour; Niduus's log, 2026-11-15 23:29).
         var noWay = UltimusPlanner.Far(member.X, member.Y, toX, toY) > 300
                     && (points.Count == 0 || UltimusPlanner.Far(member.X, member.Y, points[^1].X, points[^1].Y) < 60
-                        || (_viaPad is null && OverlayQuestPath.Apart(member.Zone, member.X, member.Y, toX, toY)));
+                        || (navHeights is null && _viaPad is null && OverlayQuestPath.Apart(member.Zone, member.X, member.Y, toX, toY)));
         // No way, but a teleporter on his ground whose landing nobody knows yet: he walks into it to see where it goes, as
         // a player tries the next door (Big Ben's floors past the fifth; Niduus, 2026-11-15: "I think he's stuck in Big Ben").
         // Once it has moved him it is learned, and the way finder chains it with the rest.
@@ -1884,7 +1894,7 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
 
         _sent[index] = (target, DateTime.UtcNow, member.X, member.Y);
         // A walk on the game's own walk map (stairs between floors) is walked as planned: no shortcuts or wobble off its links.
-        var heights = OverlayQuestPath.GameWalkHeights(points);
+        var heights = navHeights is not null && navHeights.Length == points.Count ? navHeights : OverlayQuestPath.GameWalkHeights(points);
         _actors[index].Tell(new UltimusMember.WalkTo(heights is not null ? StopShort(points, target) : Wobble(Smooth(member.Zone, StopShort(points, target))), what,
             heights is not null, heights));
         if (index == 0) {
