@@ -1496,6 +1496,33 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
                 _useNear = (target.Key, DateTime.UtcNow);
             }
 
+            // Nothing offered at this spot for 20 seconds, standing right by it: the spot is written off for now and he goes
+            // on to the step's next spot, as a player walks from one gem to the next (17 of the Kitharas Family stood at
+            // one empty spot of the Hall of Champions for "Get Some Bling" for 7 hours on 2026-11-20, 0 of 4 gemstones,
+            // while the hall has 23 gem spots). When every spot is written off, they all start over (BotCollect.Order).
+            // Before the creatures-by-it check: they chased the Hall Servants by the empty spot and came back to it, again and
+            // again (bots-v82). Only for a step with several spots: a single thing (the Frozen Forge) still has its guards fought.
+            if (everything.Count == 0 && far <= 120 && index == 0
+                && (_emptySpot.Key != target.Key || UltimusPlanner.Far(_emptySpot.X, _emptySpot.Y, target.X, target.Y) > 1)) {
+                _emptySpot = (target.Key, target.X, target.Y, DateTime.UtcNow);
+            }
+
+            if (everything.Count == 0 && far <= 120 && index == 0 && !target.Key.EndsWith("|order", StringComparison.Ordinal) && DateTime.UtcNow - _emptySpot.Since > TimeSpan.FromSeconds(20)
+                && QuestStepSpots.UsageObjects(member.Zone ?? "", target.Quest, target.Goal) is { Count: > 1 }
+                && !BotCollect.HasDone(member.CharId, target.Quest, target.Goal, target.X, target.Y)) {
+                // For the whole group: the planner sends them to a spot any of them still has open.
+                foreach (var holder in group) {
+                    BotCollect.SpotDone(holder.CharId, target.Quest, target.Goal, target.X, target.Y);
+                }
+
+                Note(member.Role, $"{member.Name} finds nothing to use at this spot for {target.What}: on to the next spot.");
+                Think($"There is nothing to use here for \"{target.What}\" right now. It can be at another of the step's spots, " +
+                      "so I go on to the next one, as a player would.", "emptyspot|" + target.Key);
+                _target = null;
+
+                return;
+            }
+
             if (everything.Count == 0 && index == 0 && far <= 300 && DateTime.UtcNow - _useNear.Since > TimeSpan.FromSeconds(10)
                 && UseNeedsFight(member, target, "the game offers nothing to click there yet")) {
                 return;
@@ -1555,30 +1582,6 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
                     Note(member.Role, $"{member.Name} picked up what was at the quest arrow's spot for {target.What}: looks around the area for more.");
                     Think("I used what was here, but the step wants more. I look around the area for more to pick up, as a player would.",
                         "search|" + target.Key);
-
-                    return;
-                }
-
-                // Nothing offered at this spot for 20 seconds, standing right by it: the spot is written off for now and he goes
-                // on to the step's next spot, as a player walks from one gem to the next (17 of the Kitharas Family stood at
-                // one empty spot of the Hall of Champions for "Get Some Bling" for 7 hours on 2026-11-20, 0 of 4 gemstones,
-                // while the hall has 23 gem spots). When every spot is written off, they all start over (BotCollect.Order).
-                if (everything.Count == 0 && far <= 120 && index == 0
-                    && (_emptySpot.Key != target.Key || UltimusPlanner.Far(_emptySpot.X, _emptySpot.Y, target.X, target.Y) > 1)) {
-                    _emptySpot = (target.Key, target.X, target.Y, DateTime.UtcNow);
-                }
-
-                if (everything.Count == 0 && far <= 120 && index == 0 && !target.Key.EndsWith("|order", StringComparison.Ordinal) && DateTime.UtcNow - _emptySpot.Since > TimeSpan.FromSeconds(20)
-                    && !BotCollect.HasDone(member.CharId, target.Quest, target.Goal, target.X, target.Y)) {
-                    // For the whole group: the planner sends them to a spot any of them still has open.
-                    foreach (var holder in group) {
-                        BotCollect.SpotDone(holder.CharId, target.Quest, target.Goal, target.X, target.Y);
-                    }
-
-                    Note(member.Role, $"{member.Name} finds nothing to use at this spot for {target.What}: on to the next spot.");
-                    Think($"There is nothing to use here for \"{target.What}\" right now. It can be at another of the step's spots, " +
-                          "so I go on to the next one, as a player would.", "emptyspot|" + target.Key);
-                    _target = null;
 
                     return;
                 }
