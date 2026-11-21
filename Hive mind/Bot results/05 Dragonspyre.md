@@ -7,11 +7,12 @@ What the bots did in Dragonspyre, from the server log: every quest finished, eve
 - Zarathax: won 1 time(s) (1 Solo, 0 Team), lost 3. Fastest: Ultimus in 24 rounds, deck for a boss (Balance), hitting with Balance, Fire, Death; a rival that outlasts me, so more hits and blades to end it sooner (many of my fights lately had 2+ enemies), hits with Balance, Elemental Shield, Fairy, Helping Hands.
 - Silver Servant: won 1 time(s) (1 Solo, 0 Team), lost 1. Fastest: Ultimus in 6 rounds, deck for Balance enemies, hitting with Balance, Myth, Death (most of my fights lately had 2+ enemies), hits with Balance, Banshee.
 - Mavra Flamewing: won 1 time(s) (1 Solo, 0 Team), lost 1. Fastest: Ultimus in 15 rounds, deck for a boss (Storm), hitting with Storm, Fire, Ice (many of my fights lately had 2+ enemies), hits with Balance, Helping Hands, Sandstorm, Vampire.
+- Loathsome Creeper: won 2 time(s) (2 Solo, 0 Team), lost 0. Fastest: Ra in 6 rounds, plan "hit now", deck for Death enemies, hitting with Death, Fire, Myth, hits with Gearhead Destroyer, Elemental Golem, Scarab.
 - Wandering Wizard: won 2 time(s) (2 Solo, 0 Team), lost 0. Fastest: Ultimus in 2 rounds, deck for Life enemies, hitting with Life, Fire, Storm (most of my fights lately had 2+ enemies).
 - Burning Hate: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 10 rounds, deck for any fight (many of my fights lately had 2+ enemies), hits with Gearhead Destroyer, Locust Swarm.
 - Irate Banshee: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 12 rounds, plan "hit now", deck for Fire enemies, hitting with Fire, Death, Myth (most of my fights lately had 2+ enemies), hits with Minor Crusade, Scarab, Gearhead Destroyer, Fairy.
 - Beghastion Crowcaller: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 5 rounds, deck for Death enemies, hitting with Death, Ice, Storm (many of my fights lately had 2+ enemies), hits with Helping Hands, Spirit Shield, Gearhead Destroyer.
-- Loathsome Creeper: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 10 rounds, plan "hit now", deck for Death enemies, hitting with Death, Fire, Myth (many of my fights lately had 2+ enemies), hits with Minor Crusade, Gearhead Destroyer, Scarab, Helping Hands.
+- Earth Elemental: never beaten yet, lost 1 time(s). Most common reason: the fight ran 21 minutes, so I ran out of good cards.
 - Sysiphan: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 23 rounds, deck for a boss (Ice), hitting with Ice, Fire, Death (many of my fights lately had 2+ enemies), hits with Helping Hands, Scarab, Elemental Shield, Fairy.
 
 ## Wizard and Crystal
@@ -320,6 +321,10 @@ What the bots did in Dragonspyre, from the server log: every quest finished, eve
 - Avoid, fights lost:
   - Mavra Flamewing: lost 1 time(s) (Ultimus). Why: its biggest hit took 75% of my health, the fight ran 7 minutes, so I ran out of good cards. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
 
+## No Weaklings Allowed
+- Avoid, fights lost:
+  - Earth Elemental: lost 1 time(s) (Ultimus). Why: the fight ran 21 minutes, so I ran out of good cards. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
+
 ## The Towering Crystal
 - Finished by Ultimus (16 min).
 - Avoid, places bots got stuck:
@@ -327,23 +332,33 @@ What the bots did in Dragonspyre, from the server log: every quest finished, eve
 
 ## Bad Blood
 - Finished by Ultimus (12 min).
+- Finished by Ra (14 min).
 
 ## Crystal-Matic
 - Finished by Ultimus (3 s).
+- Finished by Ra (3 s).
 
 ## Holger's Crystals
 - Finished by Ultimus (11 s).
+- Finished by Ra (11 s).
 
 ## Stone Tower Pilot
 - Finished by Ultimus (33 s).
+- Finished by Ra (34 s).
 
 ## The Crystal Towers
 - Finished by Ultimus (6 min).
+- Finished by Ra (4 min).
 - Won by Ultimus (Solo) against Loathsome Creeper (rank 6, 695 health, Death) on 2026-11-20 at 07:36:15.
   It took 10 rounds, about 6 minutes.
   Deck made for Death enemies, hitting with Death, Fire, Myth (many of my fights lately had 2+ enemies).
   Plan: "hit now" (mine and every other bot's).
   Spells that landed the hits: Minor Crusade x3, Gearhead Destroyer, Scarab, Helping Hands, Elemental Golem, Ice Hound.
+- Won by Ra (Solo) against Loathsome Creeper (rank 6, 695 health, Death) on 2026-11-21 at 09:10:49.
+  It took 6 rounds, about 3 minutes.
+  Deck made for Death enemies, hitting with Death, Fire, Myth.
+  Plan: "hit now" (mine and every other bot's).
+  Spells that landed the hits: Gearhead Destroyer, Elemental Golem, Scarab.
 
 ## Friend of My Friend
 - Finished by Ultimus (17 min).
