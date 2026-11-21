@@ -17,13 +17,13 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Imitsu Defouler: won 5 time(s) (5 Solo, 0 Team), lost 0. Fastest: Ultimus in 6 rounds, deck for Myth enemies, hitting with Myth, Storm, Fire (most of my fights lately had 2+ enemies), hits with Gearhead Destroyer, Minor Crusade.
 - Tortured Kakeda Soul: won 5 time(s) (5 Solo, 0 Team), lost 0. Fastest: Ultimus in 5 rounds, deck for Death enemies, hitting with Death, Fire, Myth (most of my fights lately had 2+ enemies), hits with Sandstorm, Minor Crusade, Gearhead Destroyer.
 - Kakeda Spirit Slave: won 5 time(s) (5 Solo, 0 Team), lost 0. Fastest: Ultimus in 5 rounds, deck for Death enemies, hitting with Death, Fire, Myth (most of my fights lately had 2+ enemies), hits with Sandstorm, Scarab, Locust Swarm.
+- Grum Foultooth: won 4 time(s) (4 Solo, 0 Team), lost 0. Fastest: Garm in 5 rounds, deck for a boss (Myth), hitting with Myth, Storm, Fire (many of my fights lately had 2+ enemies), hits with Poison, Sunbird.
 - Yochimo: won 4 time(s) (4 Solo, 0 Team), lost 0. Fastest: Cyndr in 1 rounds, deck for a boss (Storm), hitting with Storm, Life, Death (most of my fights lately had 2+ enemies), hits with Immolate.
 - Koto: won 2 time(s) (2 Solo, 0 Team), lost 1. Fastest: Ra in 11 rounds, plan "hit now", deck for a boss (Ice), hitting with Ice, Balance, Fire (many of my fights lately had 2+ enemies), hits with Balance, Gearhead Destroyer, Scarab, Sandstorm.
 - Kanago: won 2 time(s) (2 Solo, 0 Team), lost 1. Fastest: Ultimus in 10 rounds, plan "hit now", deck for a boss (Storm), hitting with Storm, Balance, Death (most of my fights lately had 2+ enemies), hits with Minor Crusade, Scarab, Sandstorm, Gearhead Destroyer.
 - Jade Oni: won 1 time(s) (1 Solo, 0 Team), lost 2. Fastest: Ultimus in 40 rounds, deck for a boss (Life), hitting with Life, Fire, Storm; a rival that outlasts me, so more hits and blades to end it sooner (many of my fights lately had 2+ enemies), hits with Helping Hands, Fairy, Spirit Shield, Vampire.
 - Otomo Grappler: won 3 time(s) (3 Solo, 0 Team), lost 0. Fastest: Ra in 8 rounds, deck for Balance enemies, hitting with Balance, Death, Ice (many of my fights lately had 2+ enemies), hits with Balance, Storm Hound, Sandstorm, Ghoul.
 - Katsumori: won 3 time(s) (3 Solo, 0 Team), lost 0. Fastest: Garm in 10 rounds, plan "hit now", deck for a boss (Fire), hitting with Fire, Myth (many of my fights lately had 2+ enemies), hits with Poison, Dark Sprite, Storm Hound, Ice Hound.
-- Grum Foultooth: won 3 time(s) (3 Solo, 0 Team), lost 0. Fastest: Garm in 5 rounds, deck for a boss (Myth), hitting with Myth, Storm, Fire (many of my fights lately had 2+ enemies), hits with Poison, Sunbird.
 - Ronin Mutineer: won 3 time(s) (3 Solo, 0 Team), lost 0. Fastest: Ra in 6 rounds, plan "hit now", deck for Myth enemies, hitting with Myth, Storm, Fire (most of my fights lately had 2+ enemies), hits with Scarab, Minor Crusade, Sandstorm, Locust Swarm.
 - Cursed Ronin: won 3 time(s) (3 Solo, 0 Team), lost 0. Fastest: Ultimus in 7 rounds, deck for Myth enemies, hitting with Myth, Storm, Fire (many of my fights lately had 2+ enemies), hits with Minor Crusade, Gearhead Destroyer.
 - Imitsu Retainer: won 1 time(s) (1 Solo, 0 Team), lost 1. Fastest: Ultimus in 11 rounds, deck for Balance enemies, hitting with Balance, Death, Ice (most of my fights lately had 2+ enemies), hits with Balance, Banshee, Sandstorm, Fairy.
@@ -476,29 +476,32 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Finished by Ultimus (80 s).
 - Finished by Ra (81 s).
 - Finished by Garm (78 s).
+- Finished by Cyndr (83 s).
 - Avoid, places bots got stuck:
-  - Crimson Fields near (-5900, 21800) while Talk to Rikugun Mikawa ("is a Good Defense"): stuck 3 time(s) (Garm, Ra, Ultimus).
+  - Crimson Fields near (-5900, 21800) while Talk to Rikugun Mikawa ("is a Good Defense"): stuck 4 time(s) (Cyndr, Garm, Ra, Ultimus).
 
 ## Scouring for Scouts
 - Finished by Ultimus (2 min).
 - Finished by Ra (2 min).
 - Finished by Garm (2 min).
+- Finished by Cyndr (2 min).
 - Avoid, places bots got stuck:
-  - Crimson Fields near (-5900, 21900) while Talk to Rikugun Mikawa ("Scouring for Scouts"): stuck 3 time(s) (Garm, Ra, Ultimus).
+  - Crimson Fields near (-5900, 21900) while Talk to Rikugun Mikawa ("Scouring for Scouts"): stuck 4 time(s) (Cyndr, Garm, Ra, Ultimus).
 
 ## A Soldier's Duty
 - Finished by Ultimus (61 s).
 - Finished by Ra (61 s).
 - Finished by Garm (61 s).
+- Finished by Cyndr (60 s).
 - Avoid, places bots got stuck:
-  - Crimson Fields near (-5900, 21900) while Talk to Rikugun Mikawa ("A Soldier's Duty"): stuck 6 time(s) (Garm, Ra, Ultimus); one bot tried every fix there.
+  - Crimson Fields near (-5900, 21900) while Talk to Rikugun Mikawa ("A Soldier's Duty"): stuck 8 time(s) (Cyndr, Garm, Ra, Ultimus); one bot tried every fix there.
 
 ## Passing Stones
 - Finished by Ultimus (3 min).
 - Finished by Ra (3 min).
 - Finished by Garm (2 min).
 - Avoid, places bots got stuck:
-  - Crimson Fields near (-10200, 20800) while Talk to Bricktop ("Passing Stones"): stuck 3 time(s) (Garm, Ra, Ultimus).
+  - Crimson Fields near (-10200, 20800) while Talk to Bricktop ("Passing Stones"): stuck 4 time(s) (Cyndr, Garm, Ra, Ultimus).
   - Crimson Fields near (-10200, 20900) while Talk to Bricktop ("Passing Stones"): stuck 2 time(s) (Ra, Ultimus).
 
 ## Battle of Evermore
@@ -644,6 +647,7 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Finished by Ultimus (8 min).
 - Finished by Ra (10 min).
 - Finished by Garm (4 min).
+- Finished by Cyndr (9 min).
 - Won by Ultimus (Solo) against Grum Foultooth (rank 6, 1,240 health, Myth, a boss) on 2026-11-19 at 16:05:39.
   It took 10 rounds, about 5 minutes.
   Deck made for a boss (Myth), hitting with Myth, Storm, Fire (many of my fights lately had 2+ enemies).
@@ -657,6 +661,11 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
   It took 5 rounds, about 3 minutes.
   Deck made for a boss (Myth), hitting with Myth, Storm, Fire (many of my fights lately had 2+ enemies).
   Spells that landed the hits: Poison, Sunbird.
+- Won by Cyndr (Solo) against Grum Foultooth (rank 6, 1,240 health, Myth, a boss) on 2026-11-21 at 00:29:16.
+  It took 12 rounds, about 6 minutes.
+  Deck made for a boss (Myth), hitting with Myth, Storm, Fire (most of my fights lately had 2+ enemies).
+  Plan: "hit now" (mine and every other bot's).
+  Spells that landed the hits: Scald x2, Immolate, Dream Shield, Pixie, Elemental Shield, Seraph.
 
 ## Sword of Omens
 - Finished by Ultimus (27 s).
@@ -676,6 +685,7 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 ## No Disassemble
 - Finished by Ultimus (6 min).
 - Finished by Ra (11 min).
+- Finished by Garm (12 min).
 - Won by Ultimus (Solo) against Ronin Mutineer (rank 5, 675 health, Myth) on 2026-11-19 at 17:20:35.
   It took 9 rounds, about 5 minutes.
   Deck made for any fight (many of my fights lately had 2+ enemies).
@@ -814,6 +824,7 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 
 ## Worthy Acts
 - Finished by Ultimus (7 min).
+- Finished by Ra (15 min).
 - Won by Ultimus (Solo) against Kyuto (rank 6, 1,440 health, Ice, a boss) on 2026-11-19 at 20:29:17.
   It took 17 rounds, about 8 minutes.
   Deck made for a boss (Ice), hitting with Ice, Balance, Fire (many of my fights lately had 2+ enemies).
@@ -827,9 +838,11 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 
 ## Air Apparent
 - Finished by Ultimus (88 s).
+- Finished by Ra (2 min).
 
 ## The Stuff of Epics
 - Finished by Ultimus (28 s).
+- Finished by Ra (32 s).
 
 ## River Temple
 - Finished by Ultimus (5 min, 8 min).
@@ -989,21 +1002,26 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Finished by Ra (7 s).
 - Finished by Garm (7 s).
 - Finished by Cyndr (7 s).
+- Finished by Tulkar (7 s).
+- Finished by Mythis (7 s).
 
 ## Welcome to MooShu?
 - Finished by Ra (37 s).
 - Finished by Garm (37 s).
 - Finished by Cyndr (39 s).
+- Finished by Tulkar (37 s).
 
 ## Mind Games
 - Finished by Ra (25 s).
 - Finished by Garm (24 s).
 - Finished by Cyndr (25 s).
+- Finished by Tulkar (26 s).
 
 ## Do You Mind?
 - Finished by Ra (65 s).
 - Finished by Garm (69 s).
 - Finished by Cyndr (68 s).
+- Finished by Tulkar (67 s).
 
 ## A Test of Strength
 - Finished by Ra (3 min).
