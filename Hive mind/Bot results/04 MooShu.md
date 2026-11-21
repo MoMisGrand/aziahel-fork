@@ -7,7 +7,7 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Otomo Courier: won 8 time(s) (6 Solo, 2 Team), lost 21. Fastest: Ultimus in 5 rounds, deck for a boss (Ice), hitting with Ice, Fire; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Sandstorm, Balance, Fairy.
 - Maito: won 6 time(s) (6 Solo, 0 Team), lost 17. Fastest: Cyndr in 3 rounds, plan "hit now", deck for a boss (Ice), hitting with Ice, Fire, Life; a rival that outlasts me, so more hits and blades to end it sooner (many of my fights lately had 2+ enemies), hits with Sunbird, Immolate.
 - Imitsu Defouler: won 23 time(s) (23 Solo, 0 Team), lost 0. Fastest: Cyndr in 4 rounds, plan "hit now", deck for Myth enemies, hitting with Myth, Storm, Fire (most of my fights lately had 2+ enemies), hits with Immolate.
-- War Oni: won 6 time(s) (4 Solo, 2 Team), lost 14. Fastest: Cyndr in 7 rounds, deck for a boss (Fire), hitting with Fire, Myth; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Banshee, Heck Hound.
+- War Oni: won 6 time(s) (4 Solo, 2 Team), lost 17. Fastest: Cyndr in 7 rounds, deck for a boss (Fire), hitting with Fire, Myth; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Banshee, Heck Hound.
 - Otomo Supply Runner: won 14 time(s) (12 Solo, 2 Team), lost 4. Fastest: Ultimus in 4 rounds, deck for Fire enemies, hitting with Fire, Death, Myth (most of my fights lately had 2+ enemies), hits with Gearhead Destroyer, Locust Swarm.
 - Haru: won 15 time(s) (15 Solo, 0 Team), lost 1. Fastest: Cyndr in 5 rounds, deck for a boss (Myth), hitting with Myth, Balance, Storm (most of my fights lately had 2+ enemies).
 - Sanzoku Outlaw: won 14 time(s) (10 Solo, 4 Team), lost 1. Fastest: Cyndr in 3 rounds, plan "hit now", deck for Balance enemies, hitting with Balance, Ice, Death; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Sunbird, Immolate.
@@ -933,9 +933,9 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
   - War Oni: lost 1 time(s) (Mythis). Why: its biggest hit took 65% of my health. Do instead: look for better gear in this world's shops and the Bazaar, then try again.
   - War Oni: lost 1 time(s) (Mythis). Why: its biggest hit took 65% of my health, the fight ran 6 minutes, so I ran out of good cards. Do instead: look for better gear in this world's shops and the Bazaar, then try again.
   - Katsumori: lost 1 time(s) (Kurrent). Why: its biggest hit took 68% of my health, the fight ran 8 minutes, so I ran out of good cards. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
-  - War Oni: lost 1 time(s) (Kurrent). Why: its biggest hit took 76% of my health. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
-  - War Oni: lost 1 time(s) (Kurrent). Why: its biggest hit took 76% of my health. Do instead: fight other creatures for XP first, up to the quest's level.
-  - War Oni: lost 1 time(s) (Kurrent). Why: its biggest hit took 76% of my health. Do instead: look for better gear in this world's shops and the Bazaar, then try again.
+  - War Oni: lost 2 time(s) (Kurrent). Why: its biggest hit took 76% of my health. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
+  - War Oni: lost 2 time(s) (Kurrent). Why: its biggest hit took 76% of my health. Do instead: fight other creatures for XP first, up to the quest's level.
+  - War Oni: lost 2 time(s) (Kurrent). Why: its biggest hit took 76% of my health. Do instead: look for better gear in this world's shops and the Bazaar, then try again.
   - Katsumori: lost 1 time(s) (Kurrent). Why: its biggest hit took 68% of my health. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
 - Avoid, places bots got stuck:
   - Crimson Fields near (-3700, 17100) while resting while "Clear 5 Otomo Spotter or Otomo Soldier (where they spawn)" waits: stuck 1 time(s) (Cyndr).
@@ -1036,6 +1036,7 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Finished by Garm (19 min).
 - Finished by Cyndr (7 min).
 - Finished by Tulkar (6 min).
+- Finished by Mythis (19 min).
 - Won by Ultimus (Solo) against Aiuchi (rank 6, 1,280 health, Fire, a boss) on 2026-11-19 at 19:14:30.
   It took 4 rounds, about 2 minutes.
   Deck made for a boss (Fire), hitting with Fire, Balance, Death (many of my fights lately had 2+ enemies).
@@ -1862,6 +1863,7 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Finished by Garm (10 s).
 - Finished by Cyndr (9 s).
 - Finished by Tulkar (11 s).
+- Finished by Mythis (10 s).
 
 ## Beauty is Shrine Deep
 - Finished by Ultimus (50 s).
@@ -1869,6 +1871,7 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Finished by Garm (50 s).
 - Finished by Cyndr (49 s).
 - Finished by Tulkar (62 s).
+- Finished by Mythis (50 s).
 
 ## A Good Guardian
 - Finished by Ultimus (22 s).
@@ -1876,6 +1879,7 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Finished by Garm (23 s).
 - Finished by Cyndr (23 s).
 - Finished by Tulkar (23 s).
+- Finished by Mythis (24 s).
 
 ## ...is Hard to Find
 - Finished by Ultimus (20 s).
@@ -1883,6 +1887,7 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Finished by Garm (20 s).
 - Finished by Cyndr (20 s).
 - Finished by Tulkar (20 s).
+- Finished by Mythis (20 s).
 
 ## For the Emperor!
 - Finished by Ultimus (9 min).
