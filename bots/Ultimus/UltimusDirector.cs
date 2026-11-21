@@ -1754,7 +1754,7 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
         var avoid = seek ? null : CreaturesToAvoid(member, target);
         var near = avoid?.Select(c => (c.X, c.Y, Far: UltimusPlanner.Far(member.X, member.Y, c.X, c.Y))).OrderBy(c => c.Far).FirstOrDefault();
         var replanSoon = near is { Far: < MOB_WATCH } && DateTime.UtcNow - _sent.GetValueOrDefault(index).At > TimeSpan.FromSeconds(2);
-        if (near is { Far: < MOB_TOO_CLOSE and > 1 } close && DateTime.UtcNow - _sent.GetValueOrDefault(index).At > TimeSpan.FromSeconds(1.5)) {
+        if (near is { Far: < MOB_TOO_CLOSE and > 1 } close && DateTime.UtcNow - _sent.GetValueOrDefault(index).At > TimeSpan.FromSeconds(1)) {
             var away = (X: member.X + ((member.X - close.X) / close.Far * MOB_STEP_BACK), Y: member.Y + ((member.Y - close.Y) / close.Far * MOB_STEP_BACK));
             var back = OverlayQuestPath.Walk(member.CharId, member.Zone, member.X, member.Y, away.X, away.Y, body: true, avoid: avoid);
             _sent[index] = (null, DateTime.UtcNow, member.X, member.Y);
@@ -1979,7 +1979,8 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
     }
 
     private const float MOB_WATCH = 450f;
-    private const float MOB_TOO_CLOSE = 240f;
+    // A creature starts a battle within about 175; 240 left too little room for a patrol walking his way (2026-11-21).
+    private const float MOB_TOO_CLOSE = 300f;
     private const float MOB_STEP_BACK = 260f;
     private DateTime _mobDodgeSaid = DateTime.MinValue;
 

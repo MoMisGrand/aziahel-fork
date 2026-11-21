@@ -17,6 +17,7 @@
  */
 
 using System;
+using Akka.Actor;
 using System.Collections.Generic;
 using System.Linq;
 using Imlight.CoreLib.Game.BotShared;
@@ -339,8 +340,34 @@ internal sealed partial class UltimusDirectorActor {
     // How far ahead on the walk a creature crossing it is waited for, how near the walk counts, and the longest wait.
     private const float GAP_AHEAD = 700f;
     private const float GAP_NEAR = 200f;
-    private static readonly TimeSpan s_gapMost = TimeSpan.FromSeconds(8);
+    private static readonly TimeSpan s_gapMost = TimeSpan.FromSeconds(15);
+    private static readonly TimeSpan s_gapRest = TimeSpan.FromSeconds(25);
     private (string Key, DateTime Since, DateTime Done)? _gapWait;
+
+    // While he waits: a crossing creature this near is backed away from, not stood in front of. Standing still on its way he
+    // was caught 3 to 6 seconds into the wait, four times on 2026-11-21 (a creature walking his way walks into him).
+    private const float GAP_HOLD = 450f;
+    private DateTime _gapBackAt;
+
+    private void HoldForGap(UltimusMember.Status member, List<(float X, float Y)> crossing) {
+        var nearest = crossing.Select(c => (c.X, c.Y, Far: UltimusPlanner.Far(member.X, member.Y, c.X, c.Y))).OrderBy(c => c.Far).FirstOrDefault();
+        if (crossing.Count == 0 || nearest.Far >= GAP_HOLD || nearest.Far < 1) {
+            StopWalking(0);
+            return;
+        }
+
+        if (DateTime.UtcNow - _gapBackAt < TimeSpan.FromSeconds(1.2)) {
+            return;
+        }
+
+        _gapBackAt = DateTime.UtcNow;
+        var away = (X: member.X + ((member.X - nearest.X) / nearest.Far * MOB_STEP_BACK), Y: member.Y + ((member.Y - nearest.Y) / nearest.Far * MOB_STEP_BACK));
+        var back = Imlight.CoreLib.Game.Tools.OverlayQuestPath.Walk(member.CharId, member.Zone, member.X, member.Y, away.X, away.Y, body: true, avoid: crossing);
+        _sent.Remove(0);
+        _actors[0].Tell(new UltimusMember.WalkTo(back, "backs away from a creature crossing its way while it waits"));
+        Think($"The creature on my way is {nearest.Far:0} away and could walk into me: I back away while I wait, as a player keeps out of a patrol's reach.",
+            "gap-back|" + (int) (nearest.X / 300) + "|" + (int) (nearest.Y / 300));
+    }
 
     /// <summary>
     /// A creature he does not need is on the walk just ahead (the way finder found no way round it): true while he waits
@@ -392,20 +419,21 @@ internal sealed partial class UltimusDirectorActor {
         if (_gapWait is not { } wait || wait.Key != key) {
             _gapWait = (key, DateTime.UtcNow, DateTime.MaxValue);
             Think($"A creature I don't need is walking across my way to \"{target.What}\" just ahead, and there is no way round it: " +
-                  "I wait a few seconds for it to walk on instead of walking into its battle.", "gap|" + key);
-            StopWalking(0);
+                  "I wait for it to walk on, out of its reach, instead of walking into its battle.", "gap|" + key);
+            HoldForGap(member, crossing);
 
             return true;
         }
 
         if (DateTime.UtcNow - wait.Since < s_gapMost) {
-            StopWalking(0);
+            HoldForGap(member, crossing);
             return true;
         }
 
         // Waited long enough (it stands there, or walks back and forth on the way): he goes, and does not wait again for
-        // this step for a while.
-        _gapWait = (key, wait.Since, DateTime.UtcNow + TimeSpan.FromMinutes(2));
+        // this step for a short while. It was 2 minutes, and on a long walk (the Tower Archives, 2026-11-21) every creature
+        // after the first then went unwatched: 16 battles he did not need in 3 hours.
+        _gapWait = (key, wait.Since, DateTime.UtcNow + s_gapRest);
         Think("It is still in my way after a few seconds: I go on and take the battle if it comes.", "gap-go|" + key);
 
         return false;
