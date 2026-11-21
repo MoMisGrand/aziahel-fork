@@ -1,0 +1,4 @@
+Fixed: Bots pull a puzzle piece twice and restart a lost room fight
+A puzzle piece that needs two pulls in a row, like the third brazier by the Frost door in The Vault of Ice, offers nothing after the first pull until a wizard walks out of reach and back. Bots now take a few steps back and come in again instead of standing on it. After losing a room's fight and coming back by Dungeon Recall, the room's creatures start nothing when walked into, so bots now step on the room's battle circle again, as a player does. This kept TCO7 and the Kitharas Family stuck at Big Ben's shut doors and the Vault of Ice's Frost door.
+Where: Krokotopia, The Vault of Ice; Marleybone, Big Ben; every dungeon with battle circles.
+Test: In The Vault of Ice, watch a bot set the braziers Fire, Ice, Storm and the Frost door open; in Big Ben, let a bot lose a room fight and see it step back on the circle after Dungeon Recall.

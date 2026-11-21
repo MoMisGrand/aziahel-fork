@@ -45,6 +45,9 @@ internal sealed partial class UltimusDirectorActor {
     private string _floorZone = "";
     // The spot he stands on now (stepped on once); he steps off before stepping on it again.
     private string _floorOn;
+    // Pieces he has pulled in this copy, and the one he is stepping back from to have it offered again (StepOutFrom).
+    private readonly HashSet<string> _floorPulled = new(StringComparer.Ordinal);
+    private string _floorOut;
 
     // Floor teleporters walked to for a step with no way on the map, and when (each one tried again only after a while).
     private readonly Dictionary<string, DateTime> _padAheadAt = new(StringComparer.OrdinalIgnoreCase);
@@ -166,7 +169,9 @@ internal sealed partial class UltimusDirectorActor {
         if (zoneKey != _floorZone) {
             _floorZone = zoneKey;
             _floorTries.Clear();
+            _floorPulled.Clear();
             _floorOn = null;
+            _floorOut = null;
         }
 
         var book = BotFloors.BookOf(leader.Zone);
@@ -238,6 +243,15 @@ internal sealed partial class UltimusDirectorActor {
                 : $"This floor first, as a player plays it: {duty.What}, because {duty.Why}. The teleporter on can wait until the floor is done.",
             "floor|" + duty.Key);
 
+        // Stepping back from a piece he pulled, until he is out of its reach; then he walks in again and it is offered anew.
+        if (_floorOut is not null && (_floorOut != duty.Key || far >= STEP_OUT)) {
+            _floorOut = null;
+        }
+
+        if (_floorOut == duty.Key && StepOutFrom(leader, duty, live) is { } back) {
+            return back;
+        }
+
         switch (duty.Kind) {
             case BotFloors.FIGHT: {
                 var foe = BotUseGuards.Near(leader.ZoneActor, duty.X, duty.Y)
@@ -257,6 +271,7 @@ internal sealed partial class UltimusDirectorActor {
                     Clicked("floor|" + duty.Key);
                     _floorTries[duty.Key] = _floorTries.GetValueOrDefault(duty.Key) + 1;
                     Note("Ultimus", $"{leader.Name} pulls {duty.What}: {duty.Why}.", UltimusLink.NOTABLE);
+                    _floorPulled.Add(duty.Key);
                     _actors[0].Tell(new UltimusMember.Interact(lever, "Interact", 0, duty.What));
                 }
                 else if (lever == 0 && CanClick("floor|" + duty.Key + "|none")) {
@@ -268,6 +283,15 @@ internal sealed partial class UltimusDirectorActor {
                 // Nothing to pull: a piece like Katzenstein's Lab's plaques turns when a wizard walks onto it, so he steps right
                 // onto it instead of standing beside it (the Calling of 7, 2026-11-20: the plaques never offered a click, and
                 // turned only when a bot happened to walk over one).
+                // A piece he pulled already and that needs another pull offers nothing while he stands by it: the game gives its
+                // pull again when a wizard comes back into reach. Kitharas Lamia, The Vault of Ice, 2026-11-20 20:47-20:48:
+                // Brazier3 went Fire to Ice, then offered nothing for 30 seconds until she walked off and back, and the Frost
+                // door opened on the next pull; AlchemiZist stood on it at 21:34, gave up, and sat at the shut door 10 minutes.
+                if (lever == 0 && _floorPulled.Contains(duty.Key) && StepOutFrom(leader, duty, live) is { } stepOut) {
+                    _floorOut = duty.Key;
+                    return stepOut;
+                }
+
                 if (lever == 0) {
                     return new UltimusPlanner.Target(UltimusPlanner.SPOT, duty.X, duty.Y, $"onto {duty.What} (it turns when stepped on)", Key: "floor|" + duty.Key + "|onto");
                 }
@@ -319,4 +343,28 @@ internal sealed partial class UltimusDirectorActor {
         return new UltimusPlanner.Target(UltimusPlanner.SPOT, duty.X, duty.Y, $"onto {duty.What}", Key: "floor|" + duty.Key);
     }
 
+
+    // How far he steps back from a pulled piece to be out of its reach (a pull is offered within about 220).
+    private const float STEP_OUT = 320f;
+
+    /// <summary>
+    /// A spot out of a pulled piece's reach, on his own ground: away on his own side of it first, then the other ways round.
+    /// </summary>
+    private UltimusPlanner.Target StepOutFrom(UltimusMember.Status leader, BotFloors.Duty duty, BotFloors.Live live) {
+        var dx = leader.X - duty.X;
+        var dy = leader.Y - duty.Y;
+        var len = MathF.Sqrt((dx * dx) + (dy * dy));
+        var start = len < 30 ? MathF.PI : MathF.Atan2(dy, dx);
+        for (var i = 0; i < 8; i++) {
+            var a = start + (i % 2 == 0 ? 1 : -1) * ((i + 1) / 2) * (MathF.PI / 4);
+            var x = duty.X + (MathF.Cos(a) * (STEP_OUT + 40));
+            var y = duty.Y + (MathF.Sin(a) * (STEP_OUT + 40));
+            if (live?.SameGround is null || live.SameGround(x, y)) {
+                return new UltimusPlanner.Target(UltimusPlanner.SPOT, x, y,
+                    $"a few steps back from {duty.What} (it offers its pull again when I come back in reach)", Key: "floor|" + duty.Key + "|out");
+            }
+        }
+
+        return null;
+    }
 }
