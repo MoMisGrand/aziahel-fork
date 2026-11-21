@@ -43,6 +43,7 @@ using Imlight.CoreLib.Shared.Networking;
 using Imlight.CoreLib.Shared.Packets;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Imlight.CoreLib.Game.World;
 
@@ -133,6 +134,18 @@ internal sealed class InstanceContainer(ulong instanceOwnerId, bool removeWhenEm
                 if (!string.Equals(name, message.ZoneName, StringComparison.OrdinalIgnoreCase)) {
                     room.Tell(new ZONE_102_PROTOCOL.MSG_INSTANCEIDLEEXPIRE { Force = true }, Self);
                 }
+            }
+
+            // The dungeon's own quests start over with the fresh rooms. Before, the last run's steps stayed with this
+            // container (it lives as long as its owner), so a fresh copy handed them straight back while its doors were
+            // shut again: Cyndr's fresh Shirataki Temple at 5:43 AM on 2026-11-21 gave him River Temple's gate key step
+            // as done, and the lever that needs that step done in this copy never offered itself (stuck 30+ minutes).
+            // Also when the room was already closed for being empty, as it was then.
+            var quests = WizardData.Collections.DungeonQuestIndex.GetQuestsForZones([message.ZoneName])
+                .Select(q => (string) q.m_questName).ToList();
+            if (quests.Count > 0 && _questProgress.ForgetQuests(quests) > 0) {
+                Logger.Information("Fresh run of {0} (owner {1}): its quests start over ({2}).",
+                    Logger.Args(message.ZoneName, _instanceOwnerId, string.Join(", ", quests)));
             }
         }
 

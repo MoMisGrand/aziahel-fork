@@ -49,6 +49,34 @@ public sealed class InstanceQuestProgress {
         }
     }
 
+    /// <summary>
+    /// A fresh run of a dungeon: what the last run did on these quests is forgotten, so they start from their first step
+    /// in the fresh rooms. Returns how many quests had something to forget.
+    /// </summary>
+    public int ForgetQuests(IEnumerable<string> questNames) {
+        var forgotten = 0;
+        lock (_lock) {
+            foreach (var quest in questNames) {
+                if (string.IsNullOrEmpty(quest)) {
+                    continue;
+                }
+
+                var mid = "|" + quest + "|";
+                var had = _completedGoals.Remove(quest) | _completedQuests.Remove(quest) | _startedQuests.Remove(quest);
+                had |= _claims.RemoveWhere(c => c.Contains(mid, StringComparison.OrdinalIgnoreCase)) > 0;
+                foreach (var key in _goalCounts.Keys.Where(k => k.Contains(mid, StringComparison.OrdinalIgnoreCase)).ToList()) {
+                    had |= _goalCounts.Remove(key);
+                }
+
+                if (had) {
+                    forgotten++;
+                }
+            }
+        }
+
+        return forgotten;
+    }
+
     public bool TryClaimStep(InstanceQuestClaimKind kind, string questName, string goalName) {
         lock (_lock) {
             if (!_claims.Add($"{kind}|{questName}|{goalName}")) {
