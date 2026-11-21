@@ -23,7 +23,7 @@ What the bots did in Marleybone, from the server log: every quest finished, ever
 - Nails O'Leary: won 16 time(s) (10 Solo, 6 Team), lost 2. Fastest: Kurrent in 2 rounds, plan "hit now", deck for any fight (many of my fights lately had 2+ enemies), hits with Storm Shark, Thunder Snake.
 - Agony Wraith: won 12 time(s) (10 Solo, 2 Team), lost 5. Fastest: Cyndr in 2 rounds, deck for a boss (Death), hitting with Death, Storm, Fire; a rival that outlasts me, so more hits and blades to end it sooner (many of my fights lately had 2+ enemies), hits with Fairy, Minor Fire Scorch.
 - Dr. Von Katzenstein: won 10 time(s) (10 Solo, 0 Team), lost 7. Fastest: Kurrent in 3 rounds, plan "hit now", deck for any fight (many of my fights lately had 2+ enemies), hits with Thunder Snake, Banshee.
-- O'Leary Rowdy: won 12 time(s) (12 Solo, 0 Team), lost 2. Fastest: Tulkar in 3 rounds, deck for a boss (Ice), hitting with Ice, Death (most of my fights lately had 2+ enemies).
+- O'Leary Rowdy: won 12 time(s) (12 Solo, 0 Team), lost 3. Fastest: Tulkar in 3 rounds, deck for a boss (Ice), hitting with Ice, Death (most of my fights lately had 2+ enemies).
 - O'Leary Scurrier: won 13 time(s) (11 Solo, 2 Team), lost 0. Fastest: Tulkar in 1 rounds, deck for Ice enemies, hitting with Ice, Death, Fire (many of my fights lately had 2+ enemies).
 - Brady the Sneak: won 12 time(s) (4 Solo, 8 Team), lost 1. Fastest: Idunn in 1 rounds, deck for a boss (Myth), hitting with Death, Myth, Fire (many of my fights lately had 2+ enemies).
 - Potbelly: won 13 time(s) (13 Solo, 0 Team), lost 0. Fastest: Tulkar in 2 rounds, deck for a boss (Storm), hitting with Storm, Myth, Life (most of my fights lately had 2+ enemies).
@@ -2210,7 +2210,7 @@ What the bots did in Marleybone, from the server log: every quest finished, ever
 - Finished by Mythis (12 min).
 - Finished by Ra (28 min).
 - Finished by Cyndr (20 min).
-- Finished by Kurrent (24 min, 4 min, 9 min, 17 min, 4 min).
+- Finished by Kurrent (24 min, 4 min, 9 min, 17 min, 4 min, 3 s).
 - Won by Tulkar (Solo) against Clockwork Wizard (rank 4, 560 health, Life, a boss) on 2026-11-20 at 04:12:11.
   It took 5 rounds, about 3 minutes.
   Deck made for a boss (Life), hitting with Life, Fire, Storm; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies).
@@ -2553,11 +2553,11 @@ What the bots did in Marleybone, from the server log: every quest finished, ever
   - Clockwork Warrior: lost 1 time(s) (Kurrent). Why: I went in at 58% health. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
   - Kettlehead: lost 1 time(s) (Kurrent). Why: its biggest hit took 67% of my health. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
 - Avoid, places bots got stuck:
-  - The Commons near (-4400, 1000) while filling potions before a dungeon: stuck 13 time(s) (Kurrent); one bot tried every fix there.
+  - The Commons near (-4400, 1000) while filling potions before a dungeon: stuck 17 time(s) (Kurrent); one bot tried every fix there.
   - Counterweight West near (300, -200) while stuck: Defeat 1 creatures: no creature for this step is in the area: stuck 12 time(s) (Idunn); one bot tried every fix there.
+  - The Commons near (-4300, 1100) while filling potions before a dungeon: stuck 10 time(s) (Kurrent).
   - Counterweight West near (900, 3000) while Defeat 1 creatures (where they spawn) ("Weights and Measures"): stuck 9 time(s) (Idunn).
   - Counterweight West near (1000, 2800) while Defeat 1 creatures (where they spawn) ("Weights and Measures"): stuck 9 time(s) (Idunn); one bot tried every fix there.
-  - The Commons near (-4300, 1100) while filling potions before a dungeon: stuck 9 time(s) (Kurrent).
   - The Commons near (-4200, 1100) while filling potions before a dungeon: stuck 7 time(s) (Kurrent).
   - Counterweight West near (1000, 2900) while Defeat 1 creatures (where they spawn) ("Weights and Measures"): stuck 5 time(s) (Idunn); one bot tried every fix there.
   - Counterweight West near (1000, 3100) while Defeat 1 creatures (where they spawn) ("Weights and Measures"): stuck 4 time(s) (Idunn).
@@ -3357,14 +3357,15 @@ What the bots did in Marleybone, from the server log: every quest finished, ever
   - Kettlehead: lost 1 time(s) (Tulkar). Why: I went in at 87% health, its biggest hit took 67% of my health. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
   - Gearhead: lost 1 time(s) (Idunn). Why: its biggest hit took 75% of my health. Do instead: look for better gear in this world's shops and the Bazaar, then try again.
   - Nightmare Spirit: lost 1 time(s) (Tulkar). Why: I went in at 61% health, its biggest hit took 50% of my health, the fight ran 6 minutes, so I ran out of good cards. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
+  - O'Leary Rowdy: lost 1 time(s) (Idunn). Why: I went in at 26% health, its biggest hit took 54% of my health. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
 - Avoid, places bots got stuck:
   - Big Ben near (-9600, 21000) while Defeat 1 creatures ("The Last Meow"): stuck 34 time(s) (Ra); one bot tried every fix there.
   - Big Ben near (-9700, 21000) while Defeat 1 creatures ("The Last Meow"): stuck 27 time(s) (Ra); one bot tried every fix there.
   - Big Ben near (-9600, 21100) while Defeat 1 creatures ("The Last Meow"): stuck 9 time(s) (Ra); one bot tried every fix there.
+  - Big Ben near (14400, 21000) while Defeat 1 creatures ("The Last Meow"): stuck 7 time(s) (Mythis); one bot tried every fix there.
   - Big Ben near (-9700, 21000) while a short break before trying "Defeat 1 creatures" again: stuck 5 time(s) (Ra).
   - Big Ben near (-9600, 21000) while resting while "Defeat 1 creatures" waits: stuck 4 time(s) (Ra).
   - Big Ben near (-9600, 21100) while a short break before trying "Defeat 1 creatures" again: stuck 4 time(s) (Ra).
-  - Big Ben near (14400, 21000) while Defeat 1 creatures ("The Last Meow"): stuck 4 time(s) (Mythis); one bot tried every fix there.
   - Big Ben near (-9700, 21000) while resting while "Defeat 1 creatures" waits: stuck 3 time(s) (Ra).
 
 ## Bad News...
