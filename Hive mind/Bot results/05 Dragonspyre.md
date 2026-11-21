@@ -3,7 +3,7 @@
 What the bots did in Dragonspyre, from the server log: every quest finished, every fight won (to copy), every fight lost and every place they got stuck (to avoid). Solo means the bot fought alone; Team means another of our bots won the same fight with it. Updated after each bots update.
 
 ## Best way to beat each creature
-- Petrov Gloomstrider: won 48 time(s) (48 Solo, 0 Team), lost 1. Fastest: Ultimus in 5 rounds, plan "hit now", deck for any fight (many of my fights lately had 2+ enemies), hits with Judgement, Elemental Shield, Gearhead Destroyer, Minor Crusade.
+- Petrov Gloomstrider: won 49 time(s) (49 Solo, 0 Team), lost 1. Fastest: Ultimus in 5 rounds, plan "hit now", deck for any fight (many of my fights lately had 2+ enemies), hits with Judgement, Elemental Shield, Gearhead Destroyer, Minor Crusade.
 - Wandering Wizard: won 2 time(s) (2 Solo, 0 Team), lost 0. Fastest: Ultimus in 2 rounds, deck for Life enemies, hitting with Life, Fire, Storm (most of my fights lately had 2+ enemies).
 - Loathsome Creeper: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 10 rounds, plan "hit now", deck for Death enemies, hitting with Death, Fire, Myth (many of my fights lately had 2+ enemies), hits with Minor Crusade, Gearhead Destroyer, Scarab, Helping Hands.
 
@@ -239,6 +239,11 @@ What the bots did in Dragonspyre, from the server log: every quest finished, eve
   It took 6 rounds, about 3 minutes.
   Deck made for any fight (many of my fights lately had 2+ enemies).
   Spells that landed the hits: Sandstorm, Minor Crusade, Vampire.
+- Won by Ultimus (Solo) against Petrov Gloomstrider (rank 7, 2,000 health, Ice) on 2026-11-21 at 04:39:11.
+  It took 17 rounds, about 4 minutes.
+  Deck made for any fight (most of my fights lately had 2+ enemies).
+  Plan: "hit now" (mine and every other bot's).
+  Spells that landed the hits: Helping Hands x8, Gearhead Destroyer x3, Minor Crusade x3, Sandstorm, Scarab.
 - Avoid, places bots got stuck:
   - The Tower Archives near (12300, -7200) while Go to Dragonspyre,The Tower Archives ("Portal Combat"): stuck 50 time(s) (Ultimus); one bot tried every fix there.
   - The Tower Archives near (13000, -11500) while Go to Dragonspyre,The Tower Archives ("Portal Combat"): stuck 32 time(s) (Ultimus); one bot tried every fix there.

@@ -113,6 +113,10 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 
 ## MooShu, Crimson Fields and Emperor's Retreat
 - Garm at Rikugun Mikawa (Warlord Katsumori, A Soldier's Duty) and Kitharas Hydra at Shalek the Wise (Overpower the Overseer) were told "no options" for a few minutes, then the talk went through each time (23:04, 23:30, 23:39). Nothing to fix yet; flagged if it lasts. (2026-11-20 11:45 PM Bot Update)
+- A Soldier's Duty, Talk to Rikugun Mikawa: Tulkar flagged the step broken at 4:43 AM because the game showed no options for 30 seconds, yet he finished the whole quest in 59 seconds. The quest is fine; the options just came a little late, as seen before here. (2026-11-21 4:45 AM Bot Update)
+
+## MooShu, Maito's Dojo
+- Let me Shek, Defeat Maito: at 4:39 AM Mythis lost the Maito battle in the same moment Maito fell, and he was already sent out of the area. The server tripped taking Maito out of that battle, so Maito stood frozen on the circle and never fought again in that copy; Mythis beat the Ronin Keyholder alone and had to leave for a fresh copy. Server fix PR #1474 (v0.10.949). Confidence Medium. The same trip happened 9 times that day, King Uro's battle among them. Mythis has lost to Maito 14 of 18 times: a level up or a helper is the real answer. (2026-11-21 4:45 AM Bot Update)
 
 ## MooShu, Jade Palace
 - An Imperial Cure, Defeat Jade Oni: the quest is fine. The throne room sits at the top of a long stair, and bots stayed on a hidden floor under the stair, so the Oni never started the fight with Ultimus (20 November, 05:08 onward; Mindy beat it normally). Fixed in the bots: they now climb stairs and ramps like a player. Walk up the long stair to the throne and the Oni comes out to fight.
@@ -176,3 +180,4 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 
 ## Not quest faults (gear)
 - Ultimus kept swapping Adept Sorcerer's Robe and Clanker's Noteworthy Robe (and his hat) back and forth every few minutes. Every bot shared one record of the schools it hits with and is hit by, so each other bot's fights moved his choice. Fixed 21 November 2:15 AM: each bot keeps its own. (2026-11-21 2:15 AM Bot Update)
+- Ultimus walked to the Bazaar for treasure cards after nearly every fight (4:31 and 4:39 AM). On the second trip his list changed on the way because the fight he saw at the start was out of view, so he bought nothing after a 3.5 minute walk, and 3 of his 4 Recalls that night landed him by creatures that had come back where he last fought. Fix PR #1473 (bots): the trip keeps its list and card trips wait 20 minutes unless a lost fight asks for cards. Confidence Medium-High. (2026-11-21 4:45 AM Bot Update)
