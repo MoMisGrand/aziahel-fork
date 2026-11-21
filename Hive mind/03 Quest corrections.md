@@ -262,6 +262,7 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 - 2026-11-21 12:45 (Kurrent, with Mythis): SUCCESS: the help call worked: Mythis came and they beat War Oni at 12:34. FAILURE: Kurrent lost War Oni again alone at 12:38 and called Mythis again, but while waiting his stuck check walked him off through Ravenwood and The Commons. Fix PR #1531 (bots, sent 12:50): waiting for a called helper is not being stuck. Confidence High.
 - 2026-11-21 13:00 (Kurrent): SUCCESS: finished "To the Front!" at 12:47 (35 min, after the help call with Mythis), then "Sword of Omens", "Clear Waters" and "Patience" within 4 minutes. Lesson: calling a teammate after repeated losses works; the 4th-loss help call is the right rule.
 - 2026-11-21 13:30 (Kurrent): SUCCESS: finished "No Disassemble" at 13:17 and "Second Serving" at 13:28 (the quest Garm got stuck on).
+- 2026-11-21 13:45: SUCCESS: Kurrent finished "Hut Hut Hut!" (13:41); Mythis finished "Stolen Food", "Monk Follies" and "Worthy Acts" (13:34 to 13:45).
 
 ## Krokotopia, Earth Elemental (No Weaklings Allowed)
 - 2026-11-21 12:15 (Ultimus, level 37, solo): SUCCESS: beat the Earth Elemental at 12:06 on his 7th try and finished "No Weaklings Allowed" (34 minutes), then "Fighting With Dishonor". What worked: healing to near full before going back in, and drawing a treasure card every round once his deck ran out of hits. Lesson: a boss that wins twice is beaten by healing first and keeping hits coming, not by rushing back in.
@@ -282,6 +283,7 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 - 2026-11-21 13:00: SUCCESS: Kitharas Hart FINISHED "Weird Science" at 12:53 (the plaque quest that held the Kitharas all morning). Moon and Wraith finished "More Metal Madness"; Consumer and Jackle "Gate is Enough"; Consumer "The Second Door".
 - 2026-11-21 13:15: SUCCESS: Lamia finished "Weird Science" at 13:01; Moon and Wraith finished "More Metal Madness".
 - 2026-11-21 13:30: FAILURE: Kitharas Rock, Consumer, Hart, Lamia, Lumeria and AlchemiZist sharing Lab copies keep pulling the Sun, Bird, Tree and Bug plaques at the same time, so the order Gate02 counts is broken again and again ("all set, but Gate02 stayed shut"; Rock stuck 102 times by the Bird plaque at (2867, 11711)). They clear "Gate is Enough" and "The Right Combination" over and over in fresh copies but rarely reach Clanker for "Weird Science". Being looked into next round: one member should pull an in-order puzzle while the others wait.
+- 2026-11-21 13:45: Fix PR #1539 (bots, bots update sent 13:53): in a shared copy the first bot to work an in-order puzzle sets it, and the others stand clear of its pieces and wait; the same for every in-order puzzle. Confidence Medium-High. Hart and Andromeda finished "The Second Door" at 13:42.
 
 ## MooShu, Crimson Fields (For the Emperor!)
 - 2026-11-21 12:45 (Ra): FAILURE (not a quest fault): Ra's load into Crimson Fields hung at 12:12 (the server closed it after its attach timeout) and Ra sat "waiting to be in the game" for 40 minutes, offline to everyone. Fix PR #1531 (bots, sent 12:50): a bot not in after 90 seconds logs in again. Confidence High. Mythis walked out of the Crimson Fields copy fine at 12:35.
@@ -291,7 +293,9 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 ## Krokotopia, Plaza of Conquests (Foe of Foes)
 - 2026-11-21 13:15 (Ultimus, level 37, solo): FAILURE (not a quest fault): he had already used the Summoning Crystal, but the server restart at 12:55 sent the Sea Lord away and nothing brought it back, so he stood at (-1270, 4473) with "no creature for this step" until he asked for help at 13:13. Fix PR #1535 (server, v0.10.956 sent 13:20): when a step needs one boss that an earlier step summoned, it is brought out again. Confidence Medium-High: it depends on the Sea Lord being the only switched-off creature of its kind in the Plaza.
 - 2026-11-21 13:30 (Ultimus): still no Sea Lord; he rests, flags it and went for Bazaar cards meanwhile. v0.10.956 with the fix finished building at 13:27 and was not in by 13:30.
+- 2026-11-21 13:45: v0.10.956 could not go in while the server runs (13:41: it also carries kiosk changes that add starting values, so it waits for a restart). The Sea Lord fix comes with the next restart; Ultimus keeps resting from the step and doing other work. Watchdog: no step for 45 minutes at 13:43.
 
 ## Krokotopia and Wizard City, Kitharas story (13:15)
 - 2026-11-21 13:15: SUCCESS: Kitharas Mordiael, Sentence, Crimes and Devourer finished "De-Cipher the Ahnics" and "De-Cipher the Djeserits"; Hydra finished "Key to the Temple", "Test of Strength" and "Get Smart"; Libra finished "Key to the Temple".
 - 2026-11-21 13:30: SUCCESS: Libra and Sentence finished "Test of Strength"; Libra "Get Smart"; Was Silenced, Mordiael and Crimes "The Key to the Temple"; Umbella "De-Cipher the Ahnics" and "De-Cipher the Djeserits"; Devourer "De-Cipher the Djeserits".
+- 2026-11-21 13:45: SUCCESS: Was Silenced finished "Test of Strength"; Sentence "The Key to the Temple". TCO7 Idunn finished "Stealthy Stuff" at 13:30 (Big Ben).
