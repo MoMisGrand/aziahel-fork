@@ -61,6 +61,7 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 - Internal Investigation: Pops O'Leary walks a path. The bots walk to where he really is, not where his walk began.
 - Pops never starts a fight when you walk into him. He only joins a fight started with the O'Leary Napper beside him, so the bots start that fight.
 - Confirmed November 19, 2026: Kurrent and Mythis beat Pops, Garm and Ra got out of The Ironworks.
+- Out of Control, Talk to Ms. Marphely: Kitharas Consumer waited by The Ironworks' "Activator Volume 0" (5813, 14868) for her to come out, flagged the step broken at 3:50 AM, then at 4:00 followed the quest's words to Ms. Marphely herself. Kitharas Rock (5 s) and Kitharas Jackle (3 min) finished it the same hour. Not a quest fault. (2026-11-21 4:00 AM Bot Update)
 
 ## Marleybone, Katzenstein's Lab
 - If You Build It..., the plaque gate (Gate02): the plaques only work after Weird Science is done (beat Firegut and Clanker in the first wing). Clicked before that, all four stay set and the gate never opens (Cyndr and Kurrent, 20 November, 05:53 to past 07:00). Do Weird Science first, then click Sun, Bird, Tree, Bug. If all four are set and the gate is still shut, click Sun back to reset them and start again.
@@ -88,10 +89,12 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 ## Krokotopia, Ahnic Family Tomb
 - De-Cipher the Ahnics, Defeat 1 Cipher Part 1: the creature is King Uro Ahnic (rank 4 Storm boss, 800 health) at about (-25440, -7326) in the tomb. The quest works: 22 bots have finished it, Kurrent in 2 minutes and Kitharas Wraith in 3. Kitharas Mordiael and Kitharas Devourer, grouped, each lost to him earlier on 21 November and from 3:00 AM found no creature there, flagged the step broken, and went in and out of the tomb while the other waited inside. Still being looked into: whether the waiting group mate keeps the old copy (with no King Uro) alive so the leader never gets a fresh one. (2026-11-21 3:15 AM Bot Update)
 - Correction to the line above: the tomb is a shared street area, not a dungeon copy, so there is no old copy. King Uro came back about every 3 to 5 minutes from 2:14 to 2:48 AM (beaten 6 times), then never again, while the tomb's spirits kept coming back and four Kitharas waited at his spot until past 3:35. Best guess: the server lost track of his last defeat, so his spawn point still counted him. Server fix: a street spawn point whose creature is gone without the zone hearing of it fills again. Bot fix: the set-aside rest no longer starts over every half second, so they really rest 5 minutes and try fresh. Not a quest fault. (2026-11-21 3:30 AM Bot Update)
+- 4:00 AM: King Uro Ahnic still not back (no fight with him since 2:48 AM). v0.10.946 with the server fix was released at 3:50 and is not installed on the server yet. The 3:45 bot fix works: the Kitharas' rest note now comes every 4 to 5 minutes, not 7 times a minute. (2026-11-21 4:00 AM Bot Update)
 
 ## Krokotopia, The Temple of Storms
 - Test of Strength: lighting some moons puts other moons out. The bots light first the pieces that put others out, then the rest, so every moon stays lit and the suns go dark.
 - Get Smart: after the two door puzzles the step waits on a third puzzle that opens no door. The bots light the Sun, Tree, Snake and Bug pieces in that order.
+- Temple Dweller (Get Smart's puzzle first): Kitharas Moon stood stuck at puzzle piece Part3Sun1 (-3855, 20041, height -1000) from 3:45 and flagged it broken at 3:47 AM; by 3:56 he had lit the rest, talked to the Temple Gatekeeper and gone on to Krokopatra. Not a quest fault. (2026-11-21 4:00 AM Bot Update)
 
 ## Krokotopia, Hall of Champions
 - Get Some Bling: the gemstones are spread over many spots in the hall, and not every spot has one at a time. A bot that finds nothing to click at a gem spot for 20 seconds goes on to the next spot instead of waiting there.
@@ -145,6 +148,7 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 
 - Portal Combat, 21 November 3:04-3:13 AM: after a Bazaar stop for treasure cards (Ice Hound, Judgement x3) Ultimus walked the far north-east way again, and at 3:12 AM the stuck fix chose the "To The Tower Archives" teleporter at (29029, 27396); a street fight with a Pirate Ravager came first. (2026-11-21 3:15 AM Bot Update)
 - Portal Combat, 21 November 3:30-3:45 AM: Ultimus left the far north-east for a potion trip to Wizard City at 3:33, came back, and rested on purpose at (26640, 28569) with the step set aside. His no-progress timer counted the rest as stuck at 3:40, pressed the Commons button, and the walk back put him at the area's start (-31770, -14011), far from the Tower 11 platform again. Bot fix: a planned rest no longer counts as no progress. Not a quest fault. (2026-11-21 3:45 AM Bot Update)
+- Portal Combat, 21 November 3:54-4:01 AM: after the bots update put him back in, Ultimus walked from (-6328, 1705) to the ToWizT teleporter (9177, -7685) himself, won one fight he did not need on the way (3:55-3:58), and at 4:01 took the Crystal Vortex (12767, -11249) toward the Tower 11 platform (16316, -14341). (2026-11-21 4:00 AM Bot Update)
 
 ## Marleybone, Scotland Yard
 - After Weird Science, Watson offers "Fetch Bones!" right at the hand-in. That offer is the only hint; the game does not mark Fetch Bones! as story. A bot that misses it must go back to Watson and take it, never go back to Wizard City for other quests (Cyndr, 20 November).
