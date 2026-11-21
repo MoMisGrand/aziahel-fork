@@ -389,6 +389,11 @@ public sealed class ZonePath : ZoneEntity {
     }
 
     private void HandleCreatureSpawn(SpawnObject spawnObject, ZONE_102_PROTOCOL.MSG_ZONEPATHSPAWN cause) {
+        // On the streets a creature that is gone without the zone hearing of it no longer holds its spawn point.
+        if (!Zone.IsInstance) {
+            ForgetGone(spawnObject);
+        }
+
         // Determine if the conditions match to spawn the objects.
         if (!CanSpawn(spawnObject)) {
             return;
@@ -504,6 +509,27 @@ public sealed class ZonePath : ZoneEntity {
 
         // Increment the creature count.
         SetCreatureCount(spawnObject, CreatureCount(spawnObject) + 1);
+    }
+
+    // A street creature whose actor stopped without its delete reaching the zone (a despawn that could not be written stops
+    // the actor and sends nothing) kept counting toward its spawn point, so the point never filled again: King Uro Ahnic in
+    // the Ahnic Family Tomb never came back after 2:48 AM on 2026-11-21 while four players waited for him ("De-Cipher the
+    // Ahnics"), and the tomb's spirits kept coming back. The point is freed here, as the delete would have done.
+    private void ForgetGone(SpawnObject spawnObject) {
+        var gone = _living.Where(l => l.Value.Actor is IInternalActorRef { IsTerminated: true }
+                                      && !_loadingCreatures.ContainsKey(l.Value.Actor)
+                                      && _spawnObjectInfo.TryGetValue(l.Key, out var s) && ReferenceEquals(s, spawnObject))
+            .ToList();
+        foreach (var (id, creature) in gone) {
+            Logger.Warning("Zone {0}: creature (template {1}) on spawner {2} was gone without the zone hearing of it; its spawn point fills again.",
+                Logger.Args(Zone.ZonePath, creature.Template, spawnObject.m_name));
+            SetCreatureCount(spawnObject, Math.Max(0, CreatureCount(spawnObject) - 1));
+            _spawnObjectInfo.Remove(id);
+            _spawnedTemplate.Remove(id);
+            _living.Remove(id);
+            Fighting.TryRemove(id, out _);
+            _creatureActors.Remove(creature.Actor);
+        }
     }
 
     private static bool IsItemOff(SpawnItem item)
