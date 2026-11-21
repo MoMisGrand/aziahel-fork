@@ -89,6 +89,7 @@ internal sealed partial class QuestTeamDirectorActor {
             HasEntry = BotFloors.HasEntryFor(leader.Wizard),
             StepEvents = BotFloors.StepEventsOf(target?.Quest, target?.Goal),
             Step = target is null ? null : (target.X, target.Y),
+            ChainMine = gate => (BotFloors.ClaimChain(leader.ZoneActor?.Path.ToString(), gate, leader.Name, out var holder), holder),
         };
         if (BotFloors.Next(book, live, leader.X, leader.Y, _floorTries, leader.Z) is not { } duty) {
             _floorOn = null;
@@ -113,6 +114,14 @@ internal sealed partial class QuestTeamDirectorActor {
 
         if (_floorOut == BotFloors.PieceOf(duty.Key) && StepOutFrom(leader, duty, live) is { } back) {
             return back;
+        }
+
+        // Another wizard in this copy sets this in-order puzzle: he stands clear of its pieces and waits (not stuck).
+        if (duty.Kind == BotFloors.WAIT) {
+            _floorOn = null;
+            return far > 80
+                ? new QuestTeamPlanner.Target(QuestTeamPlanner.SPOT, duty.X, duty.Y, duty.What, Key: "floor|" + duty.Key + "|clear")
+                : new QuestTeamPlanner.Target(QuestTeamPlanner.SPOT, leader.X, leader.Y, duty.What, Key: "floor|" + duty.Key);
         }
 
         switch (duty.Kind) {

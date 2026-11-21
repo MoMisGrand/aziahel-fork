@@ -137,6 +137,53 @@ internal static class BotFloors {
     internal const string FIGHT = "fight";
     internal const string CLICK = "click";
 
+    /// <summary>Another wizard in this copy is setting an in-order puzzle: wait out of the way of its pieces.</summary>
+    internal const string WAIT = "wait";
+
+    // Who sets each in-order puzzle in a copy ("copy|gate" -> wizard, until when). Pieces that turn when stepped on count in
+    // the order they turn, so two wizards working the same chain undo each other: Katzenstein's Lab, 2026-11-21 13:00-13:30,
+    // Kitharas Rock, Consumer, Hart, Lamia, Lumeria and AlchemiZist shared Lab copies and each stepped on Sun, Bird, Tree and
+    // Bug in turn; the Bird plaque turned twice and back, "all set, but Gate02 stayed shut", Rock was stuck by it 102 times.
+    private static readonly ConcurrentDictionary<string, (string Owner, DateTime Until)> s_chainClaims = new(StringComparer.Ordinal);
+    private static readonly TimeSpan CHAIN_CLAIM = TimeSpan.FromSeconds(90);
+
+    /// <summary>
+    /// Whether <paramref name="owner"/> may set the in-order puzzle that opens <paramref name="gate"/> in the copy
+    /// <paramref name="copy"/>: yes when nobody else set it in the last 90 seconds (the claim is then his, refreshed on each ask).
+    /// <paramref name="holder"/> is the wizard setting it otherwise.
+    /// </summary>
+    internal static bool ClaimChain(string copy, string gate, string owner, out string holder) {
+        holder = owner;
+        if (string.IsNullOrEmpty(copy) || string.IsNullOrEmpty(gate) || string.IsNullOrEmpty(owner)) {
+            return true;
+        }
+
+        var key = copy + "|" + gate;
+        var now = DateTime.UtcNow;
+        var claim = s_chainClaims.AddOrUpdate(key, _ => (owner, now + CHAIN_CLAIM),
+            (_, old) => old.Owner == owner || old.Until <= now ? (owner, now + CHAIN_CLAIM) : old);
+        holder = claim.Owner;
+
+        return claim.Owner == owner;
+    }
+
+    /// <summary>A spot near (x, y) out of the reach of every piece of an in-order puzzle (stepping on one turns it), or null when (x, y) already is.</summary>
+    internal static (float X, float Y)? OffPieces(Gate gate, float x, float y) {
+        const float CLEAR = 260f;
+        if (gate?.PieceSpots is not { Count: > 0 } spots || spots.Values.All(p => Far(x, y, p.X, p.Y) > CLEAR)) {
+            return null;
+        }
+
+        var near = spots.Values.OrderBy(p => Far(x, y, p.X, p.Y)).First();
+        var (dx, dy) = (x - near.X, y - near.Y);
+        var len = MathF.Max(1, MathF.Sqrt((dx * dx) + (dy * dy)));
+        if (len < 2) {
+            (dx, dy, len) = (x - gate.LX, y - gate.LY, MathF.Max(1, Far(x, y, gate.LX, gate.LY)));
+        }
+
+        return (near.X + (dx / len * (CLEAR + 140)), near.Y + (dy / len * (CLEAR + 140)));
+    }
+
     // How near a room's things count as "this room" (Big Ben rooms are 6000 across with the circle in the middle).
     internal const float ROOM = 3200f;
 
@@ -851,6 +898,12 @@ internal static class BotFloors {
 
         /// <summary>Where his quest step is in this area, or null when unknown: a far puzzle is only his when its lock lies toward it.</summary>
         internal (float X, float Y)? Step { get; init; }
+
+        /// <summary>
+        /// Whether an in-order puzzle (by the gate it opens) is his to set in this copy, and who sets it if not; null when he
+        /// is the only one here.
+        /// </summary>
+        internal Func<string, (bool Mine, string Holder)> ChainMine { get; init; }
     }
 
     /// <summary>The zone events a quest step waits on (the goal's generic events, "PuzzleComplete"), or none.</summary>
@@ -1102,6 +1155,14 @@ internal static class BotFloors {
             if (wing is not null && live?.FoesNear?.Invoke(wing.X, wing.Y) == true) {
                 return new Duty(FIGHT, wing.X, wing.Y, $"the creatures by the puzzle that opens \"{gate.Object}\"", "room|" + wing.Trigger,
                     "the puzzle comes out once they are beaten");
+            }
+
+            // An in-order puzzle another wizard in this copy is setting: he waits out of the way of its pieces, as players
+            // in one group let one of them step the plates.
+            if (gate.InOrder && live?.ChainMine?.Invoke(gate.Object) is { Mine: false } other) {
+                var (wx, wy) = OffPieces(gate, x, y) ?? (x, y);
+                return new Duty(WAIT, wx, wy, $"out of the way while {other.Holder} sets the puzzle that opens \"{gate.Object}\"", "wait|" + gate.Object,
+                    $"\"{gate.Object}\" opens only once {string.Join(", then ", gate.Needs.Select(n => n.Object))} are set in that order, and two wizards stepping them undo each other");
             }
 
             // In-order pieces all set while the gate stays shut (set before the chain could count them, as before its quest

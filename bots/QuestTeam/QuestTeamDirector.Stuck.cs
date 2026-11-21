@@ -49,7 +49,9 @@ internal sealed partial class QuestTeamDirectorActor {
     private bool Unsticking(int index) => _unstickUntil.TryGetValue(index, out var until) && DateTime.UtcNow < until;
 
     private void LookForStuck() {
-        var resting = _restingSince != DateTime.MaxValue;
+        // Waiting clear of an in-order puzzle another wizard in this copy sets (BotFloors.WAIT) is not being stuck.
+        var resting = _restingSince != DateTime.MaxValue
+                      || (_target?.Key is { } waitKey && waitKey.StartsWith("floor|wait|", StringComparison.Ordinal) && !waitKey.EndsWith("|clear", StringComparison.Ordinal));
         var leader = _team[0];
         var apart = _team.Skip(1).Any(m => m.ZoneActor is null || !m.ZoneActor.Equals(leader.ZoneActor));
 

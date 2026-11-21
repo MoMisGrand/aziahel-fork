@@ -86,7 +86,8 @@ internal sealed partial class UltimusDirectorActor {
         }
 
         (_loopJumpZone, _loopJumpAt) = (zone, (leader.X, leader.Y));
-        if (newMove && target is not null && !string.IsNullOrEmpty(target.Key) && !target.Key.StartsWith(PARTY_KEY, StringComparison.Ordinal)) {
+        if (newMove && target is not null && !string.IsNullOrEmpty(target.Key) && !target.Key.StartsWith(PARTY_KEY, StringComparison.Ordinal)
+            && !target.Key.StartsWith("floor|wait|", StringComparison.Ordinal)) {
             // The same move picked again within half a minute is one try, not many: stepping on and off a teleporter that
             // has not fired yet re-picks it every second (Big Ben 08:37: 30 picks of the boss teleporter in 16 seconds).
             var what = "move|" + target.Key;
