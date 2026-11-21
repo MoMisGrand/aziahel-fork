@@ -88,7 +88,10 @@ internal static class TrainerHallDoor {
     /// <param name="y">The new Y.</param>
     /// <param name="z">The new Z.</param>
     internal static void OnMove(IActorRef session, Wizard wizard, float x, float y, float z) {
-        if (!s_enabled || wizard is null) {
+        // The bots walk over the door spot on their way to the Shopping District, and their game client cannot load a
+        // house it was just given: each one waited 90 seconds for "The house could not be prepared" (43 times on
+        // 2026-11-21). The trainer hall is for people only.
+        if (!s_enabled || wizard is null || Imlight.CoreLib.Game.Tools.OnlineList.IsBotWizard(wizard.CharId)) {
             return;
         }
 
