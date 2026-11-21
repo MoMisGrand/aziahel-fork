@@ -68,11 +68,21 @@ internal sealed partial class UltimusDirectorActor {
         }
     }
 
+    // The step a set-aside rest is for: its quest and goal, so the step's other moves count as the same step.
+    private static string AsideStep(UltimusPlanner.Target target)
+        => target is null ? "" : target.Quest is { Length: > 0 } || target.Goal is { Length: > 0 } ? target.Quest + "|" + target.Goal : target.Key ?? "";
+
     private UltimusPlanner.Target AsideWork(UltimusMember.Status leader, UltimusPlanner.Target target) {
         _asideWaiting = false;
         if (target?.Key is not { Length: > 0 } key || key.StartsWith("floor|", StringComparison.Ordinal) || key.StartsWith("aside|", StringComparison.Ordinal)
             || !UltimusPlanner.IsSetAside(key, out var until)) {
-            _asideRest = null;
+            // Another move of the same step (its look-up, its spawn spot) keeps the rest's clock running; only a new step
+            // ends it. The two took turns every half second in Krokotopia (2026-11-21, "De-Cipher the Ahnics"), so the rest
+            // started over each time, its note came 7 times a minute and the 5 minutes never ran out.
+            if (_asideRest is { } was && was.Key != AsideStep(target)) {
+                _asideRest = null;
+            }
+
             return null;
         }
 
@@ -96,8 +106,8 @@ internal sealed partial class UltimusDirectorActor {
         }
 
         // 2. Nothing to fight: a short rest out of the way, then back to the step (its set-aside ends early).
-        if (_asideRest is not { } rest || rest.Key != key) {
-            _asideRest = rest = (key, DateTime.UtcNow);
+        if (_asideRest is not { } rest || rest.Key != AsideStep(target)) {
+            _asideRest = rest = (AsideStep(target), DateTime.UtcNow);
             Note("Ultimus", $"{leader.Name} sets \"{target.What}\" aside for real: no other story step is open and nothing to fight here, " +
                             $"so he rests out of the way for up to {(int) s_asideRestMost.TotalMinutes} minutes before trying it fresh.", UltimusLink.NOTABLE);
         }
