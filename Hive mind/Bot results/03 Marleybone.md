@@ -3858,7 +3858,9 @@ What the bots did in Marleybone, from the server log: every quest finished, ever
 
 ## Do You Mind?
 - Avoid, places bots got stuck:
+  - Regent's Square near (0, -5300) while to Wolfminster Abbey (Go to MooShu,Jade Palace): stuck 2 time(s) (Mythis); one bot tried every fix there.
   - Regent's Square near (200, -5100) while to Wolfminster Abbey (the Bazaar, for treasure cards): stuck 1 time(s) (Mythis).
+  - Regent's Square near (400, -5100) while to Wolfminster Abbey (Go to MooShu,Jade Palace): stuck 1 time(s) (Mythis).
 
 ## Missing Souls
 - Finished by Tulkar (8 s).
