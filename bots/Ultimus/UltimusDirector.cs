@@ -1270,10 +1270,15 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
 
         var leader = group[0];
 
-        // Never out of a dungeon for it: the trip waits until they are out.
-        if (group.Any(m => m.Wizard?.ZoneIsInstance == true)) {
+        // Never out of a dungeon for it: the trip waits until they are out. A school house is a private copy too, but it is
+        // where the teachers stand, not a dungeon: inside one he trains (Niduus's log, 2026-11-21 12:26: Ultimus walked into
+        // the Life school for Imp, found "nothing to do" there because it is a copy, walked out, and came back, twice).
+        if (group.Any(m => m.Wizard?.ZoneIsInstance == true && !TrainerRoom(m.Zone))) {
             return null;
         }
+
+        bool TrainerRoom(string zone) => !string.IsNullOrEmpty(zone) && !OverlayQuestRoute.IsDungeon(zone)
+            && lessons.Any(l => l.Lessons.Any(x => OverlayQuestTracker.SameZone(x.Zone, zone)));
 
         // A trainer right here: trained on the way. Otherwise a trip to Ravenwood when in Wizard City or when three wait.
         var here = lessons.SelectMany(l => l.Lessons.Where(x => OverlayQuestTracker.SameZone(x.Zone, leader.Zone)).Select(x => (l.Member, Lesson: x))).FirstOrDefault();
