@@ -542,8 +542,17 @@ public partial class Zone : ReceiveProtocolDispatcher, IWithTimers {
         => _objectSupervisor.Forward(message);
 
     [MessageHandler(typeof(ZONE_102_PROTOCOL.MSG_QUERYINSTANCEQUESTS))]
-    private void ReceiveQueryInstanceQuests(ZONE_102_PROTOCOL.MSG_QUERYINSTANCEQUESTS message)
-        => Sender.Tell(IsInstance ? ScriptState.SnapshotQuestProgress() : new ZONE_102_PROTOCOL.MSG_QUERYINSTANCEQUESTSRSP());
+    private void ReceiveQueryInstanceQuests(ZONE_102_PROTOCOL.MSG_QUERYINSTANCEQUESTS message) {
+        if (!IsInstance) {
+            Sender.Tell(new ZONE_102_PROTOCOL.MSG_QUERYINSTANCEQUESTSRSP());
+
+            return;
+        }
+
+        var progress = ScriptState.SnapshotQuestProgress();
+        progress.Zones = InstanceQuestProgress.ZonesSharingQuests(ZonePath, progress.Zones);
+        Sender.Tell(progress);
+    }
 
     [MessageHandler(typeof(ZONE_102_PROTOCOL.MSG_CHECKSTEPSPAWNS))]
     private void ReceiveCheckStepSpawns(ZONE_102_PROTOCOL.MSG_CHECKSTEPSPAWNS message)

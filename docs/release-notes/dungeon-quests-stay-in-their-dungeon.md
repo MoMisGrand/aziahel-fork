@@ -1,0 +1,4 @@
+Fixed: Dungeon quests no longer show up in school houses or the Headmistress's house
+When someone's teammates were still inside his copy of a dungeon, the dungeon's quests were also handed out in his other private rooms, such as Headmistress Ambrose's house or a school house. Walking back out took them away again, so a bot that came to Ambrose for "Colossal Trouble" was sent after Firegut, left, and came back, over 400 times in one morning. Now a room that is not part of a dungeon only gives its own quests, while every room of a dungeon still shares them.
+Where: Headmistress Ambrose's house, the school houses and other private rooms, while teammates are in a dungeon copy.
+Test: With a teammate inside your Katzenstein's Lab copy, enter the Headmistress's house: no Katzenstein's Lab quest appears, and Ambrose gives "Colossal Trouble" as normal.
