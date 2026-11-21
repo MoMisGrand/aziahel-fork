@@ -1,0 +1,4 @@
+Fixed: Bots stop fighting the creatures beside an empty gem spot
+On steps where the things to pick up are spread over many spots, the bots treated creatures walking near an empty spot as guards that had to be beaten first. In the Hall of Champions the Kitharas Family fought the Hall Servants beside one empty gem spot 583 times and came back to the same spot every time. Now, on such steps, a bot just moves on to the next spot when one is empty. A single thing that a boss or creatures really guard, like the Frozen Forge, still has them fought first.
+Where: any step where you collect or click things at several spots, first seen in Krokotopia's Hall of Champions (quest Get Some Bling)
+Test: watch a Kitharas bot on Get Some Bling walk from gem spot to gem spot without stopping to fight every Hall Servant.

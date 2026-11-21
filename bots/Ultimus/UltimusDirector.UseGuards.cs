@@ -19,6 +19,7 @@
 using System;
 using System.Linq;
 using Imlight.CoreLib.Game.BotShared;
+using Imlight.CoreLib.Game.Tools;
 
 namespace Imlight.CoreLib.Game.Ultimus;
 
@@ -31,6 +32,10 @@ internal sealed partial class UltimusDirectorActor {
 
     // The use did not work: true when creatures stand by it and he goes to fight them first.
     private bool UseNeedsFight(UltimusMember.Status member, UltimusPlanner.Target target, string why) {
+        if (ManySpots(member.Zone, target)) {
+            return false;
+        }
+
         var on = BotUseGuards.On(member.CharId, target.Quest, target.Goal);
         if (!BotUseGuards.Failed(member.CharId, target.Quest, target.Goal, member.Zone, member.ZoneActor, target.X, target.Y)) {
             return false;
@@ -46,9 +51,17 @@ internal sealed partial class UltimusDirectorActor {
         return true;
     }
 
+    // A step with things at several spots (the gems of "Get Some Bling") is never held up by the creatures by one spot: an
+    // empty spot is left for the next one instead (UseHere). The Kitharas Family fought the Hall Servants by one empty gem
+    // spot 583 times on 2026-11-20 (won every one) and came back to it each time. A single guarded thing, like the Frozen
+    // Forge with Odji Sokkwi, still has its creatures fought first. Ordered puzzles keep their own rules.
+    private static bool ManySpots(string zone, UltimusPlanner.Target target)
+        => target is not null && !target.Key.EndsWith("|order", StringComparison.Ordinal)
+           && QuestStepSpots.UsageObjects(zone ?? "", target.Quest, target.Goal) is { Count: > 1 };
+
     // While its creatures stand: the fight by the thing comes before the thing itself.
     private UltimusPlanner.Target GuardFight(UltimusMember.Status leader, UltimusPlanner.Target target) {
-        if (target?.Kind != UltimusPlanner.USE) {
+        if (target?.Kind != UltimusPlanner.USE || ManySpots(leader.Zone, target)) {
             return null;
         }
 
