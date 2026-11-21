@@ -331,44 +331,69 @@ internal sealed partial class CombatCreatureAIComponent(ZoneEntity entity) : Zon
 
     [MessageHandler(typeof(COMBAT_106_PROTOCOL.MSG_COMBATDEATH))]
     private void ReceiveCombatDeath(COMBAT_106_PROTOCOL.MSG_COMBATDEATH message) {
+        try {
+            LeaveDuelOnDeath();
+        }
+        catch (Exception e) {
+            // Its battle was taken apart while it left (a lost battle as every wizard logged out at once): it is removed
+            // anyway, so its spawn point brings it back to be fought. Left standing, it never fought again and the room's
+            // door it opens stayed shut (Big Ben, 2026-11-21: Shrieker after a bots update logged Idunn out mid-battle;
+            // Door31 waits for its defeat, and Idunn was shut in for over an hour).
+            Logger.Error("Creature {0} could not leave its battle cleanly ({1}); it is removed so its spawn point brings it back.",
+                Logger.Args(Entity.ActiveGameObject?.m_debugName, e.Message));
+            _sentFinalKill = true;
+            try {
+                Entity.DeleteObject();
+            }
+            catch (Exception) {
+                // Already gone.
+            }
+        }
+    }
+
+    private void LeaveDuelOnDeath() {
         if (_sentFinalKill || !_isInDuel) {
             Entity.DeleteObject();
 
             return;
         }
 
+        // Read once: the battle's own actor can empty the circle while this runs (CreatureWin, every wizard gone).
+        var duel = _currentDuelComponent;
+        var circle = _currentSubCircle;
+        var me = circle?.ParticipantObject;
+
         // An encounter minion can die before its duel slot is fully set up: nothing to remove from, just go. So does a
         // minion whose circle a reinforcement took already (CombatDuelComponent.BringReinforcements took it out).
-        if (_currentDuelComponent is null || _currentSubCircle?.ParticipantObject is null
-            || _currentSubCircle.ParticipantObject.m_globalID != Entity.ActiveGameObject.m_globalID) {
+        if (duel is null || me is null || Entity.ActiveGameObject is not { } self || me.m_globalID != self.m_globalID) {
             _sentFinalKill = true;
             Entity.DeleteObject();
-            if (_currentSubCircle?.IsSummonedMinion == true) {
-                CombatDuelComponent.OnMinionRemoved(_currentSubCircle, Entity.ActiveGameObject);
+            if (circle?.IsSummonedMinion == true) {
+                CombatDuelComponent.OnMinionRemoved(circle, Entity.ActiveGameObject);
             }
 
             return;
         }
 
         // A minion has no world to return to: remove and delete now, no death-animation timer.
-        if (_currentSubCircle?.IsSummonedMinion == true) {
-            _currentDuelComponent.DuelBroadcast(new DOODLEDOUG_MESSAGES_51_PROTOCOL.MSG_COMBATREMOVE {
-                DuelID = _currentDuelComponent.SigilId,
-                ParticipantID = _currentSubCircle.ParticipantObject.m_globalID
+        if (circle.IsSummonedMinion) {
+            duel.DuelBroadcast(new DOODLEDOUG_MESSAGES_51_PROTOCOL.MSG_COMBATREMOVE {
+                DuelID = duel.SigilId,
+                ParticipantID = me.m_globalID
             });
             _sentFinalKill = true;
             Entity.DeleteObject();
 
             // Free the sub-circle so a future summon can reuse the slot.
-            CombatDuelComponent.OnMinionRemoved(_currentSubCircle, Entity.ActiveGameObject);
+            CombatDuelComponent.OnMinionRemoved(circle, Entity.ActiveGameObject);
 
             return;
         }
 
         // I have died. Remove myself from the current duel.
-        _currentDuelComponent.DuelBroadcast(new DOODLEDOUG_MESSAGES_51_PROTOCOL.MSG_COMBATREMOVE {
-            DuelID = _currentDuelComponent.SigilId,
-            ParticipantID = _currentSubCircle.ParticipantObject.m_globalID
+        duel.DuelBroadcast(new DOODLEDOUG_MESSAGES_51_PROTOCOL.MSG_COMBATREMOVE {
+            DuelID = duel.SigilId,
+            ParticipantID = me.m_globalID
         });
 
         // Send this message to ourselves again after a delay to delete the entity. This lets the combat death animation play out,
