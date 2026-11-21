@@ -244,11 +244,11 @@ internal sealed partial class UltimusDirectorActor {
             "floor|" + duty.Key);
 
         // Stepping back from a piece he pulled, until he is out of its reach; then he walks in again and it is offered anew.
-        if (_floorOut is not null && (_floorOut != duty.Key || far >= STEP_OUT)) {
+        if (_floorOut is not null && (_floorOut != BotFloors.PieceOf(duty.Key) || far >= STEP_OUT)) {
             _floorOut = null;
         }
 
-        if (_floorOut == duty.Key && StepOutFrom(leader, duty, live) is { } back) {
+        if (_floorOut == BotFloors.PieceOf(duty.Key) && StepOutFrom(leader, duty, live) is { } back) {
             return back;
         }
 
@@ -271,7 +271,7 @@ internal sealed partial class UltimusDirectorActor {
                     Clicked("floor|" + duty.Key);
                     _floorTries[duty.Key] = _floorTries.GetValueOrDefault(duty.Key) + 1;
                     Note("Ultimus", $"{leader.Name} pulls {duty.What}: {duty.Why}.", UltimusLink.NOTABLE);
-                    _floorPulled.Add(duty.Key);
+                    _floorPulled.Add(BotFloors.PieceOf(duty.Key));
                     _actors[0].Tell(new UltimusMember.Interact(lever, "Interact", 0, duty.What));
                 }
                 else if (lever == 0 && CanClick("floor|" + duty.Key + "|none")) {
@@ -287,8 +287,8 @@ internal sealed partial class UltimusDirectorActor {
                 // pull again when a wizard comes back into reach. Kitharas Lamia, The Vault of Ice, 2026-11-20 20:47-20:48:
                 // Brazier3 went Fire to Ice, then offered nothing for 30 seconds until she walked off and back, and the Frost
                 // door opened on the next pull; AlchemiZist stood on it at 21:34, gave up, and sat at the shut door 10 minutes.
-                if (lever == 0 && _floorPulled.Contains(duty.Key) && StepOutFrom(leader, duty, live) is { } stepOut) {
-                    _floorOut = duty.Key;
+                if (lever == 0 && _floorPulled.Contains(BotFloors.PieceOf(duty.Key)) && StepOutFrom(leader, duty, live) is { } stepOut) {
+                    _floorOut = BotFloors.PieceOf(duty.Key);
                     return stepOut;
                 }
 

@@ -911,6 +911,21 @@ internal static class BotFloors {
         return Far(px, py, ax + (t * dx), ay + (t * dy));
     }
 
+    /// <summary>
+    /// The puzzle piece a duty key is about, without the state it shows now ("piece|Brazier3|Fire" -> "piece|Brazier3"). A piece
+    /// that needs two pulls in a row changes state after the first, so its duty key changes too: a bot that kept the full key
+    /// never knew it had pulled that piece and stood on it instead of stepping back for the second pull (Kitharas Moon and Libra
+    /// at The Vault of Ice Brazier3, 2026-11-21). Other keys come back as they are.
+    /// </summary>
+    internal static string PieceOf(string key) {
+        if (key is null || !key.StartsWith("piece|", StringComparison.Ordinal)) {
+            return key;
+        }
+
+        var bar = key.IndexOf('|', 6);
+        return bar < 0 ? key : key[..bar];
+    }
+
     internal static Duty Next(Book book, Live live, float x, float y, IReadOnlyDictionary<string, int> tries, float z = float.NaN) {
         if (book is null || book.IsEmpty) {
             return null;
