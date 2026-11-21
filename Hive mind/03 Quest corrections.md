@@ -164,6 +164,7 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 - Stealthy Stuff (Big Ben floor 5): Idunn waited at the shut Door43 in an old copy until 2:04 AM, then left and started a fresh copy, and at 2:12 AM the server brought Travis Pawman out in it, as the 1:30 fix meant to. She is climbing back up. (2026-11-21 2:15 AM Bot Update)
 
 - Stealthy Stuff: the 2:53 AM bots update logged every bot out and back in, and Idunn, who was on room 3 of her fresh Big Ben copy, started the climb again. Bots updates cost dungeon progress, so they are only sent when they carry a fix. (2026-11-21 3:00 AM Bot Update)
+- Door43 real cause (4:30 AM Bot Update): the game keeps bringing the Frog (spawn point 8, every 5 minutes) back until Door43 opens, and only then switches that spawn off. Our server never brought a beaten creature back inside a dungeon copy, so a Frog beaten before the Golem or Cat Hobo door was done never returned, and Idunn waited at Door43 from 3:12 AM. Server fix PR #1471 (v0.10.948): spawns a dungeon trigger later switches off keep coming back on their timer until then. Confidence Medium. (2026-11-21 4:30 AM Bot Update)
 
 ## Not quest faults (server outage)
 
