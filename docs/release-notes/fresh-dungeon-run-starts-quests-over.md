@@ -1,0 +1,5 @@
+Fixed: A fresh dungeon run no longer hands back the last run's quest steps
+
+When a player left a dungeon and came back in through its sigil for a fresh run, the server could still remember the steps done in the last run and mark them done again at once, while the fresh rooms had their gates and levers reset. That left a quest past a step whose gate was shut again, with no way to open it, as in Shirataki Temple where the gate lever needs the River Temple gate key step done in that same run. A fresh run now starts the dungeon's own quests from their first step, as in the game. Going back by Dungeon Recall still keeps everything done in the same run.
+Where: every dungeon entered by its sigil, first seen in MooShu's Shirataki Temple (River Temple).
+Test: in Shirataki Temple get River Temple's gate key from Shoji, leave the dungeon to Shoshun Village, wait 10 minutes, and enter again by the sigil; River Temple should start at the gate key step again and the gate lever should work once you have it.
