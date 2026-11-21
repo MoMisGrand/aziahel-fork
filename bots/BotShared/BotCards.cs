@@ -72,6 +72,13 @@ internal static class BotCards {
         /// </summary>
         internal bool LongFights { get; init; }
 
+        /// <summary>
+        /// The share of a solo wizard's main deck that goes to hits, learned from its own fights (UltimusDeckMix); 0 = the
+        /// starting share. Niduus, 2026-11-21: "weed out his deck so he's got primarily hits in main with support along with
+        /// support in TC's. Have him learn".
+        /// </summary>
+        internal double MainHits { get; init; }
+
         /// <summary>Two or more enemies now, or (not counted yet) most of its recent fights had that many.</summary>
         internal bool CrowdLikely => Enemies >= 2 || (Enemies == 0 && CrowdShare >= CROWD_MOSTLY);
 
@@ -89,6 +96,10 @@ internal static class BotCards {
             }
             else if (Rival) {
                 foe += "; a rival that keeps beating me, so more shields and heals";
+            }
+
+            if (MainHits > 0) {
+                foe += $"; my own fights say about {MainHits:P0} hits in my main deck";
             }
 
             return Enemies == 0 && CrowdShare >= CROWD_SOMETIMES
@@ -172,8 +183,16 @@ internal static class BotCards {
     internal static Situation WithCrowd(Situation situation, ulong wizard)
         => (situation ?? Situation.Unknown) with { CrowdShare = CrowdShare(wizard) };
 
+    // A solo wizard's main deck: mostly hits, a little support (Niduus, 2026-11-21); the rest of its support rides in its
+    // treasure cards (UltimusDirector.CardPlan.cs). The hit share moves with its own results (UltimusDeckMix), never past these.
+    internal const double SOLO_HITS = 0.6, SOLO_HITS_MIN = 0.5, SOLO_HITS_MAX = 0.75;
+
     // The share of the deck each kind of card gets, by job.
     private static Dictionary<Kind, double> Shares(BotStyle style, Situation situation) {
+        if (style == BotStyle.Solo) {
+            return SoloShares(situation);
+        }
+
         var shares = style switch {
             BotStyle.Hitter => new Dictionary<Kind, double> { [Kind.Hit] = 0.65, [Kind.Blade] = 0.2, [Kind.Trap] = 0.1, [Kind.Heal] = 0.05, [Kind.Shield] = 0, [Kind.Other] = 0 },
             BotStyle.Backup or BotStyle.Solo => new Dictionary<Kind, double> { [Kind.Hit] = 0.45, [Kind.Trap] = 0.15, [Kind.Blade] = 0.15, [Kind.Heal] = 0.1, [Kind.Shield] = 0.1, [Kind.Other] = 0.05 },
@@ -208,8 +227,51 @@ internal static class BotCards {
             shares[Kind.Hit] = Math.Max(0.1, shares[Kind.Hit] - 0.1);
         }
 
-        // Its cheats punish some kinds of cards: those get few places (never none for heals, which can save a life), and the
-        // places go to hits.
+        Punish(shares, situation);
+
+        return shares;
+    }
+
+    /// <summary>The share of a solo wizard's main deck that goes to hits, and to heals and shields, for this fight (replay pack).</summary>
+    internal static (double Hits, double HealsAndShields) SoloMix(Situation situation) {
+        var shares = SoloShares(situation ?? Situation.Unknown);
+        return (shares[Kind.Hit], shares[Kind.Heal] + shares[Kind.Shield]);
+    }
+
+    // A solo wizard (Ultimus and the TCO7): hits first in every fight, as Niduus asked (2026-11-21: "primarily hits in main
+    // with support along with support in TC's"). Its rival deck against the Sea Lord had 12 hits in 30 cards (boss and rival
+    // each took a tenth of the hits for shields and heals) and it lost 12 fights out of 13. A boss or a rival now moves
+    // support from blades and traps to heals and shields, but the hits keep their share; a rival that outlasts him gets more.
+    private static Dictionary<Kind, double> SoloShares(Situation situation) {
+        var hit = Math.Clamp(situation.MainHits > 0 ? situation.MainHits : SOLO_HITS, SOLO_HITS_MIN, SOLO_HITS_MAX);
+        var support = 1 - hit;
+        var shares = new Dictionary<Kind, double> {
+            [Kind.Hit] = hit, [Kind.Blade] = support * 0.25, [Kind.Trap] = support * 0.25, [Kind.Heal] = support * 0.25,
+            [Kind.Shield] = support * 0.25, [Kind.Other] = 0,
+        };
+        if (situation.Boss || (situation.Rival && !situation.LongFights)) {
+            var move = Math.Min(shares[Kind.Trap], 0.05);
+            shares[Kind.Trap] -= move;
+            shares[Kind.Heal] += move;
+            move = Math.Min(shares[Kind.Blade] / 2, 0.025);
+            shares[Kind.Blade] -= move;
+            shares[Kind.Shield] += move;
+        }
+
+        if (situation.Rival && situation.LongFights) {
+            var move = Math.Min(shares[Kind.Shield], 0.05);
+            shares[Kind.Shield] -= move;
+            shares[Kind.Hit] += move;
+        }
+
+        Punish(shares, situation);
+
+        return shares;
+    }
+
+    // Its cheats punish some kinds of cards: those get few places (never none for heals, which can save a life), and the
+    // places go to hits.
+    private static void Punish(Dictionary<Kind, double> shares, Situation situation) {
         foreach (var punished in situation.Punished) {
             var kinds = punished switch {
                 "Blade" or "Charm" => new[] { Kind.Blade },
@@ -225,8 +287,6 @@ internal static class BotCards {
                 shares[kind] = keep;
             }
         }
-
-        return shares;
     }
 
     private static Kind KindOf(Card card)

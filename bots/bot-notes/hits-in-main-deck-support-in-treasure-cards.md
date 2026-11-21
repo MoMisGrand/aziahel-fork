@@ -1,0 +1,5 @@
+Fixed: Ultimus packs mostly hits in his main deck and mostly support in his treasure cards, and learns the mix from his fights
+
+Ultimus's main deck is now about 60% hits, with a few blades, traps, heals and shields; a boss or a creature that keeps beating him swaps blades and traps for heals and shields but never takes his hits away. His treasure cards are now mostly support (shields against what the creatures ahead hit with, a stacked heal, a blade, a trap, a stun), with a few hits, both from the Bazaar and from world treasure card vendors. After each quest fight he moves the mix a little: a fight that outlasted him adds hits to his main deck, a big hit that ended him adds support treasure cards, and quick clean wins take a little support back, always inside set limits. Each move is said in his thoughts with its reason, and deck-mix.txt in his folder shows where it stands.
+Where: Ultimus and the Calling of 7, their decks and treasure cards.
+Test: Watch Ultimus make his deck before the Sea Lord and read deck-mix.txt in his logs folder after a few fights.

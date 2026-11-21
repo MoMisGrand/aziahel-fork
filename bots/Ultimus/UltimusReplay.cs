@@ -213,6 +213,27 @@ internal static class UltimusReplay {
                    && order.Count == 8 && order[0].Object == "Part2Moon2"
                 ? null : "a piece that turns another back off still comes after it: " + string.Join(", ", order.Select(p => p.Object));
         }),
+        new("Rival boss deck of 12 hits in 30 cards against the Sea Lord, lost 12 of 13 (2026-11-21)", () => {
+            var seaLord = new BotCards.Situation("Storm", true, 1) { Rival = true };
+            var (hits, support) = BotCards.SoloMix(seaLord);
+            var (longHits, _) = BotCards.SoloMix(seaLord with { LongFights = true });
+            return hits >= BotCards.SOLO_HITS && support >= 0.25 && longHits > hits ? null
+                : $"his main deck is not mostly hits: {hits:P0} hits, {support:P0} heals and shields, {longHits:P0} hits when it outlasts him";
+        }),
+        new("Bazaar treasure cards were all hits and a trap, no shield or heal (2026-11-21)", () =>
+            UltimusDeckMix.SupportSlots(16, UltimusDeckMix.TC_SUPPORT) >= 10 && UltimusDeckMix.SupportSlots(8, 0.99) <= 8
+                && UltimusDeckMix.SupportSlots(8, 0.1) >= 4
+                ? null : "his treasure cards are not mostly support, or the support share left its bounds"),
+        new("Card mix learns from his fights, inside its bounds (2026-11-21)", () => {
+            var (h1, s1, w1) = UltimusDeckMix.Step("Sea Lord", false, 30, 1, 900, 0.9, BotCards.SOLO_HITS, UltimusDeckMix.TC_SUPPORT);
+            var (h2, s2, w2) = UltimusDeckMix.Step("Sea Lord", false, 4, 1, 120, 0.9, BotCards.SOLO_HITS, UltimusDeckMix.TC_SUPPORT);
+            var (h3, s3, _) = UltimusDeckMix.Step("Sea Lord", false, 30, 1, 900, 0.9, BotCards.SOLO_HITS_MAX, UltimusDeckMix.TC_SUPPORT_MAX);
+            var (h4, s4, w4) = UltimusDeckMix.Step("Imp", true, 3, 0.1, 40, 0.1, BotCards.SOLO_HITS, UltimusDeckMix.TC_SUPPORT);
+            return w1 is not null && h1 > BotCards.SOLO_HITS && w2 is not null && s2 > UltimusDeckMix.TC_SUPPORT && h2 < BotCards.SOLO_HITS
+                   && h3 <= BotCards.SOLO_HITS_MAX && s3 <= UltimusDeckMix.TC_SUPPORT_MAX && w4 is not null && s4 < UltimusDeckMix.TC_SUPPORT
+                   && h4 == BotCards.SOLO_HITS && s1 > UltimusDeckMix.TC_SUPPORT
+                ? null : $"the mix did not move as his fights say: long loss {h1:P0}/{s1:P0}, big hit {h2:P0}/{s2:P0}, clean win {h4:P0}/{s4:P0}";
+        }),
     ];
 
     // One run at a time: the chat checks share the chat brain's memory of the last lines heard. After the 2026-11-18 7:24 PM

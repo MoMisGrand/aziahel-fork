@@ -135,12 +135,27 @@ internal sealed partial class UltimusDirectorActor {
             }
         }
 
+        // Then the next best he owns: support up to its share of the slots first (Niduus, 2026-11-21: "support in TC's"),
+        // then whatever is best. His hits score highest, so the leftover slots always went to more hits.
+        var school = BotGear.SchoolOf(wizard);
+        var foes = FoeSchools();
+        var supportRoom = UltimusDeckMix.SupportSlots(room, UltimusDeckMix.TcSupport);
+        bool Support(uint id) => TcUse(id, school, level, foes) is { } use && IsSupportKind(use.Kind);
+        int SupportTaken() => want.Where(w => Support(w.Key)).Sum(w => w.Value);
+        foreach (var id in usable.Where(Support)) {
+            Take(id, Math.Min(COPIES - want.GetValueOrDefault(id), supportRoom - SupportTaken()));
+        }
+
         foreach (var id in usable) {
             Take(id, COPIES - want.GetValueOrDefault(id));
         }
 
         return want;
     }
+
+    // A support treasure card: a shield, heal, blade, trap or stop (not a hit or a damage enchantment).
+    internal static bool IsSupportKind(string kind)
+        => kind is "shield" or "heal" or "blade" or "trap" or "control";
 
     private static string CardName(uint id)
         => CoreObjectFactory.GetCoreTemplate(id) is SpellTemplate t ? Locale.GetEnglishName((string) t.m_displayName) is { Length: > 0 } e ? e : (string) t.m_name : id.ToString();
@@ -183,6 +198,17 @@ internal sealed partial class UltimusDirectorActor {
                 kind = "heal";
                 score = card.HealAmount;
             }
+            // A blade or trap for his own hits (one of another school never helps him).
+            else if (card.Blade && !card.BladeOnlyTeammate && (string.IsNullOrEmpty(card.BladeSchool) || RewrittenAI.Same(card.BladeSchool, school)
+                                                                || string.Equals(card.BladeSchool, "All", StringComparison.OrdinalIgnoreCase))) {
+                kind = "blade";
+                score = card.BladePercent;
+            }
+            else if (card.Trap && (string.IsNullOrEmpty(card.TrapSchool) || RewrittenAI.Same(card.TrapSchool, school)
+                                   || string.Equals(card.TrapSchool, "All", StringComparison.OrdinalIgnoreCase))) {
+                kind = "trap";
+                score = card.TrapPercent;
+            }
             else {
                 continue;
             }
@@ -195,9 +221,12 @@ internal sealed partial class UltimusDirectorActor {
             picks.Add((spell.m_templateID, hash, card.Shown, vendor.GetSpellPrice(hash), kind, score));
         }
 
-        var best = picks.Where(p => p.Kind == "hit").OrderByDescending(p => p.Score).Take(2)
-            .Concat(picks.Where(p => p.Kind == "shield").OrderByDescending(p => p.Score).Take(1))
-            .Concat(picks.Where(p => p.Kind == "heal").OrderByDescending(p => p.Score).Take(1)).ToList();
+        // Support first (Niduus, 2026-11-21: "support in TC's"): a shield, a heal, a blade and a trap, then one hit.
+        var best = picks.Where(p => p.Kind == "shield").OrderByDescending(p => p.Score).Take(1)
+            .Concat(picks.Where(p => p.Kind == "heal").OrderByDescending(p => p.Score).Take(1))
+            .Concat(picks.Where(p => p.Kind == "blade").OrderByDescending(p => p.Score).Take(1))
+            .Concat(picks.Where(p => p.Kind == "trap").OrderByDescending(p => p.Score).Take(1))
+            .Concat(picks.Where(p => p.Kind == "hit").OrderByDescending(p => p.Score).Take(1)).ToList();
         var owned = OwnedCopies(wizard);
         var chosen = new List<(uint Id, uint Hash, string Name, int Price)>();
         // One of each first, then more copies of each, round by round, while he needs more and can pay.

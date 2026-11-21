@@ -191,6 +191,13 @@ internal sealed partial class UltimusDirectorActor {
         }
 
         CheckFight(me, won, lostShare, fight.Name);
+        // His card mix learns from it: more hits in his main deck when he ran out of them, more support treasure cards when a
+        // big hit or a close call says so (UltimusDeckMix; Niduus, 2026-11-21: "Have him learn, that is the whole point of him").
+        if (UltimusDeckMix.Learn(fight.Name.Length > 0 ? fight.Name : "a creature", won, battle?.Round ?? 0, lostShare, seconds,
+                BotKnowledge.Of(fight.Template)?.BiggestHitShare ?? 0) is { } mixMoved) {
+            Think($"What that fight taught me about my cards: {mixMoved}", "mix|" + fight.Template + "|" + mixMoved);
+        }
+
         if (won && _dropBefore is { } before) {
             var after = UltimusDrops.StepCount(me.Wizard, before.Quest, before.Goal);
             var counted = after > before.Count;
