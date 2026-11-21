@@ -78,6 +78,7 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 ## Dragonspyre, The Tower Archives
 - Portal Combat, Use Blue Crystal: the crystal is on top of the Blue Tower. From the low floor, walk up the long ramp east of the Wizard Tower teleporter (it starts by (8400,-10300) and runs south past (10800,-15000)) to the Blue Tower's teleporter at (9890,-18707). It lands on the tower at (11016,-16656); walk up the tower to the crystal by (12239,-16404). Bots used to read the ramp as a wall and never found the way.
 - Portal Combat, after the crystals: click the Crystal Vortex at (12767,-11249) (it turns on once the crystals are used). It lands on the high platform at (16316,-14341), where the Tower 11 sigil and the next step are. It is the only way onto that platform; before the fix of 2026-11-20 the vortex went nowhere for everyone.
+- Portal Combat, the way there: the Tower Archives are very long from the door to the far teleporter. Bots keep going to the teleporter they chose and only give up on it once they have stood by it for three minutes.
 
 ## Marleybone, Scotland Yard
 - After Weird Science, Watson offers "Fetch Bones!" right at the hand-in. That offer is the only hint; the game does not mark Fetch Bones! as story. A bot that misses it must go back to Watson and take it, never go back to Wizard City for other quests (Cyndr, 20 November).

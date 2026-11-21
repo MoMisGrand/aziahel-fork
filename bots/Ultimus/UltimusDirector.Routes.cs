@@ -58,6 +58,10 @@ internal sealed partial class UltimusDirectorActor {
         return null;
     }
     private DateTime _viaPadSince;
+    // When he first got near the teleporter he is walking to (MaxValue while still on the way).
+    private DateTime _viaPadNear = DateTime.MaxValue;
+    private const float PAD_NEAR = 600f;
+    private static readonly TimeSpan s_padNeverNear = TimeSpan.FromMinutes(12);
     // When the way to the teleporter was last walked: time away from it (a battle that caught it on the way, a heal, a
     // talk) does not count toward giving up on the teleporter (TCO7 Ra, Triton Avenue 2026-11-16: a 3-minute battle on
     // the way made it give up on the right teleporter to Suzie Gryphonbane and wander for 30 minutes).
@@ -126,6 +130,7 @@ internal sealed partial class UltimusDirectorActor {
         if (!Equals(pad, _viaPad)) {
             _viaPad = pad;
             _viaPadSince = now;
+            _viaPadNear = DateTime.MaxValue;
             _padStandSince = DateTime.MinValue;
             _padReentries = 0;
             _padStepOff = null;
@@ -135,7 +140,17 @@ internal sealed partial class UltimusDirectorActor {
                                                          : $"finds a faster way to \"{target.What}\" than walking. ") +
                             $"Takes the teleporter at ({pad.X:0}, {pad.Y:0}), which lands at ({pad.ToX:0}, {pad.ToY:0}).");
         }
-        else if (DateTime.UtcNow - _viaPadSince > s_padGiveUp) {
+        // The give-up clock runs from when he got near the teleporter, not from when he chose it: a long walk to it, with
+        // fights on the way, is no sign that it does not work (Ultimus, The Tower Archives, 2026-11-20: the teleporter at
+        // (9177, -7685) lies 41,000 from the area's door; he gave up on it halfway there, after 3 minutes of walking and
+        // creature fights, wandered to the far end of the hall and was caught 5 times in 30 minutes).
+        if (Equals(pad, _viaPad) && _viaPadNear == DateTime.MaxValue && UltimusPlanner.Far(member.X, member.Y, pad.X, pad.Y) <= PAD_NEAR) {
+            _viaPadNear = now;
+        }
+
+        // One he never gets near (the walk to it is cut off as well) is given up after a longer while.
+        if (Equals(pad, _viaPad) && ((_viaPadNear != DateTime.MaxValue && now - _viaPadNear > s_padGiveUp)
+                                     || now - _viaPadSince > s_padNeverNear)) {
             // Walked there and nothing happened (a pad that needs a quest, or one that is not there any more).
             Note("Ultimus", $"{member.Name}: the teleporter at ({pad.X:0}, {pad.Y:0}) did not take it anywhere; tries another way.", UltimusLink.ABNORMAL);
             _padsLeft[pad] = DateTime.UtcNow;
