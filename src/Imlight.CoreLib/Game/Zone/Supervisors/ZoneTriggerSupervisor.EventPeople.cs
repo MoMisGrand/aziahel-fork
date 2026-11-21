@@ -35,6 +35,10 @@ internal sealed partial class ZoneTriggerSupervisor {
     private readonly HashSet<ulong> _eventPeopleWoken = [];
 
     private void NoteEventPeopleSpawners(IEnumerable<SpawnObject> spawners) {
+        if (_eventPeopleSpawners is null || _eventPeopleWoken is null) {
+            return;
+        }
+
         _eventPeopleSpawners.Clear();
         try {
             var holders = new Dictionary<ulong, List<SpawnObject>>();
@@ -64,7 +68,11 @@ internal sealed partial class ZoneTriggerSupervisor {
         }
     }
 
-    private bool HoldsEventPeopleSpawners() => _eventPeopleSpawners.Count > _eventPeopleWoken.Count;
+    // A zone that was already running when this code went in by a live patch has no lists (its fields were added after it
+    // was made, so they are null): it holds none. Reading them unguarded crashed every such zone's trigger supervisor on each
+    // arrival, and doors and teleporters stopped taking anyone on (2026-11-21 00:31-00:46, v0.10.941 live patch).
+    private bool HoldsEventPeopleSpawners()
+        => _eventPeopleSpawners is { } spawners && _eventPeopleWoken is { } woken && spawners.Count > woken.Count;
 
     private void WakeEventPeopleForTalkSteps(WaitingSpawnWizard message) {
         if (!HoldsEventPeopleSpawners()) {
