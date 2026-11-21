@@ -86,9 +86,9 @@ What the bots did in Dragonspyre, from the server log: every quest finished, eve
   - The Tower Archives near (12300, -7200) while Go to Dragonspyre,The Tower Archives ("Portal Combat"): stuck 50 time(s) (Ultimus); one bot tried every fix there.
   - The Tower Archives near (13000, -11500) while Go to Dragonspyre,The Tower Archives ("Portal Combat"): stuck 32 time(s) (Ultimus); one bot tried every fix there.
   - The Tower Archives near (-31800, -14000) while resting while "Go to Dragonspyre,The Tower Archives" waits: stuck 13 time(s) (Ultimus); one bot tried every fix there.
+  - The Basilica near (-1200, 1200) while to The Atheneum (Go to Dragonspyre,The Tower Archives): stuck 13 time(s) (Ultimus); one bot tried every fix there.
   - The Tower Archives near (8400, -10300) while Use Blue Crystal here ("Portal Combat"): stuck 11 time(s) (Ultimus); one bot tried every fix there.
   - The Basilica near (200, -500) while a short break before trying "Go to Dragonspyre,The Tower Archives" again: stuck 9 time(s) (Ultimus); one bot tried every fix there.
-  - The Basilica near (-1200, 1200) while to The Atheneum (Go to Dragonspyre,The Tower Archives): stuck 7 time(s) (Ultimus).
   - The Tower Archives near (12300, -7200) while a short break before trying "Go to Dragonspyre,The Tower Archives" again: stuck 6 time(s) (Ultimus); one bot tried every fix there.
   - The Tower Archives near (13000, -11500) while a short break before trying "Go to Dragonspyre,The Tower Archives" again: stuck 6 time(s) (Ultimus); one bot tried every fix there.
 

@@ -274,7 +274,7 @@ internal sealed partial class UltimusDirectorActor {
                     Clicked("potion|buy");
                     Note("Ultimus", $"{leader.Name} fills its potions at the potion shop.");
                     _actors[0].Tell(new UltimusMember.Interact(pick.GlobalId, "PotionShopService", 0, "the potion shop"));
-                    _actors[0].Tell(new UltimusMember.BuyPotions());
+                    _actors[0].Tell(PotionsToBuy(leader));
                     HoldRecall(6);
                 }
             }
@@ -655,7 +655,7 @@ internal sealed partial class UltimusDirectorActor {
             if (CanClick("potion|buy")) {
                 Clicked("potion|buy");
                 _actors[0].Tell(new UltimusMember.Interact(shop.GlobalId, "PotionShopService", 0, "the potion shop"));
-                _actors[0].Tell(new UltimusMember.BuyPotions());
+                _actors[0].Tell(PotionsToBuy(leader));
                 HoldRecall(6);
             }
         }
@@ -949,4 +949,24 @@ internal sealed partial class UltimusDirectorActor {
         return list.OrderBy(a => a.Hops).ToList();
     }
 
+
+    /// <summary>
+    /// What he buys at the potion shop: "Fill All" when his gold covers every missing potion, else one at a time as many as
+    /// he can pay for. The shop turns down a Fill All he can't pay for in full, and nothing is bought. Kurrent, The Commons,
+    /// 2026-11-20 21:53-21:58: 4 potions missing at 390 each, 1115 gold, "can't afford 4 potion(s)" every 12 seconds and
+    /// flagged stuck 37 times at the shop's counter (Tulkar the same at 02:15).
+    /// </summary>
+    private static UltimusMember.BuyPotions PotionsToBuy(UltimusMember.Status leader) {
+        if (leader.Wizard?.GameStats is not { } stats) {
+            return new UltimusMember.BuyPotions();
+        }
+
+        var missing = (int) Math.Ceiling(stats.m_potionMax - stats.m_potionCharge);
+        var each = PotionService.PotionCostPerBottle(Math.Max(1, stats.Level));
+        if (missing <= 0 || each <= 0 || stats.m_currentGold >= (long) each * missing) {
+            return new UltimusMember.BuyPotions();
+        }
+
+        return new UltimusMember.BuyPotions(Math.Max(1, (int) (stats.m_currentGold / each)));
+    }
 }
