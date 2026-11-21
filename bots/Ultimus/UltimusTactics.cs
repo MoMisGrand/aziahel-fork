@@ -216,7 +216,7 @@ internal static class UltimusTactics {
                ?? Heal(me, hand, playersInDanger)
                ?? foreseen
                ?? (mine < HURT ? Heal(me, hand, myHurt) ?? Shield(me, hand, myHurt, threat) : null)
-               ?? (style == UltimusFightStyles.HIT_NOW
+               ?? (style == UltimusFightStyles.HIT_NOW && !SmallHitWastesPips(me, hand, whole, focus, enemies)
                    ? Hit(me, hand, focus, enemies, $"hits at once (\"{UltimusFightStyles.HIT_NOW}\" wins this kind of fight for me){focusWhy}")
                    : null)
                ?? HitAll(me, hand, focus, enemies)
@@ -306,6 +306,37 @@ internal static class UltimusTactics {
 
         return all is null ? null : new(Move.Cast, all.Index, -1, $"finishes off several with {all.Card.Shown}");
     }
+
+    /// <summary>
+    /// "Hit now" with only a small hit castable, against a foe it barely dents, while a hit at least two and a half times as
+    /// big is in his hand waiting for pips: the small one spends the pips the big one needs. Ultimus at level 36 in the Tower
+    /// Archives (2026-11-20 22:36-22:43) cast Minor Crusade and Scarab for about 121 into Restless Soldiers round after round,
+    /// holding Locust Swarm and Gearhead Destroyer, and a two-enemy side fight ran 13 rounds (7 minutes); five such fights cost
+    /// him most of an hour. Then the hit waits (the two-round plan or a pass builds the pips) unless the small hit finishes
+    /// the foe or takes at least a quarter of its health.
+    /// </summary>
+    private static bool SmallHitWastesPips(CombatDuelSubCircle me, List<InHand> hand, List<InHand> whole, CombatDuelSubCircle focus,
+                                           List<CombatDuelSubCircle> enemies) {
+        if (focus is null) {
+            return false;
+        }
+
+        int Damage(Card card) => card.HitsAll
+            ? enemies.Sum(e => Math.Min(RewrittenAI.Health(e), Estimate(card, me, e)))
+            : Math.Min(RewrittenAI.Health(focus), Estimate(card, me, focus));
+
+        var now = hand.Where(h => h.Card.Hit && !h.Card.Natural).Select(h => Damage(h.Card)).DefaultIfEmpty(0).Max();
+        var health = RewrittenAI.Health(focus);
+        if (now <= 0 || now >= health || now >= health * SMALL_HIT_SHARE) {
+            return false;
+        }
+
+        var later = whole.Where(h => !h.Castable && h.Card.Hit && !h.Card.Natural).Select(h => Damage(h.Card)).DefaultIfEmpty(0).Max();
+
+        return later >= now * BIG_HIT_FACTOR;
+    }
+
+    private const double SMALL_HIT_SHARE = 0.25, BIG_HIT_FACTOR = 2.5;
 
     private static Choice Hit(CombatDuelSubCircle me, List<InHand> hand, CombatDuelSubCircle focus, List<CombatDuelSubCircle> enemies, string why) {
         var best = hand.Where(h => h.Card.Hit && !h.Card.Natural)
