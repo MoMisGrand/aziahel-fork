@@ -207,6 +207,8 @@ internal sealed partial class UltimusDirectorActor {
         }
         else {
             _partyStrongWarned = 0;
+            _partyJoinNear = DateTime.MinValue;
+            _partyJoinGaveUp = false;
         }
 
         // Their battle: he walks in, as a player joins a group mate's fight (when there is room). One far too strong for him
@@ -226,8 +228,27 @@ internal sealed partial class UltimusDirectorActor {
                     $"watching {name}'s battle (it looks far too strong for me; I go in if they say so)", Key: PARTY_KEY + "watch|" + mate.CharId);
             }
 
-            return DuelBots.UltimusMayJoin(mateGid, out _)
+            // Standing at their battle and still not let in: the server keeps him out of it (Kitharas Wraith, 2026-11-20 22:52:
+            // at Kitharas Rock's fight with Krag Stonechin in the Grand Arena for 4 minutes, flagged stuck 6 times). After
+            // 30 seconds there he watches from the side until it ends, as a player does, instead of trying every unstick move.
+            var mayJoin = DuelBots.UltimusMayJoin(mateGid, out _);
+            if (mayJoin && !_partyJoinGaveUp && !CombatDuelComponent.IsInBattle(leader.GlobalId) && UltimusPlanner.Far(leader.X, leader.Y, at.X, at.Y) <= 200) {
+                if (_partyJoinNear == DateTime.MinValue) {
+                    _partyJoinNear = DateTime.UtcNow;
+                }
+                else if (DateTime.UtcNow - _partyJoinNear > TimeSpan.FromSeconds(30)) {
+                    _partyJoinGaveUp = true;
+                    Note("Ultimus", $"ABNORMAL: stood at {name}'s battle for 30 seconds and was not let in: he watches from the side until it ends.",
+                        UltimusLink.ABNORMAL);
+                    Think($"I have stood at {name}'s battle for 30 seconds and the game has not let me in. I wait by it until it ends " +
+                          "instead of trying to get unstuck where nothing is wrong.", "party-joinfail|" + mate.CharId);
+                }
+            }
+
+            return mayJoin && !_partyJoinGaveUp
                 ? new UltimusPlanner.Target(UltimusPlanner.SPOT, at.X, at.Y, $"joining {name}'s battle (my group)", Key: PARTY_KEY + "fight|" + mate.CharId)
+                : _partyJoinGaveUp
+                ? new UltimusPlanner.Target(UltimusPlanner.SPOT, leader.X, leader.Y, $"watching {name}'s battle (my group; the game did not let me in)", Key: PARTY_KEY + "watch|" + mate.CharId)
                 : new UltimusPlanner.Target(UltimusPlanner.SPOT, leader.X, leader.Y, $"watching {name}'s battle (my group; it is full)", Key: PARTY_KEY + "watch|" + mate.CharId);
         }
 
@@ -305,6 +326,8 @@ internal sealed partial class UltimusDirectorActor {
 
     // The group mate whose too-strong battle he asked about, and until when he was told to go in anyway.
     private ulong _partyStrongWarned;
+    private DateTime _partyJoinNear = DateTime.MinValue;
+    private bool _partyJoinGaveUp;
     private DateTime _partyStrongOkUntil = DateTime.MinValue;
 
     /// <summary>
