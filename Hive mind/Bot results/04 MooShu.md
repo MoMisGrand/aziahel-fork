@@ -6,7 +6,7 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Otomo Courier: won 5 time(s) (5 Solo, 0 Team), lost 21. Fastest: Ultimus in 5 rounds, deck for a boss (Ice), hitting with Ice, Fire; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Sandstorm, Balance, Fairy.
 - Ronin Keyholder: won 4 time(s) (4 Solo, 0 Team), lost 22. Fastest: Ra in 7 rounds, plan "hit now", deck for a boss (Ice), hitting with Ice, Fire, Life; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Minor Crusade, Gearhead Destroyer, Scarab.
 - Sanzoku Outlaw: won 8 time(s) (8 Solo, 0 Team), lost 1. Fastest: Cyndr in 3 rounds, plan "hit now", deck for Balance enemies, hitting with Balance, Ice, Death; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Sunbird, Immolate.
-- Otomo Supply Runner: won 7 time(s) (7 Solo, 0 Team), lost 0. Fastest: Ultimus in 4 rounds, deck for Fire enemies, hitting with Fire, Death, Myth (most of my fights lately had 2+ enemies), hits with Gearhead Destroyer, Locust Swarm.
+- Otomo Supply Runner: won 7 time(s) (7 Solo, 0 Team), lost 1. Fastest: Ultimus in 4 rounds, deck for Fire enemies, hitting with Fire, Death, Myth (most of my fights lately had 2+ enemies), hits with Gearhead Destroyer, Locust Swarm.
 - Sanzoku Bandit: won 6 time(s) (6 Solo, 0 Team), lost 0. Fastest: Ra in 6 rounds, plan "hit now", deck for Myth enemies, hitting with Myth, Storm, Fire (most of my fights lately had 2+ enemies), hits with Minor Crusade, Scarab, Sandstorm, Helping Hands.
 - Do-Daga: won 4 time(s) (4 Solo, 0 Team), lost 1. Fastest: Cyndr in 5 rounds, plan "hit now", deck for a boss (Ice), hitting with Ice, Fire, Death (many of my fights lately had 2+ enemies), hits with Minor Fire Scorch, Immolate, Sunbird.
 - Maito: won 2 time(s) (2 Solo, 0 Team), lost 3. Fastest: Garm in 9 rounds, plan "hit now", deck for a boss (Storm), hitting with Storm, Fire, Death (most of my fights lately had 2+ enemies), hits with Poison, Dark Sprite, Minor Dark Blow, Vampire.
@@ -192,6 +192,7 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 
 ## The Final Peace
 - Finished by Ultimus (4 min).
+- Finished by Ra (8 min).
 - Won by Ultimus (Solo) against Kanago (rank 6, 1,360 health, Storm, a boss) on 2026-11-19 at 18:34:31.
   It took 10 rounds, about 4 minutes.
   Deck made for a boss (Storm), hitting with Storm, Balance, Death (most of my fights lately had 2+ enemies).
@@ -373,23 +374,65 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Avoid, fights lost:
   - Otomo Quartermaster: lost 1 time(s) (Garm). Why: it simply hit harder than I could heal. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
 
+## Run Away, Run Away!
+- Finished by Ultimus (13 min).
+- Finished by Ra (7 min).
+- Finished by Garm (13 min).
+- Won by Ultimus (Solo) against Otomo Supply Runner (rank 5, 625 health, Fire) on 2026-11-19 at 11:13:54.
+  It took 4 rounds, about 2 minutes.
+  Deck made for Fire enemies, hitting with Fire, Death, Myth (most of my fights lately had 2+ enemies).
+  Spells that landed the hits: Gearhead Destroyer, Locust Swarm.
+- Won by Ultimus (Solo) against Otomo Supply Runner (rank 5, 625 health, Fire) on 2026-11-19 at 11:28:30.
+  It took 6 rounds, about 3 minutes.
+  Deck made for any fight (many of my fights lately had 2+ enemies).
+  Spells that landed the hits: Minor Crusade, Vampire.
+- Won by Ra (Solo) against Otomo Supply Runner (rank 5, 625 health, Fire) on 2026-11-20 at 19:13:04.
+  It took 4 rounds, about 2 minutes.
+  Deck made for Fire enemies, hitting with Fire, Death, Myth (most of my fights lately had 2+ enemies).
+  Plan: "hit now" (mine and every other bot's).
+  Spells that landed the hits: Minor Crusade x2, Sandstorm, Gearhead Destroyer.
+- Won by Ra (Solo) against Otomo Supply Runner (rank 5, 625 health, Fire) on 2026-11-20 at 19:16:29.
+  It took 5 rounds, about 3 minutes.
+  Deck made for Fire enemies, hitting with Fire, Death, Myth (most of my fights lately had 2+ enemies).
+  Spells that landed the hits: Minor Crusade x3, Sandstorm.
+- Won by Garm (Solo) against Otomo Supply Runner (rank 5, 625 health, Fire) on 2026-11-20 at 21:35:39.
+  It took 11 rounds, about 8 minutes.
+  Deck made for any fight (many of my fights lately had 2+ enemies).
+  Plan: "hit now" (mine and every other bot's).
+  Spells that landed the hits: Minor Dark Blow x4, Poison x3, Fairy, Heck Hound, Dark Sprite, Storm Hound.
+- Won by Garm (Solo) against Otomo Supply Runner (rank 5, 625 health, Fire) on 2026-11-20 at 21:39:17.
+  It took 6 rounds, about 3 minutes.
+  Deck made for any fight (many of my fights lately had 2+ enemies).
+  Plan: "hit now" (mine and every other bot's).
+  Spells that landed the hits: Minor Dark Blow x3, Banshee, Vampire, Dark Sprite.
+- Won by Cyndr (Solo) against Otomo Supply Runner (rank 5, 625 health, Fire) on 2026-11-20 at 22:53:03.
+  It took 5 rounds, about 3 minutes.
+  Deck made for Fire enemies, hitting with Fire, Death, Myth (most of my fights lately had 2+ enemies).
+  Plan: "hit now" (mine and every other bot's).
+  Spells that landed the hits: Minor Fire Scorch x3, Scald, Sunbird.
+- Avoid, fights lost:
+  - Otomo Supply Runner: lost 1 time(s) (Cyndr). Why: it simply hit harder than I could heal. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
+
 ## is a Good Defense
 - Finished by Ultimus (80 s).
 - Finished by Ra (81 s).
+- Finished by Garm (78 s).
 - Avoid, places bots got stuck:
   - Crimson Fields near (-5900, 21800) while Talk to Rikugun Mikawa ("is a Good Defense"): stuck 3 time(s) (Garm, Ra, Ultimus).
 
 ## Scouring for Scouts
 - Finished by Ultimus (2 min).
 - Finished by Ra (2 min).
+- Finished by Garm (2 min).
 - Avoid, places bots got stuck:
-  - Crimson Fields near (-5900, 21900) while Talk to Rikugun Mikawa ("Scouring for Scouts"): stuck 2 time(s) (Ra, Ultimus).
+  - Crimson Fields near (-5900, 21900) while Talk to Rikugun Mikawa ("Scouring for Scouts"): stuck 3 time(s) (Garm, Ra, Ultimus).
 
 ## A Soldier's Duty
 - Finished by Ultimus (61 s).
 - Finished by Ra (61 s).
+- Finished by Garm (61 s).
 - Avoid, places bots got stuck:
-  - Crimson Fields near (-5900, 21900) while Talk to Rikugun Mikawa ("A Soldier's Duty"): stuck 4 time(s) (Ra, Ultimus); one bot tried every fix there.
+  - Crimson Fields near (-5900, 21900) while Talk to Rikugun Mikawa ("A Soldier's Duty"): stuck 6 time(s) (Garm, Ra, Ultimus); one bot tried every fix there.
 
 ## Passing Stones
 - Finished by Ultimus (3 min).
@@ -491,43 +534,6 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Finished by Ra (15 s).
 - Finished by Garm (16 s).
 - Finished by Cyndr (15 s).
-
-## Run Away, Run Away!
-- Finished by Ultimus (13 min).
-- Finished by Ra (7 min).
-- Finished by Garm (13 min).
-- Won by Ultimus (Solo) against Otomo Supply Runner (rank 5, 625 health, Fire) on 2026-11-19 at 11:13:54.
-  It took 4 rounds, about 2 minutes.
-  Deck made for Fire enemies, hitting with Fire, Death, Myth (most of my fights lately had 2+ enemies).
-  Spells that landed the hits: Gearhead Destroyer, Locust Swarm.
-- Won by Ultimus (Solo) against Otomo Supply Runner (rank 5, 625 health, Fire) on 2026-11-19 at 11:28:30.
-  It took 6 rounds, about 3 minutes.
-  Deck made for any fight (many of my fights lately had 2+ enemies).
-  Spells that landed the hits: Minor Crusade, Vampire.
-- Won by Ra (Solo) against Otomo Supply Runner (rank 5, 625 health, Fire) on 2026-11-20 at 19:13:04.
-  It took 4 rounds, about 2 minutes.
-  Deck made for Fire enemies, hitting with Fire, Death, Myth (most of my fights lately had 2+ enemies).
-  Plan: "hit now" (mine and every other bot's).
-  Spells that landed the hits: Minor Crusade x2, Sandstorm, Gearhead Destroyer.
-- Won by Ra (Solo) against Otomo Supply Runner (rank 5, 625 health, Fire) on 2026-11-20 at 19:16:29.
-  It took 5 rounds, about 3 minutes.
-  Deck made for Fire enemies, hitting with Fire, Death, Myth (most of my fights lately had 2+ enemies).
-  Spells that landed the hits: Minor Crusade x3, Sandstorm.
-- Won by Garm (Solo) against Otomo Supply Runner (rank 5, 625 health, Fire) on 2026-11-20 at 21:35:39.
-  It took 11 rounds, about 8 minutes.
-  Deck made for any fight (many of my fights lately had 2+ enemies).
-  Plan: "hit now" (mine and every other bot's).
-  Spells that landed the hits: Minor Dark Blow x4, Poison x3, Fairy, Heck Hound, Dark Sprite, Storm Hound.
-- Won by Garm (Solo) against Otomo Supply Runner (rank 5, 625 health, Fire) on 2026-11-20 at 21:39:17.
-  It took 6 rounds, about 3 minutes.
-  Deck made for any fight (many of my fights lately had 2+ enemies).
-  Plan: "hit now" (mine and every other bot's).
-  Spells that landed the hits: Minor Dark Blow x3, Banshee, Vampire, Dark Sprite.
-- Won by Cyndr (Solo) against Otomo Supply Runner (rank 5, 625 health, Fire) on 2026-11-20 at 22:53:03.
-  It took 5 rounds, about 3 minutes.
-  Deck made for Fire enemies, hitting with Fire, Death, Myth (most of my fights lately had 2+ enemies).
-  Plan: "hit now" (mine and every other bot's).
-  Spells that landed the hits: Minor Fire Scorch x3, Scald, Sunbird.
 
 ## A Fighting Chance
 - Finished by Ultimus (17 s).
@@ -632,27 +638,35 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 
 ## Forest Flowers
 - Finished by Ultimus (65 s).
+- Finished by Ra (63 s).
 
 ## Spiritual Offering
 - Finished by Ultimus (33 s).
+- Finished by Ra (33 s).
 
 ## Jade Scepter
 - Finished by Ultimus (35 s).
+- Finished by Ra (14 s).
 
 ## Due Diligence
 - Finished by Ultimus (61 s).
+- Finished by Ra (62 s).
 
 ## Earth Day
 - Finished by Ultimus (5 s).
+- Finished by Ra (6 s).
 
 ## Crazy for You
 - Finished by Ultimus (24 s).
+- Finished by Ra (23 s).
 
 ## Shrining Example
 - Finished by Ultimus (10 s).
+- Finished by Ra (11 s).
 
 ## Happy Earth Spirits
 - Finished by Ultimus (31 s).
+- Finished by Ra (54 s).
 
 ## Water Everywhere...
 - Finished by Ultimus (50 s).

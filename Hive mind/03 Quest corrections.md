@@ -7,6 +7,9 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 - Gladiator Games (Talk to Arena Master): the way is the teleporter at (-1715, 3325), which lands at (-5209, 22207) beside the stairs up to the Arena Master. Solo Kitharas (Hart, Wraith, Moon) did it in 40 seconds; the ones busy forming or leaving a group (Jackle, Shade, Consumer, Lumeria) took 3 to 4 minutes on the same walk. Quest is fine; group shuffling is the slow part. (2026-11-20 10:45 PM Bot Update)
 - Taking it to the Tuts: 9 Kitharas finished in 50 seconds to 8 minutes; the slow ones were in fights with the tomb's creatures, not stuck. (2026-11-20 10:45 PM Bot Update)
 
+## Dragonspyre, The Tower Archives
+- Portal Combat: Ultimus has been in the Tower Archives since 22:11 (2026-11-20) following the game's walk map toward the raised teleporter at (9177, -7685); the way winds far round (he passed (12650, 11220) and (25407, 27105)) and creatures catch him about every 5 minutes. He wins them, but each two-enemy fight ran up to 13 rounds because he cast 1-pip hits (about 121) every round while Locust Swarm and Gearhead Destroyer waited for pips. Fix (bots): with only a small hit castable and a hit 2.5 times bigger waiting, he builds pips first. Bot fault, not quest. (2026-11-20 11:15 PM Bot Update)
+
 ## Dragonspyre, The Basilica
 - Portal Combat: Ultimus sat resting at the Basilica's arch to The Atheneum for hours (the arch offered no way through). After the arch fix reached the server at 22:08 (2026-11-20) he walked straight through at 22:09 and took the teleporter at (9177, -7685) toward the Tower Archives. Success. (2026-11-20 10:15 PM Bot Update)
 - After the arch, Ultimus is crossing The Atheneum toward the Tower Archives but is caught by side fights he tries to walk round (22:12, 22:18, 22:24, 22:29), each a long one of 5 minutes or more against Loathsome Creepers. He wins them; slow, not stuck. Watching. (2026-11-20 10:30 PM Bot Update)
