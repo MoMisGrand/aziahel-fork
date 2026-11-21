@@ -1,0 +1,4 @@
+Fixed: Bots set down by a teleporter were not noticed where they landed
+After a teleporter inside an area moved a bot, the bot did not tell the server where it now stood, so the server still had it at the teleporter. A quest spot the bot landed in never noticed it. Ultimus took the Crystal Vortex in the Tower Archives at 4:01 AM, landed right on the "Portal Combat" goal spot, and the step never finished; his stuck timer then sent him all the way back. Now the bots report their new spot the moment they land, as a player's game does.
+Where: Dragonspyre, The Tower Archives ("Portal Combat"), and every teleporter inside an area, for Ultimus, TCO7, the Kitharas and the Quest Team.
+Test: Watch Ultimus take the Crystal Vortex; "Portal Combat" moves past "Go to Dragonspyre, The Tower Archives" within a few seconds of landing.

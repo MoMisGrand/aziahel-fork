@@ -360,6 +360,11 @@ internal sealed class QuestTeamMember : ReceiveActor, IWithTimers {
                 _route.Clear();
                 View.Walking = false;
                 Place(Expand(m.LocationX), Expand(m.LocationY), Expand(m.LocationZ));
+                // A player's game says where it now stands, so the server knows the new spot (UltimusMember does the same).
+                Send(new GAME_5_PROTOCOL.MSG_CLIENTMOVE {
+                    LocationX = m.LocationX, LocationY = m.LocationY, LocationZ = m.LocationZ,
+                    Direction = (byte) Math.Min((int) m.Direction, 249), ZoneCounter = _zoneCounter,
+                });
             }
         });
         Receive<QUEST_MESSAGES_52_PROTOCOL.MSG_SENDNPCOPTIONS>(OnNpcOptions);
