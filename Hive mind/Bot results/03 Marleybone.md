@@ -3,7 +3,7 @@
 What the bots did in Marleybone, from the server log: every quest finished, every fight won (to copy), every fight lost and every place they got stuck (to avoid). Solo means the bot fought alone; Team means another of our bots won the same fight with it. Updated after each bots update.
 
 ## Best way to beat each creature
-- Bellows: won 6 time(s) (6 Solo, 0 Team), lost 84. Fastest: Tulkar in 7 rounds, deck for a boss (Balance), hitting with Balance, Storm, Myth; a rival that keeps beating me, so more shields and heals (most of my fights lately had 2+ enemies).
+- Bellows: won 6 time(s) (6 Solo, 0 Team), lost 85. Fastest: Tulkar in 7 rounds, deck for a boss (Balance), hitting with Balance, Storm, Myth; a rival that keeps beating me, so more shields and heals (most of my fights lately had 2+ enemies).
 - Gearhead: won 50 time(s) (32 Solo, 18 Team), lost 29. Fastest: Tulkar in 3 rounds, deck for a boss (Storm), hitting with Storm, Fire, Death (most of my fights lately had 2+ enemies).
 - O'Leary Conniver: won 65 time(s) (51 Solo, 14 Team), lost 12. Fastest: Garm in 2 rounds, plan "hit now", deck for any fight (many of my fights lately had 2+ enemies), hits with Vampire, Minor Dark Blow.
 - Clockwork Warrior: won 49 time(s) (47 Solo, 2 Team), lost 24. Fastest: Cyndr in 1 rounds, deck for Balance enemies, hitting with Balance, Storm, Ice; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Sunbird.
@@ -2759,6 +2759,7 @@ What the bots did in Marleybone, from the server log: every quest finished, ever
   - Clockwork Warrior: lost 1 time(s) (Kurrent). Why: I went in at 20% health. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
   - Clockwork Wizard: lost 1 time(s) (Kurrent). Why: its biggest hit took 64% of my health. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
   - Clockwork Warrior: lost 1 time(s) (Kurrent). Why: the fight ran 7 minutes, so I ran out of good cards. Do instead: fight other creatures for XP first, up to the quest's level.
+  - Bellows: lost 1 time(s) (Kurrent). Why: its biggest hit took 69% of my health, the fight ran 11 minutes, so I ran out of good cards. Do instead: look for better gear in this world's shops and the Bazaar, then try again.
 - Avoid, places bots got stuck:
   - The Commons near (-4400, 1000) while filling potions before a dungeon: stuck 21 time(s) (Kurrent); one bot tried every fix there.
   - The Commons near (-4300, 1100) while filling potions before a dungeon: stuck 13 time(s) (Kurrent).
