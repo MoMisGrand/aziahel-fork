@@ -99,6 +99,10 @@ public partial class Zone : ReceiveProtocolDispatcher, IWithTimers {
     /// </summary>
     internal int EncounterBattles;
 
+    // Spawners a trigger of this zone switches off (ResSpawn with activate false): the game means them to keep coming back
+    // on their timer until then, even in a dungeon copy (ZonePath.CanSpawn). Read when the zone's triggers load.
+    internal HashSet<ulong> SpawnersSwitchedOffByTriggers;
+
     /// <summary>
     /// The zone path, formatted as it would be in the access pass.
     /// </summary>

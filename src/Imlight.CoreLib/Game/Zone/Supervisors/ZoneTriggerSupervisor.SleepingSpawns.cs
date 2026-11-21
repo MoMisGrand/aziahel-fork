@@ -35,12 +35,18 @@ internal sealed partial class ZoneTriggerSupervisor {
         _sleepingSpawners.Clear();
         try {
             var switchedOnByTriggers = new HashSet<ulong>();
+            var switchedOffByTriggers = new HashSet<ulong>();
             foreach (var spawn in (triggers ?? []).Where(t => t?.m_results?.m_results is not null)
                          .SelectMany(t => t.m_results.m_results).OfType<ResSpawn>()) {
                 if (spawn.m_activate) {
                     switchedOnByTriggers.Add((ulong) spawn.m_spawnID);
                 }
+                else {
+                    switchedOffByTriggers.Add((ulong) spawn.m_spawnID);
+                }
             }
+
+            Zone.SpawnersSwitchedOffByTriggers = switchedOffByTriggers;
 
             foreach (var spawner in spawners ?? []) {
                 if (spawner is { m_active: false, m_spawnList.Count: > 0 } && !switchedOnByTriggers.Contains(spawner.m_id.Full)) {

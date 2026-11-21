@@ -606,7 +606,12 @@ public sealed class ZonePath : ZoneEntity {
 
         // Instanced zones never repopulate a spawn point once something from it has died, even the
         // "at least one" guarantee below.
-        if (Zone.IsInstance && _defeatedInInstance.Contains(spawnObject)) {
+        // Except a spawner with a timer that a trigger of this room switches off later: the game keeps it coming back until
+        // then. Big Ben's Door43 opens on beating the Frog (Spawn point 8, every 5 minutes) only after an earlier door
+        // switched its trigger on, and that trigger switches the Frog's spawner off; a Frog beaten before that never came
+        // back, so the door stayed shut for good (TCO7 Idunn waited there from 3:12 to past 4:30 AM on 2026-11-21).
+        if (Zone.IsInstance && _defeatedInInstance.Contains(spawnObject)
+            && !(spawnObject.m_spawnTime > 0 && Zone.SpawnersSwitchedOffByTriggers?.Contains(spawnObject.m_id.Full) == true)) {
             return false;
         }
 
