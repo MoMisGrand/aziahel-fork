@@ -6,11 +6,11 @@ What the bots did in Dragonspyre, from the server log: every quest finished, eve
 - Petrov Gloomstrider: won 52 time(s) (52 Solo, 0 Team), lost 1. Fastest: Ultimus in 5 rounds, plan "hit now", deck for any fight (many of my fights lately had 2+ enemies), hits with Judgement, Elemental Shield, Gearhead Destroyer, Minor Crusade.
 - Zarathax: won 1 time(s) (1 Solo, 0 Team), lost 3. Fastest: Ultimus in 24 rounds, deck for a boss (Balance), hitting with Balance, Fire, Death; a rival that outlasts me, so more hits and blades to end it sooner (many of my fights lately had 2+ enemies), hits with Balance, Elemental Shield, Fairy, Helping Hands.
 - Silver Servant: won 1 time(s) (1 Solo, 0 Team), lost 1. Fastest: Ultimus in 6 rounds, deck for Balance enemies, hitting with Balance, Myth, Death (most of my fights lately had 2+ enemies), hits with Balance, Banshee.
+- Mavra Flamewing: won 1 time(s) (1 Solo, 0 Team), lost 1. Fastest: Ultimus in 15 rounds, deck for a boss (Storm), hitting with Storm, Fire, Ice (many of my fights lately had 2+ enemies), hits with Balance, Helping Hands, Sandstorm, Vampire.
 - Wandering Wizard: won 2 time(s) (2 Solo, 0 Team), lost 0. Fastest: Ultimus in 2 rounds, deck for Life enemies, hitting with Life, Fire, Storm (most of my fights lately had 2+ enemies).
 - Burning Hate: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 10 rounds, deck for any fight (many of my fights lately had 2+ enemies), hits with Gearhead Destroyer, Locust Swarm.
 - Irate Banshee: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 12 rounds, plan "hit now", deck for Fire enemies, hitting with Fire, Death, Myth (most of my fights lately had 2+ enemies), hits with Minor Crusade, Scarab, Gearhead Destroyer, Fairy.
 - Beghastion Crowcaller: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 5 rounds, deck for Death enemies, hitting with Death, Ice, Storm (many of my fights lately had 2+ enemies), hits with Helping Hands, Spirit Shield, Gearhead Destroyer.
-- Mavra Flamewing: never beaten yet, lost 1 time(s). Most common reason: its biggest hit took 75% of my health, the fight ran 7 minutes, so I ran out of good cards.
 - Loathsome Creeper: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 10 rounds, plan "hit now", deck for Death enemies, hitting with Death, Fire, Myth (many of my fights lately had 2+ enemies), hits with Minor Crusade, Gearhead Destroyer, Scarab, Helping Hands.
 - Sysiphan: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 23 rounds, deck for a boss (Ice), hitting with Ice, Fire, Death (many of my fights lately had 2+ enemies), hits with Helping Hands, Scarab, Elemental Shield, Fairy.
 
@@ -312,6 +312,11 @@ What the bots did in Dragonspyre, from the server log: every quest finished, eve
   - Plaza of Conquests near (-2200, 200) while a short break before trying "to Plaza of Conquests (leaving Plaza of Conquests: a side du..." again: stuck 2 time(s) (Ultimus).
 
 ## The Best Defense
+- Finished by Ultimus (18 min).
+- Won by Ultimus (Solo) against Mavra Flamewing (rank 7, 1,600 health, Storm) on 2026-11-21 at 08:50:51.
+  It took 15 rounds, about 9 minutes.
+  Deck made for a boss (Storm), hitting with Storm, Fire, Ice (many of my fights lately had 2+ enemies).
+  Spells that landed the hits: Balance x6, Helping Hands x3, Sandstorm x2, Vampire x2, Minor Crusade, Elemental Shield.
 - Avoid, fights lost:
   - Mavra Flamewing: lost 1 time(s) (Ultimus). Why: its biggest hit took 75% of my health, the fight ran 7 minutes, so I ran out of good cards. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
 

@@ -37,6 +37,7 @@ What the bots did in Wizard City, from the server log: every quest finished, eve
 
 ## The Key at Last
 - Finished by Ultimus (5 s).
+- Finished by Ra (4 s).
 
 ## Bad News...
 - Finished by Ra (5 s).
