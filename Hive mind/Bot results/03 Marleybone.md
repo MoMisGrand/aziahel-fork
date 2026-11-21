@@ -3684,7 +3684,7 @@ What the bots did in Marleybone, from the server log: every quest finished, ever
   - Big Ben near (-9700, 21000) while a short break before trying "Defeat 1 creatures" again: stuck 5 time(s) (Ra).
   - Big Ben near (-9600, 21000) while resting while "Defeat 1 creatures" waits: stuck 4 time(s) (Ra).
   - Big Ben near (-9600, 21100) while a short break before trying "Defeat 1 creatures" again: stuck 4 time(s) (Ra).
-  - Big Ben near (-9700, 21000) while resting while "Defeat 1 creatures" waits: stuck 3 time(s) (Ra).
+  - Regent's Square near (-200, 9200) while to Royal Museum (Defeat 1 creatures): stuck 4 time(s) (Idunn); one bot tried every fix there.
 
 ## Bad News...
 - Won by Ra (Solo) against Meowiarty (rank 6, 2,000 health, Myth, a boss) on 2026-11-20 at 17:45:56.
@@ -3861,6 +3861,7 @@ What the bots did in Marleybone, from the server log: every quest finished, ever
   - Regent's Square near (0, -5300) while to Wolfminster Abbey (Go to MooShu,Jade Palace): stuck 2 time(s) (Mythis); one bot tried every fix there.
   - Regent's Square near (200, -5100) while to Wolfminster Abbey (the Bazaar, for treasure cards): stuck 1 time(s) (Mythis).
   - Regent's Square near (400, -5100) while to Wolfminster Abbey (Go to MooShu,Jade Palace): stuck 1 time(s) (Mythis).
+  - Regent's Square near (100, -5100) while to Wolfminster Abbey (Go to MooShu,Jade Palace): stuck 1 time(s) (Mythis).
 
 ## Missing Souls
 - Finished by Tulkar (8 s).
