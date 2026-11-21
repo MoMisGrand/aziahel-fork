@@ -339,6 +339,13 @@ internal sealed partial class ManagerWindow {
             var inBattle = root.TryGetProperty("InBattle", out var battles) && battles.TryGetInt32(out var count) ? count : 0;
             // An older server doesn't say: nobody waits on a dungeon.
             var botsInDungeon = root.TryGetProperty("BotsInDungeon", out var inDungeon) && inDungeon.TryGetInt32(out var dungeonCount) ? dungeonCount : 0;
+            // "Ignore bots for restarts" (on unless turned off): only people's battles hold the restart, and no bot's dungeon.
+            if (_manager.RestartIgnoresBots) {
+                botsInDungeon = 0;
+                if (root.TryGetProperty("PeopleInBattle", out var peopleBattles) && peopleBattles.TryGetInt32(out var peopleCount2)) {
+                    inBattle = peopleCount2;
+                }
+            }
 
             return (players, inBattle, botsInDungeon);
         }

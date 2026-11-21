@@ -693,6 +693,19 @@ internal sealed partial class ServerManager(string installFolder) {
 
     private const string AUTO_INSTALL_ON_FILE = "auto-install-updates-on.txt";
 
+    /// <summary>
+    /// Whether an update restart leaves the server's own bots out (Ultimus, the TCO7, the Kitharas Family, the Quest Team
+    /// and street bots): it does not wait for them to leave a dungeon or finish a battle, only for people. On unless the
+    /// marker file says off (Niduus, 2026-11-20: "Have server ignore bots for restart").
+    /// </summary>
+    internal bool RestartIgnoresBots {
+        get => !File.Exists(Path.Combine(InstallFolder, RESTART_WAITS_FOR_BOTS_FILE));
+        set => Remember(RESTART_WAITS_FOR_BOTS_FILE, !value,
+            "An update restart waits for the server's bots to leave dungeons and finish battles while this file exists. The Ahziael tab in the app changes it.");
+    }
+
+    private const string RESTART_WAITS_FOR_BOTS_FILE = "restart-waits-for-bots.txt";
+
     internal string LogFolder => RemoteSession.Current?.LogFolder ?? Path.Combine(ServerFolder, "logs");
 
     // The server runs each line of this file as a command of the wizard playing on this PC (ManagerCommands).

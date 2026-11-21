@@ -142,7 +142,9 @@ internal static class OnlineList {
             // it over (Ultimus redid Big Ben's floors after six update restarts in one night, 2026-11-16), so Ahziael's
             // "when nobody is playing" restart waits for them to come out too, for a while.
             var botsInDungeon = s_rows.Where(r => s_botAccounts.Contains(r.Key)).Count(r => OverlayQuestRoute.IsDungeon(r.Value.Row.Zone));
-            var json = JsonSerializer.Serialize(new { Players = players, People = people, InBattle = inBattle, BotsInDungeon = botsInDungeon });
+            // People (not the server's bots) in a battle: Ahziael's "Ignore bots for restarts" waits only for these.
+            var peopleInBattle = s_rows.Count(r => !s_botAccounts.Contains(r.Key) && r.Value.Row.InBattle);
+            var json = JsonSerializer.Serialize(new { Players = players, People = people, InBattle = inBattle, PeopleInBattle = peopleInBattle, BotsInDungeon = botsInDungeon });
             if (json == s_written) {
                 return;
             }

@@ -1063,6 +1063,19 @@ internal sealed partial class ManagerWindow : Window {
         return row;
     }
 
+    private Control IgnoreBotsForRestartSwitch() {
+        var toggle = new ToggleSwitch { OnContent = "On", OffContent = "Off", IsChecked = _manager.RestartIgnoresBots };
+        toggle.IsCheckedChanged += (_, _) => SaveUpdateChoice(() => _manager.RestartIgnoresBots = toggle.IsChecked == true, toggle.IsChecked == true
+            ? "Update restarts no longer wait for the server's bots: only for people playing and their battles."
+            : "Update restarts wait again for the server's bots to leave dungeons (up to 2 hours) and finish their battles.");
+
+        var row = SwitchRow("Ignore bots for restarts", toggle, "On: an update restart waits only for people, not for Ultimus, the TCO7, the Kitharas Family or other server bots in a dungeon or a battle. The bots log back in by themselves after the restart.");
+        ToolTip.SetTip(row, "Off: a \"when nobody is playing\" restart also waits (up to 2 hours) for a bot to come out of a dungeon, " +
+            "and a countdown restart waits for bots' battles to end too.");
+
+        return row;
+    }
+
     private Control GameFilesTab() {
         Action(_copyGameFiles, CopyGameFilesAsync);
         Action(_readGameFiles, ReadGameFilesAsync);
@@ -1468,7 +1481,8 @@ internal sealed partial class ManagerWindow : Window {
                 $"{Edition.NAME} {SelfUpdate.CurrentVersion}. Update Ahziael and What's new are at the top of the window, on every page.",
                 AutoUpdateBox(),
                 AutoInstallSwitch(),
-                InstantUpdateSwitch()),
+                InstantUpdateSwitch(),
+                IgnoreBotsForRestartSwitch()),
             Fold("sparkle", "What's New", "Look",
                 "How Ahziael looks.",
                 SwitchRow("Moving background", _movingBackground,
