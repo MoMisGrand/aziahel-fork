@@ -98,6 +98,11 @@ internal sealed partial class UltimusDirectorActor {
             return true;
         }
 
+        // In a dungeon, under a quarter of his health before any fight, he drinks one, even his last (Niduus, 2026-11-21).
+        if (PotionBeforeDungeonFight(leader, target)) {
+            return true;
+        }
+
         // Before walking into a dungeon he wants more (UltimusDirector.Sense.cs: a dungeon is done in one go).
         var hurt = Hurt(leader, out var lowHealth, out var lowMana, ToughFoeNow(target));
         if (!hurt && DungeonPrep(leader, target, out var dungeonHealth, out var dungeonMana)) {
@@ -377,6 +382,36 @@ internal sealed partial class UltimusDirectorActor {
         }
 
         _doing = "drinking a potion before the boss";
+
+        return true;
+    }
+
+    /// <summary>
+    /// In a dungeon, a fight next and under a quarter of his health: he drinks a potion first, even the last one he kept for the
+    /// boss. Going into a dungeon fight that low loses it, and a loss there means Dungeon Recall or a new copy, which costs far
+    /// more than a potion (97 of 291 losses on 2026-11-20 came from going in hurt). Above a quarter his potions stay for the
+    /// boss. Niduus chose this on 2026-11-21 ("Yes, under a quarter").
+    /// </summary>
+    private bool PotionBeforeDungeonFight(UltimusMember.Status leader, UltimusPlanner.Target target) {
+        if (target?.Kind != UltimusPlanner.FIGHT || !InDungeon(leader) || leader.Wizard?.GameStats is not { } stats
+            || stats.m_potionCharge < 1 || CombatDuelComponent.IsInBattle(leader.GlobalId)) {
+            return false;
+        }
+
+        var maxHealth = Math.Max(1, stats.m_baseHitpoints + stats.m_bonusHitpoints);
+        if (stats.m_currentHitpoints >= maxHealth * POTION_ONLY_BELOW) {
+            return false;
+        }
+
+        if (CanClick("potion|dungeon-fight")) {
+            Clicked("potion|dungeon-fight");
+            Note("Ultimus", $"{leader.Name} drinks a potion before the next dungeon fight ({target.What}): {stats.m_currentHitpoints} of {maxHealth} health.");
+            Think($"I am under a quarter of my health with a fight next in this dungeon ({target.What}). Going in this low loses it and costs me the dungeon, so I drink a potion now, even one I kept for the boss.",
+                "potion-dungeon-fight|" + target.Template);
+            _actors[0].Tell(new UltimusMember.UsePotion());
+        }
+
+        _doing = "drinking a potion before a dungeon fight";
 
         return true;
     }
