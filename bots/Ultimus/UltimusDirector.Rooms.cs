@@ -217,6 +217,7 @@ internal sealed partial class UltimusDirectorActor {
             HasEntry = BotFloors.HasEntryFor(leader.Wizard),
             StepEvents = BotFloors.StepEventsOf(target?.Quest, target?.Goal),
             Step = target is null ? null : (target.X, target.Y),
+            ChainMine = gate => (BotFloors.ClaimChain(leader.ZoneActor?.Path.ToString(), gate, leader.Name, out var holder), holder),
         };
         // A person to talk to, standing here on his own ground, comes before the floor's puzzles: a player talks first, and
         // the dungeon's own quest says what the puzzles are for (the Calling of 7, 2026-11-18 19:28-22:20: Shalek the Wise
@@ -259,6 +260,14 @@ internal sealed partial class UltimusDirectorActor {
 
         if (_floorOut == BotFloors.PieceOf(duty.Key) && StepOutFrom(leader, duty, live) is { } back) {
             return back;
+        }
+
+        // Another wizard in this copy sets this in-order puzzle: he stands clear of its pieces and waits (not stuck).
+        if (duty.Kind == BotFloors.WAIT) {
+            _floorOn = null;
+            return far > 80
+                ? new UltimusPlanner.Target(UltimusPlanner.SPOT, duty.X, duty.Y, duty.What, Key: "floor|" + duty.Key + "|clear")
+                : new UltimusPlanner.Target(UltimusPlanner.WAIT, leader.X, leader.Y, duty.What, Key: "floor|" + duty.Key);
         }
 
         switch (duty.Kind) {

@@ -57,7 +57,9 @@ internal sealed partial class UltimusDirectorActor {
                             // Waiting where he is for the teammate he called for help: stepping aside or taking another way
                             // walked Kurrent off through Ravenwood and The Commons while Mythis came after him (2026-11-21 12:41).
                             || partyKey.StartsWith(PARTY_KEY + "helper|", StringComparison.Ordinal));
-        var resting = _healWaiting || _asideWaiting || partyIdle;
+        // Waiting clear of an in-order puzzle another wizard in this copy sets (BotFloors.WAIT): Katzenstein's Lab's plaques.
+        var chainWait = _target is { Kind: UltimusPlanner.WAIT, Key: { } waitKey } && waitKey.StartsWith("floor|wait|", StringComparison.Ordinal);
+        var resting = _healWaiting || _asideWaiting || partyIdle || chainWait;
         for (var i = 0; i < _team.Count; i++) {
             var member = _team[i];
             RouteMemory.Track("Ultimus", member.CharId, member.Zone, member.X, member.Y);
