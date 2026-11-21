@@ -3,10 +3,10 @@
 What the bots did in MooShu, from the server log: every quest finished, every fight won (to copy), every fight lost and every place they got stuck (to avoid). Solo means the bot fought alone; Team means another of our bots won the same fight with it. Updated after each bots update.
 
 ## Best way to beat each creature
-- Haru: won 50 time(s) (16 Solo, 34 Team), lost 1. Fastest: Tulkar in 2 rounds, deck for a boss (Myth), hitting with Myth, Balance, Storm (most of my fights lately had 2+ enemies), hits with Frostbite.
+- Haru: won 52 time(s) (16 Solo, 36 Team), lost 2. Fastest: Tulkar in 2 rounds, deck for a boss (Myth), hitting with Myth, Balance, Storm (most of my fights lately had 2+ enemies), hits with Frostbite.
 - Ronin Keyholder: won 11 time(s) (9 Solo, 2 Team), lost 26. Fastest: Cyndr in 4 rounds, plan "hit now", deck for a boss (Ice), hitting with Ice, Fire, Life; a rival that outlasts me, so more hits and blades to end it sooner (many of my fights lately had 2+ enemies), hits with Immolate.
+- Imitsu Defouler: won 29 time(s) (29 Solo, 0 Team), lost 1. Fastest: Cyndr in 4 rounds, plan "hit now", deck for Myth enemies, hitting with Myth, Storm, Fire (most of my fights lately had 2+ enemies), hits with Immolate.
 - Otomo Courier: won 8 time(s) (6 Solo, 2 Team), lost 21. Fastest: Ultimus in 5 rounds, deck for a boss (Ice), hitting with Ice, Fire; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Sandstorm, Balance, Fairy.
-- Imitsu Defouler: won 28 time(s) (28 Solo, 0 Team), lost 1. Fastest: Cyndr in 4 rounds, plan "hit now", deck for Myth enemies, hitting with Myth, Storm, Fire (most of my fights lately had 2+ enemies), hits with Immolate.
 - War Oni: won 8 time(s) (6 Solo, 2 Team), lost 20. Fastest: Cyndr in 7 rounds, deck for a boss (Fire), hitting with Fire, Myth; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Banshee, Heck Hound.
 - Maito: won 6 time(s) (6 Solo, 0 Team), lost 17. Fastest: Cyndr in 3 rounds, plan "hit now", deck for a boss (Ice), hitting with Ice, Fire, Life; a rival that outlasts me, so more hits and blades to end it sooner (many of my fights lately had 2+ enemies), hits with Sunbird, Immolate.
 - Otomo Supply Runner: won 14 time(s) (12 Solo, 2 Team), lost 4. Fastest: Ultimus in 4 rounds, deck for Fire enemies, hitting with Fire, Death, Myth (most of my fights lately had 2+ enemies), hits with Gearhead Destroyer, Locust Swarm.
@@ -675,6 +675,14 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
   Deck made for a boss (Balance), hitting with Balance, Life, Death (many of my fights lately had 2+ enemies).
   Plan: "hit now" (mine and every other bot's).
   Spells that landed the hits: Minor Heroic Hit x2, Cyclops, Banshee.
+- Won by Mythis (Team with Cyndr) against Haru (rank 6, 1,480 health, Myth, a boss) on 2026-11-21 at 14:16:02.
+  It took 6 rounds, about 4 minutes.
+  Deck made for a boss (Myth), hitting with Myth, Balance, Storm (most of my fights lately had 2+ enemies).
+  Spells that landed the hits: Cyclops.
+- Won by Tulkar (Solo) against Imitsu Defouler (rank 5, 675 health, Myth) on 2026-11-21 at 14:25:51.
+  It took 8 rounds, about 4 minutes.
+  Deck made for Myth enemies, hitting with Myth, Storm, Fire (many of my fights lately had 2+ enemies).
+  Spells that landed the hits: Frostbite x4, Minor Nova.
 - Avoid, fights lost:
   - Ideyoshi: lost 1 time(s) (Ultimus). Why: I went in at 80% health, the fight ran 7 minutes, so I ran out of good cards. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
   - Ideyoshi: lost 1 time(s) (Ultimus). Why: I went in at 47% health. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
@@ -1521,9 +1529,14 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
   Deck made for a boss (Balance), hitting with Balance, Life, Death (many of my fights lately had 2+ enemies).
   Plan: "hit now" (mine and every other bot's).
   Spells that landed the hits: Immolate x2, Fire Cat x2.
+- Won by Cyndr (Team with Mythis) against Haru (rank 6, 1,480 health, Myth, a boss) on 2026-11-21 at 14:16:02.
+  It took 6 rounds, about 4 minutes.
+  Deck made for a boss (Myth), hitting with Myth, Balance, Storm (most of my fights lately had 2+ enemies).
+  Spells that landed the hits: Minor Fire Scorch.
 - Avoid, fights lost:
   - Shoji: lost 1 time(s) (Cyndr). Why: it simply hit harder than I could heal. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
   - Haru: lost 1 time(s) (Tulkar). Why: the fight ran 6 minutes, so I ran out of good cards. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
+  - Haru: lost 1 time(s) (Tulkar). Why: the fight ran 7 minutes, so I ran out of good cards. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
 - Avoid, places bots got stuck:
   - Shirataki Temple near (4100, 3700) while Go to MooShu,Shirataki Temple ("River Temple"): stuck 10 time(s) (Cyndr); one bot tried every fix there.
   - Shirataki Temple near (4200, 3800) while Go to MooShu,Shirataki Temple ("River Temple"): stuck 6 time(s) (Cyndr); one bot tried every fix there.
