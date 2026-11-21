@@ -3,7 +3,7 @@
 What the bots did in Wizard City, from the server log: every quest finished, every fight won (to copy), every fight lost and every place they got stuck (to avoid). Solo means the bot fought alone; Team means another of our bots won the same fight with it. Updated after each bots update.
 
 ## Best way to beat each creature
-- Cyrus Drake: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 22 rounds, deck for a boss (Myth), hitting with Myth, Storm, Fire (many of my fights lately had 2+ enemies), hits with Helping Hands, Scarab.
+- Cyrus Drake: won 2 time(s) (2 Solo, 0 Team), lost 0. Fastest: Ra in 20 rounds, deck for a boss (Myth), hitting with Myth, Storm, Fire (many of my fights lately had 2+ enemies), hits with Helping Hands, Fairy, Judgement.
 
 ## De-Cipher the Ahnics
 - Avoid, places bots got stuck:
@@ -52,3 +52,7 @@ What the bots did in Wizard City, from the server log: every quest finished, eve
   It took 22 rounds, about 10 minutes.
   Deck made for a boss (Myth), hitting with Myth, Storm, Fire (many of my fights lately had 2+ enemies).
   Spells that landed the hits: Helping Hands x2, Scarab x2.
+- Won by Ra (Solo) against Cyrus Drake (rank 7, 4,000 health, Myth, a boss) on 2026-11-21 at 09:03:23.
+  It took 20 rounds, about 11 minutes.
+  Deck made for a boss (Myth), hitting with Myth, Storm, Fire (many of my fights lately had 2+ enemies).
+  Spells that landed the hits: Helping Hands, Fairy, Judgement.
