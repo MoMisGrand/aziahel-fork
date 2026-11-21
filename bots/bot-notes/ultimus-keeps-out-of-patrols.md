@@ -1,0 +1,4 @@
+Changed: Ultimus keeps out of the way of creatures he doesn't need to fight
+When a creature he doesn't need is walking across his way, Ultimus used to stop right where he was and wait up to 8 seconds, and creatures walking his way often walked straight into him. After one wait he also stopped watching for crossing creatures for 2 minutes, so on a long walk every creature after the first was ignored. Now he backs away while he waits, waits up to 15 seconds, and starts watching again after 25 seconds. He also steps back from a creature a little sooner. On 21 November he got pulled into 16 fights he didn't need in the Tower Archives in about 3 hours.
+Where: Every area Ultimus walks through, and the other bots that walk the same way (TCO7 and the Kitharas Family).
+Test: Watch Ultimus's thoughts on a long walk such as the Tower Archives. You should see "I back away while I wait" and far fewer "A battle started that was not my step".
