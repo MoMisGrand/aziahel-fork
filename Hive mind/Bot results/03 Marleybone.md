@@ -3963,9 +3963,9 @@ What the bots did in Marleybone, from the server log: every quest finished, ever
   - Meowiarty: lost 1 time(s) (Kurrent). Why: its biggest hit took 75% of my health. Do instead: fight other creatures for XP first, up to the quest's level.
 - Avoid, places bots got stuck:
   - Big Ben near (-9600, 21000) while Defeat 1 creatures ("The Last Meow"): stuck 34 time(s) (Ra); one bot tried every fix there.
+  - Big Ben near (-4200, 10600) while Defeat 1 creatures ("The Last Meow"): stuck 28 time(s) (Idunn); one bot tried every fix there.
   - Big Ben near (-9700, 21000) while Defeat 1 creatures ("The Last Meow"): stuck 27 time(s) (Ra); one bot tried every fix there.
-  - Big Ben near (-4200, 10600) while Defeat 1 creatures ("The Last Meow"): stuck 22 time(s) (Idunn); one bot tried every fix there.
-  - Big Ben near (-3600, 12000) while Defeat 1 creatures ("The Last Meow"): stuck 18 time(s) (Idunn).
+  - Big Ben near (-3600, 12000) while Defeat 1 creatures ("The Last Meow"): stuck 19 time(s) (Idunn).
   - Big Ben near (-3600, 12000) while to Regent's Square (leaving Big Ben to start it over (its creature for my step is not there)): stuck 18 time(s) (Idunn).
   - Big Ben near (-3700, 12000) while Defeat 1 creatures ("The Last Meow"): stuck 17 time(s) (Idunn); one bot tried every fix there.
   - Big Ben near (-3700, 12000) while to Regent's Square (leaving Big Ben to start it over (its creature for my step is not there)): stuck 10 time(s) (Idunn); one bot tried every fix there.
