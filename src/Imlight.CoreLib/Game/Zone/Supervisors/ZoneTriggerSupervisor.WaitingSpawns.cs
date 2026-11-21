@@ -61,7 +61,7 @@ internal sealed partial class ZoneTriggerSupervisor {
     private void ReceiveWaitingSpawnCheck(WaitingSpawnCheck message) {
         _waitingSpawnChecks.Remove(message.PlayerActor);
         if (message.PlayerActor is IInternalActorRef { IsTerminated: true }
-            || (WaitingSpawnTriggers().Count == 0 && !HoldsQuestChangedObjects() && !HoldsSleepingSpawners() && !HoldsWalkInSpawners())) {
+            || (WaitingSpawnTriggers().Count == 0 && !HoldsQuestChangedObjects() && !HoldsSleepingSpawners() && !HoldsWalkInSpawners() && !HoldsEventPeopleSpawners())) {
             return;
         }
 
@@ -86,6 +86,9 @@ internal sealed partial class ZoneTriggerSupervisor {
 
         // A boss that only a walk-in spot brings out, for a wizard close to him whose step needs him (WalkInBosses).
         WakeWalkInStepSpawners(message);
+
+        // A person an earlier step's event brings out, sent to another copy of this zone (ZoneTriggerSupervisor.EventPeople).
+        WakeEventPeopleForTalkSteps(message);
 
         try {
             if (WaitingSpawnTriggers().Count == 0) {

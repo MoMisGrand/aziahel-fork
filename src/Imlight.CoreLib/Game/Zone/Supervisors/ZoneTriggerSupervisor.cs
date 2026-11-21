@@ -89,6 +89,7 @@ internal sealed partial class ZoneTriggerSupervisor(Core.Zone zone) : ZoneEntity
 
         SeedTriggerStates(replacedTriggers);
         NoteSleepingSpawners(spawners, replacedTriggers);
+        NoteEventPeopleSpawners(spawners);
         NoteWalkInSpawners(spawners, replacedTriggers, message.PathData.m_pathList, message.NodeData.m_nodeList);
 
         var byName = new Dictionary<string, Trigger>(StringComparer.Ordinal);
