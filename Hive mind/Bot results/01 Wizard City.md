@@ -38,6 +38,11 @@ What the bots did in Wizard City, from the server log: every quest finished, eve
 ## The Key at Last
 - Finished by Ultimus (5 s).
 
+## Bad News...
+- Finished by Ra (5 s).
+- Finished by Garm (5 s).
+- Finished by Cyndr (11 min).
+
 ## Bad Blood
 - Won by Ultimus (Solo) against Cyrus Drake (rank 7, 4,000 health, Myth, a boss) on 2026-11-20 at 07:21:54.
   It took 22 rounds, about 10 minutes.
