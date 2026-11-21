@@ -479,6 +479,14 @@ internal sealed partial class UltimusDirectorActor {
             return;
         }
 
+        // The spot he left from is by a door that goes elsewhere: the way finder bends round it from now on, for him and the
+        // other bots (RouteMemory's stuck spots), so the walk back out does not take the same door again. Kitharas Hydra,
+        // 2026-11-21: on the way to Nightside the walk through The Commons went into Merle Ambrose's Tower 9 times in 3
+        // minutes, and each walk out set off through the same door.
+        if (fromX != 0 || fromY != 0) {
+            RouteMemory.Stuck(leader.CharId, fromZone, fromX, fromY);
+        }
+
         var key = fromZone + ">" + leader.Zone;
         if (!_backedOut.Add(key)) {
             return;
