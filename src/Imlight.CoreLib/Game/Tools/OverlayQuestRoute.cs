@@ -323,7 +323,9 @@ internal static class OverlayQuestRoute {
             return [];
         }
 
-        var left = AreasLeft(goal, instances, mode);
+        // 2: a gauntlet's own rooms are a way to its other rooms (SameGauntlet). Its own cache key, so ways worked out
+        // before that rule are not reused after a live patch.
+        var left = AreasLeft(goal, instances, mode | 2);
         var arrivals = s_arrivals ?? [];
         var hops = new List<(string, bool)>();
         var at = from;
@@ -343,7 +345,8 @@ internal static class OverlayQuestRoute {
                 }
 
                 // No short cut through an event, a gauntlet or (first) an instance: only when it is the step's own area.
-                if (!OverlayQuestTracker.SameZone(goal, next) && (SideTrip(next, instances) || (mode == STORY && !OnStory(next)))) {
+                if (!OverlayQuestTracker.SameZone(goal, next) && ((SideTrip(next, instances) && !(instances && SameGauntlet(next, goal)))
+                                                                   || ((mode & STORY) != 0 && !OnStory(next)))) {
                     return;
                 }
 
@@ -504,6 +507,37 @@ internal static class OverlayQuestRoute {
         return !instances && InstanceZones().Contains(zone);
     }
 
+    /// <summary>
+    /// Whether two areas are rooms of the same gauntlet (a tower whose rooms are areas of their own, one teleporter to the
+    /// next). A gauntlet is never a way to anywhere else, but its own rooms are the way to its last room: "The Art of War"
+    /// asks for something in room 7 of Halina Warhawk's Tower (DS_Plaza_Gauntlet_7Room_Sub/DS_Plaza_Gauntlet_7Room_7),
+    /// and Ultimus found "no way from Plaza of Conquests to Plaza of Conquests" (2026-11-21). Dragonspyre has 18 such towers.
+    /// </summary>
+    internal static bool SameGauntlet(string zone, string goal) {
+        var a = GauntletOf(zone);
+
+        return a.Length > 0 && string.Equals(a, GauntletOf(goal), StringComparison.OrdinalIgnoreCase);
+    }
+
+    // The gauntlet an area belongs to: its path up to the folder named for the gauntlet ("..._Gauntlet_7Room", with its
+    // rooms' "_Sub" folder counted as the same), else "" (not a gauntlet, or an event's).
+    private static string GauntletOf(string zone) {
+        if (string.IsNullOrWhiteSpace(zone) || EventArea(zone)) {
+            return "";
+        }
+
+        var parts = zone.Trim().Split('/');
+        for (var i = 0; i < parts.Length; i++) {
+            if (parts[i].Contains("Gauntlet", StringComparison.OrdinalIgnoreCase)) {
+                var name = parts[i].EndsWith("_Sub", StringComparison.OrdinalIgnoreCase) ? parts[i][..^4] : parts[i];
+
+                return string.Join('/', parts[..i].Append(name));
+            }
+        }
+
+        return "";
+    }
+
     private static HashSet<string> s_instanceZones;
     private static int s_instanceZonesFrom = -1;
 
@@ -553,7 +587,8 @@ internal static class OverlayQuestRoute {
             var zone = waiting.Dequeue();
             var count = left[zone] + 1;
             // No way through a house (the step's own area aside): only its owner can go in.
-            if ((IsHouse(zone) || SideTrip(zone, instances) || (mode == STORY && !OnStory(zone))) && left[zone] > 0) {
+            if ((IsHouse(zone) || (SideTrip(zone, instances) && !(instances && SameGauntlet(zone, g))) || ((mode & STORY) != 0 && !OnStory(zone)))
+                && left[zone] > 0) {
                 continue;
             }
 
