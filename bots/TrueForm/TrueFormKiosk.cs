@@ -18,6 +18,7 @@
 
 using System;
 using System.Linq;
+using Imcodec.ObjectProperty;
 using Imcodec.ObjectProperty.TypeCache;
 using Imlight.Common;
 using Imlight.CoreLib.Game.Pet;
@@ -34,6 +35,11 @@ namespace Imlight.CoreLib.Game.Ultimus;
 /// comes off the kiosk.
 /// </summary>
 internal static class TrueFormKiosk {
+
+    // The kiosk's own pet form (plain serializer, property mask 7), the same as ItemSync.TrySerializeForKiosk. Kept here
+    // so the bots build on a server whose code came in by live patch (the bots' build never sees members a live patch
+    // added; bots-v115 waited on a restart for that one call).
+    private const uint KIOSK_FLAGS = (uint) (PropertyFlags.Prop_Save | PropertyFlags.Prop_Copy | PropertyFlags.Prop_Public);
 
     internal static void Offer(Wizard wizard) {
         if (wizard is null || !PetHatching.Enabled) {
@@ -58,7 +64,7 @@ internal static class TrueFormKiosk {
                 HatchmakingListings.Add(new HatchmakingListing {
                     Parent = parent,
                     NameKeys = CoreObjectFactory.FindBehaviorInstance<ClientPetNameBehavior>(pet, out var name) ? name.m_nameKeys : 0,
-                    ItemData = ItemSync.TrySerializeForKiosk(pet, out var data) ? Convert.ToBase64String(data) : null,
+                    ItemData = new ObjectSerializer(false, SerializerFlags.None).Serialize(pet, KIOSK_FLAGS, out var data) ? Convert.ToBase64String(data) : null,
                 });
                 listed++;
             }
