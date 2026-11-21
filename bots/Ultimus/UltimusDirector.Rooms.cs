@@ -153,6 +153,59 @@ internal sealed partial class UltimusDirectorActor {
         }
     }
 
+    // Talks with a dungeon's person for a quest that opens a gate, per quest in this copy: a talk that changes nothing is not
+    // tried for ever.
+    private const int GATE_TALK_TRIES = 3;
+    private readonly Dictionary<string, DateTime> _gateTalkAt = [];
+
+    /// <summary>
+    /// The talk that opens a shut gate here: the gate waits on a dungeon quest (its Encounter) that this copy handed him and
+    /// that he holds, and that quest's open step is a talk to a person in this copy. Null when there is none. Katzenstein's
+    /// Lab, 2026-11-21: Gate02 opens on "MB-YARD3-C01-002", which each copy hands out on the way in, a talk to Watson by the
+    /// door that posts "OpenFiregutGate". The bots whose own step was Watson's talked to him within a minute and went on;
+    /// the ones whose step was past the gate ("The Right Combination") never talked to him, so the gate stayed locked and
+    /// they stood at it for 10 minutes and more (Consumer 16:17-16:28, AlchemiZist flagged it 17:17). Every dungeon whose
+    /// gate opens by a hidden talk quest is handled the same way.
+    /// </summary>
+    private UltimusPlanner.Target HeldGateTalk(UltimusMember.Status leader, BotFloors.Book book, BotFloors.Live live) {
+        if (leader.Wizard is not { } wizard) {
+            return null;
+        }
+
+        string StateOf(string obj) => live.StateOf?.Invoke(obj) is { Length: > 0 } st ? st : book.Starts.GetValueOrDefault(obj) ?? "";
+        foreach (var quest in book.Gates.Where(g => g.Encounter.Length > 0 && !BotFloors.Opens(StateOf(g.Object)))
+                     .Select(g => g.Encounter).Distinct(StringComparer.OrdinalIgnoreCase)) {
+            bool holds;
+            try {
+                holds = wizard.HasQuest(quest);
+            }
+            catch (Exception) {
+                holds = false;
+            }
+
+            var key = "gatetalk|" + quest;
+            if (!holds || _floorTries.GetValueOrDefault(key) >= GATE_TALK_TRIES
+                || UltimusPlanner.ForQuest([leader], quest) is not { Kind: UltimusPlanner.TALK, GlobalId: not 0 } talk
+                || !live.SameGround(talk.X, talk.Y)) {
+                continue;
+            }
+
+            // Each 20 seconds beside them counts as a try (the talk itself is the usual talk step).
+            if (UltimusPlanner.Far(leader.X, leader.Y, talk.X, talk.Y) <= 150
+                && (!_gateTalkAt.TryGetValue(key, out var last) || DateTime.UtcNow - last >= TimeSpan.FromSeconds(20))) {
+                _gateTalkAt[key] = DateTime.UtcNow;
+                _floorTries[key] = _floorTries.GetValueOrDefault(key) + 1;
+            }
+
+            Think($"A gate here stays shut until I talk to someone in this dungeon (its quest \"{quest}\" is still open for me), so I " +
+                  "talk to them first, then go on.", "gatetalk|" + quest + "|" + leader.Zone);
+
+            return talk with { What = $"{talk.What} (it opens a gate on my way)", Key = key };
+        }
+
+        return null;
+    }
+
     private UltimusPlanner.Target FloorDuty(UltimusMember.Status leader, UltimusPlanner.Target target) {
         if (string.IsNullOrEmpty(leader?.Zone) || !InDungeon(leader) || IsSideDungeon(leader.Zone)) {
             return null;
@@ -226,6 +279,13 @@ internal sealed partial class UltimusDirectorActor {
         if (TalkHere(leader, target, book, live)) {
             _floorOn = null;
             return null;
+        }
+
+        // A shut gate waits on a dungeon quest this copy handed him, and that quest is a talk to someone here: he talks to them,
+        // as a player does when the dungeon's people say "come see me" (HeldGateTalk).
+        if (HeldGateTalk(leader, book, live) is { } gateTalk) {
+            _floorOn = null;
+            return gateTalk;
         }
 
         if (BotFloors.Next(book, live, leader.X, leader.Y, _floorTries, leader.Z) is not { } duty) {
