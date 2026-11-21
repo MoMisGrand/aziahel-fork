@@ -704,7 +704,7 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
   - Ideyoshi: lost 1 time(s) (Garm). Why: I went in at 57% health. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
   - Imitsu Defouler: lost 1 time(s) (Tulkar). Why: I went in at 87% health, the fight ran 5 minutes, so I ran out of good cards. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
 - Avoid, places bots got stuck:
-  - Shirataki Temple near (3400, 3000) while onto the lever "MS_Lever_Plague3 instance", which opens "MSGate1" (it turns when stepped on) (): stuck 7 time(s) (Cyndr, Tulkar); one bot tried every fix there.
+  - Shirataki Temple near (3400, 3000) while onto the lever "MS_Lever_Plague3 instance", which opens "MSGate1" (it turns when stepped on) (): stuck 10 time(s) (Cyndr, Tulkar); one bot tried every fix there.
   - Shirataki Temple near (0, 100) while stuck: Defeat Plague Oni: no creature for this step is in the area: stuck 4 time(s) (Ultimus); one bot tried every fix there.
   - Shirataki Temple near (3900, 3800) while Go to MooShu,Shirataki Temple ("River Temple"): stuck 4 time(s) (Cyndr).
   - Jade Palace near (11800, 14100) while to Shoshun Village (Talk to Din Ho): stuck 2 time(s) (Ra).
@@ -2123,6 +2123,7 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Finished by Cyndr (14 s).
 - Finished by Tulkar (5 min).
 - Finished by Mythis (14 s).
+- Finished by Kurrent (6 min).
 
 ## Due Diligence
 - Finished by Ultimus (61 s).
@@ -2131,6 +2132,7 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Finished by Cyndr (2 min).
 - Finished by Tulkar (62 s).
 - Finished by Mythis (62 s).
+- Finished by Kurrent (62 s).
 
 ## Earth Day
 - Finished by Ultimus (5 s).
@@ -2139,6 +2141,7 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Finished by Cyndr (5 s).
 - Finished by Tulkar (6 s).
 - Finished by Mythis (6 s).
+- Finished by Kurrent (6 s).
 
 ## Crazy for You
 - Finished by Ultimus (24 s).
@@ -2147,6 +2150,7 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Finished by Cyndr (79 s).
 - Finished by Tulkar (77 s).
 - Finished by Mythis (79 s).
+- Finished by Kurrent (25 s).
 
 ## Shrining Example
 - Finished by Ultimus (10 s).
@@ -2155,6 +2159,7 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Finished by Cyndr (10 s).
 - Finished by Tulkar (11 s).
 - Finished by Mythis (11 s).
+- Finished by Kurrent (11 s).
 
 ## Happy Earth Spirits
 - Finished by Ultimus (31 s).
@@ -2163,6 +2168,7 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Finished by Cyndr (32 s).
 - Finished by Tulkar (31 s).
 - Finished by Mythis (31 s).
+- Finished by Kurrent (31 s).
 
 ## Water Everywhere...
 - Finished by Ultimus (50 s).
