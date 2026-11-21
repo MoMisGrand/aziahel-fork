@@ -114,40 +114,66 @@ internal sealed partial class UltimusDirectorActor {
     }
 
     // How many different cards of each kind the plan holds, and how many copies of each, in the order slots are filled.
-    private static readonly (string Kind, int Cards, int Copies)[] s_planShape = [
-        ("hit", 2, 3), (ENCHANT_KIND + BotEnchants.DAMAGE, 1, 4), ("blade", 1, 2), ("heal", 1, 2), ("shield", 1, 2), ("trap", 1, 2), ("control", 1, 1),
+    // Support (Niduus, 2026-11-21: "primarily hits in main with support along with support in TC's"): shields against what
+    // the creatures ahead hit with, a heal stacked as a player stacks one for a boss, a blade and a trap for his big hit, a
+    // stop. His last Bazaar trip bought Heck Hound, Judgement, Dark Tribute and Feint: hits and a trap, no shield or heal,
+    // while the Sea Lord's one hit took 90% of his health.
+    private static readonly (string Kind, int Cards, int Copies)[] s_supportShape = [
+        ("shield", 2, 3), ("heal", 1, 4), ("blade", 1, 3), ("trap", 1, 3), ("control", 1, 2),
+    ];
+    // The rest: hits (for a fight his own hits can't end) and a damage enchantment for his biggest hit.
+    private static readonly (string Kind, int Cards, int Copies)[] s_attackShape = [
+        ("hit", 2, 3), (ENCHANT_KIND + BotEnchants.DAMAGE, 1, 3),
     ];
 
     /// <summary>
-    /// The treasure cards he wants for the fights ahead, best first, filling <paramref name="room"/> slots: one of each
-    /// kind first (a hit, a blade, a heal, a shield, a trap, a stop), then more copies, as a player stacks a boss deck.
+    /// The treasure cards he wants for the fights ahead, best first, filling <paramref name="room"/> slots: most of them
+    /// support (his own share of it, learned from his fights: UltimusDeckMix.TcSupport), the rest hits; one of each first,
+    /// then more copies, as a player stacks a boss deck. Slots one side can't fill go to the other.
     /// </summary>
-    internal static List<PlannedCard> PlanCards(string school, int level, IReadOnlyCollection<string> foes, int room, IEnumerable<uint> pool) {
+    internal static List<PlannedCard> PlanCards(string school, int level, IReadOnlyCollection<string> foes, int room, IEnumerable<uint> pool,
+                                                double support = UltimusDeckMix.TC_SUPPORT) {
         // One per name: two versions of a card with the same name (Storm Hound twice in his plan, 2026-11-17) are one card.
         var scored = pool.Distinct().Select(id => (Id: id, Use: TcUse(id, school, level, foes)))
             .Where(c => c.Use is { Score: > 10 })
             .GroupBy(c => CardName(c.Id), StringComparer.OrdinalIgnoreCase).Select(g => g.OrderByDescending(c => c.Use.Score).First()).ToList();
-        var picks = new List<(uint Id, string Kind, int Score, int Copies, string When)>();
-        foreach (var (kind, cards, copies) in s_planShape) {
-            foreach (var c in scored.Where(c => c.Use.Kind == kind).OrderByDescending(c => c.Use.Score).Take(cards)) {
-                picks.Add((c.Id, kind, c.Use.Score, copies, c.Use.When));
-            }
-        }
-
-        var counts = new Dictionary<uint, int>();
-        var total = 0;
-        for (var round = 0; round < s_planShape.Max(x => x.Copies) && total < room; round++) {
-            foreach (var p in picks) {
-                if (total >= room || counts.GetValueOrDefault(p.Id) >= p.Copies || round >= p.Copies) {
-                    continue;
+        List<(uint Id, string Kind, int Score, int Copies, string When)> Picks((string Kind, int Cards, int Copies)[] shape) {
+            var picks = new List<(uint Id, string Kind, int Score, int Copies, string When)>();
+            foreach (var (kind, cards, copies) in shape) {
+                foreach (var c in scored.Where(c => c.Use.Kind == kind).OrderByDescending(c => c.Use.Score).Take(cards)) {
+                    picks.Add((c.Id, kind, c.Use.Score, copies, c.Use.When));
                 }
-
-                counts[p.Id] = counts.GetValueOrDefault(p.Id) + 1;
-                total++;
             }
+
+            return picks;
         }
 
-        return [.. picks.Where(p => counts.ContainsKey(p.Id))
+        var supportPicks = Picks(s_supportShape);
+        var attackPicks = Picks(s_attackShape);
+        var counts = new Dictionary<uint, int>();
+        // One of each, round by round, up to its copies, until the slots are used; how many it placed.
+        int Fill(List<(uint Id, string Kind, int Score, int Copies, string When)> picks, int slots) {
+            var used = 0;
+            for (var round = 0; picks.Count > 0 && round < picks.Max(x => x.Copies) && used < slots; round++) {
+                foreach (var p in picks) {
+                    if (used >= slots || counts.GetValueOrDefault(p.Id) >= p.Copies) {
+                        continue;
+                    }
+
+                    counts[p.Id] = counts.GetValueOrDefault(p.Id) + 1;
+                    used++;
+                }
+            }
+
+            return used;
+        }
+
+        var supportSlots = UltimusDeckMix.SupportSlots(room, support);
+        var supportUsed = Fill(supportPicks, supportSlots);
+        var attackUsed = Fill(attackPicks, room - supportUsed);
+        Fill(supportPicks, room - supportUsed - attackUsed);
+
+        return [.. supportPicks.Concat(attackPicks).Where(p => counts.ContainsKey(p.Id))
             .Select(p => new PlannedCard(p.Id, CardName(p.Id), p.Kind, p.Score, counts[p.Id], p.When))];
     }
 
@@ -162,7 +188,7 @@ internal sealed partial class UltimusDirectorActor {
         var school = BotGear.SchoolOf(wizard);
         var level = BotGear.LevelOf(wizard);
         foes = tripFoes ?? FoeSchools();
-        var plan = PlanCards(school, level, foes, PlanRoom(wizard), AllTreasureCards());
+        var plan = PlanCards(school, level, foes, PlanRoom(wizard), AllTreasureCards(), UltimusDeckMix.TcSupport);
         var owned = OwnedCopies(wizard);
 
         return [.. plan.Select(c => (c, Math.Max(0, c.Copies - owned.GetValueOrDefault(c.Id))))];
