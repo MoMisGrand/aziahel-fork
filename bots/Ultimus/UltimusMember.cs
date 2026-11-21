@@ -560,6 +560,13 @@ internal sealed class UltimusMember : ReceiveActor, IWithTimers {
                 }
 
                 Place(x, y, Expand(m.LocationZ));
+                // A player's game says where it now stands. Without it the server kept the old spot, so a place the
+                // teleporter set him down in never noticed him: Ultimus stood 19 away from the Tower Archives' "Wizards
+                // Tower" goal spot after the Crystal Vortex (2026-11-21 4:01 AM) and the step never finished.
+                Send(new GAME_5_PROTOCOL.MSG_CLIENTMOVE {
+                    LocationX = m.LocationX, LocationY = m.LocationY, LocationZ = m.LocationZ,
+                    Direction = (byte) Math.Min((int) m.Direction, 249), ZoneCounter = _zoneCounter,
+                });
             }
         });
         Receive<QUEST_MESSAGES_52_PROTOCOL.MSG_SENDNPCOPTIONS>(OnNpcOptions);
