@@ -4,7 +4,7 @@ What the bots did in Dragonspyre, from the server log: every quest finished, eve
 
 ## Best way to beat each creature
 - Petrov Gloomstrider: won 52 time(s) (52 Solo, 0 Team), lost 1. Fastest: Ultimus in 5 rounds, plan "hit now", deck for any fight (many of my fights lately had 2+ enemies), hits with Judgement, Elemental Shield, Gearhead Destroyer, Minor Crusade.
-- Loathsome Creeper: won 17 time(s) (15 Solo, 2 Team), lost 0. Fastest: Ra in 6 rounds, deck for any fight (most of my fights lately had 2+ enemies), hits with Scarab, Arcticzilla.
+- Loathsome Creeper: won 18 time(s) (16 Solo, 2 Team), lost 0. Fastest: Ra in 6 rounds, deck for any fight (most of my fights lately had 2+ enemies), hits with Scarab, Arcticzilla.
 - Earth Elemental: won 1 time(s) (1 Solo, 0 Team), lost 4. Fastest: Ultimus in 31 rounds, deck for a boss (Life), hitting with Life, Fire, Storm; a rival that outlasts me, so more hits and blades to end it sooner (many of my fights lately had 2+ enemies), hits with Helping Hands, Spirit Shield, Elemental Shield, Fairy.
 - Zarathax: won 1 time(s) (1 Solo, 0 Team), lost 3. Fastest: Ultimus in 24 rounds, deck for a boss (Balance), hitting with Balance, Fire, Death; a rival that outlasts me, so more hits and blades to end it sooner (many of my fights lately had 2+ enemies), hits with Balance, Elemental Shield, Fairy, Helping Hands.
 - Silver Servant: won 1 time(s) (1 Solo, 0 Team), lost 1. Fastest: Ultimus in 6 rounds, deck for Balance enemies, hitting with Balance, Myth, Death (most of my fights lately had 2+ enemies), hits with Balance, Banshee.
@@ -14,6 +14,7 @@ What the bots did in Dragonspyre, from the server log: every quest finished, eve
 - Irate Banshee: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 12 rounds, plan "hit now", deck for Fire enemies, hitting with Fire, Death, Myth (most of my fights lately had 2+ enemies), hits with Minor Crusade, Scarab, Gearhead Destroyer, Fairy.
 - Beghastion Crowcaller: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 5 rounds, deck for Death enemies, hitting with Death, Ice, Storm (many of my fights lately had 2+ enemies), hits with Helping Hands, Spirit Shield, Gearhead Destroyer.
 - Sysiphan: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 23 rounds, deck for a boss (Ice), hitting with Ice, Fire, Death (many of my fights lately had 2+ enemies), hits with Helping Hands, Scarab, Elemental Shield, Fairy.
+- Sandor Spearcaller: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 17 rounds, plan "hit now", deck for a boss (Ice), hitting with Ice, Balance, Death (many of my fights lately had 2+ enemies), hits with Gearhead Destroyer, Balance, Minor Crusade, Locust Swarm.
 
 ## Wizard and Crystal
 - Finished by Ultimus (19 min).
@@ -404,6 +405,11 @@ What the bots did in Dragonspyre, from the server log: every quest finished, eve
   Deck made for any fight (most of my fights lately had 2+ enemies).
   Plan: "hit now" (mine and every other bot's).
   Spells that landed the hits: Banshee, Dark Sprite, Poison, Vampire.
+- Won by Garm (Solo) against Loathsome Creeper (rank 6, 695 health, Death) on 2026-11-21 at 12:28:13.
+  It took 14 rounds, about 9 minutes.
+  Deck made for any fight (many of my fights lately had 2+ enemies).
+  Plan: "hit now" (mine and every other bot's).
+  Spells that landed the hits: Dark Sprite x4, Vampire x2, Poison x2, Sacrifice x2, Minor Dark Blow.
 - Avoid, places bots got stuck:
   - The Tower Archives near (12300, -7200) while Use Yellow Crystal here ("The Towering Crystal"): stuck 1 time(s) (Ultimus).
   - The Tower Archives near (6700, -1000) while Use Yellow Crystal here ("The Towering Crystal"): stuck 1 time(s) (Garm).
@@ -500,3 +506,11 @@ What the bots did in Dragonspyre, from the server log: every quest finished, eve
 
 ## Fighting With Dishonor
 - Finished by Ultimus (59 s).
+
+## Trapper Keeper
+- Finished by Ultimus (18 min).
+- Won by Ultimus (Solo) against Sandor Spearcaller (rank 7, 1,600 health, Ice) on 2026-11-21 at 12:22:32.
+  It took 17 rounds, about 10 minutes.
+  Deck made for a boss (Ice), hitting with Ice, Balance, Death (many of my fights lately had 2+ enemies).
+  Plan: "hit now" (mine and every other bot's).
+  Spells that landed the hits: Gearhead Destroyer x3, Balance x2, Minor Crusade x2, Locust Swarm, Heck Hound, Helping Hands, Fairy, Scarab.

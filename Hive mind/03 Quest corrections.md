@@ -262,10 +262,14 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 
 ## Krokotopia, Earth Elemental (No Weaklings Allowed)
 - 2026-11-21 12:15 (Ultimus, level 37, solo): SUCCESS: beat the Earth Elemental at 12:06 on his 7th try and finished "No Weaklings Allowed" (34 minutes), then "Fighting With Dishonor". What worked: healing to near full before going back in, and drawing a treasure card every round once his deck ran out of hits. Lesson: a boss that wins twice is beaten by healing first and keeping hits coming, not by rushing back in.
+- 2026-11-21 12:30 (Ultimus): SUCCESS: finished "Trapper Keeper" (18 min) at 12:30; now "Foe of Foes".
 
 ## Wizard City, Headmistress's house (Colossal Trouble)
 - 2026-11-21 12:15 (Kitharas Andromeda): FAILURE (not a quest fault): came to Ambrose for "Colossal Trouble" and was handed Katzenstein's Lab's "The Right Combination" (Defeat Firegut) inside the house, because teammates were still in her Lab copy; walking out took it away and she came back, 439 times since 9:25 AM. Fix PR #1525 (server, v0.10.955): rooms that are not a dungeon only give their own quests. Confidence High.
 
 ## Not quest faults (training and gear)
 - 2026-11-21 12:15: bots update v113 is in (12:11). Ultimus's training plan now finds teachers in the school houses and in Krokotopia (Spectral Blast, Judgement, Spirit Trap, Elemental Blade, Spirit Blade, Imp); he trains once he is out of Spearcaller's Tower. Mythis trained Draw Power and Mend Minion at 12:13. Bazaar and shop trips now rate his whole outfit (PR #1517).
+- 2026-11-21 12:30 (Ultimus, level 37): FAILURE: his first training trip went Dragonspyre to Krokotopia to Wizard City, then into the Life school for Imp twice, and each time the school (a private copy) counted like a dungeon, so he walked straight out; training was set aside for an hour, 10 points still unspent. Fix PR #1528 (bots, bots update sent 12:33): a school house with a teacher he needs is a place to train. Confidence High. He did sell 2 pieces (3,313 gold) and bought Judgement, Dark Tribute and 2 Elemental Shield cards at the Bazaar.
 
+## Marleybone, Katzenstein's Lab (If You Build It...)
+- 2026-11-21 12:30 (Kitharas Hart, Lamia): SUCCESS: finished "If You Build It..." at 12:30 (Hart 14 min, Lamia 86 s). Wraith finished "More Metal Madness", Jackle "Gate is Enough". Hexation still stuck following Rock at (2478, 11290).
