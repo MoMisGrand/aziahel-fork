@@ -142,4 +142,4 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 
 ## Not quest faults (server outage)
 
-- From 12:31 AM to about 1:00 AM on 21 November every door, teleporter and dungeon sigil failed for everyone ("the exit never takes" lines, sigil waits timing out). It was a server fault from the v0.10.941 live install, fixed in v0.10.942. Bots should not learn "this way goes nowhere" from any exit that failed in that window, and quest blames from it (Tomb of Storms in The Oasis, The Tower Archives from The Atheneum, and others) are not quest faults.
+- From 12:31 AM on 21 November every door, teleporter and dungeon sigil failed for everyone ("the exit never takes" lines, sigil waits timing out), until the server restarted or v0.10.944 went in. It was a server fault from the v0.10.941 live install (v0.10.942 could not install while it ran). Bots should not learn "this way goes nowhere" from any exit that failed in that window, and quest blames from it (Tomb of Storms in The Oasis, The Tower Archives from The Atheneum, and others) are not quest faults.

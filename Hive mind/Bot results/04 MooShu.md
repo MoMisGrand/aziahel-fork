@@ -203,6 +203,7 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
   - Koto: lost 1 time(s) (Ultimus). Why: the fight ran 8 minutes, so I ran out of good cards. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
 - Avoid, places bots got stuck:
   - Cave of Solitude near (64300, 40100) while to Koto's Dojo (Defeat and Collect Koto): stuck 2 time(s) (Garm).
+  - Jade Palace near (12200, 13700) while to Shoshun Village (Defeat and Collect Koto): stuck 1 time(s) (Garm).
 
 ## The Final Peace
 - Finished by Ultimus (4 min).
@@ -268,6 +269,8 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
   - Shirataki Temple near (-400, 200) while a short break before trying "Defeat Plague Oni" again: stuck 1 time(s) (Ultimus).
   - Shirataki Temple near (3400, 3000) while at the lever "MS_Lever_Plague3 instance", which opens "MSGate1" (): stuck 1 time(s) (Ultimus).
   - Shoshun Village near (-200, 16100) while to Shirataki Temple (Talk to Din Ho): stuck 1 time(s) (Ra).
+  - Jade Palace near (11800, 14100) while to Shoshun Village (Talk to Din Ho): stuck 1 time(s) (Ra).
+  - Jade Palace near (11800, 14100) while resting while "to Shoshun Village (Talk to Din Ho)" waits: stuck 1 time(s) (Ra).
 
 ## Third Time's the Charm
 - Finished by Ultimus (73 s).
@@ -474,6 +477,8 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Avoid, fights lost:
   - War Oni: lost 1 time(s) (Garm). Why: it simply hit harder than I could heal. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
   - War Oni: lost 1 time(s) (Garm). Why: its biggest hit took 65% of my health, the fight ran 6 minutes, so I ran out of good cards. Do instead: fight other creatures for XP first, up to the quest's level.
+- Avoid, places bots got stuck:
+  - Crimson Fields near (-3700, 17100) while resting while "Clear 5 Otomo Spotter or Otomo Soldier (where they spawn)" waits: stuck 1 time(s) (Cyndr).
 
 ## is a Good Defense
 - Finished by Ultimus (80 s).
@@ -605,8 +610,9 @@ What the bots did in MooShu, from the server log: every quest finished, every fi
 - Finished by Garm (27 s).
 - Finished by Cyndr (26 s).
 - Avoid, places bots got stuck:
-  - Jade Palace near (19300, 0) while to Throne Room (Talk to Jade Champion): stuck 3 time(s) (Tulkar).
+  - Jade Palace near (19300, 0) while to Throne Room (Talk to Jade Champion): stuck 4 time(s) (Tulkar).
   - Jade Palace near (19300, 0) while a short break before trying "to Throne Room (Talk to Jade Champion)" again: stuck 2 time(s) (Tulkar); one bot tried every fix there.
+  - Jade Palace near (18900, -200) while a short break before trying "to Throne Room (Talk to Jade Champion)" again: stuck 1 time(s) (Tulkar).
 
 ## Spies Like Us
 - Finished by Ultimus (16 s).
