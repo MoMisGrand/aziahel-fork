@@ -166,7 +166,9 @@ internal static class UltimusReadiness {
         try {
             s_zoneFiles ??= new HashSet<string>(SpiralDB.GetAllZoneData().Select(z => z?.ZoneName).Where(z => !string.IsNullOrWhiteSpace(z)),
                 StringComparer.OrdinalIgnoreCase);
-            return s_zoneFiles.Contains(zone.Trim());
+            // The game's own file for the area: the server's area list misses many interiors whose files are there (every
+            // Celestia interior read as "never read" on 2026-11-20 though its .wad is in GameData).
+            return s_zoneFiles.Contains(zone.Trim()) || Imlight.CoreLib.Shared.Resources.ResourceManager.TryLoadArchive(zone.Trim(), out _);
         }
         catch (Exception) {
             return false;

@@ -28,6 +28,7 @@ using Imcodec.ObjectProperty.TypeCache;
 using Imlight.Common;
 using Imlight.CoreLib.Game.Madlibs;
 using Imlight.CoreLib.Game.Tools;
+using Imlight.CoreLib.WizardData;
 using Imlight.CoreLib.WizardData.Collections;
 
 namespace Imlight.CoreLib.Game.Ultimus;
@@ -113,6 +114,18 @@ internal static class UltimusAtlas {
                     }
                 }
 
+                // Dungeon sigils are a way in too: the zone file names where each pad sends a team. The book above holds only
+                // walk-in teleports, so every sigil dungeon (Zarathax's Tower, Castle Strigoi, ...) read as "no door in", and the
+                // look-ahead flagged 1480 steps of the 1628 quests ahead as likely stuck (readiness.txt, 2026-11-20 22:17).
+                foreach (var zone in SpiralDB.GetAllZoneData().Select(z => z?.ZoneName).Where(z => !string.IsNullOrWhiteSpace(z) && OverlayQuestRoute.OnStory(z))
+                             .Distinct(StringComparer.OrdinalIgnoreCase)) {
+                    foreach (var to in SigilWaysIn(zone)) {
+                        doorsIn[to] = doorsIn.GetValueOrDefault(to) + 1;
+                    }
+
+                    await Task.Delay(5);
+                }
+
                 var quests = QuestTemplateCollection.GetAllQuests().Where(q => q is not null && BotShared.BotStory.Plays(q)).ToList();
                 foreach (var quest in quests) {
                     foreach (var goal in quest.m_goals?.Where(g => g is not null) ?? []) {
@@ -135,6 +148,22 @@ internal static class UltimusAtlas {
                 Interlocked.Exchange(ref s_building, 0);
             }
         });
+    }
+
+    // Where the dungeon sigil pads of an area send a team, as its zone file says.
+    private static IEnumerable<string> SigilWaysIn(string zone) {
+        try {
+            if (Imlight.CoreLib.Shared.Resources.ResourceManager.TryLoadArchive(zone, out var wad)
+                && Imlight.CoreLib.Shared.Resources.ResourceManager.OpenZoneData(wad)?.ToArray() is { } bytes) {
+                return Imlight.CoreLib.Game.Sigils.SigilFileDestinations.Scan(bytes).Select(p => p.Destination?.Zone?.Trim())
+                    .Where(z => !string.IsNullOrEmpty(z)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            }
+        }
+        catch (Exception) {
+            // One area's sigils are one source among several.
+        }
+
+        return [];
     }
 
     private static Step Read(QuestTemplate quest, GoalTemplate goal, Dictionary<string, int> doorsIn) {
