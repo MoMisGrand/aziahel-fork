@@ -179,6 +179,12 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 - Keeper of Secrets, Defeat Shakes O'Leary: Kitharas Hart went in at 4:48 AM, the 4:50 bots update logged him out and back into the same copy, and from then on Shakes O'Leary was not there to fight. Hart flagged the step broken at 4:54 and took a fresh copy at 4:58. Three other Kitharas finished this quest at 4:06, 4:17 and 4:19 AM, so the quest itself works; a bots update relog in the middle of it is the likely cause. Fresh copy result checked in the next round. (2026-11-21 5:00 AM Bot Update)
 - Keeper of Secrets DONE: the fresh copy worked and Hart finished at 5:06 AM. Confirmed: the quest is fine; the 4:50 bots update relog had left Shakes O'Leary missing in the old copy. (2026-11-21 5:15 AM Bot Update)
 
+## Marleybone, Jacques' Hideout
+- Wildcat Woes, Defeat Jacques the Scratcher: Kitharas Rock went in at 5:36 AM and was in a battle with an O'Leary Brute when the 5:39 bots update logged him out (the update stops waiting for battles after 15 minutes). Back in at 5:40 AM, Jacques was not in his copy. At 5:43 AM Rock left and came back in, as a player would, and Jacques was there; he beat him at 5:47 AM after a potion. Same pattern as Shakes O'Leary at 4:50 AM: the quest is fine, a bots update during a dungeon battle can leave that copy's boss missing, and a fresh copy fixes it. (2026-11-21 5:45 AM Bot Update)
+
+## Dragonspyre, Zarathax's Tower
+- Portal Combat, Defeat Zarathax: Ultimus lost the first fight at 5:36 AM after 17 minutes. Zarathax resists Balance 80% and his biggest hit took 54% of Ultimus's health. Ultimus went straight back in at 5:41 AM with 69% health and used Hex, Bladestorm, Banshee, Vampire and Elemental Shield; that fight was still going at 5:47 AM. Not a quest fault; if he keeps losing, his deck needs more non-Balance hits or a helper. (2026-11-21 5:45 AM Bot Update)
+
 ## Not quest faults (server outage)
 
 - From 12:31 AM on 21 November every door, teleporter and dungeon sigil failed for everyone ("the exit never takes" lines, sigil waits timing out), until Niduus stopped the server at 1:12 AM; it came back at 1:24 AM on v0.10.944 with no more door or teleporter failures. It was a server fault from the v0.10.941 live install (v0.10.942 could not install while it ran). Bots should not learn "this way goes nowhere" from any exit that failed in that window, and quest blames from it (Tomb of Storms in The Oasis, The Tower Archives from The Atheneum, and others) are not quest faults.
