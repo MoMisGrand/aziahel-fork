@@ -286,11 +286,8 @@ internal static class BotCards {
         }
 
         var size = Math.Min(maxSpells, CompactSize(style, situation));
-        int Cap(Card card) {
-            var deckCap = Math.Max(1, string.Equals(card.School, school, StringComparison.OrdinalIgnoreCase) ? schoolMaxCopies : otherMaxCopies);
-
-            return Math.Min(deckCap, CopiesOf(KindOf(card), style));
-        }
+        int DeckCap(Card card) => Math.Max(1, string.Equals(card.School, school, StringComparison.OrdinalIgnoreCase) ? schoolMaxCopies : otherMaxCopies);
+        int Cap(Card card) => Math.Min(DeckCap(card), CopiesOf(KindOf(card), style));
 
         var shares = Shares(style, situation);
         var byKind = cards.GroupBy(KindOf).ToDictionary(g => g.Key, g => Order(g.Key, g.ToList(), school, style, situation)
@@ -309,8 +306,15 @@ internal static class BotCards {
             }
 
             var slots = Math.Min(left, (int) Math.Round(share * size));
-            left -= Fill(deck, ofKind, slots, Cap);
+            left -= Fill(deck, ofKind, slots, kind == Kind.Heal ? HealCap(ofKind.Count, slots) : Cap);
         }
+
+        // Heals: the deck gets its share of them even when it knows only one or two heals, as a player brings three or four
+        // of their one heal to a boss. The copy cap of two per heal left Ultimus with 2 Satyrs in a 28-card deck against the
+        // Sea Lord, whose biggest hit took 90% of his health; he lost to it 8 times (2026-11-21), passing rounds at 5-10%
+        // health with no heal in hand.
+        Func<Card, int> HealCap(int spells, int slots)
+            => card => Math.Max(Cap(card), Math.Min(DeckCap(card), Math.Min(MAX_HEAL_COPIES, (slots + spells - 1) / Math.Max(1, spells))));
 
         // What is left goes to hits (a deck runs on them), then to blades and traps; never shields, heals or charms just to
         // fill it: a smaller deck draws its best cards more often.
@@ -351,6 +355,9 @@ internal static class BotCards {
 
         return size;
     }
+
+    // The most copies of one heal a deck gets to meet its heal share (BotCards.Plan).
+    private const int MAX_HEAL_COPIES = 4;
 
     // The copies of one spell a good player takes, by kind: the main hits most, a shield or charm a copy or two.
     private static int CopiesOf(Kind kind, BotStyle style) => kind switch {
