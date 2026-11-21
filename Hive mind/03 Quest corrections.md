@@ -85,6 +85,9 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 - The three storm obelisks that open the way into the Well of Spirits stand on Storm Island in The Oasis, not in the Tomb of Storms. The bots light them in The Oasis on the way, pressing each one from its foot, and a bot already inside with obelisks left walks back out to them first.
 - A bot following its group stays in the dungeon with its group mate when a shared step leads outside, and lets the mate lead.
 
+## Krokotopia, Ahnic Family Tomb
+- De-Cipher the Ahnics, Defeat 1 Cipher Part 1: the creature is King Uro Ahnic (rank 4 Storm boss, 800 health) at about (-25440, -7326) in the tomb. The quest works: 22 bots have finished it, Kurrent in 2 minutes and Kitharas Wraith in 3. Kitharas Mordiael and Kitharas Devourer, grouped, each lost to him earlier on 21 November and from 3:00 AM found no creature there, flagged the step broken, and went in and out of the tomb while the other waited inside. Still being looked into: whether the waiting group mate keeps the old copy (with no King Uro) alive so the leader never gets a fresh one. (2026-11-21 3:15 AM Bot Update)
+
 ## Krokotopia, The Temple of Storms
 - Test of Strength: lighting some moons puts other moons out. The bots light first the pieces that put others out, then the rest, so every moon stays lit and the suns go dark.
 - Get Smart: after the two door puzzles the step waits on a third puzzle that opens no door. The bots light the Sun, Tree, Snake and Bug pieces in that order.
@@ -135,6 +138,8 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 - Portal Combat, from the north end: the "To The Tower Archives" teleporters in the north (at (29029, 27396) and (7387, 18847)) land at (2078, -573), a short walk from the ToWizT teleporter (9177, -7685). That is how Ultimus got there at 12:45 AM on 21 November. At 2:28 AM the same fix was cancelled by the loop guard a moment after it was chosen, and he went to rest instead. Fixed 2:30 AM: the loop guard waits three minutes while a teleporter fix runs. (2026-11-21 2:30 AM Bot Update)
 
 - Portal Combat, 21 November 2:37 AM: after the Commons button put him back at the area's door, Ultimus chose the ToWizT teleporter (9177, -7685) as his way for the first time that day and set off toward it. Robe swapping stopped once bots-v95 was in (none after 2:36 AM). (2026-11-21 2:45 AM Bot Update)
+
+- Portal Combat, 21 November 3:04-3:13 AM: after a Bazaar stop for treasure cards (Ice Hound, Judgement x3) Ultimus walked the far north-east way again, and at 3:12 AM the stuck fix chose the "To The Tower Archives" teleporter at (29029, 27396); a street fight with a Pirate Ravager came first. (2026-11-21 3:15 AM Bot Update)
 
 ## Marleybone, Scotland Yard
 - After Weird Science, Watson offers "Fetch Bones!" right at the hand-in. That offer is the only hint; the game does not mark Fetch Bones! as story. A bot that misses it must go back to Watson and take it, never go back to Wizard City for other quests (Cyndr, 20 November).
