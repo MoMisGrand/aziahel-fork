@@ -7,6 +7,7 @@ What the bots did in Dragonspyre, from the server log: every quest finished, eve
 - Zarathax: won 1 time(s) (1 Solo, 0 Team), lost 3. Fastest: Ultimus in 24 rounds, deck for a boss (Balance), hitting with Balance, Fire, Death; a rival that outlasts me, so more hits and blades to end it sooner (many of my fights lately had 2+ enemies), hits with Balance, Elemental Shield, Fairy, Helping Hands.
 - Wandering Wizard: won 2 time(s) (2 Solo, 0 Team), lost 0. Fastest: Ultimus in 2 rounds, deck for Life enemies, hitting with Life, Fire, Storm (most of my fights lately had 2+ enemies).
 - Burning Hate: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 10 rounds, deck for any fight (many of my fights lately had 2+ enemies), hits with Gearhead Destroyer, Locust Swarm.
+- Irate Banshee: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 12 rounds, plan "hit now", deck for Fire enemies, hitting with Fire, Death, Myth (most of my fights lately had 2+ enemies), hits with Minor Crusade, Scarab, Gearhead Destroyer, Fairy.
 - Loathsome Creeper: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 10 rounds, plan "hit now", deck for Death enemies, hitting with Death, Fire, Myth (many of my fights lately had 2+ enemies), hits with Minor Crusade, Gearhead Destroyer, Scarab, Helping Hands.
 - Sysiphan: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 23 rounds, deck for a boss (Ice), hitting with Ice, Fire, Death (many of my fights lately had 2+ enemies), hits with Helping Hands, Scarab, Elemental Shield, Fairy.
 
@@ -286,15 +287,20 @@ What the bots did in Dragonspyre, from the server log: every quest finished, eve
   It took 10 rounds, about 6 minutes.
   Deck made for any fight (many of my fights lately had 2+ enemies).
   Spells that landed the hits: Gearhead Destroyer, Locust Swarm.
+- Won by Ultimus (Solo) against Irate Banshee (rank 6, 785 health, Death) on 2026-11-21 at 07:54:46.
+  It took 12 rounds, about 7 minutes.
+  Deck made for Fire enemies, hitting with Fire, Death, Myth (most of my fights lately had 2+ enemies).
+  Plan: "hit now" (mine and every other bot's).
+  Spells that landed the hits: Minor Crusade x3, Scarab x2, Gearhead Destroyer x2, Fairy, Locust Swarm, Spirit Armor.
 - Avoid, places bots got stuck:
   - The Basilica near (0, 0) while stuck: Go to Dragonspyre,Plaza of Conquests: no way from The Basilica to Plaza of Conquests could be found: stuck 10 time(s) (Ultimus); one bot tried every fix there.
+  - Plaza of Conquests near (-2100, -200) while to Plaza of Conquests (leaving Plaza of Conquests: a side dungeon, my story is in Plaza of Conquests): stuck 4 time(s) (Ultimus); one bot tried every fix there.
+  - Plaza of Conquests near (-2100, -200) while a short break before trying "to Plaza of Conquests (leaving Plaza of Conquests: a side du..." again: stuck 3 time(s) (Ultimus).
   - The Basilica near (-100, -300) while stuck: Go to Dragonspyre,Plaza of Conquests: no way from The Basilica to Plaza of Conquests could be found: stuck 2 time(s) (Ultimus).
   - The Basilica near (0, 0) while a short break before trying "Go to Dragonspyre,Plaza of Conquests" again: stuck 2 time(s) (Ultimus).
+  - Plaza of Conquests near (-100, 1300) while to Plaza of Conquests (leaving Plaza of Conquests: a side dungeon, my story is in Plaza of Conquests): stuck 2 time(s) (Ultimus).
   - The Basilica near (200, -500) while stuck: Go to Dragonspyre,Plaza of Conquests: no way from The Basilica to Plaza of Conquests could be found: stuck 1 time(s) (Ultimus).
   - The Basilica near (-1000, -100) while stuck: Go to Dragonspyre,Plaza of Conquests: no way from The Basilica to Plaza of Conquests could be found: stuck 1 time(s) (Ultimus).
-  - The Basilica near (-100, 700) while stuck: Go to Dragonspyre,Plaza of Conquests: no way from The Basilica to Plaza of Conquests could be found: stuck 1 time(s) (Ultimus).
-  - The Basilica near (400, -300) while stuck: Go to Dragonspyre,Plaza of Conquests: no way from The Basilica to Plaza of Conquests could be found: stuck 1 time(s) (Ultimus).
-  - The Basilica near (-600, 700) while stuck: Go to Dragonspyre,Plaza of Conquests: no way from The Basilica to Plaza of Conquests could be found: stuck 1 time(s) (Ultimus).
 
 ## Bad Blood
 - Finished by Ultimus (12 min).
