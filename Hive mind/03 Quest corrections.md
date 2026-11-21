@@ -148,3 +148,7 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 
 ## Not quest faults (trainer hall door)
 - The Key to the Temple (Krokotopia) was flagged by Kitharas Hydra, but the quest was fine. The trainer hall door spot in the Commons sits on the bots' path to the Shopping District, and each bot that walked over it was sent toward a house its game client cannot load, then stood still for 90 seconds ("The house could not be prepared"). This happened 43 times on 21 November up to 2 AM. Fixed 21 November 2 AM: the door lets bots walk past. (2026-11-21 2:00 AM Bot Update)
+- Stealthy Stuff (Big Ben floor 5): Idunn waited at the shut Door43 in an old copy until 2:04 AM, then left and started a fresh copy, and at 2:12 AM the server brought Travis Pawman out in it, as the 1:30 fix meant to. She is climbing back up. (2026-11-21 2:15 AM Bot Update)
+
+## Not quest faults (gear)
+- Ultimus kept swapping Adept Sorcerer's Robe and Clanker's Noteworthy Robe (and his hat) back and forth every few minutes. Every bot shared one record of the schools it hits with and is hit by, so each other bot's fights moved his choice. Fixed 21 November 2:15 AM: each bot keeps its own. (2026-11-21 2:15 AM Bot Update)

@@ -459,14 +459,20 @@ internal static class BotGear {
     /// spiritual like Chimera"). The server boosts a hit by the caster's damage for the hit's damage type, so a Balance
     /// wizard whose Hydra lands as Fire, Ice and Storm gains from those schools' damage and pierce. Set from its deck.
     /// </summary>
-    internal static volatile IReadOnlyDictionary<string, double> SoloDamageMix = new Dictionary<string, double>();
+    // Kept per seat (Ultimus, each TCO7 member and each Kitharas wizard): one shared value let every seat's deck and
+    // creatures move every other seat's gear, so Ultimus put a robe on and took it off again within a minute, over and
+    // over (2026-11-21: Adept Sorcerer's Robe against Clanker's Noteworthy Robe).
+    private static readonly Ultimus.SeatLocal<IReadOnlyDictionary<string, double>> s_soloDamageMix = new(() => new Dictionary<string, double>());
+    internal static IReadOnlyDictionary<string, double> SoloDamageMix { get => s_soloDamageMix.Value; set => s_soloDamageMix.Value = value; }
 
     /// <summary>
     /// Alone: the share of the recent creatures' hits each school carries (the biggest 1), read from their decks
     /// (UltimusScout.Expect). A resist of those schools counts by that share (never under the usual 0.3), so its gear
     /// leans toward what the area's creatures hit with.
     /// </summary>
-    internal static volatile IReadOnlyDictionary<string, double> SoloResistMix = new Dictionary<string, double>();
+    // Kept per seat, as SoloDamageMix is.
+    private static readonly Ultimus.SeatLocal<IReadOnlyDictionary<string, double>> s_soloResistMix = new(() => new Dictionary<string, double>());
+    internal static IReadOnlyDictionary<string, double> SoloResistMix { get => s_soloResistMix.Value; set => s_soloResistMix.Value = value; }
 
     private static readonly HashSet<string> s_hitKinds = new(StringComparer.Ordinal) { "Damage", "FlatDamage", "ArmorPiercing" };
 
