@@ -458,17 +458,54 @@ internal sealed partial class UltimusDirectorActor {
     private DateTime _helpCallNextAsk = DateTime.MinValue;
     private int _helpCallAsked;
 
-    // Fights lost on each quest in the last two hours (any step of it).
+    // Fights lost on each quest in the last two hours (any step of it). Kept in his seat's folder: every bots update logs him
+    // out and starts him afresh, and the count started over each time, so the 4th loss that calls a teammate never came
+    // (Kurrent lost to Maito 5 times 09:51-10:23 on 2026-11-21, counted 1, 2, 3, then 1 again after the 10:14 update).
     private readonly Dictionary<string, List<DateTime>> _questLosses = new(StringComparer.OrdinalIgnoreCase);
+    private bool _questLossesRead;
+
+    private string QuestLossFile => Path.Combine(_seat.Folder, "quest-losses.txt");
 
     private int NoteQuestLoss(string quest) {
+        var now = DateTime.UtcNow;
+        if (!_questLossesRead) {
+            _questLossesRead = true;
+            try {
+                if (File.Exists(QuestLossFile)) {
+                    foreach (var line in File.ReadAllLines(QuestLossFile)) {
+                        var parts = line.Split('\t');
+                        if (parts.Length == 2 && long.TryParse(parts[1], out var ticks) && now - new DateTime(ticks, DateTimeKind.Utc) <= TimeSpan.FromHours(2)) {
+                            if (!_questLosses.TryGetValue(parts[0], out var list)) {
+                                _questLosses[parts[0]] = list = [];
+                            }
+
+                            list.Add(new DateTime(ticks, DateTimeKind.Utc));
+                        }
+                    }
+                }
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+                // A fresh count, as before.
+            }
+        }
+
         if (!_questLosses.TryGetValue(quest, out var times)) {
             _questLosses[quest] = times = [];
         }
 
-        var now = DateTime.UtcNow;
         times.Add(now);
-        times.RemoveAll(t => now - t > TimeSpan.FromHours(2));
+        foreach (var list in _questLosses.Values) {
+            list.RemoveAll(t => now - t > TimeSpan.FromHours(2));
+        }
+
+        try {
+            File.WriteAllLines(QuestLossFile, _questLosses.Where(q => q.Key.IndexOfAny(['\t', '\n', '\r']) < 0)
+                .SelectMany(q => q.Value.Select(t => $"{q.Key}\t{t.Ticks}")));
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+            // Kept in memory only this time.
+        }
+
         return times.Count;
     }
 
