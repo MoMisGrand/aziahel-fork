@@ -6,9 +6,9 @@ What the bots did in Dragonspyre, from the server log: every quest finished, eve
 - Petrov Gloomstrider: won 52 time(s) (52 Solo, 0 Team), lost 1. Fastest: Ultimus in 5 rounds, plan "hit now", deck for any fight (many of my fights lately had 2+ enemies), hits with Judgement, Elemental Shield, Gearhead Destroyer, Minor Crusade.
 - Zarathax: won 1 time(s) (1 Solo, 0 Team), lost 3. Fastest: Ultimus in 24 rounds, deck for a boss (Balance), hitting with Balance, Fire, Death; a rival that outlasts me, so more hits and blades to end it sooner (many of my fights lately had 2+ enemies), hits with Balance, Elemental Shield, Fairy, Helping Hands.
 - Loathsome Creeper: won 4 time(s) (4 Solo, 0 Team), lost 0. Fastest: Ra in 6 rounds, plan "hit now", deck for Death enemies, hitting with Death, Fire, Myth, hits with Gearhead Destroyer, Elemental Golem, Scarab.
+- Earth Elemental: never beaten yet, lost 3 time(s). Most common reason: the fight ran 21 minutes, so I ran out of good cards.
 - Silver Servant: won 1 time(s) (1 Solo, 0 Team), lost 1. Fastest: Ultimus in 6 rounds, deck for Balance enemies, hitting with Balance, Myth, Death (most of my fights lately had 2+ enemies), hits with Balance, Banshee.
 - Mavra Flamewing: won 1 time(s) (1 Solo, 0 Team), lost 1. Fastest: Ultimus in 15 rounds, deck for a boss (Storm), hitting with Storm, Fire, Ice (many of my fights lately had 2+ enemies), hits with Balance, Helping Hands, Sandstorm, Vampire.
-- Earth Elemental: never beaten yet, lost 2 time(s). Most common reason: the fight ran 21 minutes, so I ran out of good cards.
 - Wandering Wizard: won 2 time(s) (2 Solo, 0 Team), lost 0. Fastest: Ultimus in 2 rounds, deck for Life enemies, hitting with Life, Fire, Storm (most of my fights lately had 2+ enemies).
 - Burning Hate: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 10 rounds, deck for any fight (many of my fights lately had 2+ enemies), hits with Gearhead Destroyer, Locust Swarm.
 - Irate Banshee: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 12 rounds, plan "hit now", deck for Fire enemies, hitting with Fire, Death, Myth (most of my fights lately had 2+ enemies), hits with Minor Crusade, Scarab, Gearhead Destroyer, Fairy.
@@ -325,6 +325,7 @@ What the bots did in Dragonspyre, from the server log: every quest finished, eve
 - Avoid, fights lost:
   - Earth Elemental: lost 1 time(s) (Ultimus). Why: the fight ran 21 minutes, so I ran out of good cards. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
   - Earth Elemental: lost 1 time(s) (Ultimus). Why: the fight ran 19 minutes, so I ran out of good cards. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
+  - Earth Elemental: lost 1 time(s) (Ultimus). Why: its biggest hit took 76% of my health, the fight ran 10 minutes, so I ran out of good cards. Do instead: fight other creatures for XP first, up to the quest's level.
 
 ## The Towering Crystal
 - Finished by Ultimus (16 min).
