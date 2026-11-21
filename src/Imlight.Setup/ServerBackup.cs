@@ -61,7 +61,8 @@ internal static class ServerBackup {
     // its 437 MB on Niduus's PC (2026-11-19, "too much space being taken over for Backups"), and zipping them took
     // nearly three minutes of each update. AppWindow is the old app window's browser data, no longer used.
     private static readonly HashSet<string> s_skippedAppFolders = new(StringComparer.OrdinalIgnoreCase) {
-        "Server", "Game files", "Pending", "Logs", "Aurorium", "Import backups", "Source", "Build", "AppWindow",
+        "Server", "Game files", "Pending", "Logs", "Aurorium", "Import backups", "Source", "Source.previous", "Source-2",
+        "Source-2.previous", "Build", "AppWindow",
     };
 
     // Programs, archives, logs and the leftovers of a copy or save cut short (Imlight.exe.old is a whole old app).

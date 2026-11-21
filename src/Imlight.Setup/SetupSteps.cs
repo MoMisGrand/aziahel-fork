@@ -52,7 +52,9 @@ internal sealed class SetupSteps : IDisposable {
         _http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("ImlightSetup", SelfUpdate.CurrentVersion.ToString()));
     }
 
-    internal string SourceFolder => Path.Combine(_options.InstallFolder, "Source");
+    // Source, or Source-2 while Source is held by the running server (see KeepPreviousSource).
+    private string? _sourceFolder;
+    internal string SourceFolder => _sourceFolder ?? Path.Combine(_options.InstallFolder, "Source");
     internal string ServerFolder => _options.ServerFolder;
 
     /// <summary>True when the Server source is a server already built elsewhere: there is nothing to download or build.</summary>
@@ -522,8 +524,31 @@ internal sealed class SetupSteps : IDisposable {
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
             SetupLog.Detail("The last build could not be kept for a quicker build: " + ex.Message);
-            if (Directory.Exists(SourceFolder)) {
-                Directory.Delete(SourceFolder, recursive: true);
+            try {
+                if (Directory.Exists(SourceFolder)) {
+                    Directory.Delete(SourceFolder, recursive: true);
+                }
+            }
+            catch (Exception held) when (held is IOException or UnauthorizedAccessException && _sourceFolder is null) {
+                // A server that took a live patch held a file of the Source folder open (2026-11-21, 0.10.942: "Access to the
+                // path 'Imlight.CoreLib.pdb' is denied" stopped the update). The update is built in Source-2 instead, which
+                // nothing holds; Source is used again once the server has restarted.
+                SetupLog.Detail("The Source folder is held by the running server (" + held.Message + "), so this update is built in Source-2.");
+                _sourceFolder = Path.Combine(_options.InstallFolder, "Source-2");
+                KeepPreviousSource();
+            }
+        }
+
+        // A Source-2 left by an earlier update is not needed once Source is free again.
+        if (_sourceFolder is null) {
+            try {
+                var spare = Path.Combine(_options.InstallFolder, "Source-2");
+                if (Directory.Exists(spare)) {
+                    Directory.Delete(spare, recursive: true);
+                }
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
+                SetupLog.Detail("An old Source-2 folder could not be removed yet: " + ex.Message);
             }
         }
     }

@@ -362,6 +362,7 @@ public static class LivePatcher {
         s_serviceType = typeof(Microsoft.CodeAnalysis.Completion.CompletionService).Assembly
             .GetType("Microsoft.CodeAnalysis.ExternalAccess.UnitTesting.Api.UnitTestingHotReloadService", throwOnError: true)!;
         s_service = Activator.CreateInstance(s_serviceType, workspace.Services)!;
+        UseServerDebugFile(s_service, dll);
         var capabilities = ((string) typeof(MetadataUpdater).GetMethod("GetCapabilities", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, null) ?? "")
             .Split(' ', StringSplitOptions.RemoveEmptyEntries).ToImmutableArray();
         await (Task) s_serviceType.GetMethod("StartSessionAsync")!.Invoke(s_service, [workspace.CurrentSolution, capabilities, cancel])!;
@@ -373,6 +374,40 @@ public static class LivePatcher {
 
         return null;
     }
+
+    /// <summary>
+    /// Roslyn looks for the server part's debug file where the build wrote it (the path inside the dll: Ahziael's Source
+    /// folder) before the copy beside the running dll, and keeps it open for as long as the server runs. Ahziael could
+    /// then neither move nor delete its Source folder, so every later update stopped with "Access to the path
+    /// 'Imlight.CoreLib.pdb' is denied" (2026-11-21 00:56, 0.10.942). The copy beside the running dll is the same file
+    /// and is only swapped while the server is stopped, so the session is pointed at it.
+    /// </summary>
+    private static void UseServerDebugFile(object service, string dll) {
+        try {
+            var pdb = Path.ChangeExtension(dll, ".pdb");
+            var features = typeof(Microsoft.CodeAnalysis.Completion.CompletionService).Assembly;
+            var outputsType = features.GetType("Microsoft.CodeAnalysis.Emit.CompilationOutputFiles", throwOnError: true)!;
+            var enc = service.GetType().GetField("_encService", BindingFlags.NonPublic | BindingFlags.Instance)?.GetValue(service);
+            var field = enc?.GetType().GetField("_compilationOutputsProvider", BindingFlags.NonPublic | BindingFlags.Instance);
+            if (field is null) {
+                Logger.Information("Live patches: the server's debug file is read where it was built (this Roslyn has no way to point it elsewhere).");
+
+                return;
+            }
+
+            var outputs = Activator.CreateInstance(outputsType, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance,
+                null, [dll, pdb], null)!;
+            var provider = Delegate.CreateDelegate(field.FieldType, outputs,
+                typeof(LivePatcher).GetMethod(nameof(SameOutputs), BindingFlags.NonPublic | BindingFlags.Static)!.MakeGenericMethod(field.FieldType.GetGenericArguments()[1]));
+            field.SetValue(enc, provider);
+        }
+        catch (Exception ex) {
+            Logger.Information("Live patches: the server's debug file is read where it was built ({0}).", Logger.Args(ex.Message));
+        }
+    }
+
+    // Closed over the outputs object: every project of the one-project workspace has the same outputs.
+    private static T SameOutputs<T>(T outputs, Project project) => outputs;
 
     private sealed record Update(ImmutableArray<byte> Metadata, ImmutableArray<byte> IL, ImmutableArray<byte> Pdb, int Methods);
 
