@@ -46,6 +46,9 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 - Test of Strength: lighting some moons puts other moons out. The bots light first the pieces that put others out, then the rest, so every moon stays lit and the suns go dark.
 - Get Smart: after the two door puzzles the step waits on a third puzzle that opens no door. The bots light the Sun, Tree, Snake and Bug pieces in that order.
 
+## Krokotopia, Hall of Champions
+- Get Some Bling: the gemstones are spread over many spots in the hall, and not every spot has one at a time. A bot that finds nothing to click at a gem spot for 20 seconds goes on to the next spot instead of waiting there.
+
 ## Krokotopia, Emperor's Retreat
 - The pad to the second tower that the area's files give sits inside a wall. The bots use the real pad, which is a different one nearby, and prefer a way out they can actually reach.
 
