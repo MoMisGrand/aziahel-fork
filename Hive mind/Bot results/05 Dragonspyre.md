@@ -4,7 +4,7 @@ What the bots did in Dragonspyre, from the server log: every quest finished, eve
 
 ## Best way to beat each creature
 - Petrov Gloomstrider: won 52 time(s) (52 Solo, 0 Team), lost 1. Fastest: Ultimus in 5 rounds, plan "hit now", deck for any fight (many of my fights lately had 2+ enemies), hits with Judgement, Elemental Shield, Gearhead Destroyer, Minor Crusade.
-- Loathsome Creeper: won 18 time(s) (16 Solo, 2 Team), lost 0. Fastest: Ra in 6 rounds, deck for any fight (most of my fights lately had 2+ enemies), hits with Scarab, Arcticzilla.
+- Loathsome Creeper: won 21 time(s) (19 Solo, 2 Team), lost 0. Fastest: Garm in 5 rounds, plan "hit now", deck for any fight (many of my fights lately had 2+ enemies), hits with Vampire, Poison, Dark Sprite.
 - Earth Elemental: won 1 time(s) (1 Solo, 0 Team), lost 4. Fastest: Ultimus in 31 rounds, deck for a boss (Life), hitting with Life, Fire, Storm; a rival that outlasts me, so more hits and blades to end it sooner (many of my fights lately had 2+ enemies), hits with Helping Hands, Spirit Shield, Elemental Shield, Fairy.
 - Zarathax: won 1 time(s) (1 Solo, 0 Team), lost 3. Fastest: Ultimus in 24 rounds, deck for a boss (Balance), hitting with Balance, Fire, Death; a rival that outlasts me, so more hits and blades to end it sooner (many of my fights lately had 2+ enemies), hits with Balance, Elemental Shield, Fairy, Helping Hands.
 - Silver Servant: won 1 time(s) (1 Solo, 0 Team), lost 1. Fastest: Ultimus in 6 rounds, deck for Balance enemies, hitting with Balance, Myth, Death (most of my fights lately had 2+ enemies), hits with Balance, Banshee.
@@ -13,6 +13,7 @@ What the bots did in Dragonspyre, from the server log: every quest finished, eve
 - Burning Hate: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 10 rounds, deck for any fight (many of my fights lately had 2+ enemies), hits with Gearhead Destroyer, Locust Swarm.
 - Irate Banshee: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 12 rounds, plan "hit now", deck for Fire enemies, hitting with Fire, Death, Myth (most of my fights lately had 2+ enemies), hits with Minor Crusade, Scarab, Gearhead Destroyer, Fairy.
 - Beghastion Crowcaller: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 5 rounds, deck for Death enemies, hitting with Death, Ice, Storm (many of my fights lately had 2+ enemies), hits with Helping Hands, Spirit Shield, Gearhead Destroyer.
+- Sea Lord: never beaten yet, lost 1 time(s). Most common reason: its biggest hit took 59% of my health, the fight ran 9 minutes, so I ran out of good cards.
 - Sysiphan: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 23 rounds, deck for a boss (Ice), hitting with Ice, Fire, Death (many of my fights lately had 2+ enemies), hits with Helping Hands, Scarab, Elemental Shield, Fairy.
 - Sandor Spearcaller: won 1 time(s) (1 Solo, 0 Team), lost 0. Fastest: Ultimus in 17 rounds, plan "hit now", deck for a boss (Ice), hitting with Ice, Balance, Death (many of my fights lately had 2+ enemies), hits with Gearhead Destroyer, Balance, Minor Crusade, Locust Swarm.
 
@@ -334,6 +335,10 @@ What the bots did in Dragonspyre, from the server log: every quest finished, eve
   - Earth Elemental: lost 1 time(s) (Ultimus). Why: its biggest hit took 76% of my health, the fight ran 10 minutes, so I ran out of good cards. Do instead: fight other creatures for XP first, up to the quest's level.
   - Earth Elemental: lost 1 time(s) (Ultimus). Why: I went in at 56% health, its biggest hit took 76% of my health, the fight ran 42 minutes, so I ran out of good cards. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
 
+## Foe of Foes
+- Avoid, fights lost:
+  - Sea Lord: lost 1 time(s) (Ultimus). Why: its biggest hit took 59% of my health, the fight ran 9 minutes, so I ran out of good cards. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
+
 ## The Towering Crystal
 - Finished by Ultimus (16 min).
 - Won by Ra (Solo) against Loathsome Creeper (rank 6, 695 health, Death) on 2026-11-21 at 09:38:01.
@@ -410,6 +415,21 @@ What the bots did in Dragonspyre, from the server log: every quest finished, eve
   Deck made for any fight (many of my fights lately had 2+ enemies).
   Plan: "hit now" (mine and every other bot's).
   Spells that landed the hits: Dark Sprite x4, Vampire x2, Poison x2, Sacrifice x2, Minor Dark Blow.
+- Won by Garm (Solo) against Loathsome Creeper (rank 6, 695 health, Death) on 2026-11-21 at 12:31:18.
+  It took 5 rounds, about 2 minutes.
+  Deck made for any fight (many of my fights lately had 2+ enemies).
+  Plan: "hit now" (mine and every other bot's).
+  Spells that landed the hits: Vampire, Poison, Dark Sprite.
+- Won by Garm (Solo) against Loathsome Creeper (rank 6, 695 health, Death) on 2026-11-21 at 12:35:53.
+  It took 6 rounds, about 4 minutes.
+  Deck made for any fight (many of my fights lately had 2+ enemies).
+  Plan: "hit now" (mine and every other bot's).
+  Spells that landed the hits: Banshee, Poison, Vampire.
+- Won by Garm (Solo) against Loathsome Creeper (rank 6, 695 health, Death) on 2026-11-21 at 12:43:23.
+  It took 10 rounds, about 6 minutes.
+  Deck made for any fight (many of my fights lately had 2+ enemies).
+  Plan: "hit now" (mine and every other bot's).
+  Spells that landed the hits: Poison x2, Banshee, Vampire, Dark Sprite, Minor Dark Blow, Sacrifice.
 - Avoid, places bots got stuck:
   - The Tower Archives near (12300, -7200) while Use Yellow Crystal here ("The Towering Crystal"): stuck 1 time(s) (Ultimus).
   - The Tower Archives near (6700, -1000) while Use Yellow Crystal here ("The Towering Crystal"): stuck 1 time(s) (Garm).

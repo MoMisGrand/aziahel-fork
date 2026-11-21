@@ -36,6 +36,10 @@ What the bots did in Wizard City, from the server log: every quest finished, eve
   - The Commons near (-2000, 800) while no World or Story quest is left to get: stuck 2 time(s) (Cyndr).
   - The Commons near (0, 0) while a short break before trying "get "Dog Gone Doug"" again: stuck 2 time(s) (Cyndr).
 
+## To the Front!
+- Avoid, places bots got stuck:
+  - Ravenwood near (-400, -400) while waiting for Mythis to reach me before the fight (I asked them to help): stuck 1 time(s) (Kurrent).
+
 ## The Key at Last
 - Finished by Ultimus (5 s).
 - Finished by Ra (4 s).
