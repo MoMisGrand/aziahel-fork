@@ -147,6 +147,8 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 - Stealthy Stuff, second "Talk to Travis Pawman" (floor 5, near (-4294,22361)): he is brought there only by the event "MovePawman" that talking to him in the first room sends, in that copy only. In a new copy (relog, restart, fresh copy) floor 5 stays empty for good. Garm was stuck there 92 times on 20 November and Idunn again on 21 November at 11:53 PM. Server fix (21 November, 12:00 AM round): a person whose spawner starts off, held by one spawner only, comes out for a wizard whose open talk step needs them, in every dungeon.
 - Stealthy Stuff (Big Ben floor 5): Idunn waited at the shut Door43 in an old copy until 2:04 AM, then left and started a fresh copy, and at 2:12 AM the server brought Travis Pawman out in it, as the 1:30 fix meant to. She is climbing back up. (2026-11-21 2:15 AM Bot Update)
 
+- Stealthy Stuff: the 2:53 AM bots update logged every bot out and back in, and Idunn, who was on room 3 of her fresh Big Ben copy, started the climb again. Bots updates cost dungeon progress, so they are only sent when they carry a fix. (2026-11-21 3:00 AM Bot Update)
+
 ## Not quest faults (server outage)
 
 - From 12:31 AM on 21 November every door, teleporter and dungeon sigil failed for everyone ("the exit never takes" lines, sigil waits timing out), until Niduus stopped the server at 1:12 AM; it came back at 1:24 AM on v0.10.944 with no more door or teleporter failures. It was a server fault from the v0.10.941 live install (v0.10.942 could not install while it ran). Bots should not learn "this way goes nowhere" from any exit that failed in that window, and quest blames from it (Tomb of Storms in The Oasis, The Tower Archives from The Atheneum, and others) are not quest faults.
@@ -156,3 +158,4 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 
 ## Not quest faults (gear)
 - Ultimus kept swapping Adept Sorcerer's Robe and Clanker's Noteworthy Robe (and his hat) back and forth every few minutes. Every bot shared one record of the schools it hits with and is hit by, so each other bot's fights moved his choice. Fixed 21 November 2:15 AM: each bot keeps its own. (2026-11-21 2:15 AM Bot Update)
+- Confirmed 21 November 2:48 AM: v0.10.945 went into the running server without a restart, and no bot was sent toward the trainer hall after that. (2026-11-21 3:00 AM Bot Update)
