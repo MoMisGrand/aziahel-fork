@@ -34,6 +34,7 @@ using System.Threading.Tasks;
 using Imlight.Common;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Host.Mef;
 using Microsoft.CodeAnalysis.Text;
@@ -160,6 +161,16 @@ public static class LivePatcher {
                     string.Join(" | ", errors.Select(Plain)) + ")", []);
             }
 
+            // A field or property the change adds to a class that already runs, with a starting value: the objects made before
+            // it went in get the field with no value (null, 0), never the starting one, and code reading it breaks there. v0.10.941
+            // added two lists to the zones' trigger part; every zone open at the time threw on each arrival and doors stopped
+            // taking anyone on for 15 minutes (2026-11-21 00:31-00:46). Such a change waits for a restart instead.
+            var before = await s_current.GetProject(s_project)!.GetCompilationAsync(cancel);
+            if (before is not null && NewStartValues(before, compilation) is { Count: > 0 } started) {
+                return new Outcome(false, 0, "it adds a starting value the server's running parts would not get (" +
+                    string.Join(", ", started.Take(4)) + (started.Count > 4 ? ", ..." : "") + "), so it needs a restart", []);
+            }
+
             var steps = await GoInAsync(s_current, next, label, 0, cancel);
             if (steps.Problem is not null) {
                 if (steps.Reached != s_current) {
@@ -183,6 +194,61 @@ public static class LivePatcher {
         }
         finally {
             s_lock.Release();
+        }
+    }
+
+    /// <summary>
+    /// Fields and auto-properties the new code adds, with a starting value, to classes that the old code has too ("Type.name").
+    /// A live patch gives objects already made such a member without its starting value.
+    /// </summary>
+    internal static List<string> NewStartValues(Compilation before, Compilation after) {
+        var found = new List<string>();
+        var oldTypes = new Dictionary<string, INamedTypeSymbol>(StringComparer.Ordinal);
+        foreach (var type in TypesOf(before.Assembly.GlobalNamespace)) {
+            oldTypes.TryAdd(type.ToDisplayString(), type);
+        }
+
+        foreach (var type in TypesOf(after.Assembly.GlobalNamespace)) {
+            if (!oldTypes.TryGetValue(type.ToDisplayString(), out var old)) {
+                continue;
+            }
+
+            var had = new HashSet<string>(old.GetMembers().Select(m => m.Name), StringComparer.Ordinal);
+            foreach (var member in type.GetMembers().Where(m => !had.Contains(m.Name) && !m.IsImplicitlyDeclared)) {
+                var started = member switch {
+                    IFieldSymbol { IsConst: false } field => field.DeclaringSyntaxReferences.Any(r => r.GetSyntax() is VariableDeclaratorSyntax { Initializer: not null }),
+                    IPropertySymbol property => property.DeclaringSyntaxReferences.Any(r => r.GetSyntax() is PropertyDeclarationSyntax { Initializer: not null }),
+                    _ => false,
+                };
+                if (started) {
+                    found.Add(type.Name + "." + member.Name);
+                }
+            }
+        }
+
+        return found;
+
+        static IEnumerable<INamedTypeSymbol> TypesOf(INamespaceSymbol space) {
+            foreach (var type in space.GetTypeMembers()) {
+                foreach (var t in Nested(type)) {
+                    yield return t;
+                }
+            }
+
+            foreach (var inner in space.GetNamespaceMembers()) {
+                foreach (var t in TypesOf(inner)) {
+                    yield return t;
+                }
+            }
+        }
+
+        static IEnumerable<INamedTypeSymbol> Nested(INamedTypeSymbol type) {
+            yield return type;
+            foreach (var inner in type.GetTypeMembers()) {
+                foreach (var t in Nested(inner)) {
+                    yield return t;
+                }
+            }
         }
     }
 

@@ -1,0 +1,4 @@
+Fixed: Live patches no longer put in code that the running server can't start right
+Some updates add a new list or setting with a starting value to a part of the server that is already running. A live patch gives the parts already running that new list without its starting value, and they break when they use it, which is what stopped doors and teleporters after v0.10.941. Now such an update does not go in live: Ahziael says why and restarts the server once instead, as it does for other changes the running server can't take.
+Where: Ahziael, updates with the Live patches switch on.
+Test: Install an update with Live patches on; most go in with no restart as before, and one that adds a new starting value says "it adds a starting value the server's running parts would not get" and restarts once.
