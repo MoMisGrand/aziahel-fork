@@ -3818,8 +3818,15 @@ internal sealed partial class CombatDuelComponent(ZoneEntity entity)
         }
 
         // The duel has ended. Inform the clients of the result.
-        var playersWin = AliveAndInDuelCreatureCount <= 0;
+        // A battle every wizard left in its first seconds (before the creatures were added to it) is not the wizards' win:
+        // the creatures, never counted as in it, made it look won, so the battle ended "Players win" and nothing sent the
+        // creature back to its walk. King Uro Ahnic was caught that way when a bots update logged his fighter out at 2:53 AM
+        // on 2026-11-21: he never came back, and four players waited for him for over an hour. It is the creatures' battle,
+        // so they are spared and come back as after any flee.
+        var creaturesNotYetIn = SubCircles.Any(x => x is not null && x.Occupied && x.OccupiedTeam == CombatTeam.Monster && x.IsAlive
+                                                    && !x.AddedToDuel && !x.IsSummonedMinion);
         var creaturesWin = AliveAndInDuelPlayerCount <= 0;
+        var playersWin = AliveAndInDuelCreatureCount <= 0 && !(creaturesWin && creaturesNotYetIn);
 
         // A queued tutorial card grant must not leak into the next duel on this sigil.
         _tutorialDirector.OnDuelEnded();
