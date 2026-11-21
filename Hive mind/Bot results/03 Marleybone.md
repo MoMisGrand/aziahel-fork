@@ -4,9 +4,9 @@ What the bots did in Marleybone, from the server log: every quest finished, ever
 
 ## Best way to beat each creature
 - Bellows: won 6 time(s) (6 Solo, 0 Team), lost 82. Fastest: Tulkar in 7 rounds, deck for a boss (Balance), hitting with Balance, Storm, Myth; a rival that keeps beating me, so more shields and heals (most of my fights lately had 2+ enemies).
-- Gearhead: won 49 time(s) (31 Solo, 18 Team), lost 28. Fastest: Tulkar in 3 rounds, deck for a boss (Storm), hitting with Storm, Fire, Death (most of my fights lately had 2+ enemies).
+- Gearhead: won 49 time(s) (31 Solo, 18 Team), lost 29. Fastest: Tulkar in 3 rounds, deck for a boss (Storm), hitting with Storm, Fire, Death (most of my fights lately had 2+ enemies).
 - O'Leary Conniver: won 63 time(s) (49 Solo, 14 Team), lost 11. Fastest: Garm in 2 rounds, plan "hit now", deck for any fight (many of my fights lately had 2+ enemies), hits with Vampire, Minor Dark Blow.
-- Clockwork Warrior: won 47 time(s) (45 Solo, 2 Team), lost 22. Fastest: Cyndr in 1 rounds, deck for Balance enemies, hitting with Balance, Storm, Ice; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Sunbird.
+- Clockwork Warrior: won 47 time(s) (45 Solo, 2 Team), lost 23. Fastest: Cyndr in 1 rounds, deck for Balance enemies, hitting with Balance, Storm, Ice; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Sunbird.
 - Clockwork Wizard: won 52 time(s) (42 Solo, 10 Team), lost 16. Fastest: Kurrent in 2 rounds, plan "hit now", deck for a boss (Life), hitting with Life, Fire, Storm; a rival that outlasts me, so more hits and blades to end it sooner (most of my fights lately had 2+ enemies), hits with Storm Shark, Thunder Snake.
 - Meowiarty: won 44 time(s) (16 Solo, 28 Team), lost 14. Fastest: Cyndr in 2 rounds, plan "hit now", deck for any fight (many of my fights lately had 2+ enemies), hits with Fire Cat, Immolate.
 - Filcher: won 32 time(s) (25 Solo, 7 Team), lost 15. Fastest: Tulkar in 2 rounds, plan "hit now", deck for a boss (Ice), hitting with Ice, Death (most of my fights lately had 2+ enemies), hits with Minor Nova, Banshee.
@@ -2287,6 +2287,7 @@ What the bots did in Marleybone, from the server log: every quest finished, ever
   - Filcher: lost 1 time(s) (Idunn). Why: I went in at 27% health, its biggest hit took 73% of my health, the fight ran 6 minutes, so I ran out of good cards. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
   - Filcher: lost 1 time(s) (Idunn). Why: I went in at 77% health, its biggest hit took 73% of my health. Do instead: fight other creatures for XP first, up to the quest's level.
   - Kettlehead: lost 1 time(s) (Idunn). Why: its biggest hit took 67% of my health. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
+  - Gearhead: lost 1 time(s) (Idunn). Why: its biggest hit took 75% of my health, the fight ran 5 minutes, so I ran out of good cards. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
 - Avoid, places bots got stuck:
   - Big Ben near (-9700, 21000) while Talk to Travis Pawman ("Stealthy Stuff"): stuck 92 time(s) (Garm); one bot tried every fix there.
   - Big Ben near (-9600, 21100) while Talk to Travis Pawman ("Stealthy Stuff"): stuck 54 time(s) (Garm); one bot tried every fix there.
@@ -2717,6 +2718,7 @@ What the bots did in Marleybone, from the server log: every quest finished, ever
   - Kettlehead: lost 1 time(s) (Kurrent). Why: its biggest hit took 67% of my health. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
   - Clockwork Warrior: lost 1 time(s) (Kurrent). Why: I went in at 20% health. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
   - Clockwork Wizard: lost 1 time(s) (Kurrent). Why: its biggest hit took 64% of my health. Do instead: full health and mana first, a deck with more shields and heals for it, and its healers hit first.
+  - Clockwork Warrior: lost 1 time(s) (Kurrent). Why: the fight ran 7 minutes, so I ran out of good cards. Do instead: fight other creatures for XP first, up to the quest's level.
 - Avoid, places bots got stuck:
   - The Commons near (-4400, 1000) while filling potions before a dungeon: stuck 21 time(s) (Kurrent); one bot tried every fix there.
   - The Commons near (-4300, 1100) while filling potions before a dungeon: stuck 13 time(s) (Kurrent).
@@ -3853,6 +3855,10 @@ What the bots did in Marleybone, from the server log: every quest finished, ever
   - Katzenstein's Lab near (2500, 11300) while going along with Idunn (my group) (): stuck 1 time(s) (Ra).
   - Katzenstein's Lab near (2500, 11400) while a short break before trying "going along with Idunn (my group)" again: stuck 1 time(s) (Ra).
   - Katzenstein's Lab near (2500, 11200) while a short break before trying "going along with Idunn (my group)" again: stuck 1 time(s) (Ra).
+
+## Do You Mind?
+- Avoid, places bots got stuck:
+  - Regent's Square near (200, -5100) while to Wolfminster Abbey (the Bazaar, for treasure cards): stuck 1 time(s) (Mythis).
 
 ## Missing Souls
 - Finished by Tulkar (8 s).
