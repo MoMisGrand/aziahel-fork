@@ -158,6 +158,7 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 - 2026-11-21 9:45 AM, It's Alive! (Katzenstein's Lab): Kitharas Wraith at level 24 lost 3 fights in 12 minutes on the way to Grunk and Clockwork (09:33, 09:38, 09:45). Level 24 is low for these rooms; go in at full health or with a mate.
 - 2026-11-21 10:00 AM: Kitharas Moon, Lamia, AlchemiZist and Hart flagged Weird Science as a broken step (09:45-09:46). Moon was trapped east of the gates at (3110,11186) trying to leave the copy to start it over (Clanker not there) and could not get out for 15 minutes. Likely cause: several bots share one copy and pull the same four plaques for both gates in different orders, so solving the second gate's order can shut the first gate again behind them. Under study.
 - 2026-11-21 10:15 AM: the gates do not shut again once open (no close in the server log); the trapped bots are in fresh copies (new Gate02 objects at 09:48, 09:50, 09:51, 09:58, 10:00, 10:05, 10:10) whose gates were never opened, walking to Clanker into a shut Gate02 or Gate02 (2). The restart-copy loop (leave to start over when Clanker is not there) is what keeps resetting the plaques. Under study.
+- 2026-11-21 10:30 AM: Kitharas Wraith finished It's Alive! and Fetch Bones! and is on Metal Madness by 10:29. Kitharas Moon has stood south of the gates at about (3110,11185) since 09:20, walking to Clanker into the shut Gate02 (2) over and over; he never pulls the plaques for it, and his walks out to start the copy over get broken off by his loop check. His own AI guessed right: the door to Clanker needs the plaques. Under study (why the plaque puzzle for Gate02 (2) is not offered to him).
 
 ## Dragonspyre, The Basilica
 - The arch to The Atheneum (LibraryPort1) did nothing in v0.10.936: the arch-menu fix kept the arch's own use, whose teleport names no destination, instead of its door. Fixed 2026-11-21: the arch's own use is kept only when its teleport knows where it goes. Same for the other cathedral arches (AcadPort1, NecroPort1).
@@ -235,6 +236,7 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 ## MooShu, Jade Palace Throne Room (An Imperial Cure)
 - 2026-11-21 8:00 round: Ra lost to Jade Oni at 07:26, 07:44 and 07:57 (1 win, 7 losses overall), going back in at 57% health each time; every loss said "1 time(s) at this step", so the repeat-loss remedies never start. Bot fault, being fixed.
 - 2026-11-21 9:00 AM: SOLVED. Ra beat Jade Oni and finished An Imperial Cure at 08:47 (20 min), then The Key at Last at 08:50. Not a quest fault: the earlier losses were a hard fight, and he won once he went in better prepared.
+- 2026-11-21 10:30 AM: TCO7 Kurrent lost to Maito 5 times since 09:51 but each bots update restarts his loss count (3 at 10:03, then 1 again at 10:15), so his help call to a teammate (after 4 losses) never comes. Mythis lost twice to Usegi's room circle (10:25, 10:30).
 
 ## Not quest faults (server outage)
 
