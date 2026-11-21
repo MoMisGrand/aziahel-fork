@@ -49,6 +49,12 @@ internal sealed partial class UltimusDirectorActor {
             if (TripLegOut(target) && TripPurpose(target.What) is { Length: > 0 } purpose) {
                 _tripLeg = (purpose, target.What, zone, target.To, DateTime.UtcNow);
             }
+            // The trip did its work where the leg took him (trained, shopped, sold): walking back out after that is the trip
+            // ending, not a bounce (his log, 2026-11-21 15:21: he trained Frost Beetle, Snow Serpent and Volcanic Shield in the
+            // Ice school, spent his last point, walked out, and TRIP BOUNCE set training aside for an hour).
+            else if (!TripLegOut(target) && _tripLeg is { } arrived && OverlayQuestTracker.SameZone(zone, arrived.To)) {
+                _tripLeg = null;
+            }
 
             return target;
         }
