@@ -132,6 +132,8 @@ Every correction the bots were given for a quest, a dungeon or a puzzle. Ultimus
 - Portal Combat, the way there: the Tower Archives are very long from the door to the far teleporter. Bots keep going to the teleporter they chose and only give up on it once they have stood by it for three minutes.
 - Portal Combat, walking to the ToWizT teleporter at (9177,-7685): our ground map shows its floor cut off from the entrance, so the guessed way went far north. The right way is the game's own path: down past (1680,-7431) and back up onto the pad (about 69,000 long). Bots now take it (2026-11-21).
 
+- Portal Combat, from the north end: the "To The Tower Archives" teleporters in the north (at (29029, 27396) and (7387, 18847)) land at (2078, -573), a short walk from the ToWizT teleporter (9177, -7685). That is how Ultimus got there at 12:45 AM on 21 November. At 2:28 AM the same fix was cancelled by the loop guard a moment after it was chosen, and he went to rest instead. Fixed 2:30 AM: the loop guard waits three minutes while a teleporter fix runs. (2026-11-21 2:30 AM Bot Update)
+
 ## Marleybone, Scotland Yard
 - After Weird Science, Watson offers "Fetch Bones!" right at the hand-in. That offer is the only hint; the game does not mark Fetch Bones! as story. A bot that misses it must go back to Watson and take it, never go back to Wizard City for other quests (Cyndr, 20 November).
 - "Fetch Bones!" needs "It's Alive!", the second quest inside Katzenstein's Lab (after "If You Build It..."), not "Weird Science". A team that leaves the Lab with only Weird Science done has no quest offered anywhere; go back into the Lab, finish both, then see Watson (Cyndr and Kurrent, 20 November).
