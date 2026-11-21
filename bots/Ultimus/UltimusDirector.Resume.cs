@@ -51,6 +51,8 @@ internal sealed partial class UltimusDirectorActor {
         public Dictionary<string, DateTime> Parked { get; set; } = [];
         public string MarkedZone { get; set; }
         public DateTime MarkedAt { get; set; }
+        // The far potion trip (Wizard City's shop) still on: kept over a restart so the Recall back waits for the potions.
+        public DateTime PotionTripUntil { get; set; }
         public Dictionary<string, List<float[]>> CollectSpots { get; set; } = [];
     }
 
@@ -68,7 +70,7 @@ internal sealed partial class UltimusDirectorActor {
             Saved = DateTime.UtcNow, CharId = _team[0].CharId, Quest = _currentQuest ?? quest, Doing = _target?.What ?? "",
             Picks = picks, Asides = asides,
             Parked = _parkedAt.Where(p => DateTime.UtcNow - p.Value < ParkedFor(p.Key)).ToDictionary(p => p.Key, p => p.Value),
-            MarkedZone = _markedZone, MarkedAt = _markedAt, CollectSpots = BotCollect.Spots(_team[0].CharId),
+            MarkedZone = _markedZone, MarkedAt = _markedAt, PotionTripUntil = _farPotionTripUntil, CollectSpots = BotCollect.Spots(_team[0].CharId),
         };
         try {
             Directory.CreateDirectory(UltimusWire.Folder);
@@ -123,6 +125,13 @@ internal sealed partial class UltimusDirectorActor {
 
         if (_markedZone is null && !string.IsNullOrEmpty(state.MarkedZone) && DateTime.UtcNow - state.MarkedAt < TimeSpan.FromHours(1)) {
             (_markedZone, _markedAt) = (state.MarkedZone, state.MarkedAt);
+        }
+
+        // Back in on the far potion trip with the potions not yet bought: the trip goes on before the Recall to the mark.
+        // Without it the mark was all that came back: TCO7 Kurrent logged in at the Commons potion shop after a bots update
+        // and recalled straight to Regent's Square with 0 of 4 potions, then set off for the shop again (2026-11-20 22:29).
+        if (state.PotionTripUntil > DateTime.UtcNow && _markedZone is not null) {
+            _farPotionTripUntil = state.PotionTripUntil;
         }
 
         BotCollect.RestoreSpots(_team[0].CharId, state.CollectSpots);
