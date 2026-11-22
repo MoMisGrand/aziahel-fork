@@ -164,6 +164,7 @@ internal sealed partial class UltimusDirectorActor {
             if (step is null || step.Problem.Length > 0 || step.Kind is UltimusPlanner.WAIT or UltimusPlanner.NONE) {
                 // It sent him into this room, and here it has nothing he can do: that way is a dead end for this step.
                 NoteDungeonDeadEnd(leader, name);
+                DungeonFightGone(leader, name);
                 continue;
             }
 
@@ -185,6 +186,7 @@ internal sealed partial class UltimusDirectorActor {
                   $"first, then go on to {main?.What ?? "my story step"}, as a player does.", "dungeonfirst|" + step.Key);
 
             _dungeonFirstQuest = name;
+            _dungeonFirstFight = step.Kind == UltimusPlanner.FIGHT ? step : null;
             _dungeonFirstLead = step.Kind is UltimusPlanner.EXIT or UltimusPlanner.DOOR or UltimusPlanner.SPIRAL && step.To is { Length: > 0 }
                 ? (name, step.Goal ?? "", step.To)
                 : null;
@@ -202,6 +204,30 @@ internal sealed partial class UltimusDirectorActor {
     private readonly Dictionary<string, DateTime> _dungeonDeadEnds = new(StringComparer.OrdinalIgnoreCase);
 
     private static string DeadEndKey(string quest, string goal, string to) => quest + "|" + (goal ?? "") + "|" + to;
+
+    // The fight the dungeon's own quest last sent him to. Reaching its spot, the step there turned to "wait where they spawn"
+    // (no creature), so the story's way out won; one step away it was a fight again: Lumeria and Crimes of Kitharas went
+    // between Shoji (River Temple) and the way out of Shirataki Temple every half second for over an hour (2026-11-22
+    // 10:09-11:02). The stood-on check (UltimusDirector.cs, "no battle started") never ran: the target changed each look.
+    private UltimusPlanner.Target _dungeonFirstFight;
+
+    /// <summary>
+    /// The dungeon quest's fight spot was reached and its creature is not there: that step is left alone like a dud
+    /// (DudStep, 10 minutes) and this copy is marked as unable to give it, so the fresh-copy check can start it over.
+    /// </summary>
+    private void DungeonFightGone(UltimusMember.Status leader, string quest) {
+        if (_dungeonFirstFight is not { } fight || !string.Equals(fight.Quest, quest, StringComparison.OrdinalIgnoreCase)
+            || UltimusPlanner.Far(leader.X, leader.Y, fight.X, fight.Y) > 200 || DudStep(fight)) {
+            return;
+        }
+
+        _dungeonFirstFight = null;
+        _dudSteps[StepKey(fight)] = DateTime.UtcNow + BotShared.DudCreatures.LeaveFor;
+        _dudStepAt = (leader.Zone ?? "", DateTime.UtcNow, StepKey(fight));
+        Think($"I reached the spot for \"{fight.What}\" and nothing is there to fight. I leave that step alone for " +
+              $"{BotShared.DudCreatures.LeaveFor.TotalMinutes:0} minutes instead of turning back and forth with the way on.",
+            "dungeon-fightgone|" + StepKey(fight));
+    }
 
     private void NoteDungeonDeadEnd(UltimusMember.Status leader, string quest) {
         if (_dungeonFirstLead is not { } lead || !string.Equals(lead.Quest, quest, StringComparison.OrdinalIgnoreCase)

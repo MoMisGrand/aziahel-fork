@@ -2253,6 +2253,10 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
         // The loss can come in after the game has already put him out (his log, 2026-11-16 16:35: the recall was given at
         // :19, he was in Marleybone's hub at :20 and the loss came at :24, so nothing was noted and he walked in at floor
         // one again): the dungeon is then the one his fresh Dungeon Recall holds.
+        // A creature that has beaten him before (this loss counts) is gone back to at his tough-foe health, not the usual 60%.
+        _fellToRival = lostTo is { Kind: UltimusPlanner.FIGHT, Template: not 0 } rivalFight
+                       && UltimusFoes.Of((uint) Math.Min(rivalFight.Template, uint.MaxValue)) is { Lost: >= 1 }
+                       || UltimusFoes.RivalNamedIn(lostTo?.What) is not null;
         if (member.Wizard?.ZoneIsInstance == true) {
             _fellIn = (member.Zone ?? "", DateTime.UtcNow);
         }
