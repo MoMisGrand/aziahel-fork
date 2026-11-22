@@ -6,3 +6,6 @@ Test: Against the Sea Lord, his deck line says "alone, so single hits only" with
 Fixed: Ultimus casts Judgement at the pip count that kills, instead of always waiting for a full row.
 He works out the smallest number of pips at which Judgement ends the foe. The sum counts his damage and pierce, every blade, trap and shield on both sides, and the foe's resist and health. He casts as soon as his pips reach that number. When even full pips would not end the foe, he stacks as much as he can and hits at full pips.
 Test: His round notes say "saves its pips for Judgement: at N pips it ends Sea Lord", and he casts it on the round his pips reach N.
+
+Fixed: Ultimus stacks and finishes against every big foe, whatever style his past results pick.
+At 9:39 PM he fought the Sea Lord in the "plans two rounds" style and cast Judgement in round 1 for about 572. Now a foe with three or more of his best hits' worth of health always gets the stack-up and full-pip Judgement plan.
