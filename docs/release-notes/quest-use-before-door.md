@@ -1,0 +1,4 @@
+Fixed: The Time Crystal in the Hall of Time counts for "The Time is Right" again
+The Time Crystal is both a door to the Grand Chasm's past and the thing "The Time is Right" asks you to use. The server always took the door, so using the crystal sent you to the past without counting the step, and the quest could never be finished. Now, while your quest step asks for an object, using it counts for the step first, like in the real game. Once the step is done, the crystal works as a door again.
+Where: Dragonspyre, Hall of Time, and any other object that is both a door and a quest object. No setting.
+Test: Take "The Time is Right", go into the Hall of Time and use the Time Crystal: the step completes and you stay in the Hall of Time. A wizard who is not on that step still goes to the Grand Chasm's past.
