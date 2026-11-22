@@ -71,6 +71,9 @@ internal sealed partial class DuelBots {
         else if (_botsKicked) {
             refusal = "a player kicked a bot out of this battle";
         }
+        else if (ScoutIn() is { } scout) {
+            refusal = $"{scout} (a quest scout) is in it, and the scouts keep apart from other bots' fights";
+        }
 
         if (refusal is null) {
             // Its deck made ready for these enemies before it sits down (Niduus, 2026-11-12: "adjust decks on the fly to

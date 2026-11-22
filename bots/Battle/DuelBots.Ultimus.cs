@@ -94,6 +94,41 @@ internal sealed partial class DuelBots {
         return true;
     }
 
+    // A server-run wizard: Ultimus's seats (TCO7, Kitharas, True Form, the scouts), the Quest Team or a Bot Player.
+    private static bool ServerBot(ulong id)
+        => id != 0 && (UltimusDirector.RoleOf(id) is not null || QuestTeamDirector.RoleOf(id) is not null || Imlight.CoreLib.Game.BotPlayers.BotIds.IsBotObject(id));
+
+    private static bool Scout(ulong id) => UltimusSeat.OfGlobal(id) is { IsScout: true };
+
+    // The name of a quest scout (Zoom, Savitar) already in this battle, else null.
+    private string ScoutIn()
+        => D.SubCircles.FirstOrDefault(c => c is { Occupied: true, IsSummonedMinion: false } && Scout(c.ParticipantObject?.m_globalID.Full ?? 0))
+            ?.ParticipantObject?.m_debugName;
+
+    /// <summary>
+    /// The quest scouts keep apart from other bots' fights (Niduus, 2026-11-22: "keep Savitar and Zoom away from the fights of
+    /// other bots"): a scout never joins a battle another server-run wizard is in, and no other bot joins a scout's battle.
+    /// Walking past one, they keep walking. A real player may still join a scout, and a scout a real player's battle.
+    /// </summary>
+    private bool ScoutRefusesBattle(Imcodec.ObjectProperty.TypeCache.CoreObject joiner) {
+        var id = joiner.m_globalID.Full;
+        var joinerScout = Scout(id);
+        if (!joinerScout && !ServerBot(id)) {
+            return false;
+        }
+
+        var other = D.SubCircles.FirstOrDefault(c => c is { Occupied: true, IsSummonedMinion: false } && c.ParticipantObject is { } p
+                                                     && p.m_globalID.Full != id
+                                                     && (joinerScout ? ServerBot(p.m_globalID.Full) : Scout(p.m_globalID.Full)));
+        if (other is null) {
+            return false;
+        }
+
+        Logger.Debug("Duel {0} | {1} stays out: {2} is in this battle (the quest scouts keep apart from other bots' fights).",
+            Logger.Args(D.Duel.m_duelID.Full, joiner.m_debugName, other.ParticipantObject?.m_debugName));
+        return true;
+    }
+
     /// <summary>
     /// Whether Ultimus may walk into the battle a creature (by object id) is in: a real player is in it (not the Quest
     /// Team), it is not PvP, and a players' circle is free. <paramref name="who"/> is a player in it, for the log.
@@ -150,6 +185,13 @@ internal sealed partial class DuelBots {
                 }
 
                 if (circles.Any(c => c is { Occupied: true } && QuestTeamRole(c) is not null)) {
+                    return false;
+                }
+
+                // The scouts keep apart from other bots' fights, both ways (ScoutRefusesBattle).
+                var scoutAsks = UltimusSeat.Current.IsScout;
+                if (circles.Any(c => c is { Occupied: true, IsSummonedMinion: false } && c.ParticipantObject is { } p
+                                     && (scoutAsks ? ServerBot(p.m_globalID.Full) : Scout(p.m_globalID.Full)))) {
                     return false;
                 }
 
@@ -454,7 +496,7 @@ internal sealed partial class DuelBots {
             // True Form's hand is dealt from every spell each round (TrueFormBattle): no draws, digs or discards.
             var trueForm = UltimusSeat.Current.IsTrueForm;
             // Zoom, the quest scout, is dealt his hand too (ZoomBattle): one-shots and his biggest hits.
-            var zoom = UltimusSeat.Current.IsZoom;
+            var zoom = UltimusSeat.Current.IsScout;
             var dealt = trueForm || zoom;
 
             // The card thrown away to make room for a treasure card is not out of his hand yet: he picks once it is, on the
@@ -594,12 +636,12 @@ internal sealed partial class DuelBots {
     private void TrueFormDeal(CombatDuelSubCircle circle) {
         try {
             var who = UltimusSeat.OfGlobal(circle?.ParticipantObject?.m_globalID.Full ?? 0);
-            if (who is not ({ IsTrueForm: true } or { IsZoom: true })) {
+            if (who is not ({ IsTrueForm: true } or { IsScout: true })) {
                 return;
             }
 
             using var seat = UltimusSeatOf(circle);
-            var hand = who.IsZoom
+            var hand = who.IsScout
                 ? ZoomBattle.Deal(circle, D.ActiveSubCircles.ToList(), D.Duel.m_roundNum, D.CombatResolver, D.Duel.m_duelID.Full)
                 : TrueFormBattle.Deal(circle, D.ActiveSubCircles.ToList(), D.Duel.m_roundNum);
             if (hand is { } dealt) {

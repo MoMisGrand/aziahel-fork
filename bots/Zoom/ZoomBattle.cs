@@ -44,8 +44,8 @@ internal static class ZoomBattle {
 
     private const int HAND = TrueFormBattle.HAND;
 
-    /// <summary>His two clearing spells, best first (Niduus, 2026-11-22).</summary>
-    private static readonly string[] s_clearers = ["Tempest", "Glowbug Squall"];
+    /// <summary>His two clearing spells, best first (Niduus, 2026-11-22; per scout's school, ZoomSpells.Clearers).</summary>
+    private static IReadOnlyList<string> s_clearers => ZoomSpells.Clearers;
 
     private const string EPIC = "Epic";
 
@@ -72,9 +72,12 @@ internal static class ZoomBattle {
             .OrderByDescending(e => BotEnchants.Of(e.Id).Amount).FirstOrDefault();
     }
 
-    // His real hits at the top level (no damage-per-pip spells, which do nothing with few pips, no dev or treasure cards).
+    // His real hits at the top level, of his own school only (Zoom: Storm, Savitar: Fire; Niduus, 2026-11-22: "ALL VANILLA
+    // STORM. NOT EVERY VANILLA CARD"; Zoom was dealt Fires of Mars, Helephant and Phoenix, Savitar Tempest): no
+    // damage-per-pip spells, which do nothing with few pips, no dev or treasure cards.
     private static List<TrueFormPool.Entry> RealHits()
-        => [.. TrueFormPool.At(Top, dev: false).Where(e => !e.Dev && e.Card.Hit && e.Card.PerPip == 0 && !e.Treasure && !BotCards.NotVanilla(e.Card))];
+        => [.. TrueFormPool.At(Top, dev: false).Where(e => !e.Dev && e.Card.Hit && e.Card.PerPip == 0 && !e.Treasure && !BotCards.NotVanilla(e.Card)
+                                                          && e.School.Equals(UltimusSeat.Current.School.ToString(), StringComparison.OrdinalIgnoreCase))];
 
     /// <summary>
     /// His seven cards for this round in place of the hand he drew, or null when there is nothing to deal yet (his spells
@@ -129,7 +132,7 @@ internal static class ZoomBattle {
             shown.Add(TrueFormPool.Of(id)?.Shown ?? RewrittenAI.ReadTemplate(id)?.Shown ?? id.ToString());
         }
 
-        return $"Zoom is dealt his {(studying ? "cheat study" : "clearing")} hand ({pips} pips): {string.Join(", ", shown)}";
+        return $"{UltimusSeat.Current.Name} is dealt his {(studying ? "cheat study" : "clearing")} hand ({pips} pips): {string.Join(", ", shown)}";
     }
 
     /// <summary>
@@ -184,13 +187,13 @@ internal static class ZoomBattle {
         var hits = hand.Where(h => h.Card.Hit).ToList();
         var wide = enemies.Count > 1 ? hits.Where(h => h.Card.HitsAll).OrderByDescending(h => h.Card.BaseDamage).FirstOrDefault() : null;
         if (wide is not null) {
-            return new(UltimusTactics.Move.Cast, wide.Index, -1, $"no pips for Tempest or Glowbug Squall yet: hits every enemy with {wide.Card.Shown}");
+            return new(UltimusTactics.Move.Cast, wide.Index, -1, $"no pips for {string.Join(" or ", s_clearers)} yet: hits every enemy with {wide.Card.Shown}");
         }
 
         var big = hits.OrderByDescending(h => h.Card.BaseDamage).FirstOrDefault();
         if (big is not null) {
             return new(UltimusTactics.Move.Cast, big.Index, big.Card.HitsAll ? -1 : target.SlotIndex,
-                $"no pips for Tempest or Glowbug Squall yet: hits {(big.Card.HitsAll ? "every enemy" : UltimusTactics.Name(target))} with {big.Card.Shown}");
+                $"no pips for {string.Join(" or ", s_clearers)} yet: hits {(big.Card.HitsAll ? "every enemy" : UltimusTactics.Name(target))} with {big.Card.Shown}");
         }
 
         return new(UltimusTactics.Move.Pass, 0, -1, "builds pips for Tempest + Epic");
