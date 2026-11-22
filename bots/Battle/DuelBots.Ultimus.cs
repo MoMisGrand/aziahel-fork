@@ -294,7 +294,14 @@ internal sealed partial class DuelBots {
             ? cards.First(c => c.Index == useless[0])
             : cards.OrderBy(c => Order(c.Card)).ThenBy(c => c.Card.Rank).FirstOrDefault();
 
-        return pick.Card is null ? null : (pick.Index, $"discards {pick.Card.Shown}");
+        // Only heals left to throw away: no treasure card this round. With v131 he still threw away Satyr in round 9
+        // against the Sea Lord (2026-11-21 20:44): every other card in hand was a hit, and the old order put any card that
+        // is not a hit first, the heal included.
+        if (pick.Card is null || (pick.Card.Heal && !pick.Card.Hit)) {
+            return null;
+        }
+
+        return (pick.Index, $"discards {pick.Card.Shown}");
     }
 
     private void UltimusPlanningBegins() {
