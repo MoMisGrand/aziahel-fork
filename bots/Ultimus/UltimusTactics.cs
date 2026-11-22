@@ -194,6 +194,17 @@ internal static class UltimusTactics {
                                CombatDuelSubCircle focus, List<CombatDuelSubCircle> hurt, UltimusScout.Threat threat, int round, string focusWhy) {
         // The style of this fight, from his own results for its kind (UltimusFightStyles), picked on his first turn.
         var style = UltimusFightStyles.StyleFor(me, enemies);
+        // A foe three or more of his best hits can't end (a boss): always stack and finish, whatever his results for the kind
+        // say (Niduus, 2026-11-21: "His combo here should be to trap and blade stack as much as possible, then hit with a full
+        // pip enchanted judgement for the kill"; at 21:39 he fought the Sea Lord with "plans two rounds" and cast Judgement in
+        // round 1 for about 572).
+        if (focus is not null && style != UltimusFightStyles.STACK_UP) {
+            var best = hand.Where(h => h.Card.Hit && !h.Card.Natural && !h.Card.HitsAll).Select(h => BotCore.Estimate(h.Card, me, focus)).DefaultIfEmpty(0).Max();
+            if (best > 0 && RewrittenAI.Health(focus) >= best * BIG_FOE_HITS) {
+                style = UltimusFightStyles.STACK_UP;
+            }
+        }
+
         var mine = RewrittenAI.HealthShare(me);
         var myHurt = mine < HURT ? new List<CombatDuelSubCircle> { me } : [];
         var playersInDanger = hurt.Where(h => h != me && RewrittenAI.HealthShare(h) < DANGER).ToList();
@@ -312,6 +323,9 @@ internal static class UltimusTactics {
 
     // How much bigger an X-pip hit at full pips must be than the best hit now for him to save his pips for it.
     private const double FULL_PIP_WAIT = 1.15;
+
+    // A foe with this many of his best hits' worth of health or more is stacked for, whatever style his results pick.
+    private const int BIG_FOE_HITS = 3;
 
     // The share of my health the enemies' habits say they take this round, and who hits hardest (BotCore).
     private static (double Share, string Hardest) Incoming(List<CombatDuelSubCircle> enemies, int round) => BotCore.Incoming(enemies, round, Name);
