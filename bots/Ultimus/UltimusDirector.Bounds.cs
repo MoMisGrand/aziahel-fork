@@ -441,6 +441,25 @@ internal sealed partial class UltimusDirectorActor {
     /// <summary>The quest and goal a target belongs to, so a dud creature counts only for its own step.</summary>
     private static string StepKey(UltimusPlanner.Target target) => target is null ? "" : $"{target.Quest}|{target.Goal}";
 
+    // Fight steps whose creature was stood on with no battle, by step (quest|goal), until when they are left alone. The
+    // creature's own mark (BotShared.DudCreatures) misses a step whose target has no live creature (GlobalId 0) or a new
+    // one each look: Idunn, Shirataki Temple (2026-11-22 03:34-03:46, v160) set Shoji aside, then "another quest right
+    // here" picked "Defeat and Collect Shoji" again every 5 seconds, back and forth with the way out, about 140 times.
+    private readonly Dictionary<string, DateTime> _dudSteps = new(StringComparer.OrdinalIgnoreCase);
+
+    private bool DudStep(UltimusPlanner.Target step) {
+        if (step is null || string.IsNullOrEmpty(step.Quest) || !_dudSteps.TryGetValue(StepKey(step), out var until)) {
+            return false;
+        }
+
+        if (DateTime.UtcNow < until) {
+            return true;
+        }
+
+        _dudSteps.Remove(StepKey(step));
+        return false;
+    }
+
     // How long the walk out of a side dungeon may go on (with no real story progress) before he presses the Commons button.
     private static readonly TimeSpan s_sideWalkMost = TimeSpan.FromMinutes(10);
     private (string Zone, DateTime At, DateTime Last)? _sideSince;
