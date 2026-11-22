@@ -72,6 +72,19 @@ internal sealed class UltimusSeat {
     /// </summary>
     internal static readonly UltimusSeat TrueForm = new("TrueForm", "True Form of Kitharas", "Myth", TRUE_FORM_FOLDER, "TrueForm-Ahziael", 8);
 
+    /// <summary>Where Zoom keeps his folder, inside the server's logs folder.</summary>
+    internal const string ZOOM_FOLDER = "logs/zoom";
+
+    /// <summary>
+    /// Zoom, the Story quest scout (Niduus, 2026-11-22: "Replicating True Form, we need to make another bot: Zoom ... to
+    /// teleport complete tasks in the Story Main quests. This way he can get ahead of broken quests before Ultimus and TCO7
+    /// hit Arc 2"). Made as True Form is (the top level, the best gear, every spell), he plays Ultimus's questing brain on
+    /// the main story, but he may teleport to each step and one-shot whatever he fights (UltimusDirector.Zoom.cs,
+    /// bots/Zoom). A step that never finishes is written up as a broken quest (logs/zoom/broken-quests.txt) and he moves on.
+    /// His runs are no player's runs: none of his fights, times or walks go into what Ultimus and the teams learn from.
+    /// </summary>
+    internal static readonly UltimusSeat Zoom = new("Zoom", "Zoom", "Storm", ZOOM_FOLDER, "Zoom-Scout", 9);
+
     /// <summary>The team name of the TCO7: their settings section ([TCO7]) and what the bots call them.</summary>
     internal const string TCO7_TEAM = "TCO7";
 
@@ -81,7 +94,7 @@ internal sealed class UltimusSeat {
     /// <summary>Where the Kitharas Family keep their folders, inside the server's logs folder.</summary>
     internal const string KITHARAS_FOLDER = "logs/kitharas";
 
-    // Seat numbers of the Kitharas Family start after this one (Ultimus 0, TCO7 1-7, True Form 8; 51-70 are the family).
+    // Seat numbers of the Kitharas Family start after this one (Ultimus 0, TCO7 1-7, True Form 8, Zoom 9; 51-70 are the family).
     private const int KITHARAS_BASE = 50;
 
     /// <summary>How many of the Kitharas Family may play at once when [Kitharas] Count is not set (PC load: 5 to start).</summary>
@@ -120,8 +133,8 @@ internal sealed class UltimusSeat {
     private static UltimusSeat Family(string key, string name, string call, string school, int n)
         => new(key, name, school, $"{KITHARAS_FOLDER}/{call.ToLowerInvariant()}", "Kitharas-" + call, KITHARAS_BASE + n, call);
 
-    /// <summary>Every seat: Ultimus first, then the TCO7, then True Form, then the Kitharas Family.</summary>
-    internal static readonly UltimusSeat[] All = [Ultimus, .. Tco7, TrueForm, .. Kitharas];
+    /// <summary>Every seat: Ultimus first, then the TCO7, then True Form, then Zoom, then the Kitharas Family.</summary>
+    internal static readonly UltimusSeat[] All = [Ultimus, .. Tco7, TrueForm, Zoom, .. Kitharas];
 
     private UltimusSeat(string key, string name, string role, string folder, string username, int index, string callName = null) {
         Key = key;
@@ -199,6 +212,9 @@ internal sealed class UltimusSeat {
     /// <summary>True Form, the helper bot (bots/TrueForm).</summary>
     internal bool IsTrueForm => Index == 8;
 
+    /// <summary>Zoom, the Story quest scout (bots/Zoom).</summary>
+    internal bool IsZoom => Index == 9;
+
     /// <summary>The seat's school.</summary>
     internal MagicSchool School => Enum.TryParse<MagicSchool>(Role, true, out var school) ? school : MagicSchool.Balance;
 
@@ -206,7 +222,7 @@ internal sealed class UltimusSeat {
     internal string Folder => Path.GetFullPath(FolderName);
 
     /// <summary>"Ultimus" or "TCO7 member Tulkar", for the server log.</summary>
-    internal string LogName => IsUltimus ? "Ultimus" : IsTrueForm ? "True Form" : IsKitharas ? Name : $"TCO7 {Name}";
+    internal string LogName => IsUltimus ? "Ultimus" : IsTrueForm ? "True Form" : IsZoom ? "Zoom" : IsKitharas ? Name : $"TCO7 {Name}";
 
     // "Ultimus" as a word of its own, not "[Ultimus]" (a settings section) and not part of a longer word.
     private static readonly System.Text.RegularExpressions.Regex s_ultimusWord = new(@"(?<![\[\w])Ultimus(?![\]\w])");
@@ -225,6 +241,8 @@ internal sealed class UltimusSeat {
         ? ConfigurationManager.GetValue("Ultimus.Enabled", false)
         // True Form: [TrueForm] Enabled, on unless turned off (Niduus asked for him to stand at his spot; live).
         : IsTrueForm ? ConfigurationManager.GetValue("TrueForm.Enabled", true)
+        // Zoom: [Zoom] Enabled, on unless turned off (Niduus asked for him to run ahead of the others; live).
+        : IsZoom ? ConfigurationManager.GetValue("Zoom.Enabled", true)
         // A Kitharas Family member: [Kitharas] Enabled, its own switches, and among the first [Kitharas] Count of those switched on.
         : IsKitharas ? KitharasOn(this) && Kitharas.Where(KitharasOn).Take(KitharasCount).Contains(this)
         : ConfigurationManager.GetValue("TCO7.Enabled", false) && ConfigurationManager.GetValue("TCO7." + Name, true)
@@ -238,12 +256,14 @@ internal sealed class UltimusSeat {
     /// Its own section in Imlight.ini: [Ultimus], [TCO7-Tulkar] and so on (Ahziael's member page writes it), or
     /// [Kitharas-KitharasMoon] for the Kitharas Family.
     /// </summary>
-    internal string Section => IsUltimus ? "Ultimus" : IsTrueForm ? "TrueForm" : IsKitharas ? KITHARAS_TEAM + "-" + Key : "TCO7-" + Name;
+    internal string Section => IsUltimus ? "Ultimus" : IsTrueForm ? "TrueForm" : IsZoom ? "Zoom" : IsKitharas ? KITHARAS_TEAM + "-" + Key : "TCO7-" + Name;
 
     /// <summary>The port of its mini server: Ultimus [Ultimus] Port (12373); the TCO7 [TCO7] Port (12381) and the next six.</summary>
     internal int Port => IsUltimus
         ? ConfigurationManager.GetValue("Ultimus.Port", 12373)
         : IsTrueForm ? Math.Clamp(ConfigurationManager.GetValue("TrueForm.Port", 12389), 1024, 65000)
+        // Zoom: [Zoom] Port (12391; 12390 is the hatching kiosk's).
+        : IsZoom ? Math.Clamp(ConfigurationManager.GetValue("Zoom.Port", 12391), 1024, 65000)
         // The Kitharas Family: [Kitharas] Port (12701) and the next nineteen (clear of the TCO7's, True Form's and 12410, the
         // game's remote port).
         : IsKitharas ? Math.Clamp(ConfigurationManager.GetValue(KITHARAS_TEAM + ".Port", 12701), 1024, 64000) + Number - 1
@@ -257,7 +277,7 @@ internal sealed class UltimusSeat {
         var his = ConfigurationManager.GetValue("Ultimus." + key, fallback);
 
         return IsUltimus ? his
-            : IsTrueForm ? ConfigurationManager.GetValue(Section + "." + key, his)
+            : IsTrueForm || IsZoom ? ConfigurationManager.GetValue(Section + "." + key, his)
             : ConfigurationManager.GetValue(Section + "." + key, ConfigurationManager.GetValue(Team + "." + key, his));
     }
 

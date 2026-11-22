@@ -57,6 +57,8 @@ internal static class TrueFormPool {
     // Each family's versions, best first.
     private static volatile Dictionary<string, List<Entry>> s_families;
     private static volatile List<Entry> s_dev;
+    private static volatile List<Entry> s_devOneShots = [];
+    private static volatile HashSet<uint> s_devOneShotIds = [];
     private static volatile HashSet<uint> s_rejected;
 
     /// <summary>Spells that are no player's (monster, boss or out-of-line versions): never trained, owned or in his deck.</summary>
@@ -74,6 +76,15 @@ internal static class TrueFormPool {
 
     /// <summary>How many dev spells were left out as one-shots.</summary>
     internal static int DevOneShots { get; private set; }
+
+    /// <summary>
+    /// The dev spells that one-shot (left out of True Form's hands): Zoom, the quest scout, may use them (Niduus, 2026-11-22:
+    /// "able to one shot all enemies as much as he sees fit"). Empty while still reading.
+    /// </summary>
+    internal static List<Entry> DevOneShotList => s_devOneShots;
+
+    /// <summary>Whether this spell is one of the dev one-shots (<see cref="DevOneShotList"/>).</summary>
+    internal static bool IsDevOneShot(uint id) => s_devOneShotIds.Contains(id);
 
     /// <summary>Whether the spells are read (the first ask starts reading them; it takes a little while).</summary>
     internal static bool Ready {
@@ -336,9 +347,11 @@ internal static class TrueFormPool {
         var cap = TopRealDamage * 3 / 2;
         var oneShots = 0;
         var devKept = new List<Entry>();
+        var oneShotKept = new List<Entry>();
         foreach (var entry in dev.GroupBy(e => e.Family, StringComparer.OrdinalIgnoreCase).Select(g => g.OrderByDescending(e => Strength(e.Card)).First())) {
             if (OneShot(entry, cap)) {
                 oneShots++;
+                oneShotKept.Add(entry with { Level = 0, Family = "oneshot:" + entry.Family });
                 continue;
             }
 
@@ -346,13 +359,15 @@ internal static class TrueFormPool {
         }
 
         var byId = new Dictionary<uint, Entry>();
-        foreach (var entry in families.Values.SelectMany(v => v).Concat(devKept)) {
+        foreach (var entry in families.Values.SelectMany(v => v).Concat(devKept).Concat(oneShotKept)) {
             byId.TryAdd(entry.Id, entry);
         }
 
         s_byId = byId;
         s_rejected = rejected;
         s_dev = devKept;
+        s_devOneShots = oneShotKept;
+        s_devOneShotIds = [.. oneShotKept.Select(e => e.Id)];
         DevOneShots = oneShots;
         s_families = families;
         Logger.Information("True Form: {0} spells, one of each ({1} versions read), {2} dev spells for groups ({3} dev one-shots left out), in {4:0.0} s.",

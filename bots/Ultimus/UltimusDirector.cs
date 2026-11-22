@@ -359,6 +359,14 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
                 }
             }
 
+            // Zoom (ZoomMaker): made as True Form is, top level, the best gear and every spell, before he logs in.
+            if (members is not null && UltimusSeat.Current.IsZoom) {
+                _ = TrueFormPool.Ready;
+                foreach (var member in members) {
+                    ZoomMaker.Prepare(member.CharId);
+                }
+            }
+
             self.Tell(new Loaded(members));
         });
     }
@@ -548,6 +556,11 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
 
             _doing = "on the sigil, waiting for the countdown";
             _lastProgress = DateTime.UtcNow;
+            return;
+        }
+
+        // Zoom, the quest scout: teleports to his step, and writes up and pushes past a broken one (UltimusDirector.Zoom.cs).
+        if (_seat.IsZoom && ZoomTick(_team[0])) {
             return;
         }
 
@@ -2056,8 +2069,11 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
 
             var meant = !buttonMove && _prediction is { Kind: "travel" } travel ? travel.Zone : null;
             CheckArrival(leader);
-            // The landing the zone transfer book says, and backing out of a wrong area (UltimusDirector.Bounds.cs).
-            CheckLanding(_leaderZone, _leaderLastX, _leaderLastY, leader, meant);
+            // The landing the zone transfer book says, and backing out of a wrong area (UltimusDirector.Bounds.cs). Never for
+            // Zoom: his teleports are no doors, and nothing of them goes into the book.
+            if (!_seat.IsZoom) {
+                CheckLanding(_leaderZone, _leaderLastX, _leaderLastY, leader, meant);
+            }
 
             // Going in and out of areas again and again is a way that loops (Niduus's log, 2026-11-12: "to Savarstaad Pass"
             // while already in Savarstaad Pass, every few seconds): an issue (flagged for Niduus, never skipped).
