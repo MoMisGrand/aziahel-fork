@@ -25,6 +25,7 @@ using Imlight.CoreLib.Game.BotShared;
 using Imlight.CoreLib.Game.Combat;
 using Imlight.CoreLib.Game.Tools;
 using Imlight.CoreLib.Game.Zone.Components;
+using Imlight.CoreLib.Shared.Items;
 using Imlight.CoreLib.WizardData.Models.Player;
 
 namespace Imlight.CoreLib.Game.Ultimus;
@@ -237,6 +238,21 @@ internal sealed partial class UltimusDirectorActor {
                 UltimusJournal.Write(UltimusJournal.GEAR, $"Put on {swap.Piece.Name} ({swap.Slot.ToLowerInvariant()}).",
                     WorldOf(member.Zone), UltimusText.Zone(member.Zone), swap.Piece.Name);
                 _actors[i].Tell(new UltimusMember.Equip(swap.Item.m_globalID, swap.Slot, swap.Piece.Name));
+                continue;
+            }
+
+            // His open sockets get the best jewels in his backpack (Niduus, 2026-11-21: "since he's level 15+, he can now use
+            // jewels as well"), one at a time, as a player drags each in.
+            if (BotJewelPlan.FromBackpack(wizard, BotGear.SchoolOf(wizard), StyleOf(member)) is { } fit
+                && _jewelAsked.GetValueOrDefault(fit.Jewel.m_globalID.Full) < 2) {
+                _jewelAsked[fit.Jewel.m_globalID.Full] = _jewelAsked.GetValueOrDefault(fit.Jewel.m_globalID.Full) + 1;
+                Think($"My {fit.ItemName} has an open {JewelSockets.ShapeName(fit.Shape)} socket and I carry {fit.JewelName}, which helps my " +
+                      "damage and staying power, so it goes in.", "jewel|" + fit.Jewel.m_globalID.Full);
+                UltimusJournal.Write(UltimusJournal.GEAR, $"Put {fit.JewelName} in my {fit.ItemName}.", WorldOf(member.Zone), UltimusText.Zone(member.Zone),
+                    fit.JewelName);
+                _actors[i].Tell(new UltimusMember.SocketJewel(fit.Item.m_globalID.Full, fit.Jewel.m_globalID.Full, (byte) fit.Socket,
+                    $"{fit.JewelName} in its {fit.ItemName}"));
+                _gearChangedAt = DateTime.UtcNow;
                 continue;
             }
 
@@ -453,6 +469,9 @@ internal sealed partial class UltimusDirectorActor {
         return null;
     }
 
+    // Socket requests sent for each jewel in his backpack (two at most: one the server refuses is not asked for again).
+    private readonly Dictionary<ulong, int> _jewelAsked = [];
+
     // Trips started to another area for one piece; after two with no sale, that piece is not looked for again (audit A3:
     // the Jewel of Instinct trip again on v0.10.855).
     private readonly Dictionary<uint, int> _tripsFor = [];
@@ -479,6 +498,14 @@ internal sealed partial class UltimusDirectorActor {
             var affordable = BotGear.ShopUpgrades(wizard, StyleOf(member), gold, goals);
             var upgrades = affordable.Count > 0 || !GoldGifts ? affordable
                 : BotGear.ShopUpgrades(wizard, StyleOf(member), MAX_GEAR_TOP_UP, goals).Where(u => u.Gain >= BIG_GAIN).ToList();
+            // Jewels for his open sockets that no jewel he carries fills, bought where a shop sells them (Niduus, 2026-11-21:
+            // "since he's level 15+, he can now use jewels as well"), after the gear that is a bigger step.
+            foreach (var jewel in BotJewelPlan.FromShops(wizard, BotGear.SchoolOf(wizard), StyleOf(member), gold - upgrades.Sum(u => u.Piece.Gold), _shopSkipped)) {
+                if (BotGear.Read(jewel.JewelId) is { } jewelPiece) {
+                    upgrades.Add((jewelPiece, jewel.Vendors, 0));
+                }
+            }
+
             foreach (var (piece, vendors, _) in upgrades) {
                 if (owned.Contains(piece.Id) || _shopSkipped.Contains(piece.Id) || NotSold().Contains(piece.Id)) {
                     continue;
