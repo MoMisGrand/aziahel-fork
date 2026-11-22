@@ -223,6 +223,12 @@ internal sealed partial class DuelBots {
                 }
             }
 
+            // The Power Orb turned toward the school pips its hand needs, as a player clicks it (BotPips).
+            if (BotPips.Turn(member) is { } orb) {
+                QuestTeamLink.Note(role, $"round {D.Duel.m_roundNum}: {orb}.");
+                D.SendCombatPips();
+            }
+
             QuestTeamTactics.Choice choice;
             try {
                 choice = QuestTeamTactics.Decide(role, member, circles, D.CombatResolver, D.Duel.m_roundNum);

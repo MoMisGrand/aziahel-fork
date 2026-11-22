@@ -183,10 +183,11 @@ internal static class UltimusReplay {
             && BotEnchants.Playable(new Imcodec.ObjectProperty.TypeCache.SpellTemplate { m_levelRestriction = 52 }, 52)
                 ? null : "an enchantment card above his level would still count as one he can play"),
         new("He saved his pips for Celestial Intervention (an Ice pip card) round after round and never cast it (2026-11-22)", () =>
-            BotShared.BotCards.OtherSchoolPips(new Imcodec.ObjectProperty.TypeCache.SpellRank { m_spellRank = 2, m_icePips = 1 }, "Balance")
-            && !BotShared.BotCards.OtherSchoolPips(new Imcodec.ObjectProperty.TypeCache.SpellRank { m_spellRank = 2, m_icePips = 1 }, "Ice")
-            && !BotShared.BotCards.OtherSchoolPips(new Imcodec.ObjectProperty.TypeCache.SpellRank { m_spellRank = 4 }, "Balance")
-                ? null : "a card that needs another school's pip would still count as one he can cast"),
+            BotShared.BotPips.OutOfReach(new Imcodec.ObjectProperty.TypeCache.SpellRank { m_spellRank = 2, m_icePips = 1 }, 38)
+            && !BotShared.BotPips.OutOfReach(new Imcodec.ObjectProperty.TypeCache.SpellRank { m_spellRank = 4 }, 38)
+            && (!Combat.Archmastery.FromLevel
+                || !BotShared.BotPips.OutOfReach(new Imcodec.ObjectProperty.TypeCache.SpellRank { m_spellRank = 2, m_icePips = 1 }, 50))
+                ? null : "a school pip card would still count as castable with no Power Orb, or as out of reach once the orb can be turned to its school"),
         new("Cleanse Charm sat in his hand fight after fight and was never cast (2026-11-18): rarely played cards go", () => {
             var folder = Path.Combine(Path.GetTempPath(), "ultimus-card-use-check-" + Guid.NewGuid().ToString("N"));
             try {

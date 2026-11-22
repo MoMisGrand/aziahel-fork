@@ -527,6 +527,12 @@ internal sealed partial class DuelBots {
                 TrueFormDeal(member);
             }
 
+            // The Power Orb turned toward the school pips his hand needs, as a player clicks it (BotPips).
+            if (!zoom && !trueForm && BotPips.Turn(member) is { } orb) {
+                UltimusLink.Note(UltimusRoster.NAME, $"round {D.Duel.m_roundNum}: {orb}.");
+                D.SendCombatPips();
+            }
+
             UltimusTactics.Choice choice;
             string quip = null;
             try {
