@@ -322,11 +322,12 @@ internal static class UltimusPlanner {
         // the nearest one by the real way there first (Niduus, 2026-11-14: "prioritize the closest target"), then the next.
         // A step that must come first (the rest are behind it) keeps its place: only steps open together are compared.
         Target unresolved = null;
-        var open = new List<(Target Target, float Cost)>();
+        var open = new List<(Target Target, float Cost, string Zone)>();
         foreach (var goal in ordered) {
             var target = ForGoal(group, quest, goal);
             if (target is not null && target.Problem.Length == 0) {
-                open.Add((target, WayCost(group[0], target, OverlayQuestTracker.StepZone(goal))));
+                var goalZone = OverlayQuestTracker.StepZone(goal);
+                open.Add((target, WayCost(group[0], target, goalZone), goalZone ?? ""));
                 continue;
             }
 
@@ -346,7 +347,15 @@ internal static class UltimusPlanner {
         // Kept on the one picked before unless another is clearly nearer, so he does not turn back and forth between two.
         var best = open.MinBy(o => o.Cost);
         var before = open.FirstOrDefault(o => o.Target.Key == s_lastPick.GetValueOrDefault(questName));
-        var pick = before.Target is not null && before.Cost <= (best.Cost * 1.3f) + 200 ? before : best;
+        // A step in the world he is in now is never dropped for one in another world: the Spiral Door sets him down far from
+        // the step, so the other world's step always looks nearer from there. On "Wizard Tours" (five "Go to" steps, one per
+        // world) he went through the Spiral Door between Wolfminster Abbey and The Oasis 43 times in ten minutes, each world
+        // sending him to the other's step (Ultimus, 2026-11-22 12:50-13:01).
+        var world = (group[0].Zone ?? "").Split('/')[0];
+        bool InWorld(string z) => world.Length > 0 && string.Equals((z ?? "").Split('/')[0], world, StringComparison.OrdinalIgnoreCase);
+        var pick = before.Target is not null && (before.Cost <= (best.Cost * 1.3f) + 200 || (InWorld(before.Zone) && !InWorld(best.Zone)))
+            ? before
+            : best;
         s_lastPick[questName] = pick.Target.Key;
 
         return pick.Target;
