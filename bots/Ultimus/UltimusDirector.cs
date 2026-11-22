@@ -360,10 +360,14 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
             }
 
             // Zoom (ZoomMaker): made as True Form is, top level, the best gear and every spell, before he logs in.
-            if (members is not null && UltimusSeat.Current.IsZoom) {
+            if (members is not null && UltimusSeat.Current.IsScout) {
                 _ = TrueFormPool.Ready;
                 foreach (var member in members) {
                     ZoomMaker.Prepare(member.CharId);
+                    // Savitar starts where Ultimus is in the story (once; SavitarStart).
+                    if (UltimusSeat.Current.IsSavitar) {
+                        SavitarStart.FromUltimus(member.CharId);
+                    }
                 }
             }
 
@@ -560,7 +564,7 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
         }
 
         // Zoom, the quest scout: teleports to his step, and writes up and pushes past a broken one (UltimusDirector.Zoom.cs).
-        if (_seat.IsZoom && ZoomTick(_team[0])) {
+        if (_seat.IsScout && ZoomTick(_team[0])) {
             return;
         }
 
@@ -1023,7 +1027,7 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
         // for Imp, side trips were closed in there, so the story walked him straight out again, twice, and the trip bounce
         // set training aside for an hour).
         // Zoom never trains: his spellbook is given (ZoomSpells).
-        if (!_seat.IsZoom && (SideTripsOpen || PlannedTrainingReady(group) || InTrainerRoom(group)) && SideTrip(TrainingTarget(group), "training") is { } training) {
+        if (!_seat.IsScout && (SideTripsOpen || PlannedTrainingReady(group) || InTrainerRoom(group)) && SideTrip(TrainingTarget(group), "training") is { } training) {
             MarkBeforeTrip(leader, training);
             return Source("training", training);
         }
@@ -2072,7 +2076,7 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
             CheckArrival(leader);
             // The landing the zone transfer book says, and backing out of a wrong area (UltimusDirector.Bounds.cs). Never for
             // Zoom: his teleports are no doors, and nothing of them goes into the book.
-            if (!_seat.IsZoom) {
+            if (!_seat.IsScout) {
                 CheckLanding(_leaderZone, _leaderLastX, _leaderLastY, leader, meant);
             }
 
