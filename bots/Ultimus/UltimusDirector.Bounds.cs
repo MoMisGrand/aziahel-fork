@@ -262,6 +262,10 @@ internal sealed partial class UltimusDirectorActor {
                 _resetting = null;
                 _noFoeSince = null;
             }
+            else if (now - going.At > s_resetWalkMost && ResetByButton(leader, zone, now)) {
+                return new UltimusPlanner.Target(UltimusPlanner.WAIT, leader.X, leader.Y, $"leaving {UltimusText.Zone(zone)} by the Commons button to start it over",
+                    Key: "resetcopy|button");
+            }
             else if (leader.Wizard?.SafeZone is { Length: > 0 } outside
                      && UltimusPlanner.Travel(leader, outside, $"leaving {UltimusText.Zone(zone)} to start it over (its creature for my step is not there)", "resetcopy") is { } walk) {
                 return walk;
@@ -334,6 +338,41 @@ internal sealed partial class UltimusDirectorActor {
               "left to do. A player walks out and comes back in, and the dungeon starts fresh, so I do that.", "resetcopy|" + zone);
 
         return UltimusPlanner.Travel(leader, safe, $"leaving {UltimusText.Zone(zone)} to start it over (its creature for my step is not there)", "resetcopy");
+    }
+
+    // How long the walk out to start a copy over may go on before he presses the Commons button instead.
+    private static readonly TimeSpan s_resetWalkMost = TimeSpan.FromMinutes(4);
+    private (string Zone, DateTime At)? _resetPressed;
+
+    /// <summary>
+    /// The walk out of a dungeon copy to start it over has gone on for minutes and he is still in it: the way back is shut
+    /// (Big Ben is a climb of one-way floor teleporters, and a floor's only way on is the door its creature opens). A player
+    /// presses the Commons button there and walks back in for a fresh copy, so he does too, once per walk out. Kitharas
+    /// Hexation and Sentence (2026-11-22 00:47-01:30) stood on Big Ben's 7th floor by a shut Door14 whose Golem Brass
+    /// Elite never came: "leaving Big Ben to start it over" walked them back to that same door 18 times. True when pressed.
+    /// </summary>
+    private bool ResetByButton(UltimusMember.Status leader, string zone, DateTime now) {
+        if (_resetPressed is { } pressed && OverlayQuestTracker.SameZone(pressed.Zone, zone) && now - pressed.At < TimeSpan.FromMinutes(10)) {
+            return now - pressed.At < TimeSpan.FromSeconds(30);
+        }
+
+        if (leader.Wizard is not { } wizard || CombatDuelComponent.IsInBattle(leader.GlobalId) || (wizard.MagicSchoolBehavior?.Level ?? 1) < 2
+            || now - _hubPressedAt < TimeSpan.FromSeconds(20)) {
+            return false;
+        }
+
+        _resetPressed = (zone, now);
+        _hubPressedAt = now;
+        _buttonFromZone = leader.Zone;
+        StopWalking(0);
+        Note("Ultimus", $"ABNORMAL: {leader.Name} has been walking out of {UltimusText.Zone(zone)} to start it over for " +
+                        $"{(now - (_resetting?.At ?? now)).TotalMinutes:0} minutes and is still in it (the way back is shut): presses the Commons button, " +
+                        "as a player does, and walks back in for a fresh copy.", UltimusLink.ABNORMAL);
+        Think($"I can't walk out of {UltimusText.Zone(zone)}: the way back is shut. A player presses the Commons button and comes back in, " +
+              "and the dungeon starts fresh, so I do that.", "resetbutton|" + zone);
+        Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromSeconds(1.5), _actors[0], new UltimusMember.PressCommons(), Self);
+
+        return true;
     }
 
     /// <summary>
