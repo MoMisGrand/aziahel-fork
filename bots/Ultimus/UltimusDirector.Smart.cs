@@ -167,6 +167,13 @@ internal sealed partial class UltimusDirectorActor {
                 continue;
             }
 
+            // Its creature here was stood on and started no battle: left alone, as everywhere else (BotShared.DudCreatures).
+            // Idunn, Shirataki Temple (2026-11-22 02:17-02:27): this path picked Shoji again right after she set it aside,
+            // flip-flopping with the way out 700 times in ten minutes; ResetCopy now starts the copy over for it (QuickReset).
+            if (step.Kind == UltimusPlanner.FIGHT && step.GlobalId != 0 && BotShared.DudCreatures.IsDud(step.GlobalId)) {
+                continue;
+            }
+
             if (step.Kind is UltimusPlanner.EXIT or UltimusPlanner.DOOR or UltimusPlanner.SPIRAL && step.To is { Length: > 0 } to
                 && _dungeonDeadEnds.TryGetValue(DeadEndKey(name, step.Goal, to), out var until) && DateTime.UtcNow < until) {
                 Think($"\"{UltimusText.Title(name)}\" points me to {UltimusText.Zone(to)}, but I was just there and its step had " +
@@ -253,7 +260,8 @@ internal sealed partial class UltimusDirectorActor {
 
             var other = UltimusPlanner.ForQuest(group, name);
             if (other is null || other.Problem.Length > 0 || other.Kind is UltimusPlanner.EXIT or UltimusPlanner.DOOR or UltimusPlanner.SPIRAL
-                    or UltimusPlanner.WAIT or UltimusPlanner.NONE) {
+                    or UltimusPlanner.WAIT or UltimusPlanner.NONE
+                || other.Kind == UltimusPlanner.FIGHT && other.GlobalId != 0 && BotShared.DudCreatures.IsDud(other.GlobalId)) {
                 continue;
             }
 
