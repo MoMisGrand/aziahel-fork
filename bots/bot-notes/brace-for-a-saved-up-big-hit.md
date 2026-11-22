@@ -1,0 +1,4 @@
+Fixed: Ultimus shields himself before a boss's saved-up big hit, counting any burn already on him.
+At 9:23 PM the Sea Lord saved 1 + 6 power pips over two rounds of small hits. Ultimus spent that round stacking Bladestorm at 88% health, and one Kraken hit took him from 1,638 to 4. Next round he played Elemental Shield, but Heck Hound's burn from round 1 ticked at the start of his turn (as in the game, before his card) and knocked him out, so the server skipped his shield. Now, when an enemy holds the pips for the biggest hit it has landed on the bots, and that hit plus the burn ticking on him would take him under his heal line, he puts up a shield (else a heal) first.
+Where: bots/Ultimus/UltimusTactics.cs (Solo), bots/BotShared/BotCore.cs (BigHitReady, BurnOn).
+Test: Against the Sea Lord, his round notes show "holds the pips for its big hit ... so I brace first" in the round before its Kraken hit, and he is not knocked out from 88% in one round.

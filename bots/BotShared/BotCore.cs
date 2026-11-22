@@ -75,6 +75,46 @@ internal static class BotCore {
     }
 
     /// <summary>
+    /// The biggest hit an enemy has landed on bots (a share of their health), when it holds the pips for a hit that big now
+    /// (BIG_HIT_PIPS, a power pip worth 2), and who it is; else 0. The Sea Lord (2026-11-21 21:23) saved 1 + 6 power pips
+    /// over two rounds of small hits, then took Ultimus from 1,638 to 4 health with one Kraken hit while he stacked a blade.
+    /// </summary>
+    internal static (double Share, string Who) BigHitReady(IEnumerable<CombatDuelSubCircle> enemies, Func<CombatDuelSubCircle, string> name) {
+        var best = (0.0, "");
+        foreach (var enemy in enemies) {
+            if (enemy is not { IsAlive: true } || RewrittenAI.PipsOf(enemy) < BIG_HIT_PIPS || HabitOf(enemy) is not { HitsOnBots: >= 2 } habit) {
+                continue;
+            }
+
+            var share = Math.Min(1.0, habit.BiggestHitShare);
+            if (share > best.Item1) {
+                best = (share, name(enemy));
+            }
+        }
+
+        return best;
+    }
+
+    internal const int BIG_HIT_PIPS = 7;
+
+    /// <summary>
+    /// The damage over time on this participant that ticks at the start of its next turn, before its card (the game's
+    /// order), as a share of its health. Heck Hound's burn knocked Ultimus out at 4 health before his shield went up.
+    /// </summary>
+    internal static double BurnOn(CombatDuelSubCircle circle) {
+        if (circle?._hangingEffects is not { } hanging) {
+            return 0;
+        }
+
+        lock (hanging) {
+            var tick = hanging.Where(x => x is not null && x.m_effectType == kSpellEffects.kDamageOverTime && x.m_numRounds > 0)
+                .Sum(x => Math.Max(0, x.m_paramPerRound));
+
+            return tick / (double) RewrittenAI.MostHealth(circle);
+        }
+    }
+
+    /// <summary>
     /// A hit as the game lands it on this target: its resist taken down by the caster's pierce for that school (resist
     /// can't go under nothing).
     /// </summary>
