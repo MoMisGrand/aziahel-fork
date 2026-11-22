@@ -262,6 +262,16 @@ internal sealed partial class DuelBots {
         }
     }
 
+    // Fewest cards left in his main deck for a card to be thrown away to make room for a treasure card. Each throw costs a
+    // main deck card on top of the one he plays: in an 18-minute fight with Vladimir Darkflame he threw one away every
+    // round from round 1 (Feint, Spectral Blast, Gearhead Destroyer among them), his deck ran dry by round 31, and he
+    // ended on Judgements of 144 while Vladimir healed back up (2026-11-22 11:20-11:37, 34 rounds, lost).
+    private const int ULTIMUS_DISCARD_DECK_MIN = 10;
+
+    // Whether he can spare a main deck card for a treasure card: enough are left, or his hand holds no hit at all.
+    private static bool UltimusDeckLasts(CombatDuelSubCircle me)
+        => me.AvailableSpells >= ULTIMUS_DISCARD_DECK_MIN || UltimusOutOfHits(me);
+
     // A tough fight: a boss, three or more enemies, his health under half, or the enemies' habits say they take 40% of it this round.
     private bool UltimusToughFight(CombatDuelSubCircle me, IReadOnlyList<CombatDuelSubCircle> circles) {
         var enemies = circles.Where(c => c.OccupiedTeam != me.OccupiedTeam && c.IsAlive).ToList();
@@ -514,6 +524,7 @@ internal sealed partial class DuelBots {
             var digging = !dealt && UltimusDigForEnchant(member, circles);
             if (!dealt && !message.Deadline && ((UltimusToughFight(member, circles) && member.VaultRemainingCount > 0 && (member.TreasureCardsInHand == 0 || UltimusOutOfHits(member))) || digging)
                 && member.HandCount >= 7 && !_ultimusDrew.Contains((D.Duel.m_roundNum, member.SlotIndex))
+                && UltimusDeckLasts(member)
                 && UltimusRoomForTreasure(member, circles) is { } room && _ultimusRoomMade.Add((D.Duel.m_roundNum, member.SlotIndex))
                 && UltimusDirector.ActorOf(UltimusRole(member)) is { } maker) {
                 UltimusLink.Note(UltimusRoster.NAME, $"round {D.Duel.m_roundNum}: " + (digging
