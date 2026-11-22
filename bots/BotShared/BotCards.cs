@@ -328,25 +328,6 @@ internal static class BotCards {
     internal static bool NotVanilla(Card card) => card?.Shown?.Contains("Balance Prism", StringComparison.OrdinalIgnoreCase) == true;
 
     /// <summary>
-    /// A card that costs school pips of a school other than the wizard's own: a wizard only ever gets school pips of his own
-    /// school, so the game never lets him cast it (unless the server lets any school's pips pay, [Battle] AnySchoolPips).
-    /// Celestial Intervention's treasure card costs 2 pips and an Ice pip; Ultimus (Balance) carried two in every plan as his
-    /// heal, saved his pips for it round after round against Vasek Ashweaver (2026-11-22 01:00-01:07) and never cast it.
-    /// </summary>
-    internal static bool OtherSchoolPips(SpellRank rank, string ownSchool) {
-        if (rank is null || ConfigurationManager.GetValue("Battle.AnySchoolPips", false)) {
-            return false;
-        }
-
-        (string School, byte Cost)[] costs = [
-            ("Balance", rank.m_balancePips), ("Death", rank.m_deathPips), ("Fire", rank.m_firePips), ("Ice", rank.m_icePips),
-            ("Life", rank.m_lifePips), ("Myth", rank.m_mythPips), ("Storm", rank.m_stormPips),
-        ];
-
-        return costs.Any(c => c.Cost > 0 && !string.Equals(c.School, ownSchool, StringComparison.OrdinalIgnoreCase));
-    }
-
-    /// <summary>
     /// A spell the developers made for testing (the Dev trainer's list: a Test folder, or named Dev, Debug, GM or Admin).
     /// The server's wizards never put one in a deck (Niduus, 2026-11-12: "any Dev gear and spells").
     /// </summary>

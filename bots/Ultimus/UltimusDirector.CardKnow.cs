@@ -55,7 +55,7 @@ internal sealed partial class UltimusDirectorActor {
     internal static TcUseOf TcUse(uint templateId, string school, int level, IReadOnlyCollection<string> foes) {
         if (CoreObjectFactory.GetCoreTemplate(templateId) is not SpellTemplate template || template.m_levelRestriction > level
             || BotCards.IsDevSpell(templateId) || BrokenCards.Skip(templateId) || SpellFactory.GetSpell(templateId) is not { } spell
-            || BotCards.OtherSchoolPips(template.m_spellRank, school)) {
+            || BotPips.OutOfReach(template.m_spellRank, level)) {
             return null;
         }
 

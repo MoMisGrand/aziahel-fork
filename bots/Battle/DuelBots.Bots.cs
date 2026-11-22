@@ -199,6 +199,11 @@ internal sealed partial class DuelBots {
                 continue;
             }
 
+            // The Power Orb turned toward the school pips its hand needs, as a player clicks it (BotPips).
+            if (BotPips.Turn(bot) is not null) {
+                D.SendCombatPips();
+            }
+
             BotTactics.Choice choice;
             try {
                 choice = BotTactics.Decide(bot, circles, D.CombatResolver, _botTargets.GetValueOrDefault(bot.SlotIndex, -1), IsBot);
