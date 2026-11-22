@@ -1,0 +1,4 @@
+Fixed: A quest boss that one wizard beat comes back for the next wizard on that step
+Some bosses only appear because an earlier step of the quest brings them out, like Iona Pyrelance in Dragonspyre's Crucible for "Justice Hurts". The server brought such a boss out once for the first wizard who needed it. After that wizard won, the boss never came back for anyone else on the same step until the server restarted, so the next wizard stood at an empty spot and the "Defeat" step could not be done. Now the boss comes back when the next wizard who needs it arrives, as long as it is not already standing there or in a battle.
+Where: Dragonspyre, The Crucible ("Justice Hurts"), and any other area where an earlier step brings out a single boss or person.
+Test: Have one wizard beat Iona Pyrelance in The Crucible for "Justice Hurts". Then bring a second wizard on the same step into The Crucible: Iona Pyrelance should be standing at her spot again within a minute.
