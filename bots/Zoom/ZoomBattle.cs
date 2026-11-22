@@ -72,9 +72,12 @@ internal static class ZoomBattle {
             .OrderByDescending(e => BotEnchants.Of(e.Id).Amount).FirstOrDefault();
     }
 
-    // His real hits at the top level (no damage-per-pip spells, which do nothing with few pips, no dev or treasure cards).
+    // His real hits at the top level, of his own school only (Zoom: Storm, Savitar: Fire; Niduus, 2026-11-22: "ALL VANILLA
+    // STORM. NOT EVERY VANILLA CARD"; Zoom was dealt Fires of Mars, Helephant and Phoenix, Savitar Tempest): no
+    // damage-per-pip spells, which do nothing with few pips, no dev or treasure cards.
     private static List<TrueFormPool.Entry> RealHits()
-        => [.. TrueFormPool.At(Top, dev: false).Where(e => !e.Dev && e.Card.Hit && e.Card.PerPip == 0 && !e.Treasure && !BotCards.NotVanilla(e.Card))];
+        => [.. TrueFormPool.At(Top, dev: false).Where(e => !e.Dev && e.Card.Hit && e.Card.PerPip == 0 && !e.Treasure && !BotCards.NotVanilla(e.Card)
+                                                          && e.School.Equals(UltimusSeat.Current.School.ToString(), StringComparison.OrdinalIgnoreCase))];
 
     /// <summary>
     /// His seven cards for this round in place of the hand he drew, or null when there is nothing to deal yet (his spells
