@@ -3229,8 +3229,13 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
             else if (DateTime.UtcNow - _fightWalkSince > TimeSpan.FromSeconds(20)) {
                 Odd($"nobattle|{fight.Key}|{fight.GlobalId}", $"stood on the creature for \"{fight.What}\" ({TemplateName(fight.Template)}) for 20 seconds and no battle started; a player walking into it starts one.");
                 // Left alone for a while, so the next look picks another (BotShared.DudCreatures).
-                if (!BotShared.DudCreatures.IsDud(fight.GlobalId)) {
+                if (!BotShared.DudCreatures.IsDud(fight.GlobalId) && !DudStep(fight)) {
                     BotShared.DudCreatures.Mark(fight.GlobalId);
+                    // The step itself too: a step that points at a spot with no live creature (GlobalId 0) or picks a
+                    // different copy of it each look would otherwise never count as left alone (UltimusDirector.Smart.cs).
+                    if (!string.IsNullOrEmpty(fight.Quest)) {
+                        _dudSteps[StepKey(fight)] = DateTime.UtcNow + BotShared.DudCreatures.LeaveFor;
+                    }
                     // His own step's creature in a dungeon copy that starts no battle: that copy can't give the step.
                     if (!string.IsNullOrEmpty(fight.Quest) && me.Wizard?.ZoneIsInstance == true && !fight.Key.StartsWith("floor|", StringComparison.Ordinal)) {
                         _dudStepAt = (me.Zone ?? "", DateTime.UtcNow, StepKey(fight));
