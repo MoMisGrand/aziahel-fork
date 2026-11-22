@@ -1,0 +1,4 @@
+Fixed: Treasure card and item card blades and traps now stack with the same card from your deck
+A blade or trap from a treasure card did not stack with the same one from your deck: a deck Hex and a treasure card Hex counted as one, so the second did nothing. Item cards from gear did the same. Now, as in the game, a deck card, its treasure card, its item card and an enchanted copy each count on the same hit. Two copies of the same card from the same place still count once.
+Where: In battle, for every player, bot and creature. No setting. Needs a server restart.
+Test: Cast Hex from your deck and a Hex treasure card on one enemy, then hit it. Both traps should be used up and the hit should be bigger than with one. Try the same with a deck blade and its treasure card, and with an item card blade from your gear.

@@ -139,6 +139,20 @@ internal static class CombatEffectApplicator {
     [ThreadStatic]
     private static uint s_castEnchantment;
 
+    /// <summary>
+    /// Where the card being cast now came from: the deck (0), a treasure card (1) or an item card from gear (2)
+    /// (CombatCharms.DECK, TREASURE, ITEM). Its charms and wards carry it (CombatCharms.MarkSource), so a blade or trap
+    /// stacks with the same one from another source, as in the game (Niduus, 2026-11-21: "normal blades can stack with TC
+    /// ones, traps too"; "Item cards too stack!").
+    /// </summary>
+    internal static int CastSource {
+        get => s_castSource;
+        set => s_castSource = value;
+    }
+
+    [ThreadStatic]
+    private static int s_castSource;
+
     // The enchantment a hanging copy keeps: its own, else the card's being cast now.
     private static uint EnchantmentOf(SpellEffect effect) => effect.m_enchantmentSpellTemplateID != 0 ? effect.m_enchantmentSpellTemplateID : s_castEnchantment;
 
@@ -928,6 +942,8 @@ internal static class CombatEffectApplicator {
                 m_enchantmentSpellTemplateID = EnchantmentOf(effect),
                 m_paramPerRound = effect.m_effectType == kSpellEffects.kAbsorbDamage ? effect.m_effectParam : effect.m_paramPerRound,
             };
+
+            CombatCharms.MarkSource(copy, s_castSource);
 
             // A participant has one aura at a time: a new one (Fortify, Amplify, Frenzy...) takes the old one's place.
             if (CombatRequirements.IsAura(copy)) {
