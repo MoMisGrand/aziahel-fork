@@ -274,8 +274,11 @@ internal sealed partial class DuelBots {
             }
         }
 
+        // A heal is never the card thrown away for a treasure card: this is a tough fight, and the spare-heal rules threw away
+        // Ultimus's Satyr in round 1 and round 4 against the Sea Lord, then he had nothing to heal with, and Crimes Against
+        // Kitharas threw away Fairy at 46% health (2026-11-21 18:34, 19:41, 19:45).
         var useless = BotCards.Discards(me, circles, BotStyle.Backup, c => UltimusTactics.UselessShield(c, threat))
-            .Where(i => cards.Any(c => c.Index == i)).ToList();
+            .Where(i => cards.Any(c => c.Index == i && !(c.Card.Heal && !c.Card.Hit))).ToList();
         var pick = useless.Count > 0
             ? cards.First(c => c.Index == useless[0])
             : cards.OrderBy(c => c.Card.Hit ? 1 : 0)
