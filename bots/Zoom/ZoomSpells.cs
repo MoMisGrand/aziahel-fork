@@ -63,10 +63,15 @@ internal static class ZoomSpells {
 
     // One card per spell name (Niduus's panel, 01:43: five Hurricanes, five Storm Lords, the game's other copies of the same
     // spell): the one the spell list puts first for the top level, else the highest level, else the lowest id.
+    // Niduus, 2026-11-22: "Just make it only 1 copy of each that does the highest damage": the version that hits hardest
+    // (an enchantment: adds the most), then the one the spell list puts first, then the highest level.
     private static TrueFormPool.Entry OnePerName(IEnumerable<TrueFormPool.Entry> same) {
         var heads = TrueFormPool.At(Top, dev: false).Select(e => e.Id).ToHashSet();
-        return same.OrderByDescending(e => heads.Contains(e.Id)).ThenByDescending(e => e.Level).ThenBy(e => e.Id).First();
+        return same.OrderByDescending(Damage).ThenByDescending(e => heads.Contains(e.Id)).ThenByDescending(e => e.Level).ThenBy(e => e.Id).First();
     }
+
+    private static int Damage(TrueFormPool.Entry e)
+        => Math.Max(Math.Max(e.Card?.BaseDamage ?? 0, e.Card?.Tiers?.Select(t => t.Damage).DefaultIfEmpty(0).Max() ?? 0), BotEnchants.Of(e.Id)?.Amount ?? 0);
 
     // His treasure cards: every enchantment and every Storm card a player can have (no dev, monster or boss cards).
     private static List<TrueFormPool.Entry> WantedCards()
@@ -199,7 +204,7 @@ internal static class ZoomSpells {
 
     /// <summary>
     /// His deck, by spell and copies: Epic, Tempest and Glowbug Squall as many as the deck allows, then his biggest Storm hits
-    /// (two of each), then his other Storm spells, until it is full. Only spells in his book. Null while the spells are read.
+    /// (one of each), then his other Storm spells, until it is full. Only spells in his book. Null while the spells are read.
     /// </summary>
     internal static Dictionary<uint, int> Deck(Wizard wizard, int room, int schoolMost, int genericMost) {
         if (!TrueFormPool.Ready || wizard?.SpellbookBehavior is not { } book || room <= 0) {
@@ -230,7 +235,7 @@ internal static class ZoomSpells {
         }
 
         foreach (var hit in mine.Where(e => Storm(e) && e.Card.Hit && e.Card.PerPip == 0).OrderByDescending(e => e.Card.HitsAll).ThenByDescending(e => e.Card.BaseDamage)) {
-            Put(hit, 2);
+            Put(hit, 1);
         }
 
         foreach (var other in mine.Where(e => Storm(e)).OrderByDescending(e => e.Level)) {
