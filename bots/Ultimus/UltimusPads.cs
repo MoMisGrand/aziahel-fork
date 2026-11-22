@@ -170,6 +170,31 @@ internal static class UltimusPads {
         return from < 0 || goal < 0 ? NavToward(zonePath, x, y, z, toX, toY, skip) : IslandToward(zonePath, from, goal, x, y, skip) ?? NavToward(zonePath, x, y, z, toX, toY, skip);
     }
 
+    // A first pad at least this far off (straight) is worth a look for a door or stone that lands much nearer it.
+    private const float SHORTCUT_FROM = 6000f;
+
+    /// <summary>
+    /// The pad to walk to for a step at (toX, toY): the first pad of the way there (<see cref="Toward"/>), else a faster one
+    /// (<see cref="Faster"/>). When that first pad is itself a long walk off on this ground, a door or stone here that lands
+    /// much nearer it goes first, as a player takes the stones (The Tower Archives, "Portal Combat", 2026-11-21/22: the way
+    /// to the step starts at the walk-on pad (9177, -7685), 41,000 from the area's door; the "To The Tower Archives" stones
+    /// by the door (-18758, -13255) and in the north (29029, 27396), (7387, 18847) land at (2078, -573), a short walk from it,
+    /// but no bot pressed them on its own, so TCO7 Garm walked the halls toward the pad for three hours and never got there,
+    /// while Ra only got there when a stuck fix happened to send it to a stone).
+    /// </summary>
+    internal static Pad Way(string zonePath, float x, float y, float toX, float toY, ICollection<Pad> skip = null, float z = float.NaN) {
+        var pad = Toward(zonePath, x, y, toX, toY, skip, z);
+        if (pad is null) {
+            return Faster(zonePath, x, y, toX, toY, skip);
+        }
+
+        if (UltimusPlanner.Far(x, y, pad.X, pad.Y) < SHORTCUT_FROM) {
+            return pad;
+        }
+
+        return Faster(zonePath, x, y, pad.X, pad.Y, skip) is { } shortcut && !Equals(shortcut, pad) ? shortcut : pad;
+    }
+
     private static Pad IslandToward(string zonePath, int from, int goal, float x, float y, ICollection<Pad> skip) {
         var pads = In(zonePath).Where(p => skip is null || !skip.Contains(p))
             .Select(p => (Pad: p, On: OverlayQuestPath.IslandOf(zonePath, p.X, p.Y), Lands: OverlayQuestPath.IslandOf(zonePath, p.ToX, p.ToY)))
@@ -372,7 +397,7 @@ internal static class UltimusPads {
     /// be pressed (null when the way has no such pad here). The same for Ultimus and the Quest Team.
     /// </summary>
     internal static Pad PressHere(string zonePath, float x, float y, float toX, float toY, ICollection<Pad> skip = null, float reach = 160f)
-        => (Toward(zonePath, x, y, toX, toY, skip) ?? Faster(zonePath, x, y, toX, toY, skip)) is { Click: not 0 } pad && Near(x, y, pad.X, pad.Y, reach) ? pad : null;
+        => Way(zonePath, x, y, toX, toY, skip) is { Click: not 0 } pad && Near(x, y, pad.X, pad.Y, reach) ? pad : null;
 
     private static bool Near(float ax, float ay, float bx, float by, float most) => UltimusPlanner.Far(ax, ay, bx, by) <= most;
 
