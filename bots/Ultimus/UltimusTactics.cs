@@ -257,13 +257,34 @@ internal static class UltimusTactics {
         }
 
         var stacked = BotCore.Stacked(me, focus);
+        var pips = RewrittenAI.PipsOf(me);
+        var now = hand.Where(h => h.Card.Hit && !h.Card.Natural && !h.Card.HitsAll)
+            .Select(h => (Hand: h, Damage: Estimate(h.Card, me, focus))).OrderByDescending(x => x.Damage).FirstOrDefault();
+
+        // The finisher: an X-pip hit (Judgement) with every pip slot full, on top of the stack (Niduus, 2026-11-21: "trap and
+        // blade stack as much as possible, then hit with a full pip enchanted judgement for the kill"; "Judgement gets more
+        // damage the more pips he has": he cast it at 1 power pip on the Sea Lord for about 446). Cast now when it ends the
+        // foe or the slots are full; else his pips are saved for it while he is not hurt.
+        var health = RewrittenAI.Health(focus);
+        var x = hand.Where(h => h.Card.Hit && h.Card.XPip && !h.Card.Natural && !h.Card.HitsAll)
+            .Select(h => (Hand: h, Now: Estimate(h.Card, me, focus), Full: BotCore.EstimateFull(h.Card, me, focus)))
+            .OrderByDescending(c => c.Full).FirstOrDefault();
+        if (x.Hand is not null && x.Now > 0 && (x.Now >= health || BotCore.PipSlotsLeft(me) == 0) && x.Now >= now.Damage) {
+            return new(Move.Cast, x.Hand.Index, focus.SlotIndex, (x.Now >= health
+                ? $"finishes off {Name(focus)} with {x.Hand.Card.Shown} at {pips} pips (about {x.Now}"
+                : $"hits with {x.Hand.Card.Shown} at full pips ({pips}; about {x.Now}") + $", {stacked} blade(s) and trap(s) stacked){focusWhy}");
+        }
+
+        if (x.Hand is not null && BotCore.PipSlotsLeft(me) > 0 && now.Damage < health && x.Full > Math.Max(now.Damage, x.Now) * FULL_PIP_WAIT
+            && RewrittenAI.HealthShare(me) >= HURT) {
+            return Pass($"saves its pips for {x.Hand.Card.Shown} at full pips: about {x.Now} now, about {x.Full} with every pip slot full " +
+                        $"({stacked} blade(s) and trap(s) stacked; {Name(focus)} has {health:N0} health)");
+        }
+
         if (stacked == 0) {
             return null;
         }
 
-        var pips = RewrittenAI.PipsOf(me);
-        var now = hand.Where(h => h.Card.Hit && !h.Card.Natural && !h.Card.HitsAll)
-            .Select(h => (Hand: h, Damage: Estimate(h.Card, me, focus))).OrderByDescending(x => x.Damage).FirstOrDefault();
         var soon = whole.Where(h => !h.Castable && h.Card.Hit && !h.Card.Natural && !h.Card.HitsAll && h.Card.Rank <= pips + 1)
             .Select(h => (Hand: h, Damage: Estimate(h.Card, me, focus))).OrderByDescending(x => x.Damage).FirstOrDefault();
         if (soon.Hand is not null && soon.Damage > now.Damage * STACK_WAIT && now.Damage < RewrittenAI.Health(focus)) {
@@ -279,6 +300,9 @@ internal static class UltimusTactics {
 
     // How much bigger the hit one pip away must be for him to hold a stack for it.
     private const double STACK_WAIT = 1.3;
+
+    // How much bigger an X-pip hit at full pips must be than the best hit now for him to save his pips for it.
+    private const double FULL_PIP_WAIT = 1.15;
 
     // The share of my health the enemies' habits say they take this round, and who hits hardest (BotCore).
     private static (double Share, string Hardest) Incoming(List<CombatDuelSubCircle> enemies, int round) => BotCore.Incoming(enemies, round, Name);

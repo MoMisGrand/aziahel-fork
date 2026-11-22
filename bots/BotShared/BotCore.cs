@@ -22,6 +22,7 @@ using System.Linq;
 using Imcodec.ObjectProperty.TypeCache;
 using Imlight.CoreLib.Game.Combat;
 using Imlight.CoreLib.Game.Zone.Components;
+using Imlight.CoreLib.Shared.Resources;
 using Card = Imlight.CoreLib.Game.Combat.RewrittenAI.Card;
 
 namespace Imlight.CoreLib.Game.BotShared;
@@ -75,6 +76,32 @@ internal static class BotCore {
     }
 
     /// <summary>
+    /// The pips an X-pip hit (Judgement: more pips, more damage) would be paid with once every pip slot is full: what it
+    /// would take now, plus one for each empty slot (a new pip is worth at least one). Niduus, 2026-11-21: "trap and blade
+    /// stack as much as possible, then hit with a full pip enchanted judgement for the kill"; "Judgement gets more damage the
+    /// more pips he has" (he cast it at 1 power pip on the Sea Lord, about 446).
+    /// </summary>
+    internal static int FullPips(Card card, CombatDuelSubCircle me) {
+        try {
+            var now = card?.Spell is null ? RewrittenAI.PipsOf(me) : CombatActionResolver.GetXPipCost(card.Spell, me);
+            return now + PipSlotsLeft(me);
+        }
+        catch (Exception) {
+            return RewrittenAI.PipsOf(me) + PipSlotsLeft(me);
+        }
+    }
+
+    /// <summary>His empty pip slots (seven in all; a power pip takes one slot).</summary>
+    internal static int PipSlotsLeft(CombatDuelSubCircle me) {
+        var pips = me?.CombatParticipant?.m_pipCount;
+        return pips is null ? 0 : Math.Max(0, CombatDuelSubCircle.MAX_PIP_COUNT - pips.m_genericPips - pips.m_powerPips);
+    }
+
+    /// <summary>A hit as it would land: an X-pip hit with full pips (FullPips), any other as it is now.</summary>
+    internal static int EstimateFull(Card card, CombatDuelSubCircle me, CombatDuelSubCircle target, float blades = 0, float traps = 0)
+        => Estimate(card, me, target, blades, traps, card is { XPip: true } ? FullPips(card, me) : null);
+
+    /// <summary>
     /// The biggest hit an enemy has landed on bots (a share of their health), when it holds the pips for a hit that big now
     /// (BIG_HIT_PIPS, a power pip worth 2), and who it is; else 0. The Sea Lord (2026-11-21 21:23) saved 1 + 6 power pips
     /// over two rounds of small hits, then took Ultimus from 1,638 to 4 health with one Kraken hit while he stacked a blade.
@@ -118,9 +145,18 @@ internal static class BotCore {
     /// A hit as the game lands it on this target: its resist taken down by the caster's pierce for that school (resist
     /// can't go under nothing).
     /// </summary>
-    internal static int Estimate(Card card, CombatDuelSubCircle me, CombatDuelSubCircle target, float blades = 0, float traps = 0) {
-        var raw = RewrittenAI.Estimate(card, me, target, blades, traps);
+    internal static int Estimate(Card card, CombatDuelSubCircle me, CombatDuelSubCircle target, float blades = 0, float traps = 0, int? xPips = null) {
+        var raw = RewrittenAI.Estimate(card, me, target, blades, traps, xPips: xPips);
         var resist = RewrittenAI.ResistOf(target, card.DamageSchool);
+        // A hit that lands as one of several schools at random (Spectral Blast: Fire, Ice or Storm) is worth the average of
+        // them on this target, not the first one's (Niduus, 2026-11-21: "He also should not be using Elemental Blast ...
+        // because it's a 1 of 3 to land on storm. If he's to use offbrand damage or spells, he should focus on maximum
+        // damage"): it was rated as Fire against the Storm Sea Lord, which resists Storm.
+        if (RandomSchools(card) is { Count: >= 2 } schools && resist < 0.95f) {
+            var plain = raw / Math.Max(0.05, 1 - Through(resist, me, card.DamageSchool));
+            return (int) schools.Average(s => plain * (1 - Through(RewrittenAI.ResistOf(target, s), me, s)));
+        }
+
         if (resist <= 0 || resist >= 0.95f) {
             return raw;
         }
@@ -128,6 +164,54 @@ internal static class BotCore {
         var through = Math.Min(resist, PierceOf(me, card.DamageSchool));
 
         return (int) (raw * (1 - (resist - through)) / (1 - resist));
+    }
+
+    // The resist a hit of this school meets, after the caster's pierce (a weakness, under nothing, stays as it is).
+    private static double Through(float resist, CombatDuelSubCircle me, string school)
+        => resist <= 0 ? resist : Math.Min(0.95, resist - Math.Min(resist, PierceOf(me, school)));
+
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<uint, IReadOnlyList<string>> s_randomSchools = new();
+
+    /// <summary>The schools a hit lands as at random (one of its random choices each), or empty for a hit of one school.</summary>
+    internal static IReadOnlyList<string> RandomSchools(Card card) {
+        if (card is not { Hit: true }) {
+            return [];
+        }
+
+        return s_randomSchools.GetOrAdd(card.Id, id => {
+            try {
+                if (CoreObjectFactory.GetCoreTemplate(id) is not SpellTemplate template) {
+                    return [];
+                }
+
+                var schools = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                void Walk(IEnumerable<SpellEffect> effects, bool inRandom) {
+                    foreach (var e in effects ?? []) {
+                        switch (e) {
+                            case null:
+                                break;
+                            case RandomSpellEffect random:
+                                Walk(random.m_effectList, true);
+                                break;
+                            case EffectListSpellEffect list:
+                                Walk(list.m_effectList, inRandom);
+                                break;
+                            default:
+                                if (inRandom && CombatCharms.DamageEffects.Contains(e.m_effectType) && ((string) e.m_sDamageType) is { Length: > 0 } school) {
+                                    schools.Add(school);
+                                }
+                                break;
+                        }
+                    }
+                }
+
+                Walk(template.m_effects, false);
+                return schools.Count >= 2 ? [.. schools] : [];
+            }
+            catch (Exception) {
+                return [];
+            }
+        });
     }
 
     internal static float PierceOf(CombatDuelSubCircle circle, string school) {
@@ -219,8 +303,8 @@ internal static class BotCore {
         var pips = RewrittenAI.PipsOf(me);
         var health = RewrittenAI.Health(focus);
         // The big hit: the best he holds that his pips reach now or next round.
-        var big = whole.Where(h => h.Card.Hit && !h.Card.Natural && !h.Card.HitsAll && h.Card.Rank <= pips + 1)
-            .Select(h => (Hand: h, Damage: Estimate(h.Card, me, focus))).OrderByDescending(x => x.Damage).FirstOrDefault();
+        var big = whole.Where(h => h.Card.Hit && !h.Card.Natural && !h.Card.HitsAll && (h.Card.XPip || h.Card.Rank <= pips + 1))
+            .Select(h => (Hand: h, Damage: EstimateFull(h.Card, me, focus))).OrderByDescending(x => x.Damage).FirstOrDefault();
         if (big.Hand is null || big.Damage <= 0 || big.Damage >= health) {
             return null;
         }
@@ -234,11 +318,11 @@ internal static class BotCore {
         var setups = new List<(InHand Hand, int Target, int Gain, string Text)>();
         foreach (var h in hand.Where(h => h.Castable && !h.Card.Hit && h.Card.Rank + big.Hand.Card.Rank <= pips + 2)) {
             if (h.Card.Blade && !h.Card.BladeOnlyTeammate && Fits(h.Card.BladeSchool, school) && Stacks(me, h.Card)) {
-                var gain = Estimate(big.Hand.Card, me, focus, h.Card.BladePercent, 0) - big.Damage;
+                var gain = EstimateFull(big.Hand.Card, me, focus, h.Card.BladePercent, 0) - big.Damage;
                 setups.Add((h, h.Card.BladeWholeTeam ? -1 : me.SlotIndex, gain, $"{h.Card.Shown} on myself (+{h.Card.BladePercent}%)"));
             }
             else if (h.Card.Trap && Fits(h.Card.TrapSchool, school) && Stacks(focus, h.Card) && h.Card.TrapPercent > 0) {
-                var gain = Estimate(big.Hand.Card, me, focus, 0, h.Card.TrapPercent) - big.Damage;
+                var gain = EstimateFull(big.Hand.Card, me, focus, 0, h.Card.TrapPercent) - big.Damage;
                 setups.Add((h, h.Card.TrapAll ? -1 : focus.SlotIndex, gain, $"{h.Card.Shown} on {Name(focus)} (+{h.Card.TrapPercent}%)"));
             }
         }
