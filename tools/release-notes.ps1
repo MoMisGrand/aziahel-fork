@@ -112,12 +112,23 @@ foreach ($line in @(git log --first-parent --diff-merges=first-parent --diff-fil
     }
 }
 
+# Pull requests left out of every patch note, on the owner's word (tools/release-notes-skip.txt: one number per line).
+$skip = @{}
+$skipFile = Join-Path $PSScriptRoot 'release-notes-skip.txt'
+if (Test-Path $skipFile) {
+    foreach ($line in Get-Content -Encoding utf8 $skipFile) {
+        if ($line -match '^\s*#?(\d+)\s*$') { $skip[$Matches[1]] = $true }
+    }
+}
+
 $result = @()
 $log = (@(git log --first-parent --reverse --pretty=format:'%H%x1f%s%x1f%b%x1e' "$From..$To") -join "`n")
 foreach ($record in ($log -split [char]0x1e)) {
     $fields = $record.Trim("`n") -split [char]0x1f
     if ($fields.Count -lt 2 -or -not $fields[0]) { continue }
     $hash = $fields[0].Trim(); $subject = $fields[1].Trim(); $body = if ($fields.Count -gt 2) { $fields[2] } else { '' }
+    if ($subject -match '\(#(\d+)\)\s*$' -and $skip.ContainsKey($Matches[1])) { continue }
+    if ($subject -match '^Merge pull request #(\d+)' -and $skip.ContainsKey($Matches[1])) { continue }
 
     # Bot changes go in the bot update's notes, everything else in the app's.
     # Which code a change touched: note files, tools and the generated message list do not count (Niduus, 2026-11-19: every
@@ -131,6 +142,14 @@ foreach ($record in ($log -split [char]0x1e)) {
     $botOnly = ($code.Count -gt 0 -and $botFiles.Count -eq $code.Count) -or $botNotesOnly
     if ($Bots -and $botFiles.Count -eq 0 -and -not $botNotesOnly) { continue }
     if (-not $Bots -and $botOnly) { continue }
+
+    # Kept out of the app's notes (Niduus, 2026-11-22: "DO NOT MENTION ANY OF THESE CHANGES IN THE CHANGE LOG TO AHZIAEL.
+    # ESPECIALLY THE DEPRECATION/KILLSWITCH"): Hellhound, the bots' own app (src/Hellhound, with the build files that only
+    # build it), and any change whose message has a "No app notes" line.
+    $notApp = @($code | Where-Object { -not $_.StartsWith('src/Hellhound/') -and -not $_.StartsWith('bots/') -and
+        $_ -ne 'src/Imlight.sln' -and -not $_.StartsWith('.github/') })
+    $hellhound = @($code | Where-Object { $_.StartsWith('src/Hellhound/') }).Count -gt 0
+    if (-not $Bots -and (($hellhound -and $notApp.Count -eq 0) -or $body -match '(?im)^\s*No app notes\s*$')) { continue }
 
     if ($added.ContainsKey($hash)) {
         foreach ($file in $added[$hash]) {

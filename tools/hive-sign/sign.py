@@ -41,10 +41,15 @@ BRAIN = [
     "ultimus/quest-tree.json", "ultimus/npc-book.json", "ultimus/zone-transfers.json", "ultimus/pads.json",
     "ultimus/deck-mix.json", "ultimus/learned.jsonl", "ultimus/foes.json", "ultimus/drop-memory.json",
     "ultimus/abnormal-fixes.json", "ultimus/guided-runs.json", "ultimus/playbook.txt",
+    "ultimus/story-extras.json", "ultimus/worlds.json", "ultimus/training-pins.json", "ultimus/player-tips.json",
+    "ultimus/watchdog-book.json", "ultimus/stuck-days.json", "ultimus/cause-days.json", "ultimus/time-waste.json",
+    "ultimus/tco7-council.json", "routes/learned-routes.json",
 ]
 
 
 KILLSWITCH = "killswitch.txt"
+# Ahziael's own bot switch (Niduus: "Make a separate one for that"), signed in when it is there (src/Imlight.Setup/AhziaelKillSwitch.cs).
+AHZIAEL_SWITCH = "ahziael-killswitch.txt"
 
 
 def sha256(data: bytes) -> str:
@@ -52,7 +57,7 @@ def sha256(data: bytes) -> str:
 
 
 # Niduus/ahziael-bots keeps the same files elsewhere: shared/now = logs/bots, bots/ultimus/now = logs/ultimus.
-REPO_FOLDERS = {"bots": "shared/now", "ultimus": "bots/ultimus/now"}
+REPO_FOLDERS = {"bots": "shared/now", "ultimus": "bots/ultimus/now", "routes": "shared/routes"}
 
 
 def locate(source: str, rel: str, repo: bool) -> str:
@@ -66,10 +71,11 @@ def build(source: str, key_path: str, out: str, repo: bool = False) -> int:
     with open(key_path, "rb") as f:
         key = serialization.load_pem_private_key(f.read(), password=None)
 
-    files, blobs = [], {}
+    files, blobs, missing = [], {}, []
     for rel in BRAIN:
         path = locate(source, rel, repo)
         if not os.path.isfile(path):
+            missing.append(rel)
             continue
         with open(path, "rb") as f:
             data = f.read()
@@ -90,6 +96,13 @@ def build(source: str, key_path: str, out: str, repo: bool = False) -> int:
     blobs[KILLSWITCH] = data
     files.append({"path": KILLSWITCH, "size": len(data), "sha256": sha256(data)})
 
+    ahziael = os.path.join(source, AHZIAEL_SWITCH)
+    if os.path.isfile(ahziael):
+        with open(ahziael, "rb") as f:
+            data = f.read()
+        blobs[AHZIAEL_SWITCH] = data
+        files.append({"path": AHZIAEL_SWITCH, "size": len(data), "sha256": sha256(data)})
+
     manifest = json.dumps({
         "format": FORMAT,
         "purpose": PURPOSE,
@@ -106,7 +119,10 @@ def build(source: str, key_path: str, out: str, repo: bool = False) -> int:
         for rel, data in blobs.items():
             z.writestr("brain/" + rel, data)
     os.replace(tmp, out)
-    print(f"Signed {len(files) - 1} brain file(s) and the kill switch into {out}.")
+    extra = 1 + (AHZIAEL_SWITCH in blobs)
+    if missing:
+        print(f"Not found, so not signed in ({len(missing)}): {', '.join(missing)}")
+    print(f"Signed {len(files) - extra} brain file(s), the kill switch{' and the Ahziael switch' if extra == 2 else ''} into {out}.")
     return 0
 
 
@@ -141,9 +157,13 @@ def verify(pack: str, public_path: str) -> int:
             if sha256(z.read("brain/" + entry["path"])) != entry["sha256"]:
                 print(f"NOT VALID: {entry['path']} was changed after signing.")
                 return 1
-        switch = "missing" if not any(e["path"] == KILLSWITCH for e in info["files"]) else (
-            "ON" if switch_on(z.read("brain/" + KILLSWITCH).decode("utf-8", "replace")) else "off")
-    print(f"Valid: signed by {info['by']} at {info['made']}, {len(info['files'])} file(s), kill switch {switch}.")
+        def state(name):
+            if not any(e["path"] == name for e in info["files"]):
+                return "missing"
+            return "ON" if switch_on(z.read("brain/" + name).decode("utf-8", "replace")) else "off"
+        switch, ahziael = state(KILLSWITCH), state(AHZIAEL_SWITCH)
+    print(f"Valid: signed by {info['by']} at {info['made']}, {len(info['files'])} file(s), kill switch {switch}, "
+          f"Ahziael switch {ahziael}.")
     return 0
 
 
