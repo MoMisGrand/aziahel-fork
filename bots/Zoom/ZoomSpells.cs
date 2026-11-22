@@ -59,14 +59,21 @@ internal static class ZoomSpells {
         => [.. TrueFormPool.Versions(Top, dev: false)
             .Where(e => !e.Dev && !e.Treasure && !TrueFormPool.NotForPlayers(e.Id) && !BotCards.NotVanilla(e.Card)
                         && SpellFactory.GetSpell(e.Id) is not null && (Storm(e) || IsEnchant(e.Id)))
-            .GroupBy(e => e.Id).Select(g => g.First())];
+            .GroupBy(e => e.Shown.Trim(), StringComparer.OrdinalIgnoreCase).Select(OnePerName)];
+
+    // One card per spell name (Niduus's panel, 01:43: five Hurricanes, five Storm Lords, the game's other copies of the same
+    // spell): the one the spell list puts first for the top level, else the highest level, else the lowest id.
+    private static TrueFormPool.Entry OnePerName(IEnumerable<TrueFormPool.Entry> same) {
+        var heads = TrueFormPool.At(Top, dev: false).Select(e => e.Id).ToHashSet();
+        return same.OrderByDescending(e => heads.Contains(e.Id)).ThenByDescending(e => e.Level).ThenBy(e => e.Id).First();
+    }
 
     // His treasure cards: every enchantment and every Storm card a player can have (no dev, monster or boss cards).
     private static List<TrueFormPool.Entry> WantedCards()
         => [.. TrueFormPool.Versions(Top, dev: false)
             .Where(e => !e.Dev && e.Treasure && !TrueFormPool.NotForPlayers(e.Id) && !BotCards.NotVanilla(e.Card)
                         && SpellFactory.GetSpell(e.Id) is not null && (Storm(e) || IsEnchant(e.Id)))
-            .GroupBy(e => e.Id).Select(g => g.First())];
+            .GroupBy(e => e.Shown.Trim(), StringComparer.OrdinalIgnoreCase).Select(OnePerName)];
 
     private static bool IsTreasure(uint id) => CoreObjectFactory.GetCoreTemplate(id) is SpellTemplate { m_Treasure: true };
 
