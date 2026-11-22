@@ -398,31 +398,10 @@ internal sealed partial class UltimusDirectorActor {
         _actors[index].Tell(new UltimusMember.EditDeck(deckItem.m_globalID, take, put, "for " + key));
     }
 
-    private void PrepareZoomDeck(int index, UltimusMember.Status member, Wizard wizard, Imlight.CoreLib.Shared.Behaviors.ServerWizSpellbookBehavior book, bool force) {
-        var key = ZoomSpells.DeckWords;
-        if (!force && _deckFor.GetValueOrDefault(member.Role) == key) {
-            return;
-        }
-
-        var deckItem = wizard.EquipmentBehavior?.GetItemInSlot(EquipmentSlotType.Deck);
-        if (deckItem is null || book.MaxSpells <= 0
-            || ZoomSpells.Deck(wizard, book.MaxSpells, Math.Max(1, book.SchoolMaxInstances), Math.Max(1, book.GenericMaxInstances)) is not { Count: > 0 } wanted) {
-            return;
-        }
-
-        // Treasure cards stay as they are.
-        var now = (book.SpellList ?? []).Where(s => s is not null && Imlight.CoreLib.Shared.Resources.CoreObjectFactory.GetCoreTemplate(s.m_templateID) is Imcodec.ObjectProperty.TypeCache.SpellTemplate { m_Treasure: false })
-            .GroupBy(s => s.m_templateID).ToDictionary(g => (uint) g.Key, g => g.Sum(s => (int) s.m_quantity));
-        _deckFor[member.Role] = key;
-        var (take, put) = BotCards.Changes(now, wanted);
-        if (take.Count + put.Count == 0) {
-            return;
-        }
-
-        Note(member.Role, $"{member.Name} makes its deck: {key}: {BotCards.Describe(wanted.Select(w => (w.Key, w.Value)))}.");
-        WhyDeck(BotGear.SchoolOf(wizard), wanted);
-        _actors[index].Tell(new UltimusMember.EditDeck(deckItem.m_globalID, take, put, "for " + key));
-    }
+    // Zoom's deck is written with his spellbook (ZoomSpells.Ensure, when he is made ready and by his tick), never by Ultimus's
+    // deck builder: this only keeps that builder off it.
+    private void PrepareZoomDeck(int index, UltimusMember.Status member, Wizard wizard, Imlight.CoreLib.Shared.Behaviors.ServerWizSpellbookBehavior book, bool force)
+        => _deckFor[member.Role] = ZoomSpells.DeckWords;
 
     /// <summary>
     /// His deck in card-use.txt, a line per spell with why he packs it and how often he plays it (Niduus, 2026-11-18: "Does

@@ -25,6 +25,7 @@ using Imlight.CoreLib.Game.BotShared;
 using Imlight.CoreLib.Game.Combat;
 using Imlight.CoreLib.Game.Spells;
 using Imlight.CoreLib.Shared.Character;
+using Imlight.CoreLib.Shared.Items;
 using Imlight.CoreLib.Shared.Resources;
 using Imlight.CoreLib.WizardData.Collections;
 using Imlight.CoreLib.WizardData.Models.Player;
@@ -60,9 +61,26 @@ internal static class ZoomSpells {
                         && SpellFactory.GetSpell(e.Id) is not null && (Storm(e) || IsEnchant(e.Id)))
             .GroupBy(e => e.Id).Select(g => g.First())];
 
+    // His treasure cards: every enchantment and every Storm card a player can have (no dev, monster or boss cards).
+    private static List<TrueFormPool.Entry> WantedCards()
+        => [.. TrueFormPool.Versions(Top, dev: false)
+            .Where(e => !e.Dev && e.Treasure && !TrueFormPool.NotForPlayers(e.Id) && !BotCards.NotVanilla(e.Card)
+                        && SpellFactory.GetSpell(e.Id) is not null && (Storm(e) || IsEnchant(e.Id)))
+            .GroupBy(e => e.Id).Select(g => g.First())];
+
+    private static bool IsTreasure(uint id) => CoreObjectFactory.GetCoreTemplate(id) is SpellTemplate { m_Treasure: true };
+
+    // The best damage enchantment first: Epic, then by how much it adds.
+    private static int EnchantOrder(TrueFormPool.Entry e)
+        => e.Shown.Equals(EPIC, StringComparison.OrdinalIgnoreCase) ? int.MaxValue : BotEnchants.Of(e.Id) is { Kind: BotEnchants.DAMAGE } d ? d.Amount : 0;
+
     /// <summary>
-    /// Puts every Storm spell and enchantment in his book and takes out other schools' fighting spells. False while the
-    /// game's spells are still being read (try again later). Says what it did in the server log.
+    /// Makes his spellbook exactly what Niduus asked (2026-11-22: "I only wanted ALL VANILLA enchants and ALL VANILLA STORM. NOT
+    /// EVERY VANILLA CARD"): trained spells are every Storm spell and enchantment and nothing else (every other spell he has,
+    /// other schools, fishing, potions, comes out); treasure cards are enchantments and Storm cards only, every other one
+    /// comes out (True Form's maker gave him every card in the game before, 01:12: 570 spells, 285 cards). Then his deck is
+    /// written: Epic, Tempest and Glowbug Squall at the most copies, his biggest Storm hits, and Epic (then the next best
+    /// damage enchantments) in the treasure card slots. False while the game's spells are still being read.
     /// </summary>
     internal static bool Ensure(Wizard wizard) {
         if (wizard?.SpellbookBehavior is not { } book || !TrueFormPool.Ready) {
@@ -76,34 +94,100 @@ internal static class ZoomSpells {
             }
 
             var keep = wanted.Select(e => e.Id).ToHashSet();
-            var learned = (book.LearnedSpellTemplateIds ?? []).ToHashSet();
+            var cards = WantedCards();
+            var keepCards = cards.Select(e => e.Id).ToHashSet();
+            var learned = (book.LearnedSpellTemplateIds ?? []).ToList();
             var add = keep.Where(id => !learned.Contains(id)).ToList();
-            // Fighting spells of other schools (those the spell list knows) come out; utility spells (fishing, gardening) stay.
-            var drop = learned.Where(id => !keep.Contains(id) && TrueFormPool.Of(id) is { Treasure: false } && !IsEnchant(id)).ToHashSet();
-            if (add.Count > 0 || drop.Count > 0) {
-                book.LearnedSpellTemplateIds ??= [];
-                book.LearnedSpellTemplateIds.RemoveAll(drop.Contains);
-                book.LearnedSpellTemplateIds.AddRange(add);
-                WizardCollection.UpdateCharacter(wizard.CharId, saved => {
-                    var list = saved.SpellbookBehavior.LearnedSpellTemplateIds ??= [];
-                    list.RemoveAll(drop.Contains);
-                    var known = list.ToHashSet();
-                    list.AddRange(add.Where(known.Add));
-                });
+            var drop = learned.Where(id => !keep.Contains(id)).ToHashSet();
+            var ownedCards = book.TreasureCardTemplateIds ?? [];
+            var dropCards = ownedCards.Where(id => !keepCards.Contains(id)).ToList();
+            // Two of each enchantment card in his book (Epic: enough for his deck), one of each Storm card.
+            var giveCards = new List<uint>();
+            foreach (var card in cards) {
+                var want = card.Shown.Equals(EPIC, StringComparison.OrdinalIgnoreCase) ? 40 : IsEnchant(card.Id) ? 2 : 1;
+                var have = ownedCards.Count(id => id == card.Id);
+                giveCards.AddRange(Enumerable.Repeat(card.Id, Math.Max(0, want - have)));
             }
 
-            var clearers = Clearers.Where(n => wanted.Any(e => e.Shown.Equals(n, StringComparison.OrdinalIgnoreCase))).ToList();
-            var epic = wanted.Any(e => e.Shown.Equals(EPIC, StringComparison.OrdinalIgnoreCase));
-            Logger.Information("Zoom: his spellbook holds {0} Storm spells and {1} enchantments ({2} learned, {3} other-school spells taken out); "
-                               + "Tempest {4}, Glowbug Squall {5}, Epic {6}.",
-                Logger.Args(wanted.Count(Storm), wanted.Count(e => IsEnchant(e.Id)), add.Count, drop.Count,
-                    clearers.Contains("Tempest") ? "in" : "NOT FOUND", clearers.Contains("Glowbug Squall") ? "in" : "NOT FOUND", epic ? "in" : "NOT FOUND"));
+            book.LearnedSpellTemplateIds ??= [];
+            book.LearnedSpellTemplateIds.RemoveAll(drop.Contains);
+            book.LearnedSpellTemplateIds.AddRange(add);
+            book.TreasureCardTemplateIds ??= [];
+            book.TreasureCardTemplateIds.RemoveAll(id => !keepCards.Contains(id));
+            book.TreasureCardTemplateIds.AddRange(giveCards);
+            WizardCollection.UpdateCharacter(wizard.CharId, saved => {
+                var list = saved.SpellbookBehavior.LearnedSpellTemplateIds ??= [];
+                list.RemoveAll(id => !keep.Contains(id));
+                var known = list.ToHashSet();
+                list.AddRange(add.Where(known.Add));
+                var savedCards = saved.SpellbookBehavior.TreasureCardTemplateIds ??= [];
+                savedCards.RemoveAll(id => !keepCards.Contains(id));
+                savedCards.AddRange(giveCards);
+            });
+
+            WriteDeck(wizard, wanted, cards);
+            var found = (string name) => wanted.Concat(cards).Any(e => e.Shown.Equals(name, StringComparison.OrdinalIgnoreCase)) ? "in" : "NOT FOUND";
+            Logger.Information("Zoom: his spellbook is {0} Storm spells and {1} enchantments, nothing else ({2} added, {3} other spells taken out); "
+                               + "treasure cards: {4} enchantment and Storm cards ({5} others taken out); Tempest {6}, Glowbug Squall {7}, Epic {8}.",
+                Logger.Args(wanted.Count(Storm), wanted.Count(e => IsEnchant(e.Id)), add.Count, drop.Count, cards.Count, dropCards.Count,
+                    found("Tempest"), found("Glowbug Squall"), found(EPIC)));
             return true;
         }
         catch (Exception e) {
             Logger.Warning("Zoom: could not fill his spellbook: {0}", Logger.Args(e.Message));
             return false;
         }
+    }
+
+    // His deck written straight to his deck item, as True Form's is (TrueFormSpells.FillDeck): the spells from Deck, and the
+    // treasure card slots Epic first, then the next best damage enchantments; every other card comes out.
+    private static void WriteDeck(Wizard wizard, List<TrueFormPool.Entry> wanted, List<TrueFormPool.Entry> cards) {
+        if (wizard.EquipmentBehavior?.GetItemInSlot(EquipmentSlotType.Deck) is not { } deckItem
+            || !CoreObjectFactory.FindBehaviorInstance<DeckBehavior>(deckItem, out var deck)
+            || ItemHelper.GetItemTemplate(deckItem)?.m_behaviors?.OfType<DeckBehaviorTemplate>().FirstOrDefault() is not { } rules) {
+            Logger.Warning("Zoom: he wears no deck to fill.");
+            return;
+        }
+
+        var book = wizard.SpellbookBehavior;
+        var spells = Deck(wizard, Math.Max(0, (int) rules.m_maxSpells), Math.Max(1, (int) rules.m_schoolMaxInstances), Math.Max(1, (int) rules.m_genericMaxInstances)) ?? [];
+        var cardRoom = Math.Max(0, (int) rules.m_maxTreasureCards);
+        var tcs = new Dictionary<uint, int>();
+        foreach (var card in cards.Where(c => BotEnchants.Of(c.Id) is { Kind: BotEnchants.DAMAGE }).OrderByDescending(EnchantOrder)) {
+            var n = Math.Min(cardRoom - tcs.Values.Sum(), card.Shown.Equals(EPIC, StringComparison.OrdinalIgnoreCase) ? cardRoom : 4);
+            if (n > 0) {
+                tcs[card.Id] = n;
+            }
+        }
+
+        // Treasure cards going into the deck leave his book; those coming out of it go back.
+        var oldCards = (deck.m_spellList ?? []).Where(s => IsTreasure(s.m_templateID)).ToList();
+        var leaving = oldCards.Where(s => cards.Any(c => c.Id == s.m_templateID))
+            .SelectMany(s => Enumerable.Repeat(s.m_templateID, Math.Max(0, (int) s.m_quantity - tcs.GetValueOrDefault(s.m_templateID)))).ToList();
+        var coming = tcs.SelectMany(t => Enumerable.Repeat(t.Key, Math.Max(0, t.Value - (int) (oldCards.FirstOrDefault(s => s.m_templateID == t.Key)?.m_quantity ?? 0)))).ToList();
+        book.TreasureCardTemplateIds ??= [];
+        book.TreasureCardTemplateIds.AddRange(leaving);
+        foreach (var id in coming) {
+            book.TreasureCardTemplateIds.Remove(id);
+        }
+
+        WizardCollection.UpdateCharacter(wizard.CharId, saved => {
+            var list = saved.SpellbookBehavior.TreasureCardTemplateIds ??= [];
+            list.AddRange(leaving);
+            foreach (var id in coming) {
+                list.Remove(id);
+            }
+        });
+
+        deck.m_spellList = [.. spells.Concat(tcs).Select(x => new SpellData { m_templateID = x.Key, m_enchantment = 0, m_quantity = (uint) x.Value })];
+        if (book is Imlight.CoreLib.Shared.Behaviors.ServerWizSpellbookBehavior wiz) {
+            wiz.EquipDeck(ItemHelper.GetItemTemplate(deckItem), deck);
+        }
+
+        WizardItemCollection.SaveItemBehaviors(deckItem);
+        Logger.Information("Zoom: his deck: {0}; treasure cards: {1}.",
+            Logger.Args(string.Join(", ", spells.Select(x => $"{TrueFormPool.Of(x.Key)?.Shown ?? x.Key.ToString()} x{x.Value}")),
+                string.Join(", ", tcs.Select(x => $"{TrueFormPool.Of(x.Key)?.Shown ?? x.Key.ToString()} x{x.Value}"))));
     }
 
     /// <summary>
