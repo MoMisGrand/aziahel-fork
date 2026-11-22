@@ -286,8 +286,13 @@ internal static class UltimusTactics {
                 : $"hits with {x.Hand.Card.Shown} at full pips ({pips}; about {x.Now}") + $", {stacked} blade(s) and trap(s) stacked){focusWhy}");
         }
 
+        // Hurt but not in danger still saves: by here no heal or shield was castable and no heal is one pip away, and a
+        // low-pip Judgement into a boss does not keep him alive either (Vladimir Darkflame 2026-11-22 08:56-09:00: at 50-60%
+        // health, careful mood, he cast Judgement for about 288 and 144 round after round into 3,671 health instead of
+        // building the next full-pip hit; in the fight before, a Feint stacked for a full-pip kill on 1,247 health went on a
+        // 244 Judgement).
         if (x.Hand is not null && BotCore.PipSlotsLeft(me) > 0 && now.Damage < health && x.Full > Math.Max(now.Damage, x.Now) * FULL_PIP_WAIT
-            && RewrittenAI.HealthShare(me) >= HURT) {
+            && RewrittenAI.HealthShare(me) >= DANGER) {
             // The pips it needs to end the foe, counted from all he knows (Niduus, 2026-11-21: "He should mathmatically take all
             // his damage into account ... saving and surviving for a Judge that kills"): his damage and pierce, every blade and
             // trap and shield on both sides, the foe's resist and health (RewrittenAI.Estimate, BotCore.Estimate). It is cast
