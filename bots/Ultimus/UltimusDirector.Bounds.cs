@@ -263,12 +263,14 @@ internal sealed partial class UltimusDirectorActor {
                 _noFoeSince = null;
             }
             else if (now - going.At > s_resetWalkMost && ResetByButton(leader, zone, now)) {
-                return new UltimusPlanner.Target(UltimusPlanner.WAIT, leader.X, leader.Y, $"leaving {UltimusText.Zone(zone)} by the Commons button to start it over",
-                    Key: "resetcopy|button");
+                return ButtonOut(leader, zone);
             }
             else if (leader.Wizard?.SafeZone is { Length: > 0 } outside
                      && UltimusPlanner.Travel(leader, outside, $"leaving {UltimusText.Zone(zone)} to start it over (its creature for my step is not there)", "resetcopy") is { } walk) {
                 return walk;
+            }
+            else if (ResetByButton(leader, zone, now)) {
+                return ButtonOut(leader, zone);
             }
             else {
                 _resetting = null;
@@ -329,7 +331,8 @@ internal sealed partial class UltimusDirectorActor {
             Think($"Nothing I tried in {UltimusText.Zone(zone)} got me on, twice over. A player walks out and comes back in, and the dungeon " +
                   "starts fresh with its doors and creatures back, so I do that.", "resetcopy|" + zone);
 
-            return UltimusPlanner.Travel(leader, safe, $"leaving {UltimusText.Zone(zone)} to start it over (every fix failed here)", "resetcopy");
+            return UltimusPlanner.Travel(leader, safe, $"leaving {UltimusText.Zone(zone)} to start it over (every fix failed here)", "resetcopy")
+                   ?? (ResetByButton(leader, zone, now) ? ButtonOut(leader, zone) : null);
         }
 
         Note("Ultimus", $"ABNORMAL: in {UltimusText.Zone(zone)} " + (UseDud(zone, step, now) ? "what is used" : "the creature") + $" for \"{step.What}\" " + (quick ? (UseDud(zone, step, now) ? "was all used up" : "stood still and started no battle") : $"has not been there to fight for {(now - _noFoeSince.Value).TotalMinutes:0} minutes") +
@@ -337,8 +340,17 @@ internal sealed partial class UltimusDirectorActor {
         Think($"The creature my step needs in {UltimusText.Zone(zone)} has not been there to fight for a long time, and nothing else here is " +
               "left to do. A player walks out and comes back in, and the dungeon starts fresh, so I do that.", "resetcopy|" + zone);
 
-        return UltimusPlanner.Travel(leader, safe, $"leaving {UltimusText.Zone(zone)} to start it over (its creature for my step is not there)", "resetcopy");
+        return UltimusPlanner.Travel(leader, safe, $"leaving {UltimusText.Zone(zone)} to start it over (its creature for my step is not there)", "resetcopy")
+               ?? (ResetByButton(leader, zone, now) ? ButtonOut(leader, zone) : null);
     }
+
+    // No walk out of the copy was found at all (no way back from here: the Plaza of Conquests gauntlet's rooms are one-way,
+    // each room's only way on is the door its fight opens). Cyndr, 2026-11-22 06:04-07:00: in the gauntlet's fourth room
+    // after losing its fight, "walks out to The Basilica and back in for a fresh copy" seven times a minute for an hour,
+    // because the walk out came back empty, the start over was dropped the same second, and the 4-minute Commons button
+    // fallback never came. With no way out he presses the Commons button at once, as a player would.
+    private static UltimusPlanner.Target ButtonOut(UltimusMember.Status leader, string zone)
+        => new(UltimusPlanner.WAIT, leader.X, leader.Y, $"leaving {UltimusText.Zone(zone)} by the Commons button to start it over", Key: "resetcopy|button");
 
     // How long the walk out to start a copy over may go on before he presses the Commons button instead.
     private static readonly TimeSpan s_resetWalkMost = TimeSpan.FromMinutes(4);

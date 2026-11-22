@@ -1,0 +1,4 @@
+Fixed: Bots press the Commons button when a dungeon has no way back out
+When a bot decided to leave a dungeon and come back in for a fresh copy, but no walk out existed from where it stood, it gave up the plan the same second and decided it again a moment later. Cyndr stood in the fourth room of the Plaza of Conquests gauntlet for an hour after losing its fight, saying he would walk out to The Basilica about seven times a minute without moving. The gauntlet's rooms only go forward, and that room's door opens only after its fight. Now, when no walk out is found, the bot presses the Commons button at once, as a player would, and walks back in for a fresh copy.
+Where: any dungeon whose rooms only go forward, such as the Plaza of Conquests gauntlet in Dragonspyre.
+Test: lose a gauntlet room's fight with a bot on The Art of War, and within a few minutes the bot presses the Commons button and starts the gauntlet over.
