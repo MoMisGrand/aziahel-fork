@@ -61,8 +61,11 @@ internal static class BotJewelPlan {
         }
     }
 
-    /// <summary>The best jewel from his backpack for one of his open sockets, or null.</summary>
-    internal static Fit FromBackpack(Wizard wizard, string school, BotStyle style) {
+    /// <summary>
+    /// The best jewel from his backpack for one of his open sockets, or null. <paramref name="pending"/> (jewel, item,
+    /// socket) leaves out a jewel or a socket he has just asked the server for, until his backpack shows the answer.
+    /// </summary>
+    internal static Fit FromBackpack(Wizard wizard, string school, BotStyle style, Func<ulong, ulong, int, bool> pending = null) {
         var known = BotJewels.All;
         if (wizard is null || known.Count == 0) {
             return null;
@@ -81,6 +84,7 @@ internal static class BotJewelPlan {
             foreach (var (jewelItem, jewelTemplate) in held) {
                 var id = (uint) Math.Min((ulong) jewelItem.m_templateID, uint.MaxValue);
                 if (known.FirstOrDefault(j => j.Id == id) is not { } jewel || jewel.Shape != shape
+                    || pending?.Invoke(jewelItem.m_globalID.Full, item.m_globalID.Full, socket) == true
                     || JewelSockets.CheckSocket(wizard, item, jewelTemplate, socket) is not null) {
                     continue;
                 }
