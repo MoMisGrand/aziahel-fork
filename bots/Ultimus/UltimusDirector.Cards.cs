@@ -175,7 +175,8 @@ internal sealed partial class UltimusDirectorActor {
                 || CoreObjectFactory.GetCoreTemplate(spell.m_templateID) is not SpellTemplate template || template.m_levelRestriction > level
                 || (_cardSkipped.TryGetValue(spell.m_templateID, out var skipped) && DateTime.UtcNow - skipped < s_cardSkip)
                 || RewrittenAI.Read(spell) is not { } card || BotCards.NotVanilla(card)
-                || BotCards.IsDevSpell(spell.m_templateID) || BrokenCards.Skip(spell.m_templateID)) {
+                || BotCards.IsDevSpell(spell.m_templateID) || BrokenCards.Skip(spell.m_templateID)
+                || BotCards.OtherSchoolPips(template.m_spellRank, school)) {
                 continue;
             }
 

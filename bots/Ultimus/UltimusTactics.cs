@@ -382,7 +382,10 @@ internal static class UltimusTactics {
         }
 
         var pips = count.m_genericPips + count.m_powerPips;
-        var heal = whole.Where(h => !h.Castable && h.Card.Heal && !h.Card.Hit && h.Card.Rank > pips && h.Card.Rank <= pips + 1)
+        // Only a heal one more pip pays for: one that also needs a school pip he does not hold (Celestial Intervention's Ice
+        // pip, for a Balance wizard) never comes, and waiting for it lost him three fights to Vasek Ashweaver (2026-11-22).
+        var heal = whole.Where(h => !h.Castable && h.Card.Heal && !h.Card.Hit && h.Card.Rank > pips && h.Card.Rank <= pips + 1
+                                    && me.GetSpellFromLastHand((byte) h.Index) is { } spell && me.HasSchoolPipsForSpell(spell))
             .OrderByDescending(h => h.Card.HealAmount).FirstOrDefault();
 
         return heal is null ? null
