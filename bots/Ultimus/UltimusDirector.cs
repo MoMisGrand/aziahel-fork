@@ -1022,7 +1022,8 @@ internal sealed partial class UltimusDirectorActor : ReceiveActor, IWithTimers {
         // copy, which closes side trips like a dungeon; his log, 2026-11-21 13:56 and 14:22: he walked into the Life school
         // for Imp, side trips were closed in there, so the story walked him straight out again, twice, and the trip bounce
         // set training aside for an hour).
-        if ((SideTripsOpen || PlannedTrainingReady(group) || InTrainerRoom(group)) && SideTrip(TrainingTarget(group), "training") is { } training) {
+        // Zoom never trains: his spellbook is given (ZoomSpells).
+        if (!_seat.IsZoom && (SideTripsOpen || PlannedTrainingReady(group) || InTrainerRoom(group)) && SideTrip(TrainingTarget(group), "training") is { } training) {
             MarkBeforeTrip(leader, training);
             return Source("training", training);
         }

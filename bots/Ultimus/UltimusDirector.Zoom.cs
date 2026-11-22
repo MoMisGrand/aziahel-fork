@@ -71,7 +71,20 @@ internal sealed partial class UltimusDirectorActor {
     /// Zoom's part of each tick, out of battle and dialog: teleports to his step, and writes up and pushes past a broken
     /// one. True when he did something this tick (the rest of the brain waits for the next).
     /// </summary>
+    private bool _zoomSpellsDone;
+    private DateTime _zoomSpellsTry = DateTime.MinValue;
+
     private bool ZoomTick(UltimusMember.Status me) {
+        // His spellbook (every Storm spell and enchantment) and his Tempest/Glowbug Squall + Epic deck, once the game's spell
+        // list is read: checked every half minute until done (ZoomSpells); his deck is then made again from it.
+        if (!_zoomSpellsDone && DateTime.UtcNow >= _zoomSpellsTry && me.Wizard is { IsInDuel: false } spellWizard) {
+            _zoomSpellsTry = DateTime.UtcNow.AddSeconds(30);
+            if (ZoomSpells.Ensure(spellWizard)) {
+                _zoomSpellsDone = true;
+                _deckFor.Remove(me.Role);
+            }
+        }
+
         if (me.Wizard?.QuestBehavior?.CurrentQuestInstances is not { } instances || me.Session is null) {
             return false;
         }

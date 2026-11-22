@@ -342,6 +342,13 @@ internal sealed partial class UltimusDirectorActor {
             return;
         }
 
+        // Zoom's deck is his tactic, not Ultimus's learned mix (Niduus, 2026-11-22): Epic, Tempest, Glowbug Squall, then his
+        // biggest Storm hits (ZoomSpells).
+        if (_seat.IsZoom) {
+            PrepareZoomDeck(index, member, wizard, book, force);
+            return;
+        }
+
         // How often its fights lately had two or more enemies: a hit on all of them goes in when that is often.
         situation = BotCards.WithCrowd(situation, member.GlobalId);
         // How much of his main deck is hits, from his own fights (UltimusDeckMix).
@@ -387,6 +394,32 @@ internal sealed partial class UltimusDirectorActor {
 
         Note(member.Role, $"{member.Name} makes its deck ready for {key}: {BotCards.Describe(wanted.Select(w => (w.Key, w.Value)))}."
                           + (rarely.Count > 0 ? $" Left out: {string.Join("; ", rarely.Select(r => $"{BotCards.Describe([(r.Id, 1)]).Replace(" x1", "")} ({r.Why})"))}." : ""));
+        WhyDeck(BotGear.SchoolOf(wizard), wanted);
+        _actors[index].Tell(new UltimusMember.EditDeck(deckItem.m_globalID, take, put, "for " + key));
+    }
+
+    private void PrepareZoomDeck(int index, UltimusMember.Status member, Wizard wizard, Imlight.CoreLib.Shared.Behaviors.ServerWizSpellbookBehavior book, bool force) {
+        var key = ZoomSpells.DeckWords;
+        if (!force && _deckFor.GetValueOrDefault(member.Role) == key) {
+            return;
+        }
+
+        var deckItem = wizard.EquipmentBehavior?.GetItemInSlot(EquipmentSlotType.Deck);
+        if (deckItem is null || book.MaxSpells <= 0
+            || ZoomSpells.Deck(wizard, book.MaxSpells, Math.Max(1, book.SchoolMaxInstances), Math.Max(1, book.GenericMaxInstances)) is not { Count: > 0 } wanted) {
+            return;
+        }
+
+        // Treasure cards stay as they are.
+        var now = (book.SpellList ?? []).Where(s => s is not null && Imlight.CoreLib.Shared.Resources.CoreObjectFactory.GetCoreTemplate(s.m_templateID) is Imcodec.ObjectProperty.TypeCache.SpellTemplate { m_Treasure: false })
+            .GroupBy(s => s.m_templateID).ToDictionary(g => (uint) g.Key, g => g.Sum(s => (int) s.m_quantity));
+        _deckFor[member.Role] = key;
+        var (take, put) = BotCards.Changes(now, wanted);
+        if (take.Count + put.Count == 0) {
+            return;
+        }
+
+        Note(member.Role, $"{member.Name} makes its deck: {key}: {BotCards.Describe(wanted.Select(w => (w.Key, w.Value)))}.");
         WhyDeck(BotGear.SchoolOf(wizard), wanted);
         _actors[index].Tell(new UltimusMember.EditDeck(deckItem.m_globalID, take, put, "for " + key));
     }
