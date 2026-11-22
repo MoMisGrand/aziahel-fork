@@ -322,12 +322,12 @@ internal static class UltimusPlanner {
         // the nearest one by the real way there first (Niduus, 2026-11-14: "prioritize the closest target"), then the next.
         // A step that must come first (the rest are behind it) keeps its place: only steps open together are compared.
         Target unresolved = null;
-        var open = new List<(Target Target, float Cost, string Zone)>();
+        var open = new List<(Target Target, float Cost, string Zone, string Goal)>();
         foreach (var goal in ordered) {
             var target = ForGoal(group, quest, goal);
             if (target is not null && target.Problem.Length == 0) {
                 var goalZone = OverlayQuestTracker.StepZone(goal);
-                open.Add((target, WayCost(group[0], target, goalZone), goalZone ?? ""));
+                open.Add((target, WayCost(group[0], target, goalZone), goalZone ?? "", (string) goal.m_goalName ?? ""));
                 continue;
             }
 
@@ -346,21 +346,34 @@ internal static class UltimusPlanner {
 
         // Kept on the one picked before unless another is clearly nearer, so he does not turn back and forth between two.
         var best = open.MinBy(o => o.Cost);
-        var before = open.FirstOrDefault(o => o.Target.Key == s_lastPick.GetValueOrDefault(questName));
+        // The pick before, by its step (goal) as well as its target's key: the key changes with the way there (a Spiral Door
+        // target ends "|spiral", the walk once he is through it does not), so by key alone he lost his pick on arriving.
+        var lastGoal = s_lastPickGoal.GetValueOrDefault(questName);
+        var before = open.FirstOrDefault(o => o.Target.Key == s_lastPick.GetValueOrDefault(questName)
+                                              || (!string.IsNullOrEmpty(lastGoal) && o.Goal == lastGoal));
         // A step in the world he is in now is never dropped for one in another world: the Spiral Door sets him down far from
         // the step, so the other world's step always looks nearer from there. On "Wizard Tours" (five "Go to" steps, one per
         // world) he went through the Spiral Door between Wolfminster Abbey and The Oasis 43 times in ten minutes, each world
         // sending him to the other's step (Ultimus, 2026-11-22 12:50-13:01).
         var world = (group[0].Zone ?? "").Split('/')[0];
         bool InWorld(string z) => world.Length > 0 && string.Equals((z ?? "").Split('/')[0], world, StringComparison.OrdinalIgnoreCase);
+        // Open steps in this world come before any in another world (bots-v179 still bounced: the key changed on arrival).
+        if (!InWorld(best.Zone) && open.Where(o => InWorld(o.Zone)).ToList() is { Count: > 0 } here) {
+            best = here.MinBy(o => o.Cost);
+        }
+
         var pick = before.Target is not null && (before.Cost <= (best.Cost * 1.3f) + 200 || (InWorld(before.Zone) && !InWorld(best.Zone)))
             ? before
             : best;
         s_lastPick[questName] = pick.Target.Key;
+        s_lastPickGoal[questName] = pick.Goal;
 
         return pick.Target;
     }
 
+    // The step (goal name) picked last per quest. Kept per seat (UltimusSeat).
+    private static readonly SeatLocal<System.Collections.Concurrent.ConcurrentDictionary<string, string>> s_lastPickGoalSeat = new(() => new System.Collections.Concurrent.ConcurrentDictionary<string, string>(StringComparer.OrdinalIgnoreCase));
+    private static System.Collections.Concurrent.ConcurrentDictionary<string, string> s_lastPickGoal => s_lastPickGoalSeat.Value;
     // Kept per seat (Ultimus and each TCO7 member has its own; UltimusSeat).
     private static readonly SeatLocal<System.Collections.Concurrent.ConcurrentDictionary<string, string>> s_lastPickSeat = new(() => new System.Collections.Concurrent.ConcurrentDictionary<string, string>(StringComparer.OrdinalIgnoreCase));
     private static System.Collections.Concurrent.ConcurrentDictionary<string, string> s_lastPick { get => s_lastPickSeat.Value; set => s_lastPickSeat.Value = value; }
