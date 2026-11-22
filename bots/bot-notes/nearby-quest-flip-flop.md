@@ -1,0 +1,4 @@
+Fixed: Bots stop switching back and forth between a nearby quest and their story step
+When another quest's step was right next to a bot, the bot took it up, then dropped it as soon as it got close because there was nothing to do there yet, then took it up again a few steps away. AlchemiZist of Kitharas went back and forth 68 times in 4 minutes in Crimson Fields, twice, between the Stone Cold boss Grum Foultooth and the way out to the War Oni, and got nowhere. Now, a nearby step the bot drops 3 times in 10 minutes without real progress is left alone for 10 minutes, and the bot goes on with its story step.
+Where: anywhere a bot holds a second quest whose step is close by, such as Crimson Fields in MooShu.
+Test: a bot with Stone Cold and the War Oni step in Crimson Fields goes on to the War Oni within a minute instead of switching between the two.
