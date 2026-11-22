@@ -117,9 +117,11 @@ internal sealed partial class UltimusDirectorActor {
     // Support (Niduus, 2026-11-21: "primarily hits in main with support along with support in TC's"): shields against what
     // the creatures ahead hit with, a heal stacked as a player stacks one for a boss, a blade and a trap for his big hit, a
     // stop. His last Bazaar trip bought Heck Hound, Judgement, Dark Tribute and Feint: hits and a trap, no shield or heal,
-    // while the Sea Lord's one hit took 90% of his health.
+    // while the Sea Lord's one hit took 90% of his health. Blades and traps come first now (Niduus, 2026-11-21: "normal
+    // blades can stack with TC ones, traps too"; "Including Dark Tribute from Death that he can get TC's from"): a treasure
+    // Feint, Hex or Dark Tribute stacks on the one from his deck, so two of each kind, then the heal and one shield.
     private static readonly (string Kind, int Cards, int Copies)[] s_supportShape = [
-        ("shield", 2, 3), ("heal", 1, 4), ("blade", 1, 3), ("trap", 1, 3), ("control", 1, 2),
+        ("blade", 2, 3), ("trap", 2, 3), ("heal", 1, 4), ("shield", 1, 3), ("control", 1, 2),
     ];
     // The rest: hits (for a fight his own hits can't end) and a damage enchantment for his biggest hit.
     private static readonly (string Kind, int Cards, int Copies)[] s_attackShape = [

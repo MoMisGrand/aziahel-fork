@@ -240,22 +240,22 @@ internal static class BotCards {
 
     // A solo wizard (Ultimus and the TCO7): hits first in every fight, as Niduus asked (2026-11-21: "primarily hits in main
     // with support along with support in TC's"). Its rival deck against the Sea Lord had 12 hits in 30 cards (boss and rival
-    // each took a tenth of the hits for shields and heals) and it lost 12 fights out of 13. A boss or a rival now moves
-    // support from blades and traps to heals and shields, but the hits keep their share; a rival that outlasts him gets more.
+    // each took a tenth of the hits for shields and heals) and it lost 12 fights out of 13. A boss or a rival now moves a
+    // little support from shields to heals, but the hits keep their share; a rival that outlasts him gets more.
     private static Dictionary<Kind, double> SoloShares(Situation situation) {
         var hit = Math.Clamp(situation.MainHits > 0 ? situation.MainHits : SOLO_HITS, SOLO_HITS_MIN, SOLO_HITS_MAX);
         var support = 1 - hit;
         var shares = new Dictionary<Kind, double> {
-            [Kind.Hit] = hit, [Kind.Blade] = support * 0.25, [Kind.Trap] = support * 0.25, [Kind.Heal] = support * 0.25,
-            [Kind.Shield] = support * 0.25, [Kind.Other] = 0,
+            // The rest mostly blades and traps to stack for one big hit, then heals for when it is time to survive, and few
+            // shields (Niduus, 2026-11-21: "look for the most maximum damage possible if he knows he can pump it out,
+            // choosing survivability afterwards or when it's time to be a survivalist ... Like he has Spirit Armor in his deck").
+            [Kind.Hit] = hit, [Kind.Blade] = support * 0.30, [Kind.Trap] = support * 0.25, [Kind.Heal] = support * 0.30,
+            [Kind.Shield] = support * 0.15, [Kind.Other] = 0,
         };
         if (situation.Boss || (situation.Rival && !situation.LongFights)) {
-            var move = Math.Min(shares[Kind.Trap], 0.05);
-            shares[Kind.Trap] -= move;
+            var move = Math.Min(shares[Kind.Shield], 0.025);
+            shares[Kind.Shield] -= move;
             shares[Kind.Heal] += move;
-            move = Math.Min(shares[Kind.Blade] / 2, 0.025);
-            shares[Kind.Blade] -= move;
-            shares[Kind.Shield] += move;
         }
 
         if (situation.Rival && situation.LongFights) {
@@ -683,12 +683,14 @@ internal static class BotCards {
         }
 
         // A charm or ward already on every circle it can go on: one copy stays for when it is used up.
-        foreach (var group in hand.Where(h => (h.Card.Blade || h.Card.Shield) && !h.Card.Hit).GroupBy(h => h.Card.Id)) {
+        // Copies from different sources (deck, treasure card, item card) or enchantments are different cards: they stack.
+        foreach (var group in hand.Where(h => (h.Card.Blade || h.Card.Shield) && !h.Card.Hit)
+                     .GroupBy(h => (h.Card.Id, BotCore.SourceOf(h.Card.Spell), h.Card.Spell?.m_enchantment ?? 0))) {
             var targets = group.First().Card switch {
                 { Blade: true, BladeForTeammate: false, BladeWholeTeam: false } or { Shield: true, ShieldForTeammate: false, ShieldWholeTeam: false } => [me],
                 _ => allies,
             };
-            if (targets.All(t => RewrittenAI.HasEffectOfSpell(t, group.Key))) {
+            if (targets.All(t => !BotCore.Stacks(t, group.First().Card))) {
                 throwAway.AddRange(group.Skip(1).Select(h => h.Index));
             }
         }

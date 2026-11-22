@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Imcodec.ObjectProperty.TypeCache;
 using Imlight.CoreLib.Game.Combat;
 using Imlight.CoreLib.Game.Zone.Components;
 using Card = Imlight.CoreLib.Game.Combat.RewrittenAI.Card;
@@ -100,6 +101,123 @@ internal static class BotCore {
         }
     }
 
+    /// <summary>
+    /// The card's blade or trap would count on <paramref name="on"/>: none of the same card from the same source with the
+    /// same enchantment is there yet (the game's rule, Niduus, 2026-11-21: "normal blades can stack with TC ones, traps
+    /// too"; "A Sharpen Blade Bladestorm DOES stack with non-Enchant and Treasure Card versions. Item cards too stack!": a
+    /// Hex from the deck, a Hex treasure card, a Hex item card and a Sharpened Hex all count; two Hexes from the deck do not).
+    /// </summary>
+    internal static bool Stacks(CombatDuelSubCircle on, Card card) {
+        if (on?._hangingEffects is not { } hanging || card is null) {
+            return false;
+        }
+
+        var enchantment = card.Spell?.m_enchantment ?? 0;
+        var source = SourceOf(card.Spell);
+        lock (hanging) {
+            return !hanging.Any(x => x is not null && x.m_spellTemplateID == card.Id && x.m_enchantmentSpellTemplateID == enchantment
+                                     && SourceOf(x) == source);
+        }
+    }
+
+    /// <summary>
+    /// Where a card or a hanging charm came from as the server counts it for stacking (0 the deck, 1 a treasure card, 2 an
+    /// item card). Read through reflection, so these bots also run on a server from before the stacking fix (0.10.960):
+    /// there every copy counts as the deck's, just as that server plays it, and nothing waits for a full server update.
+    /// </summary>
+    internal static int SourceOf(Spell spell) => s_spellSource(spell);
+
+    internal static int SourceOf(SpellEffect effect) => s_effectSource(effect);
+
+    private static readonly Func<Spell, int> s_spellSource = SourceReader<Spell>();
+    private static readonly Func<SpellEffect, int> s_effectSource = SourceReader<SpellEffect>();
+
+    private static Func<T, int> SourceReader<T>() {
+        try {
+            var method = typeof(CombatCharms).GetMethod("SourceOf", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public
+                                                                    | System.Reflection.BindingFlags.NonPublic, [typeof(T)]);
+            if (method is not null && method.ReturnType == typeof(int)) {
+                return method.CreateDelegate<Func<T, int>>();
+            }
+        }
+        catch (Exception) {
+            // An older server: every copy counts as the deck's.
+        }
+
+        return _ => 0;
+    }
+
+    /// <summary>How many blades on <paramref name="me"/> and traps on <paramref name="target"/> are stacked now.</summary>
+    internal static int Stacked(CombatDuelSubCircle me, CombatDuelSubCircle target) {
+        int Count(CombatDuelSubCircle c, kSpellEffects type) {
+            if (c?._hangingEffects is not { } hanging) {
+                return 0;
+            }
+
+            lock (hanging) {
+                return hanging.Count(x => x is not null && x.m_effectType == type && x.m_effectParam > 0);
+            }
+        }
+
+        return Count(me, kSpellEffects.kModifyOutgoingDamage) + Count(target, kSpellEffects.kModifyIncomingDamage);
+    }
+
+    /// <summary>
+    /// Stacking up for one big hit against a foe that one hit can't end (Niduus, 2026-11-21: "Train feint, use that feint,
+    /// then a TC feint into a blade then hit"; "look for the most maximum damage possible ... look at the maximum outcome he
+    /// can pump out"). Each round: the biggest hit he can have ready soon, and every blade (on himself) or trap (on the
+    /// foe) in hand that still stacks and fits that hit's school. A setup that adds enough to that hit is played, the one
+    /// that adds most first; when none is left, or the stack is full, or the hit with all of it ends the foe, it is time to
+    /// hit (null: the hit, heal and pip-saving rules take over). Pips are kept for the big hit.
+    /// </summary>
+    internal static Plan StackUp(CombatDuelSubCircle me, List<InHand> hand, List<InHand> whole, CombatDuelSubCircle focus,
+                                 List<CombatDuelSubCircle> enemies, Func<CombatDuelSubCircle, string> Name, int most = STACK_MOST) {
+        if (focus is null) {
+            return null;
+        }
+
+        var pips = RewrittenAI.PipsOf(me);
+        var health = RewrittenAI.Health(focus);
+        // The big hit: the best he holds that his pips reach now or next round.
+        var big = whole.Where(h => h.Card.Hit && !h.Card.Natural && !h.Card.HitsAll && h.Card.Rank <= pips + 1)
+            .Select(h => (Hand: h, Damage: Estimate(h.Card, me, focus))).OrderByDescending(x => x.Damage).FirstOrDefault();
+        if (big.Hand is null || big.Damage <= 0 || big.Damage >= health) {
+            return null;
+        }
+
+        var stacked = Stacked(me, focus);
+        if (stacked >= most) {
+            return null;
+        }
+
+        var school = big.Hand.Card.DamageSchool;
+        var setups = new List<(InHand Hand, int Target, int Gain, string Text)>();
+        foreach (var h in hand.Where(h => h.Castable && !h.Card.Hit && h.Card.Rank + big.Hand.Card.Rank <= pips + 2)) {
+            if (h.Card.Blade && !h.Card.BladeOnlyTeammate && Fits(h.Card.BladeSchool, school) && Stacks(me, h.Card)) {
+                var gain = Estimate(big.Hand.Card, me, focus, h.Card.BladePercent, 0) - big.Damage;
+                setups.Add((h, h.Card.BladeWholeTeam ? -1 : me.SlotIndex, gain, $"{h.Card.Shown} on myself (+{h.Card.BladePercent}%)"));
+            }
+            else if (h.Card.Trap && Fits(h.Card.TrapSchool, school) && Stacks(focus, h.Card) && h.Card.TrapPercent > 0) {
+                var gain = Estimate(big.Hand.Card, me, focus, 0, h.Card.TrapPercent) - big.Damage;
+                setups.Add((h, h.Card.TrapAll ? -1 : focus.SlotIndex, gain, $"{h.Card.Shown} on {Name(focus)} (+{h.Card.TrapPercent}%)"));
+            }
+        }
+
+        // Worth a round: it adds at least a fifth of the hit (a 20% blade on a 1,000 hit adds 200).
+        var best = setups.Where(x => x.Gain >= big.Damage * STACK_GAIN).OrderByDescending(x => x.Gain).FirstOrDefault();
+        if (best.Hand is null) {
+            return null;
+        }
+
+        var after = big.Damage + best.Gain;
+        return new Plan(best.Hand, best.Target,
+            $"stacks up for one big hit: {best.Text} now, so {big.Hand.Card.Shown} goes from about {big.Damage} to about {after} " +
+            $"({stacked + 1} stacked; {Name(focus)} has {health:N0} health, too much for one hit yet)");
+    }
+
+    internal const int STACK_MOST = 5;
+    private const double STACK_GAIN = 0.2;
+
     internal static bool Fits(string charmSchool, string hitSchool)
         => string.IsNullOrEmpty(charmSchool) || charmSchool.Equals("All", StringComparison.OrdinalIgnoreCase) || RewrittenAI.Same(charmSchool, hitSchool);
 
@@ -148,7 +266,7 @@ internal static class BotCore {
 
         // A blade on myself now, then a bigger hit.
         foreach (var blade in hand.Where(h => h.Card.Blade && !h.Card.BladeOnlyTeammate && Fits(h.Card.BladeSchool, RewrittenAI.SchoolOf(me))
-                                              && !RewrittenAI.HasEffectOfSpell(me, h.Card.Id))) {
+                                              && Stacks(me, h.Card))) {
             var next = hits.Where(h => CanNext(h, blade.Card.Rank, blade) && Fits(blade.Card.BladeSchool, h.Card.DamageSchool))
                 .Select(h => (Hand: h, Damage: Deal(h, blade.Card.BladePercent, 0, focusHealth))).OrderByDescending(x => x.Damage).FirstOrDefault();
             if (next.Hand is not null) {
@@ -158,7 +276,7 @@ internal static class BotCore {
         }
 
         // A trap on the target now, then a bigger hit.
-        foreach (var trap in hand.Where(h => h.Card.Trap && !RewrittenAI.HasEffectOfSpell(focus, h.Card.Id))) {
+        foreach (var trap in hand.Where(h => h.Card.Trap && Stacks(focus, h.Card))) {
             var percent = trap.Card.TrapPercent > 0 ? trap.Card.TrapPercent : numbers.TrapGuess;
             var next = hits.Where(h => CanNext(h, trap.Card.Rank, trap) && Fits(trap.Card.TrapSchool, h.Card.DamageSchool))
                 .Select(h => (Hand: h, Damage: Deal(h, 0, percent, focusHealth))).OrderByDescending(x => x.Damage).FirstOrDefault();

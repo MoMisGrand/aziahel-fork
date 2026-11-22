@@ -213,6 +213,14 @@ internal static class BotTrainingPlan {
             [DAMAGE] = (slow * 2) + recent.Count(f => !f.Won && f.Minutes >= LONG_MINUTES),
             [SCHOOL_SHIELD] = school is null ? 0 : (bySchool * 2) + 1,
         };
+        // A heal already learned and fights still lost: what is missing is damage he can stack (Niduus, 2026-11-21: "how hard
+        // is it for him to just Train feint, use that feint, then a TC feint into a blade then hit?"). Ultimus had Satyr and
+        // lost to the Sea Lord 29 times while his points went to Tower Shield; each lost fight then weighs as much for
+        // damage as for surviving.
+        if (lost > 0 && Answers(HEAL, school).Any(h => Find(h) is { } heal && wizard.SpellbookBehavior.HasSpell(heal.Id))) {
+            scores[DAMAGE] += lost * 3;
+        }
+
         var weighed = scores.Where(s => s.Value > 0).OrderByDescending(s => s.Value).ToList();
         var lacking = weighed.Count < 2 ? ""
             : $" Weighing what I lack most in combat: {string.Join(", ", weighed.Select(s => $"{s_lackWords[s.Key]} {s.Value}"))}.";

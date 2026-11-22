@@ -28,16 +28,22 @@ namespace Imlight.CoreLib.Game.Ultimus;
 
 /// <summary>
 /// Battle choices from his own results (Niduus, 2026-11-15, "all" of the robustness pitches). Each fight is of a kind (how
-/// many enemies, and how strong they are together next to him), and he plays it in one of two styles: "build up" (a blade
-/// or trap first, then one big hit, the old way) or "hit now" (his best hit at once, every round). Every fight's result
+/// many enemies, and how strong they are together next to him), and he plays it in one of three styles: "build up" (a
+/// blade or trap first, then one big hit, the old way), "hit now" (his best hit at once, every round) or "stack up" (every
+/// blade and trap that still stacks, then one big hit). Every fight's result
 /// (won, rounds, health lost) is scored for its kind and style in fight-styles.json, and the style that really did best for
 /// that kind is the one he plays, instead of a hand-set rule that needs tuning. Until a style has 5 fights in a kind he
-/// tries it now and then, only in fights where the enemies are not stronger than him; a heal, a shield or a finishing blow
+/// tries it now and then; against enemies stronger than him he starts with "stack up"; a heal, a shield or a finishing blow
 /// still always comes first. Off switch: playbook Rules.FightStyles (2 on, 1 watch only, 0 off).
 /// </summary>
 internal static class UltimusFightStyles {
 
-    internal const string BUILD_UP = "build up", HIT_NOW = "hit now";
+    internal const string BUILD_UP = "build up", HIT_NOW = "hit now", STACK_UP = "stack up";
+    // Every style he can play. "Stack up" (Niduus, 2026-11-21: "Train feint, use that feint, then a TC feint into a blade
+    // then hit"; "look for the most maximum damage possible ... Not how many times is he gonna fight the guy"): every blade
+    // and trap that still stacks (deck, treasure card, item card, enchanted: BotCore.Stacks) goes on first, then one big hit.
+    // It is the style he starts with against a foe stronger than him, and his results then say whether it really wins more.
+    internal static readonly string[] STYLES = [BUILD_UP, HIT_NOW, STACK_UP];
     internal const string RULE = "FightStyles";
     private const string DATA = "fight-styles.json", REPORT = "fight-styles.txt";
     internal const int TRIES = 5;
@@ -71,14 +77,17 @@ internal static class UltimusFightStyles {
         return $"{count}, {strength}";
     }
 
-    /// <summary>The style his own results say is best for this kind, or null when the data does not show one is better.</summary>
+    /// <summary>
+    /// The style his own results say is best for this kind, or null when the data does not show one is better: of the styles
+    /// with at least 5 fights (two or more of them), the best must beat the next by the margin.
+    /// </summary>
     internal static string Best(Dictionary<string, Score> scores) {
-        if (scores is null || !scores.TryGetValue(BUILD_UP, out var build) || !scores.TryGetValue(HIT_NOW, out var hit)
-            || build.Fights < TRIES || hit.Fights < TRIES) {
+        var played = scores?.Where(s => STYLES.Contains(s.Key) && s.Value.Fights >= TRIES).OrderByDescending(s => s.Value.Value).ToList();
+        if (played is null || played.Count < 2) {
             return null;
         }
 
-        return hit.Value > build.Value + MARGIN ? HIT_NOW : build.Value > hit.Value + MARGIN ? BUILD_UP : null;
+        return played[0].Value.Value > played[1].Value.Value + MARGIN ? played[0].Key : null;
     }
 
     /// <summary>The style for this battle, picked on his first turn and kept to the end.</summary>
@@ -99,11 +108,18 @@ internal static class UltimusFightStyles {
         var style = Best(scores);
         var tried = false;
         var why = style is null ? "" : $"the ladder's results (mine and every other bot's) for fights of this kind ({kind}) say \"{style}\" wins more";
-        if (style is null) {
+        if (style is null && kind.EndsWith("stronger", StringComparison.Ordinal)) {
+            // A foe stronger than him and no proof yet of what wins: the most damage he can pump out, every blade and trap
+            // stacked for one big hit (what Niduus taught him), not small hits round after round.
+            style = STACK_UP;
+            why = $"this foe is stronger than me ({kind}) and my results don't show a better way yet, so I stack every blade and trap that " +
+                  "counts and hit once with all of it (Niduus taught me this)";
+        }
+        else if (style is null) {
             style = BUILD_UP;
-            var few = new[] { BUILD_UP, HIT_NOW }.Where(st => (scores?.GetValueOrDefault(st)?.Fights ?? 0) < TRIES).ToList();
-            if (few.Count > 0 && !kind.EndsWith("stronger", StringComparison.Ordinal) && Roll() < TRY_CHANCE) {
-                style = few[Roll() < 0.5 ? 0 : few.Count - 1];
+            var few = STYLES.Where(st => (scores?.GetValueOrDefault(st)?.Fights ?? 0) < TRIES).ToList();
+            if (few.Count > 0 && Roll() < TRY_CHANCE) {
+                style = few[(int) (Roll() * few.Count) % few.Count];
                 tried = true;
                 why = $"I have fewer than {TRIES} fights of this kind ({kind}) played \"{style}\", so I try it to learn which wins";
             }
