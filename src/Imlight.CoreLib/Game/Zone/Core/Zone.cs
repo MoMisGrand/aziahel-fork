@@ -884,7 +884,12 @@ public partial class Zone : ReceiveProtocolDispatcher, IWithTimers {
             return;
         }
 
-        if (World.DungeonRecall.HeldUntil(ContainerOwnerId) > DateTimeOffset.UtcNow.ToUnixTimeSeconds()) {
+        // A fresh run (Force: the owner walked in through the dungeon's front again) is not held by a Dungeon Recall into
+        // the last run: the recall was for that run, and a room kept for it is what the fresh run walks into next. Cyndr,
+        // 2026-11-22 08:06-08:16: he pressed the Commons button in the Plaza of Conquests gauntlet's third room (recall
+        // for 10 minutes), walked in again at 08:10, and only the first room was new; rooms 2 and 3 were the old ones,
+        // whose door stays shut for good once its Irate Banshee is beaten, so he stood by the same shut door again.
+        if (!message.Force && World.DungeonRecall.HeldUntil(ContainerOwnerId) > DateTimeOffset.UtcNow.ToUnixTimeSeconds()) {
             ScheduleIdleExpiryIfEmpty();
 
             return;
