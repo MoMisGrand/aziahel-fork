@@ -120,7 +120,14 @@ internal static class UltimusDeckMix {
                                                                           double seconds, double biggestHit, double mainHits, double tcSupport) {
         double hits = 0, support = 0;
         string why;
-        if (!won && seconds >= LONG_FIGHT) {
+        if (!won && seconds >= LONG_FIGHT && biggestHit >= BIG_HIT) {
+            // Both: it ran long and a big hit ended it. Hits alone would climb to the top on every such loss and leave even
+            // fewer heals (the Sea Lord, 2026-11-21: 8 minutes and a hit of 90% of his health, and he never healed once).
+            hits = 0.01;
+            support = 0.04;
+            why = $"{foe} outlasted me ({seconds / 60:0} minutes) and its big hit ({biggestHit:P0} of my health) ended it: a few more hits, and more heals and shields to live through it";
+        }
+        else if (!won && seconds >= LONG_FIGHT) {
             hits = 0.03;
             support = 0.02;
             why = $"{foe} outlasted me ({seconds / 60:0} minutes): I ran out of hits before it fell";
