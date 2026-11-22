@@ -126,6 +126,9 @@ internal static class BotBossPlaybook {
         internal IReadOnlyList<string> Punished => [.. Answers.Where(a => a.Trigger == CAST && a.Weight * a.Chance >= 150 && a.Spells.Count == 0 && a.School.Length == 0)
             .SelectMany(a => a.Kinds).Select(SpellNameFamily.KindSynonym).Where(k => k is not ("Damage" or "Attack")).Distinct(StringComparer.OrdinalIgnoreCase)];
 
+        /// <summary>Whether its cheats bring help into the fight (minions or another form): then a hit on every enemy earns a place.</summary>
+        internal bool BringsHelp => Describe().Any(l => l.Contains("help joins it", StringComparison.OrdinalIgnoreCase));
+
         /// <summary>Whether its free moves hit the players hard (a timed hit or trap): the gear leans to resist and health.</summary>
         internal bool HitsHard => Timed.Count(t => t.HitsPlayers) >= 1 || Answers.Count(a => a.Weight >= HURTS) >= 2;
 

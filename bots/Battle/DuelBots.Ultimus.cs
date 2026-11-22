@@ -278,7 +278,7 @@ internal sealed partial class DuelBots {
         // Ultimus's Satyr in round 1 and round 4 against the Sea Lord, then he had nothing to heal with, and Crimes Against
         // Kitharas threw away Fairy at 46% health (2026-11-21 18:34, 19:41, 19:45).
         var useless = BotCards.Discards(me, circles, BotStyle.Backup, c => UltimusTactics.UselessShield(c, threat))
-            .Where(i => cards.Any(c => c.Index == i && !(c.Card.Heal && !c.Card.Hit))).ToList();
+            .Where(i => cards.Any(c => c.Index == i && !(c.Card.Heal && !c.Card.Hit) && !(c.Card.Hit && c.Card.XPip && !c.Card.HitsAll))).ToList();
         // Nor is a blade or trap that would still stack (Niduus, 2026-11-21: "normal blades can stack with TC ones, traps
         // too"): against the Sea Lord he threw away Hex, Spirit Blade and Bladestorm for treasure cards round after round
         // (20:04-20:16) and kept Minor Crusade. With three or more hits in hand the weakest hit goes before a stacking charm.
@@ -286,7 +286,9 @@ internal sealed partial class DuelBots {
         bool Stacking(RewrittenAI.Card c) => !c.Hit && ((c.Blade && BotCore.Stacks(me, c)) || (c.Trap && foes.Any(f => BotCore.Stacks(f, c))));
         bool Keeper(RewrittenAI.Card c) => c.Heal || (c.Shield && !UltimusTactics.UselessShield(c, threat));
         var hits = cards.Count(c => c.Card.Hit && !c.Card.Natural);
-        int Order(RewrittenAI.Card c) => Keeper(c) && !c.Hit ? 3
+        // His X-pip finisher (Judgement) is never thrown away either: he threw it away in round 2 against the Sea Lord
+        // (2026-11-21 21:27) and stacked for Spectral Blast instead.
+        int Order(RewrittenAI.Card c) => (Keeper(c) && !c.Hit) || (c.Hit && c.XPip && !c.HitsAll) ? 3
             : Stacking(c) ? (hits >= 3 ? 2 : 1)
             : c.Hit ? (hits >= 3 ? 1 : 2)
             : 0;
@@ -297,7 +299,7 @@ internal sealed partial class DuelBots {
         // Only heals left to throw away: no treasure card this round. With v131 he still threw away Satyr in round 9
         // against the Sea Lord (2026-11-21 20:44): every other card in hand was a hit, and the old order put any card that
         // is not a hit first, the heal included.
-        if (pick.Card is null || (pick.Card.Heal && !pick.Card.Hit)) {
+        if (pick.Card is null || (pick.Card.Heal && !pick.Card.Hit) || (pick.Card.Hit && pick.Card.XPip && !pick.Card.HitsAll)) {
             return null;
         }
 

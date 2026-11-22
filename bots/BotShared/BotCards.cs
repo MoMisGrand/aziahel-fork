@@ -62,6 +62,16 @@ internal static class BotCards {
         /// <summary>Its name, when its cheats change the deck (for the words).</summary>
         internal string CheaterName { get; init; } = "";
 
+        /// <summary>A boss whose cheats bring help into the fight (BotBossPlaybook.Plan.BringsHelp).</summary>
+        internal bool BringsHelp { get; init; }
+
+        /// <summary>
+        /// A boss met alone, its cheats bringing no help: no hit on every enemy in the deck (Niduus, 2026-11-21: "In solo
+        /// boss fights like this (Unless later the solo boss cheats in minions) he shouldn't be packing Sandstorm"; he took
+        /// Sandstorm x5 and Gearhead Destroyer x5 against the Sea Lord because many of his other fights had 2+ enemies).
+        /// </summary>
+        internal bool LoneBoss => Boss && !BringsHelp && Enemies <= 1;
+
         /// <summary>A creature that keeps beating this wizard (his own results): more shields and heals in the deck.</summary>
         internal bool Rival { get; init; }
 
@@ -80,15 +90,19 @@ internal static class BotCards {
         internal double MainHits { get; init; }
 
         /// <summary>Two or more enemies now, or (not counted yet) most of its recent fights had that many.</summary>
-        internal bool CrowdLikely => Enemies >= 2 || (Enemies == 0 && CrowdShare >= CROWD_MOSTLY);
+        internal bool CrowdLikely => Enemies >= 2 || (Enemies == 0 && !LoneBoss && CrowdShare >= CROWD_MOSTLY);
 
         /// <summary>A hit on all enemies earns a place: a crowd now, or often enough lately.</summary>
-        internal bool WantsAllHit => Enemies >= 2 || (Enemies == 0 && CrowdShare >= CROWD_SOMETIMES);
+        internal bool WantsAllHit => Enemies >= 2 || (Enemies == 0 && !LoneBoss && CrowdShare >= CROWD_SOMETIMES);
 
         internal string Describe() {
             var foe = HitSchools.Count > 0 ? $"{DescribeFoe()}, hitting with {string.Join(", ", HitSchools.Take(3))}" : DescribeFoe();
             if (Punished.Count > 0) {
                 foe += $"; its cheats punish {string.Join(", ", Punished.Select(p => p.ToLowerInvariant() + "s"))}, so fewer of those";
+            }
+
+            if (LoneBoss) {
+                foe += "; alone, so single hits only";
             }
 
             if (Rival && LongFights) {
@@ -124,6 +138,7 @@ internal static class BotCards {
         // Its boss playbook (its cheat file): the kinds of cards it punishes go in the deck less (Niduus, 2026-11-16: decks
         // per boss from its known cheats).
         var plan = BotBossPlaybook.For(creatureTemplate);
+        situation = situation with { BringsHelp = plan.BringsHelp };
         return plan.Punished.Count == 0 ? situation : situation with { Punished = plan.Punished, CheaterName = plan.Name };
     }
 
@@ -343,6 +358,11 @@ internal static class BotCards {
         // Shields only for a school that can hit it, when the enemies' decks are known.
         if (situation.HitSchools.Count > 0) {
             cards.RemoveAll(c => KindOf(c) == Kind.Shield && !Covers(c, situation.HitSchools));
+        }
+
+        // A boss met alone: single hits only, while it knows any.
+        if (situation.LoneBoss && cards.Any(c => KindOf(c) == Kind.Hit && !c.HitsAll)) {
+            cards.RemoveAll(c => KindOf(c) == Kind.Hit && c.HitsAll);
         }
 
         var size = Math.Min(maxSpells, CompactSize(style, situation));
