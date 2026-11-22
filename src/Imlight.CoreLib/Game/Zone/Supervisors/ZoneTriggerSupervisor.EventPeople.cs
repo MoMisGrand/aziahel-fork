@@ -42,7 +42,7 @@ internal sealed partial class ZoneTriggerSupervisor {
      * Now a person who is not up is switched on again for the next wizard who needs them, at most once every
      * EVENT_PEOPLE_AGAIN_SECONDS; the spawn still happens only when the spawner holds nobody (OnlyIfAbsent), so a
      * person who is up, or in a battle, is never doubled. Null in a zone that was running before this went in by a
-     * live patch: that zone keeps the old once-only behaviour until it reloads.
+     * live patch: that zone then switches the person on again whenever a wizard needs them (still only if absent).
      */
     private readonly Dictionary<ulong, DateTime> _eventPeopleWokenAt = [];
     private const int EVENT_PEOPLE_AGAIN_SECONDS = 60;
@@ -86,7 +86,7 @@ internal sealed partial class ZoneTriggerSupervisor {
     // arrival, and doors and teleporters stopped taking anyone on (2026-11-21 00:31-00:46, v0.10.941 live patch).
     private bool HoldsEventPeopleSpawners()
         => _eventPeopleSpawners is { } spawners && _eventPeopleWoken is { } woken
-            && (spawners.Count > woken.Count || (_eventPeopleWokenAt is not null && spawners.Count > 0));
+            && spawners.Count > 0;
 
     // True when this person was switched on here before and may not be switched on again yet.
     private bool EventPersonWokenLately(ulong person) {
@@ -94,8 +94,10 @@ internal sealed partial class ZoneTriggerSupervisor {
             return false;
         }
 
-        return _eventPeopleWokenAt is not { } at || !at.TryGetValue(person, out var last)
-            || DateTime.UtcNow - last < TimeSpan.FromSeconds(EVENT_PEOPLE_AGAIN_SECONDS);
+        // A zone patched in while running has no times: it asks again on every arrival or new step, which OnlyIfAbsent keeps
+        // harmless (those come seconds apart at most, never in a loop).
+        return _eventPeopleWokenAt is { } at && at.TryGetValue(person, out var last)
+            && DateTime.UtcNow - last < TimeSpan.FromSeconds(EVENT_PEOPLE_AGAIN_SECONDS);
     }
 
     /*
