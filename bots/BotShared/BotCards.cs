@@ -107,17 +107,18 @@ internal static class BotCards {
             }
 
             if (Rival && LongFights) {
-                foe += "; a rival that outlasts me, so more hits and blades to end it sooner";
+                foe += LoneBoss ? "; a rival that outlasts me, so more blades and traps under each big hit"
+                    : "; a rival that outlasts me, so more hits and blades to end it sooner";
             }
             else if (Rival) {
                 foe += "; a rival that keeps beating me, so more shields and heals";
             }
 
             if (MainHits > 0) {
-                foe += $"; my own fights say about {MainHits:P0} hits in my main deck";
+                foe += $"; my own {(LoneBoss ? "boss " : "")}fights say about {MainHits:P0} hits in my main deck";
             }
 
-            return Enemies == 0 && CrowdShare >= CROWD_SOMETIMES
+            return Enemies == 0 && !LoneBoss && CrowdShare >= CROWD_SOMETIMES
                 ? $"{foe} ({(CrowdShare >= CROWD_MOSTLY ? "most" : "many")} of my fights lately had 2+ enemies)" : foe;
         }
 
@@ -275,9 +276,16 @@ internal static class BotCards {
         }
 
         if (situation.Rival && situation.LongFights) {
+            // A boss met alone that outlasts him: the move goes to blades and traps (a bigger stacked hit), not more plain hits.
             var move = Math.Min(shares[Kind.Shield], 0.05);
             shares[Kind.Shield] -= move;
-            shares[Kind.Hit] += move;
+            if (situation.LoneBoss) {
+                shares[Kind.Blade] += move / 2;
+                shares[Kind.Trap] += move / 2;
+            }
+            else {
+                shares[Kind.Hit] += move;
+            }
         }
 
         Punish(shares, situation);

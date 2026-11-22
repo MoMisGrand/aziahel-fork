@@ -36,6 +36,11 @@ namespace Imlight.CoreLib.Game.Ultimus;
 /// <item>TcSupport: the share of his treasure cards that is support (shields, heals, blades, traps, stops; CardPlan.cs),
 /// 50% to 90%, starting at 70%. A loss or a close call moves it up; a quick, clean win moves it down, so more treasure
 /// card hits come along when support was not needed.</item>
+/// <item>BossHits: the same share for his deck against a boss met alone, learned only from boss fights. Against a boss his
+/// damage comes from blades and traps stacked under one full-pip hit, so a boss that outlasts him moves it DOWN (more
+/// blades and traps), the opposite of a crowd fight. Before this, crowd side fights pushed one shared share to 75% and his
+/// Vladimir Darkflame deck (2026-11-22) was 15 hits, 2 Bladestorm, 1 Hex and 2 heals in 20: one blade under each
+/// Judgement, about 1,900 a hit into 6,400 health that the boss heals, and he lost 8 times.</item>
 /// </list>
 /// Each move is small, stays inside those bounds (only Niduus changes them), and is said in his thoughts with its reason;
 /// deck-mix.txt in his folder shows where it stands and the last moves. Kept per seat (Ultimus and each TCO7 member).
@@ -53,6 +58,8 @@ internal static class UltimusDeckMix {
     internal sealed class Mix {
         public double MainHits { get; set; } = BotCards.SOLO_HITS;
         public double TcSupport { get; set; } = TC_SUPPORT;
+        public double BossHits { get; set; } = BotCards.SOLO_HITS;
+        public int BossFights { get; set; }
         public int Fights { get; set; }
         public int Lost { get; set; }
         public List<string> Moves { get; set; } = [];
@@ -67,6 +74,15 @@ internal static class UltimusDeckMix {
         get {
             lock (s_lock) {
                 return Math.Clamp((s_mix ??= Read()).MainHits, BotCards.SOLO_HITS_MIN, BotCards.SOLO_HITS_MAX);
+            }
+        }
+    }
+
+    /// <summary>The share of his main deck that goes to hits against a boss met alone (learned from boss fights only).</summary>
+    internal static double BossHits {
+        get {
+            lock (s_lock) {
+                return Math.Clamp((s_mix ??= Read()).BossHits, BotCards.SOLO_HITS_MIN, BotCards.SOLO_HITS_MAX);
             }
         }
     }
@@ -88,19 +104,28 @@ internal static class UltimusDeckMix {
     /// <param name="healthLost">The share of his health it took (0 to 1).</param>
     /// <param name="seconds">How long it ran.</param>
     /// <param name="biggestHit">The creature's biggest hit as a share of his health (BotKnowledge), 0 when not known.</param>
-    internal static string Learn(string foe, bool won, int rounds, double healthLost, double seconds, double biggestHit) {
+    /// <param name="boss">The foe was a boss (it moves the boss deck's share, not the everyday one).</param>
+    internal static string Learn(string foe, bool won, int rounds, double healthLost, double seconds, double biggestHit, bool boss = false) {
         lock (s_lock) {
             var mix = s_mix ??= Read();
             mix.Fights++;
             mix.Lost += won ? 0 : 1;
-            var (newHits, newSupport, why) = Step(foe, won, rounds, healthLost, seconds, biggestHit, mix.MainHits, mix.TcSupport);
-            if (why is null || (Math.Abs(newHits - mix.MainHits) < 0.001 && Math.Abs(newSupport - mix.TcSupport) < 0.001)) {
+            mix.BossFights += boss ? 1 : 0;
+            var oldHits = boss ? mix.BossHits : mix.MainHits;
+            var (newHits, newSupport, why) = Step(foe, won, rounds, healthLost, seconds, biggestHit, oldHits, mix.TcSupport, boss);
+            if (why is null || (Math.Abs(newHits - oldHits) < 0.001 && Math.Abs(newSupport - mix.TcSupport) < 0.001)) {
                 Write(mix);
                 return null;
             }
 
-            var said = $"{why}. Main deck hits {mix.MainHits:P0} -> {newHits:P0}, treasure card support {mix.TcSupport:P0} -> {newSupport:P0}.";
-            mix.MainHits = newHits;
+            var said = $"{why}. {(boss ? "Boss deck" : "Main deck")} hits {oldHits:P0} -> {newHits:P0}, treasure card support {mix.TcSupport:P0} -> {newSupport:P0}.";
+            if (boss) {
+                mix.BossHits = newHits;
+            }
+            else {
+                mix.MainHits = newHits;
+            }
+
             mix.TcSupport = newSupport;
             mix.Moves.Add($"{DateTime.Now:yyyy-MM-dd HH:mm} {said}");
             if (mix.Moves.Count > MOVES_KEPT) {
@@ -117,10 +142,22 @@ internal static class UltimusDeckMix {
     /// (null when the fight teaches nothing about the mix). Always inside the bounds.
     /// </summary>
     internal static (double MainHits, double TcSupport, string Why) Step(string foe, bool won, int rounds, double healthLost,
-                                                                          double seconds, double biggestHit, double mainHits, double tcSupport) {
+                                                                          double seconds, double biggestHit, double mainHits, double tcSupport,
+                                                                          bool boss = false) {
         double hits = 0, support = 0;
         string why;
-        if (!won && seconds >= LONG_FIGHT && biggestHit >= BIG_HIT) {
+        if (boss && !won && seconds >= LONG_FIGHT) {
+            // A boss that outlasts him: his big hits were too small, and against a boss the size of a hit is the blades and
+            // traps stacked under it, so fewer plain hits and more blades and traps in the boss deck.
+            hits = -0.03;
+            support = biggestHit >= BIG_HIT ? 0.02 : 0;
+            why = $"{foe} outlasted me ({seconds / 60:0} minutes): against a boss my big hits need more blades and traps stacked under them";
+        }
+        else if (boss && won && rounds > 0 && rounds <= 8 && healthLost <= 0.4) {
+            hits = 0.01;
+            why = $"I beat {foe} in {rounds} rounds with {healthLost:P0} of my health lost: my boss deck can carry a few more hits";
+        }
+        else if (!won && seconds >= LONG_FIGHT && biggestHit >= BIG_HIT) {
             // Both: it ran long and a big hit ended it. Hits alone would climb to the top on every such loss and leave even
             // fewer heals (the Sea Lord, 2026-11-21: 8 minutes and a hit of 90% of his health, and he never healed once).
             hits = 0.01;
@@ -183,6 +220,7 @@ internal static class UltimusDeckMix {
             var text = new StringBuilder();
             text.AppendLine($"HOW HE SPLITS HIS CARDS, FROM HIS OWN FIGHTS (written {DateTime.Now:yyyy-MM-dd HH:mm})");
             text.AppendLine($"Main deck: {mix.MainHits:P0} hits (starts at {BotCards.SOLO_HITS:P0}, kept between {BotCards.SOLO_HITS_MIN:P0} and {BotCards.SOLO_HITS_MAX:P0}); the rest blades, traps, heals and shields.");
+            text.AppendLine($"Boss deck (a boss met alone): {mix.BossHits:P0} hits, learned from {mix.BossFights} boss fight(s); the rest mostly blades and traps to stack under one big hit.");
             text.AppendLine($"Treasure cards: {mix.TcSupport:P0} support (starts at {TC_SUPPORT:P0}, kept between {TC_SUPPORT_MIN:P0} and {TC_SUPPORT_MAX:P0}); the rest hits and damage enchantments.");
             text.AppendLine($"Fights counted: {mix.Fights}, lost: {mix.Lost}.");
             text.AppendLine("Last moves:");
