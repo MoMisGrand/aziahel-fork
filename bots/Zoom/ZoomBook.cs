@@ -27,99 +27,118 @@ using Imlight.Common;
 namespace Imlight.CoreLib.Game.Ultimus;
 
 /// <summary>
-/// Zoom's book of what he scouted (logs/zoom): every quest step he could not finish (broken-quests.txt, newest first, and
-/// broken-quests.json), and every main quest he got through (scouted.txt), so Niduus and the bots' fixers see the broken
-/// quests before Ultimus and the teams reach them.
+/// Zoom's own mind file (Niduus, 2026-11-22: "his goal is to mark down broken quests and/or broken steps in quests. These are
+/// to be of his own mind file for data collection"): logs/zoom/zoom-mind.json, with a readable copy in zoom-mind.txt. It
+/// holds every broken quest step he found (a step that never finished), every broken quest (the next main quest never
+/// came after one he finished), and every main quest he got through. It is his alone: nothing else writes it, and nothing
+/// in it goes into what Ultimus and the teams learn from.
 /// </summary>
 internal static class ZoomBook {
 
-    internal const string BROKEN_TXT = "broken-quests.txt";
-    internal const string BROKEN_JSON = "broken-quests.json";
-    internal const string SCOUTED_TXT = "scouted.txt";
+    internal const string MIND_JSON = "zoom-mind.json";
+    internal const string MIND_TXT = "zoom-mind.txt";
 
-    /// <summary>One step Zoom could not finish.</summary>
-    internal sealed record Broken(DateTime At, string Quest, string Title, int Step, string Goal, string Zone, string Why, string Doing, bool PushedPast);
+    /// <summary>A broken step of a quest.</summary>
+    internal const string STEP = "step";
+
+    /// <summary>A broken quest: the next main quest never came.</summary>
+    internal const string QUEST = "quest";
+
+    /// <summary>One broken quest or step Zoom found.</summary>
+    internal sealed record Broken(DateTime At, string Kind, string Quest, string Title, int Step, string Goal, string Zone, string Why, string Doing);
+
+    /// <summary>One main quest he got through.</summary>
+    internal sealed record Scouted(DateTime At, string Quest, string Title, int Seconds, int Teleports, int BrokenSteps);
+
+    /// <summary>His whole mind file.</summary>
+    internal sealed class Mind {
+        public List<Broken> Broken { get; set; } = [];
+        public List<Scouted> Scouted { get; set; } = [];
+    }
 
     private static readonly object s_lock = new();
-    private static List<Broken> s_broken;
+    private static Mind s_mind;
 
     private static string Folder => UltimusSeat.Zoom.Folder;
 
-    private static List<Broken> Load() {
-        if (s_broken is not null) {
-            return s_broken;
+    private static Mind Load() {
+        if (s_mind is not null) {
+            return s_mind;
         }
 
         try {
-            var path = Path.Combine(Folder, BROKEN_JSON);
-            s_broken = File.Exists(path) ? JsonSerializer.Deserialize<List<Broken>>(File.ReadAllText(path)) ?? [] : [];
+            var path = Path.Combine(Folder, MIND_JSON);
+            s_mind = File.Exists(path) ? JsonSerializer.Deserialize<Mind>(File.ReadAllText(path)) ?? new Mind() : new Mind();
         }
         catch (Exception e) {
-            Logger.Warning("Zoom: his broken quest list could not be read ({0}); a new one is started.", Logger.Args(e.Message));
-            s_broken = [];
+            Logger.Warning("Zoom: his mind file could not be read ({0}); a new one is started.", Logger.Args(e.Message));
+            s_mind = new Mind();
         }
 
-        return s_broken;
+        s_mind.Broken ??= [];
+        s_mind.Scouted ??= [];
+        return s_mind;
     }
 
-    /// <summary>Every broken step he found, oldest first.</summary>
-    internal static List<Broken> All() {
+    /// <summary>Whether this quest's step (or, for a broken quest, what came after it) is already marked down.</summary>
+    internal static bool Has(string kind, string quest, string goal) {
         lock (s_lock) {
-            return [.. Load()];
+            return Load().Broken.Any(b => b.Kind == kind && b.Quest == quest && b.Goal == goal);
         }
     }
 
-    /// <summary>Whether this step of this quest is already written up.</summary>
-    internal static bool Has(string quest, string goal) {
-        lock (s_lock) {
-            return Load().Any(b => b.Quest == quest && b.Goal == goal);
-        }
-    }
-
-    /// <summary>Writes a broken step down (once per quest and step).</summary>
+    /// <summary>Marks a broken quest or step down (once each).</summary>
     internal static void Add(Broken broken) {
         lock (s_lock) {
-            var list = Load();
-            if (list.Any(b => b.Quest == broken.Quest && b.Goal == broken.Goal)) {
+            var mind = Load();
+            if (mind.Broken.Any(b => b.Kind == broken.Kind && b.Quest == broken.Quest && b.Goal == broken.Goal)) {
                 return;
             }
 
-            list.Add(broken);
-            try {
-                Directory.CreateDirectory(Folder);
-                File.WriteAllText(Path.Combine(Folder, BROKEN_JSON), JsonSerializer.Serialize(list, new JsonSerializerOptions { WriteIndented = true }));
-                var lines = new List<string> {
-                    $"Broken quest steps Zoom found ahead of Ultimus and the teams: {list.Count}. Newest first.",
-                    "",
-                };
-                foreach (var b in Enumerable.Reverse(list)) {
-                    lines.Add($"{b.At.ToLocalTime():yyyy-MM-dd HH:mm}  {b.Title} ({b.Quest}), step {b.Step}: {b.Goal}");
-                    lines.Add($"    Where: {b.Zone}");
-                    lines.Add($"    What happened: {b.Why}");
-                    lines.Add($"    He was: {b.Doing}");
-                    lines.Add(b.PushedPast ? "    He finished the step by command to keep scouting." : "    He waits at it.");
-                    lines.Add("");
-                }
-
-                File.WriteAllLines(Path.Combine(Folder, BROKEN_TXT), lines);
-            }
-            catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
-                Logger.Warning("Zoom: could not write his broken quest list: {0}", Logger.Args(e.Message));
-            }
+            mind.Broken.Add(broken);
+            Save(mind);
         }
     }
 
-    /// <summary>A main quest he got through: how long it took, how many teleports, and whether a step of it was broken.</summary>
-    internal static void Scouted(string quest, string title, TimeSpan took, int hops, int broken) {
+    /// <summary>A main quest he got through: how long it took, how many teleports, and how many of its steps were broken.</summary>
+    internal static void Done(string quest, string title, TimeSpan took, int hops, int broken) {
+        lock (s_lock) {
+            var mind = Load();
+            mind.Scouted.Add(new Scouted(DateTime.UtcNow, quest, title, (int) took.TotalSeconds, hops, broken));
+            Save(mind);
+        }
+    }
+
+    private static void Save(Mind mind) {
         try {
             Directory.CreateDirectory(Folder);
-            File.AppendAllLines(Path.Combine(Folder, SCOUTED_TXT), [
-                $"{DateTime.Now:yyyy-MM-dd HH:mm}  {title} ({quest}): {(int) took.TotalMinutes} min {took.Seconds} s, {hops} teleport{(hops == 1 ? "" : "s")}" +
-                (broken > 0 ? $", {broken} broken step{(broken == 1 ? "" : "s")} pushed past" : ", clean"),
-            ]);
+            File.WriteAllText(Path.Combine(Folder, MIND_JSON), JsonSerializer.Serialize(mind, new JsonSerializerOptions { WriteIndented = true }));
+            var lines = new List<string> {
+                $"Zoom's mind: {mind.Broken.Count(b => b.Kind == QUEST)} broken quest(s) and {mind.Broken.Count(b => b.Kind == STEP)} broken quest step(s) " +
+                $"found ahead of Ultimus and the teams, {mind.Scouted.Count} main quest(s) scouted. Newest first.",
+                "",
+                "BROKEN",
+            };
+            foreach (var b in Enumerable.Reverse(mind.Broken)) {
+                lines.Add(b.Kind == QUEST
+                    ? $"{b.At.ToLocalTime():yyyy-MM-dd HH:mm}  Broken quest: the next main quest after {b.Title} ({b.Quest}) never came."
+                    : $"{b.At.ToLocalTime():yyyy-MM-dd HH:mm}  Broken step: {b.Title} ({b.Quest}), step {b.Step}: {b.Goal}");
+                lines.Add($"    Where: {b.Zone}");
+                lines.Add($"    What happened: {b.Why}");
+                lines.Add($"    He was: {b.Doing}");
+                lines.Add("");
+            }
+
+            lines.Add("SCOUTED");
+            foreach (var s in Enumerable.Reverse(mind.Scouted)) {
+                lines.Add($"{s.At.ToLocalTime():yyyy-MM-dd HH:mm}  {s.Title} ({s.Quest}): {s.Seconds / 60} min {s.Seconds % 60} s, " +
+                          $"{s.Teleports} teleport{(s.Teleports == 1 ? "" : "s")}{(s.BrokenSteps > 0 ? $", {s.BrokenSteps} broken step(s)" : ", clean")}");
+            }
+
+            File.WriteAllLines(Path.Combine(Folder, MIND_TXT), lines);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
-            Logger.Debug("Zoom: could not write his scouted list: {0}", Logger.Args(e.Message));
+            Logger.Warning("Zoom: could not write his mind file: {0}", Logger.Args(e.Message));
         }
     }
 

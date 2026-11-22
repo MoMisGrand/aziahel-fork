@@ -30,15 +30,17 @@ namespace Imlight.CoreLib.Game.Ultimus;
 
 /// <summary>
 /// Zoom's seat (Niduus, 2026-11-22: "Zoom's purpose is to teleport complete tasks in the Story Main quests ... He is permitted
-/// to TP to his quests and to complete them as fast as possible"). He plays Ultimus's questing brain on the main story, with
-/// two things Ultimus may never do:
+/// to TP to his quests and to complete them as fast as possible"; "no commands ... He is to use the Hive Mind and Ultimus'
+/// brain with a mix of TF, BUT, his goal is to mark down broken quests and/or broken steps in quests"). He plays Ultimus's
+/// questing brain on the main story, reading everything Ultimus and the bots know, with what True Form has:
 /// - He teleports to his step: when the step happens in another area, or far across this one, he is sent right to where the
 ///   game's quest arrow points (QuestStepSpots, as Ahziael's step buttons do). Never into a dungeon (its copy holds the
 ///   quest): to the area its way in is in, and he walks in from there. Three teleports per step at most, so a step he can't
 ///   finish where it says is no teleport loop.
-/// - A step that does not finish in [Zoom] StepMinutes (10 unless set) is a broken quest: written up (ZoomBook,
-///   logs/zoom/broken-quests.txt, and an issue), then finished by command ([Zoom] PushPast, on unless turned off) so he keeps
-///   scouting ahead.
+/// - A step that does not finish in [Zoom] StepMinutes (10 unless set) is a broken step, and no next main quest that long
+///   after one he finished is a broken quest: each is marked down in his own mind file (ZoomBook, logs/zoom/zoom-mind.json)
+///   and as an issue. He never finishes anything by command: he keeps at it with Ultimus's own ways (and his teleports again)
+///   until the quest is fixed.
 /// </summary>
 internal sealed partial class UltimusDirectorActor {
 
@@ -62,7 +64,8 @@ internal sealed partial class UltimusDirectorActor {
 
     private static TimeSpan ZoomStepLimit => TimeSpan.FromMinutes(Math.Clamp(ConfigurationManager.GetValue("Zoom.StepMinutes", 10), 2, 120));
 
-    private static bool ZoomPushPast => ConfigurationManager.GetValue("Zoom.PushPast", true);
+    private DateTime _zoomNoQuestSince = DateTime.MaxValue;
+    private string _zoomLastDone;
 
     /// <summary>
     /// Zoom's part of each tick, out of battle and dialog: teleports to his step, and writes up and pushes past a broken
@@ -85,8 +88,11 @@ internal sealed partial class UltimusDirectorActor {
                        ?? instances.FirstOrDefault(q => q is not null && (q.QuestName ?? "").Contains("-MAIN-", StringComparison.OrdinalIgnoreCase));
         if (instance is null || QuestTemplateCollection.GetQuestByName(instance.QuestName) is not { m_goals: { Count: > 0 } goals } template) {
             ZoomQuestChanged(me, null);
+            ZoomNoQuest(me, now);
             return false;
         }
+
+        _zoomNoQuestSince = DateTime.MaxValue;
 
         var index = goals.FindIndex(g => g is not null && instance.IsGoalActive(g.m_goalName));
         if (index < 0) {
@@ -108,10 +114,9 @@ internal sealed partial class UltimusDirectorActor {
             _zoomHops = 0;
         }
 
-        // A step that never finishes: a broken quest, written up, then pushed past so he keeps scouting.
-        if (now - _zoomSince > ZoomStepLimit && now - _zoomPushedAt > TimeSpan.FromSeconds(60)) {
+        // A step that never finishes: a broken step, marked down in his mind file. He keeps at it (and may teleport again).
+        if (now - _zoomSince > ZoomStepLimit && now - _zoomPushedAt > ZoomStepLimit) {
             ZoomBroken(me, template, index + 1, goal, now - _zoomSince);
-            return true;
         }
 
         if (_zoomHops >= ZOOM_HOPS_PER_STEP || now - _zoomHopAt < s_zoomHopGap) {
@@ -187,7 +192,8 @@ internal sealed partial class UltimusDirectorActor {
 
         if (_zoomQuest is not null && QuestTemplateCollection.GetQuestByName(_zoomQuest) is { } before
             && me.Wizard?.QuestBehavior?.CurrentQuestInstances?.Any(q => q?.QuestName == _zoomQuest) != true) {
-            ZoomBook.Scouted(_zoomQuest, QuestGuide.QuestTitle(before), DateTime.UtcNow - _zoomQuestSince, _zoomQuestHops, _zoomQuestBroken);
+            ZoomBook.Done(_zoomQuest, QuestGuide.QuestTitle(before), DateTime.UtcNow - _zoomQuestSince, _zoomQuestHops, _zoomQuestBroken);
+            _zoomLastDone = _zoomQuest;
         }
 
         _zoomQuest = quest;
@@ -202,27 +208,42 @@ internal sealed partial class UltimusDirectorActor {
         string goalName = goal.m_goalName;
         var title = QuestGuide.QuestTitle(template);
         var stepText = QuestGuide.StepText(goal);
-        var why = $"\"{stepText}\" did not finish in {(int) stuckFor.TotalMinutes} minutes, after {_zoomHops} teleport{(_zoomHops == 1 ? "" : "s")} to it" +
-                  $" and Ultimus's own way of doing it, while he is level {me.Wizard?.MagicSchoolBehavior?.Level} and wins every fight in one hit.";
-        var push = ZoomPushPast;
-        if (!ZoomBook.Has(quest, goalName)) {
-            ZoomBook.Add(new ZoomBook.Broken(DateTime.UtcNow, quest, title, step, stepText, UltimusText.Zone(me.Zone),
-                why, string.IsNullOrEmpty(_doing) ? "?" : _doing, push));
-            Issue("quest", quest, $"Zoom (quest scout) found a broken step in {title}, step {step}: {why}", key: "zoom|" + quest + "|" + goalName);
-        }
-
-        _zoomQuestBroken++;
         _zoomPushedAt = DateTime.UtcNow;
-        _lastProgress = DateTime.UtcNow;
-        if (!push) {
-            _doing = $"waiting at a broken step of {title} ([Zoom] PushPast is off)";
+        var hops = _zoomHops;
+        // Another round of teleports for it: the next try starts from its spot again.
+        _zoomHops = 0;
+        if (ZoomBook.Has(ZoomBook.STEP, quest, goalName)) {
             return;
         }
 
-        _doing = $"finishing a broken step of {title} by command to keep scouting";
-        Note("Ultimus", $"Zoom: \"{stepText}\" of {title} is broken (written in broken-quests.txt); he finishes it by command and scouts on.", UltimusLink.NOTABLE);
-        StopWalking(0);
-        me.Session.Tell(new CHARACTER_103_PROTOCOL.MSG_QUESTCOMMAND { Action = "completegoal", QuestName = quest }, Self);
+        var why = $"\"{stepText}\" did not finish in {(int) stuckFor.TotalMinutes} minutes, after {hops} teleport{(hops == 1 ? "" : "s")} to it" +
+                  $" and Ultimus's own ways of doing it, at level {me.Wizard?.MagicSchoolBehavior?.Level}, winning every fight in one hit.";
+        ZoomBook.Add(new ZoomBook.Broken(DateTime.UtcNow, ZoomBook.STEP, quest, title, step, stepText, UltimusText.Zone(me.Zone),
+            why, string.IsNullOrEmpty(_doing) ? "?" : _doing));
+        _zoomQuestBroken++;
+        Issue("quest", quest, $"Zoom (quest scout) marked a broken step in {title}, step {step}: {why}", key: "zoom|" + quest + "|" + goalName);
+        Note("Ultimus", $"Zoom: \"{stepText}\" of {title} looks broken; marked down in his mind file. He keeps trying it.", UltimusLink.NOTABLE);
+    }
+
+    // No main quest in his book: after a quest he finished, the next one never coming is a broken quest.
+    private void ZoomNoQuest(UltimusMember.Status me, DateTime now) {
+        if (_zoomNoQuestSince == DateTime.MaxValue) {
+            _zoomNoQuestSince = now;
+            return;
+        }
+
+        if (now - _zoomNoQuestSince < ZoomStepLimit || _zoomLastDone is null
+            || ZoomBook.Has(ZoomBook.QUEST, _zoomLastDone, "next")) {
+            return;
+        }
+
+        var title = QuestTemplateCollection.GetQuestByName(_zoomLastDone) is { } done ? QuestGuide.QuestTitle(done) : _zoomLastDone;
+        var why = $"No main quest came for {(int) (now - _zoomNoQuestSince).TotalMinutes} minutes after he finished {title}, " +
+                  "while Ultimus's brain looked for its giver.";
+        ZoomBook.Add(new ZoomBook.Broken(DateTime.UtcNow, ZoomBook.QUEST, _zoomLastDone, title, 0, "next", UltimusText.Zone(me.Zone),
+            why, string.IsNullOrEmpty(_doing) ? "?" : _doing));
+        Issue("quest", _zoomLastDone, $"Zoom (quest scout) marked a broken quest: {why}", key: "zoom|next|" + _zoomLastDone);
+        Note("Ultimus", $"Zoom: the next main quest after {title} never came; marked down in his mind file.", UltimusLink.NOTABLE);
     }
 
 }
