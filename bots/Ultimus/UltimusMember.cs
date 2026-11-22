@@ -91,6 +91,8 @@ internal sealed class UltimusMember : ReceiveActor, IWithTimers {
 
     /// <summary>Put on an item from the backpack, as the game's backpack does.</summary>
     internal sealed record Equip(ulong ItemId, string Slot, string What);
+    // A jewel from his backpack into an open socket of a piece he wears, as a player drags it there (BotJewelPlan).
+    internal sealed record SocketJewel(ulong ItemId, ulong JewelId, byte Socket, string What);
 
     /// <summary>The backpack padlock on these items, one click each (lock or unlock), as a player clicks it.</summary>
     internal sealed record LockItems(List<(ulong Id, bool Lock, string Name)> Clicks);
@@ -408,6 +410,10 @@ internal sealed class UltimusMember : ReceiveActor, IWithTimers {
 
             Note($"accepts a friend request from {m.OwnerName}.");
             Send(new GAME_5_PROTOCOL.MSG_BUDDYREQUESTACCEPT { ListOwnerGID = m.ListOwnerGID, EntryGID = _member.CharId });
+        });
+        Receive<SocketJewel>(m => {
+            Note($"puts {m.What}.");
+            Send(new WIZARD2_53_PROTOCOL.MSG_EQUIPJEWELREQUEST { ItemGID = m.ItemId, JewelGID = m.JewelId, SocketNumber = m.Socket });
         });
         Receive<Equip>(m => {
             Note($"puts on {m.What}.");
