@@ -162,6 +162,15 @@ internal sealed partial class UltimusDirectorActor {
         foreach (var name in held) {
             var step = UltimusPlanner.ForQuest(group, name);
             if (step is null || step.Problem.Length > 0 || step.Kind is UltimusPlanner.WAIT or UltimusPlanner.NONE) {
+                // It sent him into this room, and here it has nothing he can do: that way is a dead end for this step.
+                NoteDungeonDeadEnd(leader, name);
+                continue;
+            }
+
+            if (step.Kind is UltimusPlanner.EXIT or UltimusPlanner.DOOR or UltimusPlanner.SPIRAL && step.To is { Length: > 0 } to
+                && _dungeonDeadEnds.TryGetValue(DeadEndKey(name, step.Goal, to), out var until) && DateTime.UtcNow < until) {
+                Think($"\"{UltimusText.Title(name)}\" points me to {UltimusText.Zone(to)}, but I was just there and its step had " +
+                      $"nothing for me to do, so I go on to {main?.What ?? "my story step"} from here instead.", "dungeon-deadend|" + name + "|" + to);
                 continue;
             }
 
@@ -169,10 +178,32 @@ internal sealed partial class UltimusDirectorActor {
                   $"first, then go on to {main?.What ?? "my story step"}, as a player does.", "dungeonfirst|" + step.Key);
 
             _dungeonFirstQuest = name;
+            _dungeonFirstLead = step.Kind is UltimusPlanner.EXIT or UltimusPlanner.DOOR or UltimusPlanner.SPIRAL && step.To is { Length: > 0 }
+                ? (name, step.Goal ?? "", step.To)
+                : null;
             return step;
         }
 
         return null;
+    }
+
+    // The way the dungeon's own quest last sent him (its quest, step and the room it led to), and the ways that led to a room
+    // where that step had nothing to do. In Shirataki Temple, "Summoning the Spirit" sent Tulkar from the Plague Oni's palace
+    // out to the cliffside, where its shrines could not be placed, so the story step took him back in: 43 times in 20 minutes
+    // (2026-11-21 23:10-23:30). A dead end is skipped for 20 minutes, so the story step (the Oni, right in that palace) goes on.
+    private (string Quest, string Goal, string To)? _dungeonFirstLead;
+    private readonly Dictionary<string, DateTime> _dungeonDeadEnds = new(StringComparer.OrdinalIgnoreCase);
+
+    private static string DeadEndKey(string quest, string goal, string to) => quest + "|" + (goal ?? "") + "|" + to;
+
+    private void NoteDungeonDeadEnd(UltimusMember.Status leader, string quest) {
+        if (_dungeonFirstLead is not { } lead || !string.Equals(lead.Quest, quest, StringComparison.OrdinalIgnoreCase)
+            || !string.Equals(lead.To, leader.Zone, StringComparison.OrdinalIgnoreCase)) {
+            return;
+        }
+
+        _dungeonDeadEnds[DeadEndKey(lead.Quest, lead.Goal, lead.To)] = DateTime.UtcNow.AddMinutes(20);
+        _dungeonFirstLead = null;
     }
 
     /// <summary>
