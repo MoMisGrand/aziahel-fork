@@ -250,7 +250,15 @@ internal sealed partial class UltimusDirectorActor {
         // Dungeon Recall (it holds the copy 10 minutes) brings him back to this same copy at his tough-foe health
         // (UltimusDirector.Comeback.cs). After a bots update he was back inside The Labyrinth at 69%, then 48%, and met
         // Vladimir Darkflame like that (2026-11-22 10:40, 11:15): 14 tries, 14 losses.
-        if (InDungeon(leader) && rival && !IsSideDungeon(leader.Zone) && StepOutForRival(leader, share)) {
+        // The same for a fight that beat him once right here, or the dungeon's boss, under half health: in Pyromancer's Tomb
+        // he lost to Drusilla Morningbane, said "I don't start it until full health", and went straight back in at 36%
+        // (2026-11-22 12:36-12:41; she counted as a rival only after two losses). Just under his tough-foe health a trip
+        // gains almost nothing, so a rival alone needs a real gap (Lamia stepped out of Crimson Fields at 93%, 12:3x).
+        var beatHere = target?.Kind == UltimusPlanner.FIGHT && target.Template != 0
+                       && UltimusFoes.Of((uint) Math.Min(target.Template, uint.MaxValue)) is { Lost: >= 1 };
+        var stepOut = (rival && share < UltimusPlaybook.Value("Quest.ToughFoeHealth") - 0.1)
+                      || ((beatHere || BossNext(leader, target)) && share < 0.5);
+        if (InDungeon(leader) && stepOut && !IsSideDungeon(leader.Zone) && StepOutForRival(leader, share)) {
             _doing = "stepping out of the dungeon to heal before a rival";
             return true;
         }
@@ -905,7 +913,7 @@ internal sealed partial class UltimusDirectorActor {
         StopWalking(0);
         Note("Ultimus", $"{leader.Name} steps out of {UltimusText.Zone(leader.Zone)} by the Commons button at {share:P0} health to heal before " +
                         "a fight that has beaten him, and comes back to the same copy by Dungeon Recall.", UltimusLink.NOTABLE);
-        Think($"I'm at {share:P0} health and what comes next in {UltimusText.Zone(leader.Zone)} has beaten me before. Nothing in here heals me, " +
+        Think($"I'm at {share:P0} health and what comes next in {UltimusText.Zone(leader.Zone)} is a boss or has beaten me before. Nothing in here heals me, " +
               "so I step out, heal up, and my Dungeon Recall brings me back to this same copy, as a player does.", "rival-stepout|" + leader.Zone);
         Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromSeconds(1.5), _actors[0], new UltimusMember.PressCommons(), Self);
 
