@@ -509,8 +509,13 @@ internal sealed partial class UltimusDirectorActor {
         // that picks what he wears, so a piece he buys is one he keeps on (BotGear.OutfitUpgrades). Pieces already in his
         // backpack are not bought again.
         var owned = (wizard.InventoryBehavior?.Items ?? []).Select(i => (uint) Math.Min((ulong) i.m_templateID, uint.MaxValue)).ToHashSet();
-        foreach (var (_, piece, gain) in BotGear.OutfitUpgrades(wizard, GearGoals(wizard),
-                     p => !p.CrownsOnly && !BotGear.Forbidden(p.Id) && !owned.Contains(p.Id) && !_bazaarSkipped.Contains(p.Id), gainNeeded)) {
+        // Then jewels for his open sockets that none he carries fills (Niduus, 2026-11-21: "since he's level 15+, he can now
+        // use jewels as well"; BotJewelPlan).
+        var jewels = BotJewelPlan.FromShops(wizard, BotGear.SchoolOf(wizard), BotStyle.Solo, spend, _bazaarSkipped, needVendor: false)
+            .Where(j => !owned.Contains(j.JewelId)).Select(j => (Piece: BotGear.Read(j.JewelId), Gain: j.Score)).Where(j => j.Piece is not null).ToList();
+        foreach (var (piece, gain) in BotGear.OutfitUpgrades(wizard, GearGoals(wizard),
+                         p => !p.CrownsOnly && !BotGear.Forbidden(p.Id) && !owned.Contains(p.Id) && !_bazaarSkipped.Contains(p.Id), gainNeeded)
+                     .Select(u => (u.Item2, u.Item3)).Concat(jewels)) {
             BazaarQuote quote;
             try {
                 quote = BazaarLink.Find(piece.Id);
