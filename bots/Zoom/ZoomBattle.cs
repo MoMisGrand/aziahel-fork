@@ -80,10 +80,15 @@ internal static class ZoomBattle {
     /// His seven cards for this round in place of the hand he drew, or null when there is nothing to deal yet (his spells
     /// are still being read). Says what was dealt.
     /// </summary>
-    internal static string Deal(CombatDuelSubCircle me, IReadOnlyList<CombatDuelSubCircle> circles, int round) {
+    internal static string Deal(CombatDuelSubCircle me, IReadOnlyList<CombatDuelSubCircle> circles, int round, CombatResolver resolver, ulong duel) {
         if (me?._combatDeck is not { } deck || !TrueFormPool.Ready) {
             return null;
         }
+
+        // Bosses with cheats: what went off since his last look is written down, and while he studies them his hand holds
+        // the cards that set them off (ZoomCheats) and no Epic (a study hit must not end the fight).
+        ZoomCheats.Round(duel, me, circles, resolver, round);
+        var studying = ZoomCheats.Studying(duel);
 
         var pips = RewrittenAI.PipsOf(me);
         var ids = new List<uint>();
@@ -95,8 +100,12 @@ internal static class ZoomBattle {
             }
         }
 
+        if (studying) {
+            Add(StudyCards(), HAND - 2);
+        }
+
         // Epic twice (one for each clearing spell), then Tempest and Glowbug Squall.
-        if (Enchant() is { } epic) {
+        if (!studying && Enchant() is { } epic) {
             Add([epic, epic], 2, again: true);
         }
 
@@ -120,14 +129,44 @@ internal static class ZoomBattle {
             shown.Add(TrueFormPool.Of(id)?.Shown ?? RewrittenAI.ReadTemplate(id)?.Shown ?? id.ToString());
         }
 
-        return $"Zoom is dealt his clearing hand ({pips} pips): {string.Join(", ", shown)}";
+        return $"Zoom is dealt his {(studying ? "cheat study" : "clearing")} hand ({pips} pips): {string.Join(", ", shown)}";
     }
 
     /// <summary>
     /// His pick for the round: Tempest, else Glowbug Squall (the director puts Epic on it first); only when neither can be paid
     /// for, the biggest hit he can pay for, at the boss or the creature with the most health.
     /// </summary>
-    internal static UltimusTactics.Choice Decide(CombatDuelSubCircle me, IReadOnlyList<CombatDuelSubCircle> circles, CombatResolver resolver, int round) {
+    internal static UltimusTactics.Choice Decide(CombatDuelSubCircle me, IReadOnlyList<CombatDuelSubCircle> circles, CombatResolver resolver, int round, ulong duel) {
+        ZoomCheats.Round(duel, me, circles, resolver, round);
+        var choice = ZoomCheats.Move(duel, me, UltimusTactics.Hand(me).Where(h => h.Castable).ToList(), round) ?? Clear(me, circles);
+        ZoomCheats.Done(duel, me, circles, choice, round);
+        return choice;
+    }
+
+    // One of each kind of card a cheat answers (the smallest of each, so a study move does not end the fight): a single hit,
+    // a blade, a heal, a shield, a trap and a weakness, then Tempest for when the study is done.
+    private static List<TrueFormPool.Entry> StudyCards() {
+        var pool = TrueFormPool.At(Top, dev: false).Where(e => !e.Dev && !e.Treasure && e.Card.PerPip == 0 && !BotCards.NotVanilla(e.Card)
+                                                              && SpellFactory.GetSpell(e.Id) is not null).ToList();
+        var list = new List<TrueFormPool.Entry>();
+        void One(Func<RewrittenAI.Card, bool> kind) {
+            if (pool.Where(e => kind(e.Card)).OrderBy(e => e.Card.Rank).ThenBy(e => e.Card.BaseDamage).FirstOrDefault() is { } e) {
+                list.Add(e);
+            }
+        }
+
+        One(c => c.Hit && !c.HitsAll);
+        One(c => c.Blade && !c.Hit && !c.BladeOnlyTeammate);
+        One(c => c.Heal && !c.Hit);
+        One(c => c.Shield && !c.Hit && !c.Heal);
+        One(c => c.Trap && !c.Hit);
+        One(c => c.Weakness && !c.Hit);
+        list.AddRange(Clearers().Take(1));
+        return list;
+    }
+
+    // His clearing pick (no cheats left to study).
+    private static UltimusTactics.Choice Clear(CombatDuelSubCircle me, IReadOnlyList<CombatDuelSubCircle> circles) {
         var enemies = circles.Where(c => c.OccupiedTeam != me.OccupiedTeam && c.IsAlive).ToList();
         if (enemies.Count == 0) {
             return new(UltimusTactics.Move.Pass, 0, -1, "no enemy is left");
