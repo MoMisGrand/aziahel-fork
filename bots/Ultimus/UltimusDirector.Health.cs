@@ -246,6 +246,15 @@ internal sealed partial class UltimusDirectorActor {
             return true;
         }
 
+        // A rival next in a dungeon, hurt, and nothing in here to heal from: he steps out by the Commons button, heals, and
+        // Dungeon Recall (it holds the copy 10 minutes) brings him back to this same copy at his tough-foe health
+        // (UltimusDirector.Comeback.cs). After a bots update he was back inside The Labyrinth at 69%, then 48%, and met
+        // Vladimir Darkflame like that (2026-11-22 10:40, 11:15): 14 tries, 14 losses.
+        if (InDungeon(leader) && rival && !IsSideDungeon(leader.Zone) && StepOutForRival(leader, share)) {
+            _doing = "stepping out of the dungeon to heal before a rival";
+            return true;
+        }
+
         if (InDungeon(leader) && !IsSideDungeon(leader.Zone)) {
             Think($"I'm at {share:P0} health in a dungeon with no potion or wisp in here. Walking out would cost the floors done, so I go on " +
                   "and fight; if I fall, I heal and Dungeon Recall brings me back to this same copy.", "dungeon-noheal|" + leader.Zone);
@@ -867,6 +876,42 @@ internal sealed partial class UltimusDirectorActor {
     /// the trip, as a player does. Only out of instances, out of battle, and from level 2 (the game locks it before).
     /// False when he can't press it now.
     /// </summary>
+    // When he last stepped out of a dungeon to heal before a rival: once in 30 minutes, so a recall that brought him back
+    // still hurt (it was running out) does not send him out again and again.
+    private DateTime _rivalStepOutAt = DateTime.MinValue;
+
+    /// <summary>
+    /// Out of the dungeon by the Commons button to heal before a rival, with the copy held by Dungeon Recall and marked as
+    /// the one to go back to. True while that runs.
+    /// </summary>
+    private bool StepOutForRival(UltimusMember.Status leader, double share) {
+        var now = DateTime.UtcNow;
+        if (now - _rivalStepOutAt < TimeSpan.FromMinutes(30)) {
+            return now - _rivalStepOutAt < TimeSpan.FromSeconds(30);
+        }
+
+        if (!World.DungeonRecall.Enabled || _partyMate != 0 || leader.Wizard is not { } wizard || string.IsNullOrEmpty(leader.Zone)
+            || CombatDuelComponent.IsInBattle(leader.GlobalId) || (wizard.MagicSchoolBehavior?.Level ?? 1) < 2
+            || now - _hubPressedAt < TimeSpan.FromSeconds(20)) {
+            return false;
+        }
+
+        _rivalStepOutAt = now;
+        _hubPressedAt = now;
+        _buttonFromZone = leader.Zone;
+        _fellIn = (leader.Zone, now);
+        _fellToRival = true;
+        _comebackTries = 0;
+        StopWalking(0);
+        Note("Ultimus", $"{leader.Name} steps out of {UltimusText.Zone(leader.Zone)} by the Commons button at {share:P0} health to heal before " +
+                        "a fight that has beaten him, and comes back to the same copy by Dungeon Recall.", UltimusLink.NOTABLE);
+        Think($"I'm at {share:P0} health and what comes next in {UltimusText.Zone(leader.Zone)} has beaten me before. Nothing in here heals me, " +
+              "so I step out, heal up, and my Dungeon Recall brings me back to this same copy, as a player does.", "rival-stepout|" + leader.Zone);
+        Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromSeconds(1.5), _actors[0], new UltimusMember.PressCommons(), Self);
+
+        return true;
+    }
+
     private bool PressHubButton(UltimusMember.Status leader, string why) {
         if (leader.Wizard is not { } wizard || wizard.ZoneIsInstance || CombatDuelComponent.IsInBattle(leader.GlobalId)
             || (wizard.MagicSchoolBehavior?.Level ?? 1) < 2) {
