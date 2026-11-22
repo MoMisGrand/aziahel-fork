@@ -116,5 +116,21 @@
         }
       }
     ]
+  },
+  {
+    "ZoneName": "DragonSpire/DS_A3_Kings/DS_A3Hub_Academy",
+    "Teleports": [
+      {
+        "TriggerName": "DS_Door_Regular_01",
+        "Teleport": {
+          "m_destinationLoc": "Start",
+          "m_destinationZone": "DragonSpire/DS_A3_Kings/Interiors/DS_School_Fire",
+          "m_exitTeleporter": 0,
+          "m_teleporterTag": 0,
+          "m_teleportType": "TELEPORT_STATIC",
+          "m_transitionID": 0
+        }
+      }
+    ]
   }
 ]
