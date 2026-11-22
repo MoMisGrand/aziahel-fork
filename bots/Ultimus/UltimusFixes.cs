@@ -123,6 +123,14 @@ internal static class UltimusFixes {
                 fix = prefer;
                 flag.Lesson = preferLine ?? "";
             }
+            // Nothing worked here for him, but another bot got free at this very spot: its fix first (Niduus, 2026-11-20: all
+            // bots learn from each other). Mythis got out of a Tower Archives dead end at (6883, -1015) by "another way" at
+            // 06:38 on 2026-11-22; Kitharas Shade, stuck at the same spot at 09:49, found nothing written there, pressed the
+            // Commons button, and walked back into it, over and over for 2.5 hours.
+            else if (flag.Worked.Length == 0 && OtherSeatFix(zone, x, y, allowed, flag.Tried) is { } theirs) {
+                fix = theirs.Fix;
+                flag.Lesson = $"{theirs.Who} got free at this spot with \"{theirs.Fix}\"";
+            }
             // Nothing known at this spot: what worked most in situations like it, anywhere (BotLessons, Niduus, 2026-11-15).
             else if (flag.Worked.Length == 0 && BotShared.BotLessons.Best(situation, allowed.Where(f => f != FLAG).ToList(), flag.Tried, out var line) is { } learned) {
                 fix = learned;
@@ -141,6 +149,44 @@ internal static class UltimusFixes {
 
             return (fix, flag);
         }
+    }
+
+    // Other seats' stuck books, read at most once a minute (seat key -> its flags with a fix that worked).
+    private static readonly Dictionary<string, List<Flag>> s_others = new(StringComparer.Ordinal);
+    private static DateTime s_othersRead = DateTime.MinValue;
+
+    /// <summary>
+    /// A fix that freed another bot (Ultimus, TCO7, Kitharas; not the scouts, whose moves are not a player's) within
+    /// <see cref="ADJACENT"/> of this spot, that this bot may make and has not tried here yet: the one that worked for the
+    /// most bots there. Null when none.
+    /// </summary>
+    private static (string Fix, string Who)? OtherSeatFix(string zone, float x, float y, List<string> allowed, List<string> tried) {
+        var me = UltimusSeat.Current;
+        if (DateTime.UtcNow - s_othersRead > TimeSpan.FromMinutes(1)) {
+            s_othersRead = DateTime.UtcNow;
+            s_others.Clear();
+            foreach (var seat in UltimusSeat.All.Where(s => s != UltimusSeat.Zoom && s != UltimusSeat.Savitar && s != UltimusSeat.TrueForm)) {
+                try {
+                    var path = Path.Combine(seat.Folder, FILE);
+                    if (File.Exists(path) && JsonSerializer.Deserialize<List<Flag>>(File.ReadAllText(path)) is { } read) {
+                        s_others[seat.Key] = [.. read.Where(f => f is not null && !string.IsNullOrEmpty(f.Zone) && !string.IsNullOrEmpty(f.Worked))];
+                    }
+                }
+                catch (Exception) {
+                    // A book being written right now is read again next minute.
+                }
+            }
+        }
+
+        var found = s_others.Where(o => o.Key != me.Key)
+            .SelectMany(o => o.Value.Select(f => (Seat: o.Key, Flag: f)))
+            .Where(o => string.Equals(o.Flag.Zone, zone, StringComparison.OrdinalIgnoreCase) && Far(o.Flag.X, o.Flag.Y, x, y) <= ADJACENT
+                        && o.Flag.Worked != FLAG && allowed.Contains(o.Flag.Worked) && !tried.Contains(o.Flag.Worked))
+            .GroupBy(o => o.Flag.Worked)
+            .OrderByDescending(g => g.Count()).ThenBy(g => g.Min(o => Far(o.Flag.X, o.Flag.Y, x, y)))
+            .FirstOrDefault();
+
+        return found is null ? null : (found.Key, UltimusSeat.ByKey(found.First().Seat)?.Name ?? found.First().Seat);
     }
 
     /// <summary>
