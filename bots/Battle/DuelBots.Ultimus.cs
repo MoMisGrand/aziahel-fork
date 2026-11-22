@@ -531,7 +531,7 @@ internal sealed partial class DuelBots {
             string quip = null;
             try {
                 if (zoom) {
-                    choice = ZoomBattle.Decide(member, circles, D.CombatResolver, D.Duel.m_roundNum);
+                    choice = ZoomBattle.Decide(member, circles, D.CombatResolver, D.Duel.m_roundNum, D.Duel.m_duelID.Full);
                 }
                 else if (trueForm) {
                     choice = TrueFormBattle.Decide(member, circles, D.CombatResolver, D.Duel.m_roundNum);
@@ -594,7 +594,7 @@ internal sealed partial class DuelBots {
 
             using var seat = UltimusSeatOf(circle);
             var hand = who.IsZoom
-                ? ZoomBattle.Deal(circle, D.ActiveSubCircles.ToList(), D.Duel.m_roundNum)
+                ? ZoomBattle.Deal(circle, D.ActiveSubCircles.ToList(), D.Duel.m_roundNum, D.CombatResolver, D.Duel.m_duelID.Full)
                 : TrueFormBattle.Deal(circle, D.ActiveSubCircles.ToList(), D.Duel.m_roundNum);
             if (hand is { } dealt) {
                 D.SendCurrentCombatHand(circle);

@@ -109,10 +109,29 @@ internal static class ZoomBook {
         }
     }
 
+    /// <summary>Writes his readable mind page again (his hive's cheat findings changed).</summary>
+    internal static void Refresh() {
+        lock (s_lock) {
+            WriteText(Load());
+        }
+    }
+
     private static void Save(Mind mind) {
         try {
             Directory.CreateDirectory(Folder);
             File.WriteAllText(Path.Combine(Folder, MIND_JSON), JsonSerializer.Serialize(mind, new JsonSerializerOptions { WriteIndented = true }));
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+            Logger.Warning("Zoom: could not write his mind file: {0}", Logger.Args(e.Message));
+        }
+
+        WriteText(mind);
+    }
+
+    // The readable page (Ahziael, Zoom's mind): broken quests and steps, his cheat findings in short (ZoomHive), scouted quests.
+    private static void WriteText(Mind mind) {
+        try {
+            Directory.CreateDirectory(Folder);
             var lines = new List<string> {
                 $"Zoom's mind: {mind.Broken.Count(b => b.Kind == QUEST)} broken quest(s) and {mind.Broken.Count(b => b.Kind == STEP)} broken quest step(s) " +
                 $"found ahead of Ultimus and the teams, {mind.Scouted.Count} main quest(s) scouted. Newest first.",
@@ -129,6 +148,9 @@ internal static class ZoomBook {
                 lines.Add("");
             }
 
+            lines.AddRange(ZoomHive.Summary());
+            lines.Add($"    (every cheat in full: {ZoomHive.HIVE}/{ZoomHive.CHEATS_TXT})");
+            lines.Add("");
             lines.Add("SCOUTED");
             foreach (var s in Enumerable.Reverse(mind.Scouted)) {
                 lines.Add($"{s.At.ToLocalTime():yyyy-MM-dd HH:mm}  {s.Title} ({s.Quest}): {s.Seconds / 60} min {s.Seconds % 60} s, " +
