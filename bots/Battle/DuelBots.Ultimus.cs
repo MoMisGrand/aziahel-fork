@@ -279,11 +279,20 @@ internal sealed partial class DuelBots {
         // Kitharas threw away Fairy at 46% health (2026-11-21 18:34, 19:41, 19:45).
         var useless = BotCards.Discards(me, circles, BotStyle.Backup, c => UltimusTactics.UselessShield(c, threat))
             .Where(i => cards.Any(c => c.Index == i && !(c.Card.Heal && !c.Card.Hit))).ToList();
+        // Nor is a blade or trap that would still stack (Niduus, 2026-11-21: "normal blades can stack with TC ones, traps
+        // too"): against the Sea Lord he threw away Hex, Spirit Blade and Bladestorm for treasure cards round after round
+        // (20:04-20:16) and kept Minor Crusade. With three or more hits in hand the weakest hit goes before a stacking charm.
+        var foes = circles.Where(c => c.OccupiedTeam != me.OccupiedTeam && c.IsAlive).ToList();
+        bool Stacking(RewrittenAI.Card c) => !c.Hit && ((c.Blade && BotCore.Stacks(me, c)) || (c.Trap && foes.Any(f => BotCore.Stacks(f, c))));
+        bool Keeper(RewrittenAI.Card c) => c.Heal || (c.Shield && !UltimusTactics.UselessShield(c, threat));
+        var hits = cards.Count(c => c.Card.Hit && !c.Card.Natural);
+        int Order(RewrittenAI.Card c) => Keeper(c) && !c.Hit ? 3
+            : Stacking(c) ? (hits >= 3 ? 2 : 1)
+            : c.Hit ? (hits >= 3 ? 1 : 2)
+            : 0;
         var pick = useless.Count > 0
             ? cards.First(c => c.Index == useless[0])
-            : cards.OrderBy(c => c.Card.Hit ? 1 : 0)
-                .ThenBy(c => c.Card.Heal || (c.Card.Shield && !UltimusTactics.UselessShield(c.Card, threat)) ? 1 : 0)
-                .ThenBy(c => c.Card.Rank).FirstOrDefault();
+            : cards.OrderBy(c => Order(c.Card)).ThenBy(c => c.Card.Rank).FirstOrDefault();
 
         return pick.Card is null ? null : (pick.Index, $"discards {pick.Card.Shown}");
     }

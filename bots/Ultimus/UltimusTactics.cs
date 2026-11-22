@@ -219,10 +219,53 @@ internal static class UltimusTactics {
                ?? (style == UltimusFightStyles.HIT_NOW && !SmallHitWastesPips(me, hand, whole, focus, enemies)
                    ? Hit(me, hand, focus, enemies, $"hits at once (\"{UltimusFightStyles.HIT_NOW}\" wins this kind of fight for me){focusWhy}")
                    : null)
+               ?? (style == UltimusFightStyles.STACK_UP ? StackUp(me, hand, whole, focus, enemies, focusWhy) : null)
                ?? HitAll(me, hand, focus, enemies)
                ?? TwoRounds(me, hand, whole, focus, enemies, round, mine - incoming < HURT, focusWhy)
                ?? Pass("saves its pips for a bigger hit");
     }
+
+    /// <summary>
+    /// "Stack up" (Niduus, 2026-11-21: "Train feint, use that feint, then a TC feint into a blade then hit"; "He needs to look
+    /// at the maximum outcome he can pump out"): every blade and trap that still stacks goes on first (BotCore.StackUp; a deck
+    /// blade, its treasure card, its item card and an enchanted one all count), then the biggest hit takes all of it. With a
+    /// stack up and the big hit one pip away, he saves the pip rather than spend the stack on a small hit. Against the Sea
+    /// Lord (6,400 health, 2026-11-21 20:04-20:19) he threw away Hex, Spirit Blade and Bladestorm for treasure cards and
+    /// cast Judgement for about 143 round after round; the one time pips and a blade stood behind it, it landed about 1,609.
+    /// </summary>
+    private static Choice StackUp(CombatDuelSubCircle me, List<InHand> hand, List<InHand> whole, CombatDuelSubCircle focus,
+                                  List<CombatDuelSubCircle> enemies, string focusWhy) {
+        if (focus is null) {
+            return null;
+        }
+
+        if (BotCore.StackUp(me, hand, whole, focus, enemies, Name) is { } plan) {
+            return new(Move.Cast, plan.First.Index, plan.Target, plan.Why + focusWhy);
+        }
+
+        var stacked = BotCore.Stacked(me, focus);
+        if (stacked == 0) {
+            return null;
+        }
+
+        var pips = RewrittenAI.PipsOf(me);
+        var now = hand.Where(h => h.Card.Hit && !h.Card.Natural && !h.Card.HitsAll)
+            .Select(h => (Hand: h, Damage: Estimate(h.Card, me, focus))).OrderByDescending(x => x.Damage).FirstOrDefault();
+        var soon = whole.Where(h => !h.Castable && h.Card.Hit && !h.Card.Natural && !h.Card.HitsAll && h.Card.Rank <= pips + 1)
+            .Select(h => (Hand: h, Damage: Estimate(h.Card, me, focus))).OrderByDescending(x => x.Damage).FirstOrDefault();
+        if (soon.Hand is not null && soon.Damage > now.Damage * STACK_WAIT && now.Damage < RewrittenAI.Health(focus)) {
+            return Pass($"saves its pips for {soon.Hand.Card.Shown} on {stacked} stacked blade(s) and trap(s): about {soon.Damage} next round " +
+                        $"instead of {(now.Hand is null ? "nothing" : $"{now.Hand.Card.Shown} for about {now.Damage}")} now");
+        }
+
+        return now.Hand is null
+            ? null
+            : new(Move.Cast, now.Hand.Index, focus.SlotIndex,
+                $"hits with everything stacked ({stacked} blade(s) and trap(s)): {Name(focus)} with {now.Hand.Card.Shown} (about {now.Damage}){focusWhy}");
+    }
+
+    // How much bigger the hit one pip away must be for him to hold a stack for it.
+    private const double STACK_WAIT = 1.3;
 
     // The share of my health the enemies' habits say they take this round, and who hits hardest (BotCore).
     private static (double Share, string Hardest) Incoming(List<CombatDuelSubCircle> enemies, int round) => BotCore.Incoming(enemies, round, Name);

@@ -118,6 +118,16 @@ internal static class UltimusReplay {
                 return "a style is picked from too few fights or with no real difference";
             }
 
+            // Stacking (Niduus, 2026-11-21): "stack up" is weighed like the others once it has its fights, and a style with
+            // no rival that has enough fights is not called best.
+            var stackWins = new Dictionary<string, UltimusFightStyles.Score> {
+                [UltimusFightStyles.BUILD_UP] = S(30, 1, 300, 28), [UltimusFightStyles.STACK_UP] = S(6, 3, 48, 4),
+            };
+            var stackOnly = new Dictionary<string, UltimusFightStyles.Score> { [UltimusFightStyles.STACK_UP] = S(9, 2, 70, 7) };
+            if (UltimusFightStyles.Best(stackWins) != UltimusFightStyles.STACK_UP || UltimusFightStyles.Best(stackOnly) is not null) {
+                return "\"stack up\" is not weighed against the other styles";
+            }
+
             return UltimusFightStyles.KindOf(1, 300, 1000) == "1 enemy, weaker" && UltimusFightStyles.KindOf(4, 5000, 1000) == "3+ enemies, stronger"
                 ? null : "fight kinds are sorted wrong";
         }),
@@ -217,7 +227,9 @@ internal static class UltimusReplay {
             var seaLord = new BotCards.Situation("Storm", true, 1) { Rival = true };
             var (hits, support) = BotCards.SoloMix(seaLord);
             var (longHits, _) = BotCards.SoloMix(seaLord with { LongFights = true });
-            return hits >= BotCards.SOLO_HITS && support >= 0.25 && longHits > hits ? null
+            // Heals and shields keep at least a sixth of the deck; since Niduus's stacking asks (2026-11-21) blades and traps
+            // take the larger part of the support.
+            return hits >= BotCards.SOLO_HITS && support >= 0.16 && longHits > hits ? null
                 : $"his main deck is not mostly hits: {hits:P0} hits, {support:P0} heals and shields, {longHits:P0} hits when it outlasts him";
         }),
         new("Bazaar treasure cards were all hits and a trap, no shield or heal (2026-11-21)", () =>
