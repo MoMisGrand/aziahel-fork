@@ -211,6 +211,19 @@ internal static class UltimusTactics {
             };
         }
 
+        // A big hit saved up (its pips) and a burn that ticks before my next card: a shield first, else a heal, while the
+        // two together would take me under my heal line (Sea Lord 2026-11-21 21:23: 13 pips' worth saved, a 1,592 hit on
+        // 1,638 health while he stacked Bladestorm, then Heck Hound's burn knocked him out at 4 health before his shield).
+        var (big, bigWho) = BotCore.BigHitReady(enemies, Name);
+        var burn = BotCore.BurnOn(me);
+        if (foreseen is null && mine >= HURT && big > incoming && mine - big - burn < DANGER
+            && (Shield(me, hand, [me], threat) ?? Heal(me, hand, [me])) is { } braced) {
+            foreseen = braced with {
+                Why = $"{braced.Why}: {bigWho} holds the pips for its big hit (up to {big:P0} of my health)" +
+                      (burn > 0 ? $" and a burn on me ticks for {burn:P0}" : "") + $", which would take me from {mine:P0} under {DANGER:P0}, so I brace first",
+            };
+        }
+
         return (mine < DANGER ? Heal(me, hand, myHurt) : null)
                ?? Finish(me, hand, enemies)
                ?? Heal(me, hand, playersInDanger)
