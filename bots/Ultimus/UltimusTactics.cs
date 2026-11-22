@@ -277,8 +277,17 @@ internal static class UltimusTactics {
 
         if (x.Hand is not null && BotCore.PipSlotsLeft(me) > 0 && now.Damage < health && x.Full > Math.Max(now.Damage, x.Now) * FULL_PIP_WAIT
             && RewrittenAI.HealthShare(me) >= HURT) {
-            return Pass($"saves its pips for {x.Hand.Card.Shown} at full pips: about {x.Now} now, about {x.Full} with every pip slot full " +
-                        $"({stacked} blade(s) and trap(s) stacked; {Name(focus)} has {health:N0} health)");
+            // The pips it needs to end the foe, counted from all he knows (Niduus, 2026-11-21: "He should mathmatically take all
+            // his damage into account ... saving and surviving for a Judge that kills"): his damage and pierce, every blade and
+            // trap and shield on both sides, the foe's resist and health (RewrittenAI.Estimate, BotCore.Estimate). It is cast
+            // as soon as his pips reach that number (above), not held for a full row.
+            var full = BotCore.FullPips(x.Hand.Card, me);
+            var kills = Enumerable.Range(1, Math.Max(1, full)).FirstOrDefault(k => BotCore.Estimate(x.Hand.Card, me, focus, xPips: k) >= health);
+            return Pass(kills > 0
+                ? $"saves its pips for {x.Hand.Card.Shown}: at {kills} pips it ends {Name(focus)} ({health:N0} health; about {x.Now} now, " +
+                  $"{stacked} blade(s) and trap(s) stacked), so I hold until then"
+                : $"saves its pips for {x.Hand.Card.Shown} at full pips: about {x.Now} now, about {x.Full} with every pip slot full " +
+                  $"({stacked} blade(s) and trap(s) stacked; {Name(focus)} has {health:N0} health, more than one hit even then)");
         }
 
         if (stacked == 0) {
