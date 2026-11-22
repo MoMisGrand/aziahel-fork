@@ -175,6 +175,10 @@ internal static class BotCore {
             lines.Add((saved.Damage * later, null, -1, $"saving my pips now, then {saved.Hand.Card.Shown} (about {saved.Damage:0})"));
         }
 
+        // A line worth nothing (a hit the target is immune to, or that its wards soak whole) is never played: it spends the pips
+        // and the turn for nothing, and the heal, shield or pass after it is the better move. Ultimus against the Sea Lord,
+        // 2026-11-21 18:17: round 3, "Ice Hound now (about 0)", the boss lost no health, and its next hits took him to half.
+        lines.RemoveAll(l => l.Value <= 0);
         if (lines.Count == 0) {
             return null;
         }
