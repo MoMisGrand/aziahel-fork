@@ -133,9 +133,23 @@ internal sealed partial class UltimusDirectorActor {
 
     // A talk step whose person stands in this area, on his floor and ground, with the walk there going through no door
     // still shut (one that is shut is the floor's to open first, as in Big Ben).
-    private static bool TalkHere(UltimusMember.Status leader, UltimusPlanner.Target target, BotFloors.Book book, BotFloors.Live live) {
-        if (target is not { Kind: UltimusPlanner.TALK, GlobalId: not 0 } || !live.SameGround(target.X, target.Y)
-            || !BotFloors.OnFloor(leader.Z, TargetZ(leader, target))) {
+    private static bool TalkHere(UltimusMember.Status leader, UltimusPlanner.Target target, BotFloors.Book book, BotFloors.Live live)
+        => target is { Kind: UltimusPlanner.TALK, GlobalId: not 0 } && WayClear(leader, target, book, live);
+
+    /// <summary>
+    /// The way out of this area toward his step (an exit or door here) is a walk on his floor and ground through no door
+    /// still shut: no puzzle of this floor stands between him and it, so he goes. Katzenstein's Lab, 2026-11-21 22:00-22:12:
+    /// Libra, right by Watson on the open west side, was sent east to the plaques that open Gate02 (2) (the next quest's
+    /// gate, "Gate is Enough") though Firegut's teleporter lay west with nothing shut on the way; after the plaques he stood
+    /// on the gates' side of the lab, the way back to Firegut went through the shut Gate02, and he waited there 11 minutes
+    /// (flagged 31 times at that spot today, with Umbella, Hydra and Consumer).
+    /// </summary>
+    private static bool ExitClear(UltimusMember.Status leader, UltimusPlanner.Target target, BotFloors.Book book, BotFloors.Live live)
+        => target is { Kind: UltimusPlanner.EXIT or UltimusPlanner.DOOR } && !(target.Key ?? "").StartsWith("floor|", StringComparison.Ordinal)
+           && WayClear(leader, target, book, live);
+
+    private static bool WayClear(UltimusMember.Status leader, UltimusPlanner.Target target, BotFloors.Book book, BotFloors.Live live) {
+        if (!live.SameGround(target.X, target.Y) || !BotFloors.OnFloor(leader.Z, TargetZ(leader, target))) {
             return false;
         }
 
@@ -277,6 +291,17 @@ internal sealed partial class UltimusDirectorActor {
         // stood by Emperor's Retreat's start for "Guardians at the Gate", and floor duty sent them to the far Snake obelisk
         // every other second, for two hours, until the watchdog stopped them).
         if (TalkHere(leader, target, book, live)) {
+            _floorOn = null;
+            return null;
+        }
+
+        // Likewise the way on toward his step, when nothing shut stands between (ExitClear): another quest's puzzle can wait.
+        if (ExitClear(leader, target, book, live)) {
+            if (_floorOn is not null) {
+                Think($"The way to {target.What} is open from here, with no shut door on it, so I go there now; this floor's " +
+                      "puzzles are not on my way.", "floor-clear|" + target.Key);
+            }
+
             _floorOn = null;
             return null;
         }
