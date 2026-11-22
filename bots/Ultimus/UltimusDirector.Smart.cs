@@ -171,6 +171,15 @@ internal sealed partial class UltimusDirectorActor {
             // Its creature here was stood on and started no battle: left alone, as everywhere else (BotShared.DudCreatures).
             // Idunn, Shirataki Temple (2026-11-22 02:17-02:27): this path picked Shoji again right after she set it aside,
             // flip-flopping with the way out 700 times in ten minutes; ResetCopy now starts the copy over for it (QuickReset).
+            // The step itself is left alone too, for as long as its creature: the step's next look picked "where they spawn"
+            // (no creature) or another copy of it, so Lumeria and Crimes of Kitharas still turned between Shoji and the way out
+            // every half second (2026-11-22 11:52-12:00, bots-v175).
+            if (step.Kind == UltimusPlanner.FIGHT && step.GlobalId != 0 && BotShared.DudCreatures.IsDud(step.GlobalId) && !DudStep(step)
+                && !string.IsNullOrEmpty(step.Quest)) {
+                _dudSteps[StepKey(step)] = DateTime.UtcNow + BotShared.DudCreatures.LeaveFor;
+                _dudStepAt ??= (leader.Zone ?? "", DateTime.UtcNow, StepKey(step));
+            }
+
             if (step.Kind == UltimusPlanner.FIGHT && (step.GlobalId != 0 && BotShared.DudCreatures.IsDud(step.GlobalId) || DudStep(step))) {
                 continue;
             }
