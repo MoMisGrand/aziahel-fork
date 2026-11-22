@@ -42,6 +42,11 @@ internal sealed partial class UltimusDirectorActor {
     private (string Zone, DateTime At)? _fellIn;
     private static readonly TimeSpan s_comebackWithin = TimeSpan.FromMinutes(20);
 
+    // The fall was to a creature that has beaten him before (UltimusFoes): he goes back in at his tough-foe health
+    // (Quest.ToughFoeHealth), not COMEBACK_HEALTH. At 60% he went back to Vladimir Darkflame by the recall, met him at 61%
+    // and lost again (his log, 2026-11-22, "Stay for Detention", 13 losses).
+    private bool _fellToRival;
+
     private DateTime _comebackSentAt = DateTime.MinValue;
     private int _comebackTries;
 
@@ -87,7 +92,16 @@ internal sealed partial class UltimusDirectorActor {
         var walkingIn = _target is { } next && !string.IsNullOrEmpty(next.To) && OverlayQuestTracker.SameZone(next.To, fell.Zone);
         // Walking in at any health is never better than the recall (16:38, same day: under a quarter of his health he
         // walked in at floor one again), so then he always takes it.
-        if (share < COMEBACK_HEALTH && !walkingIn && !(runningOut && share >= 0.25)) {
+        var wanted = _fellToRival ? Math.Max(COMEBACK_HEALTH, UltimusPlaybook.Value("Quest.ToughFoeHealth")) : COMEBACK_HEALTH;
+        // Not for a rival: his heal before it comes next (UltimusDirector.Health.cs), and the recall waits for that.
+        if (share < wanted && !(walkingIn && !_fellToRival) && !(runningOut && share >= 0.25)) {
+            if (_fellToRival && share >= COMEBACK_HEALTH) {
+                _doing = "healing up before going back to a rival by Dungeon Recall";
+                Think($"I'm at {share:P0} health. What beat me in {UltimusText.Zone(fell.Zone)} has beaten me before, so I heal up to " +
+                      $"{wanted:P0} ({UltimusPlaybook.Cite("Quest.ToughFoeHealth")}) before my Dungeon Recall takes me back to it.",
+                    "comeback-rival|" + fell.Zone + "|" + (int) (share * 10));
+            }
+
             return false;
         }
 
