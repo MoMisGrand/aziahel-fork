@@ -263,6 +263,15 @@ internal sealed class InteractServiceMementoComponent(ZoneEntity entity)
             }
         }
 
+        // The list can be one built for another wizard (a shared area): a door click from a wizard whose step says to use
+        // this object counts for the step instead (see RefreshServiceMomento).
+        if (serviceComponent is InteractDoorTeleportComponent && playerCharacter is not null
+            && _serviceComponents.OfType<InteractQuestSelectComponent>().FirstOrDefault() is { } questUse
+            && OptionsFor(questUse, playerCharacter).Count > 0) {
+            serviceComponent = questUse;
+            serviceIndex = _componentFirstOption.TryGetValue(questUse, out var questFirst) ? (uint) questFirst : 0;
+        }
+
         if (serviceComponent is null) {
             Logger.Warning("No component owns service index {0} for NPC {1} with service name {2}",
                 Logger.Args(serviceIndex, Entity.ActiveGameObject.m_debugName, serviceName));
@@ -505,14 +514,24 @@ internal sealed class InteractServiceMementoComponent(ZoneEntity entity)
         // object's own use when that sends the wizard through (it plays the arch lighting up too), else the door.
         var door = _serviceComponents.OfType<InteractDoorTeleportComponent>().FirstOrDefault();
         var objectState = _serviceComponents.OfType<InteractObjectStateComponent>().FirstOrDefault();
-        IServiceComponent dropped = null;
+        var dropped = new HashSet<IServiceComponent>();
         if (door is not null && objectState is not null && playerCharacter is not null
             && OptionsFor(door, playerCharacter).Count > 0 && OptionsFor(objectState, playerCharacter).Count > 0) {
-            dropped = objectState.UseTeleports(playerCharacter) ? door : objectState;
+            dropped.Add(objectState.UseTeleports(playerCharacter) ? door : objectState);
+        }
+
+        // An object that is a door and also the thing a wizard's quest step says to use (Dragonspyre's Time Crystal in the
+        // Hall of Time: "The Time is Right" says use it, and its other option sends a wizard to the Grand Chasm's past)
+        // counts for the step first, as live. The door went first, so the step never counted and Ultimus went to the past
+        // and back 31 times in 20 minutes (2026-11-21 23:10-23:30). Once the step is done, the door is the only option again.
+        var questUse = _serviceComponents.OfType<InteractQuestSelectComponent>().FirstOrDefault();
+        if (door is not null && questUse is not null && playerCharacter is not null
+            && OptionsFor(door, playerCharacter).Count > 0 && OptionsFor(questUse, playerCharacter).Count > 0) {
+            dropped.Add(door);
         }
 
         foreach (var component in _serviceComponents) {
-            var componentOptions = component == dropped ? [] : OptionsFor(component, playerCharacter);
+            var componentOptions = dropped.Contains(component) ? [] : OptionsFor(component, playerCharacter);
             if (componentOptions.Count > 0) {
                 componentsWithOptions.Add(component);
             }
