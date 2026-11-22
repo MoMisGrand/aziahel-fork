@@ -180,6 +180,12 @@ internal sealed class ZoneObjectSupervisor(Core.Zone zone) : ZoneEntitySuperviso
             return;
         }
 
+        if (message.OwnMovesChanged) {
+            ApplyOwnMoves();
+
+            return;
+        }
+
         foreach (var placed in _placed.Where(p => message.Removed.Contains(p.Object.m_globalID.Full)).ToList()) {
             if (placed.Actor is not null) {
                 RemoveEntity(placed.Actor, placed.Object);
@@ -211,6 +217,26 @@ internal sealed class ZoneObjectSupervisor(Core.Zone zone) : ZoneEntitySuperviso
 
             var actor = CreateEntityActor(coreObject, template, objectInfo, $"_{++_addedWhileRunning}");
             _placed.Add(new PlacedObject(objectInfo, template, coreObject, actor));
+        }
+    }
+
+    // Blood Moon moved some of the zone's own objects (ZoneMoves): each one that changed place leaves the players and comes
+    // back at its new place (one that is off or taken away by a trigger just keeps the new place for when it returns).
+    private void ApplyOwnMoves() {
+        var moved = 0;
+        foreach (var placed in _placed) {
+            if (!Imlight.CoreLib.Game.Zone.Core.ZoneMoves.Apply(placed.Info) || placed.Actor is null) {
+                continue;
+            }
+
+            RemoveEntity(placed.Actor, placed.Object);
+            placed.Object = CoreObjectFactory.FinalizeCoreObject(placed.Info, placed.Template);
+            placed.Actor = placed.Object is null ? null : CreateEntityActor(placed.Object, placed.Template, placed.Info, $"_{++_addedWhileRunning}");
+            moved++;
+        }
+
+        if (moved > 0) {
+            Logger.Information("Zone {0}: {1} of its own objects moved (Blood Moon).", Logger.Args(Zone.ZonePath, moved));
         }
     }
 

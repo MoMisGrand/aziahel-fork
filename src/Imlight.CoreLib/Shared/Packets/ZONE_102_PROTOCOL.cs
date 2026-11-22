@@ -1288,6 +1288,10 @@ public class ZONE_102_PROTOCOL : IServerProtocol {
         // and each one that is on again comes back.
         public bool SwitchesChanged;
 
+        // Blood Moon's moves of the zones' own objects changed (Game/Zone/Core/ZoneMoves, Customs/ZoneMoves.json): each
+        // object whose place changed leaves the players and comes back at its new place.
+        public bool OwnMovesChanged;
+
     }
 
     /// <summary>
