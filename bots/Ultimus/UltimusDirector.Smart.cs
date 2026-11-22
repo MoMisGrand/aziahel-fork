@@ -143,7 +143,47 @@ internal sealed partial class UltimusDirectorActor {
     // The dungeon's own quest being done first, kept while in the dungeon (any of its rooms).
     private string _dungeonFirstQuest;
 
+    // The dungeon's own quest taken up and dropped again look after look, with no progress: left alone for 10 minutes, so the
+    // story's way on goes. Lumeria and Crimes of Kitharas still turned between Shoji ("River Temple", a spot 290 away that
+    // they never reached) and the way out of Shirataki Temple every half second, 130 times a minute, for over three hours
+    // (2026-11-22 10:09-13:30), through every narrower fix (#1691, #1694): whatever made the step come and go, the turning
+    // itself is the sign.
+    private string _dungeonFirstPrev;
+    private readonly Dictionary<string, List<DateTime>> _dungeonFirstDrops = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, DateTime> _dungeonFirstSkip = new(StringComparer.OrdinalIgnoreCase);
+    private const int DUNGEON_FIRST_DROPS = 8;
+    private static readonly TimeSpan s_dungeonFirstWindow = TimeSpan.FromMinutes(2);
+    private static readonly TimeSpan s_dungeonFirstSkipFor = TimeSpan.FromMinutes(10);
+
     private UltimusPlanner.Target DungeonQuestFirst(List<UltimusMember.Status> group, UltimusPlanner.Target main) {
+        var step = DungeonQuestFirstPick(group, main);
+        var now = DateTime.UtcNow;
+        if (_dungeonFirstPrev is { } prev && !string.Equals(prev, step?.Quest, StringComparison.OrdinalIgnoreCase)) {
+            if (!_dungeonFirstDrops.TryGetValue(prev, out var drops)) {
+                _dungeonFirstDrops[prev] = drops = [];
+            }
+
+            drops.RemoveAll(d => now - d > s_dungeonFirstWindow || d < _realProgressAt);
+            drops.Add(now);
+            if (drops.Count >= DUNGEON_FIRST_DROPS && now - _realProgressAt > TimeSpan.FromMinutes(1)) {
+                drops.Clear();
+                _dungeonFirstSkip[prev] = now + s_dungeonFirstSkipFor;
+                Think($"I keep turning between \"{UltimusText.Title(prev)}\" and {main?.What ?? "my story step"} and get nowhere: I leave " +
+                      $"\"{UltimusText.Title(prev)}\" alone for {s_dungeonFirstSkipFor.TotalMinutes:0} minutes and go on.", "dungeonfirst-skip|" + prev);
+                Note(group[0].Role, $"{group[0].Name} sets \"{UltimusText.Title(prev)}\" aside for {s_dungeonFirstSkipFor.TotalMinutes:0} minutes: " +
+                                    "it kept turning between it and the way on.");
+                if (step is not null && string.Equals(step.Quest, prev, StringComparison.OrdinalIgnoreCase)) {
+                    step = null;
+                }
+            }
+        }
+
+        _dungeonFirstPrev = step?.Quest;
+
+        return step;
+    }
+
+    private UltimusPlanner.Target DungeonQuestFirstPick(List<UltimusMember.Status> group, UltimusPlanner.Target main) {
         var leader = group[0];
         if (leader.Wizard is not { ZoneIsInstance: true } wizard || string.IsNullOrEmpty(leader.Zone)) {
             _dungeonFirstQuest = null;
@@ -160,6 +200,10 @@ internal sealed partial class UltimusDirectorActor {
         var held = wizard.QuestBehavior?.CurrentQuestInstances?.Where(q => q is not null && own.Contains(q.QuestName)
             && !string.Equals(q.QuestName, main?.Quest ?? _currentQuest, StringComparison.OrdinalIgnoreCase)).Select(q => q.QuestName).ToList() ?? [];
         foreach (var name in held) {
+            if (_dungeonFirstSkip.TryGetValue(name, out var skipUntil) && DateTime.UtcNow < skipUntil) {
+                continue;
+            }
+
             var step = UltimusPlanner.ForQuest(group, name);
             if (step is null || step.Problem.Length > 0 || step.Kind is UltimusPlanner.WAIT or UltimusPlanner.NONE) {
                 // It sent him into this room, and here it has nothing he can do: that way is a dead end for this step.
