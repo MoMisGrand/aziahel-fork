@@ -39,7 +39,14 @@ internal sealed partial class UltimusDirectorActor {
     private readonly Dictionary<string, int> _floorTries = new(StringComparer.Ordinal);
 
     // The floor duty spot he is on his way to, and since when (UnreachableFor).
-    private (string Key, DateTime Since) _floorChase;
+    private (string Key, DateTime Since, DateTime Last) _floorChase;
+
+    // A chase that was not followed for this long starts over. Dungeon circles share one trigger name from room to room
+    // ("Activator Volume-ForceCombat"), so the chase begun in one room carried on into the next: in Lord Obsidian's Tomb on
+    // 2026-11-22 Ultimus fought room 2's circle at 05:19, and on walking into room 4 at 05:26 he "gave up" its circle at
+    // once ("no way there in 5 minutes"). That circle brings out the Banshee whose defeat opens the gauntlet door, so the
+    // door stayed shut and he stood at it for 20 minutes, twice. Now a new room, or a pause in the chase, starts the clock again.
+    private static readonly TimeSpan ChaseGap = TimeSpan.FromMinutes(2);
     private static readonly TimeSpan UnreachableFor = TimeSpan.FromMinutes(5);
     private string _floorBehindSaid;
     private string _floorZone = "";
@@ -244,6 +251,7 @@ internal sealed partial class UltimusDirectorActor {
         var zoneKey = leader.Zone + "|" + (leader.ZoneActor?.Path.ToString() ?? "");
         if (zoneKey != _floorZone) {
             _floorZone = zoneKey;
+            _floorChase = default;
             _floorTries.Clear();
             _floorPulled.Clear();
             _floorOn = null;
@@ -408,10 +416,11 @@ internal sealed partial class UltimusDirectorActor {
         // A spot he has had for minutes and never reached counts as tried out: Katzenstein's Lab's "Gate 1 Open" lies past its own
         // gate, a floor below, with no way to it from the entrance side; Cyndr stood 20 minutes on it, twice (2026-11-20).
         if (far > BotFloors.ON_SPOT && _floorOn != duty.Key) {
-            if (_floorChase.Key != duty.Key) {
-                _floorChase = (duty.Key, DateTime.UtcNow);
+            var now = DateTime.UtcNow;
+            if (_floorChase.Key != duty.Key || now - _floorChase.Last > ChaseGap) {
+                _floorChase = (duty.Key, now, now);
             }
-            else if (DateTime.UtcNow - _floorChase.Since > UnreachableFor) {
+            else if ((_floorChase.Last = now) - _floorChase.Since > UnreachableFor) {
                 _floorTries[duty.Key] = BotFloors.TRIES;
                 _floorChase = default;
                 Note("Ultimus", $"{leader.Name} gives up on {duty.What}: no way there in {UnreachableFor.TotalMinutes:0} minutes, so it is not his to step on from here.", UltimusLink.ABNORMAL);
