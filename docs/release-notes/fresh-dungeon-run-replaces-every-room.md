@@ -1,0 +1,4 @@
+Fixed: Walking back into a dungeon gives fresh rooms all the way through
+When a wizard left a dungeon partway through and then walked back in through its front entrance, only the first room started over. The later rooms were the old ones, kept for that wizard's Dungeon Recall, so a door whose creature was already beaten stayed shut for good and the run could not go on. Cyndr stood by the same shut door in the Plaza of Conquests gauntlet for hours. Now a fresh run through the front entrance clears out every empty room of the last run, even while the Dungeon Recall is still showing, so every room starts over.
+Where: Any dungeon with several rooms, such as the Plaza of Conquests gauntlet in Dragonspyre. No setting.
+Test: Go two or three rooms into the Plaza of Conquests gauntlet, press the Commons button, and walk straight back in through Halina Warhawk's Tower. Every room should have its creatures and shut doors again.
