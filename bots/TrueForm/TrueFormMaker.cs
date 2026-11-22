@@ -50,8 +50,23 @@ internal static class TrueFormMaker {
 
     private const string DRESSED_FILE = "dressed.txt";
 
+    /// <summary>
+    /// One maker at a time: True Form and Zoom are both made at server start, and the gear picks share BotGear's settings
+    /// for the one being dressed (its weave, its pushes, its socket worth).
+    /// </summary>
+    internal static readonly object Gate = new();
+
+    // The folder of the bot being dressed now: Zoom's when it is his turn (ZoomMaker), else True Form's.
+    private static string MakerFolder => (UltimusSeat.Current.IsZoom ? UltimusSeat.Zoom : UltimusSeat.TrueForm).Folder;
+
     /// <summary>Makes him ready (he must be logged out); writes what it did to the server log.</summary>
     internal static void Prepare(ulong charId) {
+        lock (Gate) {
+            PrepareNow(charId);
+        }
+    }
+
+    private static void PrepareNow(ulong charId) {
         var wizard = WizardCollection.GetCharacter(charId);
         if (wizard is null) {
             Logger.Warning("True Form: his wizard {0} was not found to make ready.", Logger.Args(charId));
@@ -153,7 +168,7 @@ internal static class TrueFormMaker {
     // (index 0), no face paint or accessory; eyebrow and lip colors as they are. Done once (look.txt), so a look Niduus
     // gives him later at the Magic Mirror stays.
     private static void MakeMale(Wizard wizard) {
-        var marker = Path.Combine(UltimusSeat.TrueForm.Folder, LOOK_FILE);
+        var marker = Path.Combine(MakerFolder, LOOK_FILE);
         if (wizard.WizardAvatar is not { } avatar || (File.Exists(marker) && File.ReadAllText(marker).Trim() == BASE_LOOK)) {
             return;
         }
@@ -164,7 +179,7 @@ internal static class TrueFormMaker {
         wizard.MirrorStartLook = null;
         WizardCollection.UpdateCharacterMirrorLook(wizard);
         try {
-            Directory.CreateDirectory(UltimusSeat.TrueForm.Folder);
+            Directory.CreateDirectory(MakerFolder);
             File.WriteAllText(marker, BASE_LOOK);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
@@ -724,7 +739,7 @@ internal static class TrueFormMaker {
     }
 
     // The best gear per slot for a Myth wizard of his level; put on when what he wears differs.
-    private static void Dress(Wizard wizard, int level, string school, BotStyle style, string statSchool) {
+    internal static void Dress(Wizard wizard, int level, string school, BotStyle style, string statSchool) {
         // The gear list is read on the first ask, in the background: up to a minute for it.
         for (var i = 0; i < 120 && BotGear.Catalog.Count == 0; i++) {
             System.Threading.Thread.Sleep(500);
@@ -912,7 +927,7 @@ internal static class TrueFormMaker {
         }
 
         var outfit = string.Join(",", best.OrderBy(b => b.Key).Select(b => b.Value.Id));
-        var marker = Path.Combine(UltimusSeat.TrueForm.Folder, DRESSED_FILE);
+        var marker = Path.Combine(MakerFolder, DRESSED_FILE);
         outfit = $"{school}{(statSchool.Length == 0 ? " universal" : "")} {style}: {outfit}";
         var worn = BotGear.Slots.Select(s => (Slot: s, Item: wizard.EquipmentBehavior?.GetItemInSlot(s))).ToList();
         var wearsIt = best.All(b => worn.FirstOrDefault(w => w.Slot == b.Key).Item is { } item && (uint) Math.Min((ulong) item.m_templateID, uint.MaxValue) == b.Value.Id);
@@ -970,9 +985,9 @@ internal static class TrueFormMaker {
         }
 
         try {
-            Directory.CreateDirectory(UltimusSeat.TrueForm.Folder);
+            Directory.CreateDirectory(MakerFolder);
             File.WriteAllText(marker, outfit);
-            File.WriteAllLines(Path.Combine(UltimusSeat.TrueForm.Folder, "gear.txt"), BotGear.Describe(wizard));
+            File.WriteAllLines(Path.Combine(MakerFolder, "gear.txt"), BotGear.Describe(wizard));
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
             Logger.Debug("True Form: could not write his gear list: {0}", Logger.Args(e.Message));

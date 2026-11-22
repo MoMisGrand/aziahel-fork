@@ -160,6 +160,20 @@ internal sealed partial class UltimusDirectorActor {
         }
 
         _fight = null;
+        // Zoom one-shots with dev spells: his fights are no player's, so none of them goes into what the bots learn of
+        // creatures, styles or card mixes. Only which creature counted for a step is kept (that is the game's, not his).
+        if (_seat.IsZoom) {
+            UltimusFights.Take(me.GlobalId);
+            UltimusFightStyles.End(me.GlobalId, won, 0, 0, count: false);
+            if (won && _dropBefore is { } zoomBefore && fight.Template != 0) {
+                var counted = UltimusDrops.StepCount(me.Wizard, zoomBefore.Quest, zoomBefore.Goal) > zoomBefore.Count;
+                UltimusDrops.Fought(zoomBefore.Quest, zoomBefore.Goal, fight.Template, fight.Name, me.Zone, counted);
+            }
+
+            _dropBefore = null;
+            return;
+        }
+
         var lostShare = Math.Max(0, fight.Health - (won ? HealthShare(me) : 0));
         var seconds = (DateTime.UtcNow - fight.Since).TotalSeconds;
         // What really stood there, read from the battle: a fight he did not pick gets its real foe (it was not written at

@@ -453,11 +453,14 @@ internal sealed partial class DuelBots {
 
             // True Form's hand is dealt from every spell each round (TrueFormBattle): no draws, digs or discards.
             var trueForm = UltimusSeat.Current.IsTrueForm;
+            // Zoom, the quest scout, is dealt his hand too (ZoomBattle): one-shots and his biggest hits.
+            var zoom = UltimusSeat.Current.IsZoom;
+            var dealt = trueForm || zoom;
 
             // The card thrown away to make room for a treasure card is not out of his hand yet: he picks once it is, on the
             // hand as it really is (Niduus, 2026-11-16: "Ultimus just hit himself": he looked again before the discard
             // landed, and his pick's place in the hand then held another card, cast on himself).
-            if (!trueForm && !message.Deadline && _ultimusRoomMade.Contains((D.Duel.m_roundNum, member.SlotIndex)) && member.HandCount >= 7
+            if (!dealt && !message.Deadline && _ultimusRoomMade.Contains((D.Duel.m_roundNum, member.SlotIndex)) && member.HandCount >= 7
                 && !_ultimusDrew.Contains((D.Duel.m_roundNum, member.SlotIndex))) {
                 D.BotTimer(ULTIMUS_THINK_KEY, new UltimusThink(D.Duel.m_roundNum, false), TimeSpan.FromSeconds(1));
                 continue;
@@ -466,8 +469,8 @@ internal sealed partial class DuelBots {
             // A tough fight, treasure cards waiting and a full hand: the Draw button does nothing with seven cards in hand, so
             // he had never drawn one (Niduus, 2026-11-16: "if he's not using Treasure cards in battle, have him use them";
             // his logs: no draw in any fight). As a player does, he throws away his least useful card first, then draws.
-            var digging = !trueForm && UltimusDigForEnchant(member, circles);
-            if (!trueForm && !message.Deadline && ((UltimusToughFight(member, circles) && member.VaultRemainingCount > 0 && (member.TreasureCardsInHand == 0 || UltimusOutOfHits(member))) || digging)
+            var digging = !dealt && UltimusDigForEnchant(member, circles);
+            if (!dealt && !message.Deadline && ((UltimusToughFight(member, circles) && member.VaultRemainingCount > 0 && (member.TreasureCardsInHand == 0 || UltimusOutOfHits(member))) || digging)
                 && member.HandCount >= 7 && !_ultimusDrew.Contains((D.Duel.m_roundNum, member.SlotIndex))
                 && UltimusRoomForTreasure(member, circles) is { } room && _ultimusRoomMade.Add((D.Duel.m_roundNum, member.SlotIndex))
                 && UltimusDirector.ActorOf(UltimusRole(member)) is { } maker) {
@@ -484,7 +487,7 @@ internal sealed partial class DuelBots {
             // Niduus, 2026-11-15: "Let him buy a few treasure cards and play them in tough fights". In a tough fight, with
             // treasure cards in his deck, none in hand and room for one, he presses Draw (his own game's button, once a
             // round) and looks at the hand again a moment later, when the card is in it.
-            if (!trueForm && !message.Deadline && ((UltimusToughFight(member, circles) && member.VaultRemainingCount > 0 && (member.TreasureCardsInHand == 0 || UltimusOutOfHits(member))) || digging)
+            if (!dealt && !message.Deadline && ((UltimusToughFight(member, circles) && member.VaultRemainingCount > 0 && (member.TreasureCardsInHand == 0 || UltimusOutOfHits(member))) || digging)
                 && member.HandCount < 7 && _ultimusDrew.Add((D.Duel.m_roundNum, member.SlotIndex))
                 && UltimusDirector.ActorOf(UltimusRole(member)) is { } drawer) {
                 if (digging) {
@@ -502,7 +505,7 @@ internal sealed partial class DuelBots {
             var moves = new List<BotBattle.Move>();
 
             // First, once a round, the cards a solo wizard won't play go, as a player discards.
-            if (!trueForm && _ultimusDiscarded.Add((D.Duel.m_roundNum, member.SlotIndex))) {
+            if (!dealt && _ultimusDiscarded.Add((D.Duel.m_roundNum, member.SlotIndex))) {
                 var threat = UltimusScout.InBattle(circles.Where(c => c.OccupiedTeam != member.OccupiedTeam));
                 // The schools he is hit with go into his training plan (a school shield against the one he meets most).
                 BotTrainingPlan.Faced(member.ParticipantObject?.m_globalID.Full ?? 0, threat.Schools);
@@ -527,7 +530,10 @@ internal sealed partial class DuelBots {
             UltimusTactics.Choice choice;
             string quip = null;
             try {
-                if (trueForm) {
+                if (zoom) {
+                    choice = ZoomBattle.Decide(member, circles, D.CombatResolver, D.Duel.m_roundNum);
+                }
+                else if (trueForm) {
                     choice = TrueFormBattle.Decide(member, circles, D.CombatResolver, D.Duel.m_roundNum);
                     quip = TrueFormBattle.Quip;
                 }
@@ -581,12 +587,16 @@ internal sealed partial class DuelBots {
     // new hand goes to his game at once, so his clicks by hand place land on the right card.
     private void TrueFormDeal(CombatDuelSubCircle circle) {
         try {
-            if (UltimusSeat.OfGlobal(circle?.ParticipantObject?.m_globalID.Full ?? 0) is not { IsTrueForm: true }) {
+            var who = UltimusSeat.OfGlobal(circle?.ParticipantObject?.m_globalID.Full ?? 0);
+            if (who is not ({ IsTrueForm: true } or { IsZoom: true })) {
                 return;
             }
 
             using var seat = UltimusSeatOf(circle);
-            if (TrueFormBattle.Deal(circle, D.ActiveSubCircles.ToList(), D.Duel.m_roundNum) is { } dealt) {
+            var hand = who.IsZoom
+                ? ZoomBattle.Deal(circle, D.ActiveSubCircles.ToList(), D.Duel.m_roundNum)
+                : TrueFormBattle.Deal(circle, D.ActiveSubCircles.ToList(), D.Duel.m_roundNum);
+            if (hand is { } dealt) {
                 D.SendCurrentCombatHand(circle);
                 UltimusLink.Note(UltimusRoster.NAME, $"round {D.Duel.m_roundNum}: {dealt}.");
             }
