@@ -61,6 +61,11 @@ public partial class CombatResolver {
             s_effectTags.AddOrUpdate(to, new HashSet<string>(tags, StringComparer.OrdinalIgnoreCase));
         }
 
+        // So does where its card came from (a treasure or item card stacks with the same card from the deck; CombatCharms).
+        if (from is not null && to is not null) {
+            CombatCharms.MarkSource(to, CombatCharms.SourceOf(from));
+        }
+
         // Whose cheat made it goes with it too (CombatResolver.CheatOwners.cs).
         if (from is not null && to is not null && s_effectMakers.TryGetValue(from, out var maker)) {
             s_effectMakers.AddOrUpdate(to, maker);

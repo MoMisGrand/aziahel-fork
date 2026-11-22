@@ -105,16 +105,39 @@ internal static class CombatCharms {
         => string.Equals(modifierSchool, "All", StringComparison.OrdinalIgnoreCase)
            || string.Equals(modifierSchool, school, StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>Where a card came from: the deck, a treasure card, or an item card from gear. Each counts apart on a hit.</summary>
+    internal const int DECK = 0, TREASURE = 1, ITEM = 2;
+
+    // Where each hanging charm or ward came from, when not the deck (CombatEffectApplicator.CastSource). Kept beside the
+    // effect, not in it: the effect is the game's own type and goes to the client as it is.
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<SpellEffect, object> s_sources = new();
+
+    /// <summary>Where a card in hand came from (DECK, TREASURE or ITEM).</summary>
+    internal static int SourceOf(Spell spell) => spell is null ? DECK : spell.m_treasureCard ? TREASURE : spell.m_itemCard ? ITEM : DECK;
+
+    /// <summary>Marks a hanging charm or ward with where its card came from.</summary>
+    internal static void MarkSource(SpellEffect effect, int source) {
+        if (effect is not null && source != DECK) {
+            s_sources.AddOrUpdate(effect, source);
+        }
+    }
+
+    /// <summary>Where the card that put a hanging charm or ward on came from (DECK, TREASURE or ITEM).</summary>
+    internal static int SourceOf(SpellEffect effect) => effect is not null && s_sources.TryGetValue(effect, out var source) ? (int) source : DECK;
+
     /// <summary>
     /// Keeps the first of each spell's modifiers. One with no spell id (from before ids were kept) counts as its own. An
     /// enchanted card counts apart from the plain card (as in the game): a Sharpened Balanceblade and a Balanceblade both
-    /// count on one hit, two Balanceblades or two Sharpened ones do not.
+    /// count on one hit, two Balanceblades or two Sharpened ones do not. A treasure card and an item card each count apart
+    /// from the same card from the deck, as in the game (Niduus, 2026-11-21: "normal blades can stack with TC ones, traps
+    /// too"; "A Sharpen Blade Bladestorm DOES stack with non-Enchant and Treasure Card versions. Item cards too stack!"): a
+    /// Hex from the deck, a Hex treasure card and a Sharpened Hex all count on one hit.
     /// </summary>
     internal static List<SpellEffect> OnePerSpell(IEnumerable<SpellEffect> effects) {
-        var seen = new HashSet<(uint Spell, uint Enchantment)>();
+        var seen = new HashSet<(uint Spell, uint Enchantment, int Source)>();
         var kept = new List<SpellEffect>();
         foreach (var effect in effects) {
-            if (effect.m_spellTemplateID == 0 || seen.Add((effect.m_spellTemplateID, effect.m_enchantmentSpellTemplateID))) {
+            if (effect.m_spellTemplateID == 0 || seen.Add((effect.m_spellTemplateID, effect.m_enchantmentSpellTemplateID, SourceOf(effect)))) {
                 kept.Add(effect);
             }
         }

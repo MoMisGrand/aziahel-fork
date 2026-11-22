@@ -98,7 +98,9 @@ internal static class CombatActionResolver {
         s_picksChosen = action.PicksChosen;
         s_selfGoesOn = action.SelfOnTarget && action.SelectedTarget is { } onTarget && onTarget != action.SpellCaster ? onTarget : null;
         var outerEnchantment = CombatEffectApplicator.CastEnchantment;
+        var outerSource = CombatEffectApplicator.CastSource;
         CombatEffectApplicator.CastEnchantment = action.Spell?.m_enchantment ?? 0;
+        CombatEffectApplicator.CastSource = CombatCharms.SourceOf(action.Spell);
         try {
             CombatEffectApplicator.FlushIntercepts();
             var worth = Process(action, ref combatAction, ref cinematicTime, out notes);
@@ -112,6 +114,7 @@ internal static class CombatActionResolver {
             s_picksChosen = false;
             s_selfGoesOn = null;
             CombatEffectApplicator.CastEnchantment = outerEnchantment;
+            CombatEffectApplicator.CastSource = outerSource;
         }
     }
 
