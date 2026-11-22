@@ -73,7 +73,7 @@ internal sealed partial class DuelBots {
     internal void JoinedPlanning(CombatDuelSubCircle circle, double secondsLeft) => UltimusJoinedPlanning(circle, secondsLeft);
 
     // The Quest Team never joins a battle with someone else's wizard in it, and Ultimus and the Quest Team never share one.
-    internal bool RefusesJoiner(CoreObject joiner) => QuestTeamRefusesBattle(joiner) || UltimusRefusesBattle(joiner);
+    internal bool RefusesJoiner(CoreObject joiner) => QuestTeamRefusesBattle(joiner) || UltimusRefusesBattle(joiner) || ScoutRefusesBattle(joiner);
 
     internal CombatDuelSubCircle OwnCircle(CoreObject joiner) => QuestTeamOwnCircle(joiner);
 
