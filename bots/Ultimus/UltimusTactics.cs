@@ -215,7 +215,7 @@ internal static class UltimusTactics {
                ?? Finish(me, hand, enemies)
                ?? Heal(me, hand, playersInDanger)
                ?? foreseen
-               ?? (mine < HURT ? Heal(me, hand, myHurt) ?? Shield(me, hand, myHurt, threat) : null)
+               ?? (mine < HURT ? Heal(me, hand, myHurt) ?? Shield(me, hand, myHurt, threat) ?? SaveForHeal(me, hand, whole, mine) : null)
                ?? (style == UltimusFightStyles.HIT_NOW && !SmallHitWastesPips(me, hand, whole, focus, enemies)
                    ? Hit(me, hand, focus, enemies, $"hits at once (\"{UltimusFightStyles.HIT_NOW}\" wins this kind of fight for me){focusWhy}")
                    : null)
@@ -266,6 +266,24 @@ internal static class UltimusTactics {
         return new(Move.Cast, heal.Index, target, heal.Card.HealWholeTeam
             ? $"heals the team with {heal.Card.Shown}"
             : $"heals {Name(who)} ({RewrittenAI.Percent(RewrittenAI.HealthShare(who))}% health) with {heal.Card.Shown}");
+    }
+
+    // Hurt, with a heal for himself in hand that his pips can't pay for yet but will next round: he spends nothing now. Against
+    // the Sea Lord (2026-11-21 18:32-18:40) he spent every pip every round on small hits (Judgement and Minor Crusade for
+    // about 121 to 143), went from 54% to 7% over six rounds without a single heal, and was knocked out in round 11. Pips are
+    // counted the way an off-school heal (his Satyr) pays: a power pip counts once. A heal his pips already pay for but the
+    // game still won't let him cast is left alone, so he never waits on it for ever.
+    private static Choice SaveForHeal(CombatDuelSubCircle me, List<InHand> hand, List<InHand> whole, float mine) {
+        if (Heal(me, hand, [me]) is not null || me.CombatParticipant?.m_pipCount is not { } count) {
+            return null;
+        }
+
+        var pips = count.m_genericPips + count.m_powerPips;
+        var heal = whole.Where(h => !h.Castable && h.Card.Heal && !h.Card.Hit && h.Card.Rank > pips && h.Card.Rank <= pips + 1)
+            .OrderByDescending(h => h.Card.HealAmount).FirstOrDefault();
+
+        return heal is null ? null
+            : Pass($"saves its pips for {heal.Card.Shown} next round: I am at {RewrittenAI.Percent(mine)}% health, under my heal line, and a pip spent now puts the heal off another round");
     }
 
     private static Choice Shield(CombatDuelSubCircle me, List<InHand> hand, List<CombatDuelSubCircle> hurt, UltimusScout.Threat threat) {
