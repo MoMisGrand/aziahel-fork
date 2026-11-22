@@ -352,7 +352,8 @@ internal sealed partial class UltimusDirectorActor {
         // How often its fights lately had two or more enemies: a hit on all of them goes in when that is often.
         situation = BotCards.WithCrowd(situation, member.GlobalId);
         // How much of his main deck is hits, from his own fights (UltimusDeckMix).
-        situation = situation with { MainHits = UltimusDeckMix.MainHits };
+        // A boss met alone has its own share, learned from boss fights only (crowd side fights pushed the shared one to 75%).
+        situation = situation with { MainHits = situation.LoneBoss ? UltimusDeckMix.BossHits : UltimusDeckMix.MainHits };
         var key = situation.Describe();
         if (!force && _deckFor.GetValueOrDefault(member.Role) == key) {
             return;

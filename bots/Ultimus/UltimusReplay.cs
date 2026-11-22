@@ -235,13 +235,26 @@ internal static class UltimusReplay {
             var (longHits, _) = BotCards.SoloMix(seaLord with { LongFights = true });
             // Heals and shields keep at least a sixth of the deck; since Niduus's stacking asks (2026-11-21) blades and traps
             // take the larger part of the support.
-            return hits >= BotCards.SOLO_HITS && support >= 0.16 && longHits > hits ? null
-                : $"his main deck is not mostly hits: {hits:P0} hits, {support:P0} heals and shields, {longHits:P0} hits when it outlasts him";
+            // A rival that outlasts him gets more hits; a boss met alone gets the blades and traps instead (2026-11-22,
+            // Vladimir Darkflame: one blade under each Judgement), so its hits do not grow.
+            var outlaws = new BotCards.Situation("Myth", false, 2) { Rival = true };
+            var (rivalHits, _) = BotCards.SoloMix(outlaws);
+            var (rivalLongHits, _) = BotCards.SoloMix(outlaws with { LongFights = true });
+            return hits >= BotCards.SOLO_HITS && support >= 0.16 && longHits == hits && rivalLongHits > rivalHits ? null
+                : $"his main deck is not mostly hits: {hits:P0} hits, {support:P0} heals and shields, {longHits:P0} hits when a lone boss outlasts him, " +
+                  $"{rivalLongHits:P0} (from {rivalHits:P0}) when a crowd rival does";
         }),
         new("Bazaar treasure cards were all hits and a trap, no shield or heal (2026-11-21)", () =>
             UltimusDeckMix.SupportSlots(16, UltimusDeckMix.TC_SUPPORT) >= 10 && UltimusDeckMix.SupportSlots(8, 0.99) <= 8
                 && UltimusDeckMix.SupportSlots(8, 0.1) >= 4
                 ? null : "his treasure cards are not mostly support, or the support share left its bounds"),
+        new("A boss that outlasts him moves his boss deck to blades and traps, not more hits (Vladimir Darkflame, 2026-11-22)", () => {
+            var (h1, _, w1) = UltimusDeckMix.Step("Vladimir Darkflame", false, 19, 1, 660, 0.61, BotCards.SOLO_HITS_MAX, UltimusDeckMix.TC_SUPPORT, boss: true);
+            var (h2, _, _) = UltimusDeckMix.Step("Vladimir Darkflame", false, 19, 1, 660, 0.61, BotCards.SOLO_HITS_MIN, UltimusDeckMix.TC_SUPPORT, boss: true);
+            var (h3, _, _) = UltimusDeckMix.Step("Vladimir Darkflame", false, 19, 1, 660, 0.61, BotCards.SOLO_HITS, UltimusDeckMix.TC_SUPPORT);
+            return w1 is not null && h1 < BotCards.SOLO_HITS_MAX && h2 >= BotCards.SOLO_HITS_MIN && h3 > BotCards.SOLO_HITS
+                ? null : $"boss loss moved hits to {h1:P0} (from {BotCards.SOLO_HITS_MAX:P0}), floor {h2:P0}, crowd loss {h3:P0}";
+        }),
         new("Card mix learns from his fights, inside its bounds (2026-11-21)", () => {
             var (h1, s1, w1) = UltimusDeckMix.Step("Sea Lord", false, 30, 1, 900, 0.9, BotCards.SOLO_HITS, UltimusDeckMix.TC_SUPPORT);
             var (h2, s2, w2) = UltimusDeckMix.Step("Sea Lord", false, 4, 1, 120, 0.9, BotCards.SOLO_HITS, UltimusDeckMix.TC_SUPPORT);
