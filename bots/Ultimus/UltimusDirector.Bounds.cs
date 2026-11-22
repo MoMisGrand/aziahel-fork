@@ -284,7 +284,7 @@ internal sealed partial class UltimusDirectorActor {
         // a Bellows that would not fight for 40 minutes, and the rest never counted as "its creature is not there".
         var step = _target?.Key?.StartsWith("aside|wait|", StringComparison.Ordinal) == true && _asideStep is { } aside ? aside : _target;
         var parked = ParkedInCopy(zone, now);
-        var noFoe = parked || step is { } last && !string.IsNullOrEmpty(last.Quest)
+        var noFoe = parked || FirstQuestDud(zone, now) || step is { } last && !string.IsNullOrEmpty(last.Quest)
                     && (last.Problem == "no creature for this step is in the area"
                         || UseDud(zone, last, now)
                         || (last.Kind == UltimusPlanner.WAIT && last.What.StartsWith("resting while", StringComparison.Ordinal))
@@ -385,13 +385,24 @@ internal sealed partial class UltimusDirectorActor {
         // East that started no battle, finished Metal Madness, and the very next step ("Stolen Away", Sprockets a floor up)
         // read that as its own and walked him out at once; the fresh copy's levers no longer work for him, and he stood
         // at the first shut gate for over an hour.
+        // Or the dungeon's own quest done first (DungeonQuestFirst), whose boss started no battle while his main step is
+        // the way on: Idunn rested beside the way out of Shirataki Temple while Shoji, the dud, was River Temple's step.
         if (_dudStepAt is not { } dud || !OverlayQuestTracker.SameZone(dud.Zone, zone) || now - dud.At > TimeSpan.FromMinutes(5)
-            || dud.Step != StepKey(step)) {
+            || dud.Step != StepKey(step) && !FirstQuestDud(zone, now)) {
             return false;
         }
 
         return QuickLeft(zone, now);
     }
+
+    /// <summary>
+    /// The step's creature that started no battle here (in the last 5 minutes) belongs to the dungeon's own quest that
+    /// DungeonQuestFirst does first: that quest can't go on in this copy, so the copy starts over even though his main step
+    /// (the way on) is what he is at.
+    /// </summary>
+    private bool FirstQuestDud(string zone, DateTime now)
+        => _dudStepAt is { } dud && OverlayQuestTracker.SameZone(dud.Zone, zone) && now - dud.At <= TimeSpan.FromMinutes(5)
+           && _dungeonFirstQuest is { Length: > 0 } first && dud.Step.StartsWith(first + "|", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>Whether this dungeon had fewer than 2 quick fresh copies in the last hour.</summary>
     private bool QuickLeft(string zone, DateTime now) {
