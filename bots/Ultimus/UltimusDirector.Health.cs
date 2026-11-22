@@ -62,6 +62,13 @@ internal sealed partial class UltimusDirectorActor {
     // Standing still on purpose until it can heal: not "stuck".
     private bool _healWaiting;
 
+    // A heal trip for a rival (a creature that beat him twice) holds until he is at his tough-foe health or this time.
+    // Away from the rival's area his next move was only a walk back, so the rival rule went quiet, the 25% hunt rule said "go
+    // on", and back by the rival it sent him for wisps again: Crimes Against Kitharas went between Knight's Court and Scotland
+    // Yard Roof 8 times in 2 minutes, Ultimus between The Atheneum and Plaza of Conquests (2026-11-21 18:27-18:31).
+    private DateTime _rivalTripUntil = DateTime.MinValue;
+    private static readonly TimeSpan s_rivalTrip = TimeSpan.FromMinutes(10);
+
     private static bool Hurt(UltimusMember.Status member, out bool lowHealth, out bool lowMana, bool tough = false) {
         lowHealth = lowMana = false;
         if (member.Wizard?.GameStats is not { } stats) {
@@ -107,6 +114,16 @@ internal sealed partial class UltimusDirectorActor {
         var hurt = Hurt(leader, out var lowHealth, out var lowMana, ToughFoeNow(target));
         if (!hurt && DungeonPrep(leader, target, out var dungeonHealth, out var dungeonMana)) {
             (hurt, lowHealth, lowMana) = (true, dungeonHealth, dungeonMana);
+        }
+
+        var onRivalTrip = DateTime.UtcNow < _rivalTripUntil && leader.Wizard?.GameStats is { } tripStats
+                          && tripStats.m_currentHitpoints < Math.Max(1, tripStats.m_baseHitpoints + tripStats.m_bonusHitpoints)
+                          * UltimusPlaybook.Value("Quest.ToughFoeHealth");
+        if (!onRivalTrip) {
+            _rivalTripUntil = DateTime.MinValue;
+        }
+        else if (!hurt) {
+            (hurt, lowHealth) = (true, true);
         }
 
         if (CombatDuelComponent.IsInBattle(leader.GlobalId) || !hurt) {
@@ -174,9 +191,10 @@ internal sealed partial class UltimusDirectorActor {
         // A creature that beat him twice or more is met like a boss, at his tough-foe health: after a bots update his own
         // "full health first" remedy is forgotten, and he walked into Earth Elemental at 54% after three losses to it
         // (2026-11-21 10:34; the game's map does not mark it as a boss).
-        var rival = target?.Kind == UltimusPlanner.FIGHT && target.Template != 0
-                    && UltimusFoes.Of((uint) Math.Min(target.Template, uint.MaxValue)) is { Lost: >= 2 }
-                    && share < UltimusPlaybook.Value("Quest.ToughFoeHealth");
+        var rivalHere = target?.Kind == UltimusPlanner.FIGHT && target.Template != 0
+                        && UltimusFoes.Of((uint) Math.Min(target.Template, uint.MaxValue)) is { Lost: >= 2 }
+                        && share < UltimusPlaybook.Value("Quest.ToughFoeHealth");
+        var rival = rivalHere || onRivalTrip;
         var bossNext = (BossNext(leader, target) && share < 0.5) || rival;
         if (bossNext && !InDungeon(leader)) {
             Think(rival
@@ -269,6 +287,10 @@ internal sealed partial class UltimusDirectorActor {
         // 2026-11-16: "If he doesn't have gold, he searches the hub areas for wisps instead").
         pick ??= HubWisps(leader, lowHealth, lowMana);
         if (pick is not null) {
+            if (rivalHere && !onRivalTrip) {
+                _rivalTripUntil = DateTime.UtcNow + s_rivalTrip;
+            }
+
             // The trip is not cut short by the Recall back to his marked spot until he is healed.
             HoldRecall(20);
             _doing = pick.What;
