@@ -237,7 +237,43 @@ internal sealed partial class UltimusDirectorActor {
         return step;
     }
 
+    // Another quest's step "right here" that he keeps taking up and dropping (picked, then given nothing once he is by it,
+    // so the story step wins, then picked again from a few steps off): dropped 3 times in 10 minutes with no real progress,
+    // it is left alone for 10 minutes. AlchemiZist of Kitharas, Crimson Fields, 2026-11-22 07:21-07:42: the dungeon's own
+    // Stone Cold boss Grum Foultooth (lost to once) and the way out to "Defeat War Oni" took turns 68 times in 4 minutes,
+    // twice over, and she went nowhere.
+    private string _whileHerePrev;
+    private readonly Dictionary<string, List<DateTime>> _whileHereDrops = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, DateTime> _whileHereSkip = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly TimeSpan s_whileHereWindow = TimeSpan.FromMinutes(10);
+    private const int WHILE_HERE_DROPS = 3;
+
     private UltimusPlanner.Target WhileHere(List<UltimusMember.Status> group, UltimusPlanner.Target main) {
+        var here = WhileHereFind(group, main);
+        var now = DateTime.UtcNow;
+        if (_whileHerePrev is { } prev && !string.Equals(prev, here?.Quest, StringComparison.OrdinalIgnoreCase)) {
+            if (!_whileHereDrops.TryGetValue(prev, out var drops)) {
+                _whileHereDrops[prev] = drops = [];
+            }
+
+            drops.RemoveAll(d => now - d > s_whileHereWindow || d < _realProgressAt);
+            drops.Add(now);
+            if (drops.Count >= WHILE_HERE_DROPS && now - _realProgressAt > TimeSpan.FromMinutes(2)) {
+                drops.Clear();
+                _whileHereSkip[prev] = now + s_whileHereWindow;
+                Think($"I keep taking up \"{UltimusText.Title(prev)}\" right here and dropping it again, and nothing moves on: I leave it " +
+                      $"alone for {s_whileHereWindow.TotalMinutes:0} minutes and go on with {main?.What ?? "my story step"}.", "whilehere-skip|" + prev);
+                if (string.Equals(here?.Quest, prev, StringComparison.OrdinalIgnoreCase)) {
+                    here = null;
+                }
+            }
+        }
+
+        _whileHerePrev = here?.Quest;
+        return here;
+    }
+
+    private UltimusPlanner.Target WhileHereFind(List<UltimusMember.Status> group, UltimusPlanner.Target main) {
         if (main is null || main.Kind is UltimusPlanner.FIGHT && main.Key.EndsWith("|join", StringComparison.Ordinal)) {
             return null;
         }
@@ -254,7 +290,8 @@ internal sealed partial class UltimusDirectorActor {
         UltimusPlanner.Target best = null;
         var bestWalk = float.MaxValue;
         foreach (var name in held) {
-            if (QuestTemplateCollection.GetQuestByName(name) is not { } template || !UltimusPlanner.IsMainStoryWorld(template)) {
+            if (QuestTemplateCollection.GetQuestByName(name) is not { } template || !UltimusPlanner.IsMainStoryWorld(template)
+                || _whileHereSkip.TryGetValue(name, out var skipUntil) && DateTime.UtcNow < skipUntil) {
                 continue;
             }
 
