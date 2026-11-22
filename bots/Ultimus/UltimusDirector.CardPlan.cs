@@ -121,7 +121,7 @@ internal sealed partial class UltimusDirectorActor {
     // blades can stack with TC ones, traps too"; "Including Dark Tribute from Death that he can get TC's from"): a treasure
     // Feint, Hex or Dark Tribute stacks on the one from his deck, so two of each kind, then the heal and one shield.
     private static readonly (string Kind, int Cards, int Copies)[] s_supportShape = [
-        ("blade", 2, 3), ("trap", 2, 3), ("heal", 1, 4), ("shield", 1, 3), ("control", 1, 2),
+        ("blade", 2, 3), ("trap", 2, 3), ("heal", 1, 4), ("shield", 1, 3), ("control", 1, 2), ("global", 1, 2),
     ];
     // The rest: hits (for a fight his own hits can't end) and a damage enchantment for his biggest hit.
     private static readonly (string Kind, int Cards, int Copies)[] s_attackShape = [

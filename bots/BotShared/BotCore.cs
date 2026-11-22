@@ -101,6 +101,57 @@ internal static class BotCore {
     internal static int EstimateFull(Card card, CombatDuelSubCircle me, CombatDuelSubCircle target, float blades = 0, float traps = 0)
         => Estimate(card, me, target, blades, traps, card is { XPip: true } ? FullPips(card, me) : null);
 
+    /// <summary>The damage boost (percent) the battlefield's global gives a hit of this school now; 0 with none.</summary>
+    internal static int GlobalUp(CombatDuelSubCircle me, string school) {
+        try {
+            var bubbles = me?._duelActor?.Duel?.m_duelModifier?.m_battlefieldEffects;
+            if (bubbles is null || string.IsNullOrEmpty(school)) {
+                return 0;
+            }
+
+            lock (bubbles) {
+                return bubbles.Where(x => x is not null && x.m_effectType == kSpellEffects.kModifyOutgoingDamage
+                                          && Fits((string) x.m_sDamageType, school)).Sum(x => x.m_effectParam);
+            }
+        }
+        catch (Exception) {
+            return 0;
+        }
+    }
+
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<uint, (string School, int Percent)> s_globals = new();
+
+    /// <summary>
+    /// The damage a global card puts on the battlefield for one school (or all): (school, percent), or (null, 0) when the
+    /// card is no damage global (Niduus, 2026-11-21: "He should be able to cast Globals as well").
+    /// </summary>
+    internal static (string School, int Percent) GlobalOf(Card card) {
+        if (card is null || card.Hit) {
+            return (null, 0);
+        }
+
+        return s_globals.GetOrAdd(card.Id, id => {
+            try {
+                if (CoreObjectFactory.GetCoreTemplate(id) is not SpellTemplate template) {
+                    return (null, 0);
+                }
+
+                var best = ((string) null, 0);
+                foreach (var e in CombatEnchantments.Leaves(template.m_effects ?? []).Where(e => e is not null && e.m_effectTarget == kEffectTarget.kGlobal
+                                                                                                && e.m_effectType == kSpellEffects.kModifyOutgoingDamage && e.m_effectParam > 0)) {
+                    if (e.m_effectParam > best.Item2) {
+                        best = (((string) e.m_sDamageType) ?? "", e.m_effectParam);
+                    }
+                }
+
+                return best;
+            }
+            catch (Exception) {
+                return (null, 0);
+            }
+        });
+    }
+
     /// <summary>
     /// The biggest hit an enemy has landed on bots (a share of their health), when it holds the pips for a hit that big now
     /// (BIG_HIT_PIPS, a power pip worth 2), and who it is; else 0. The Sea Lord (2026-11-21 21:23) saved 1 + 6 power pips
@@ -147,6 +198,12 @@ internal static class BotCore {
     /// </summary>
     internal static int Estimate(Card card, CombatDuelSubCircle me, CombatDuelSubCircle target, float blades = 0, float traps = 0, int? xPips = null) {
         var raw = RewrittenAI.Estimate(card, me, target, blades, traps, xPips: xPips);
+        // The global on the battlefield for the hit's school (Darkwind, Supercharge...): the server adds it (GetGlobalEffect),
+        // the AI's estimate does not.
+        if (GlobalUp(me, card.DamageSchool) is var bubble and not 0) {
+            raw = (int) Math.Max(0, raw * (1 + (bubble / 100.0)));
+        }
+
         var resist = RewrittenAI.ResistOf(target, card.DamageSchool);
         // A hit that lands as one of several schools at random (Spectral Blast: Fire, Ice or Storm) is worth the average of
         // them on this target, not the first one's (Niduus, 2026-11-21: "He also should not be using Elemental Blast ...
@@ -316,7 +373,10 @@ internal static class BotCore {
 
         var school = big.Hand.Card.DamageSchool;
         var setups = new List<(InHand Hand, int Target, int Gain, string Text)>();
-        foreach (var h in hand.Where(h => h.Castable && !h.Card.Hit && h.Card.Rank + big.Hand.Card.Rank <= pips + 2)) {
+        // An X-pip setup (Backdraft, Fire's X-pip trap; Niduus, 2026-11-21: "they potentially can use Backdraft as their feint,
+        // but that's also X pip") takes every pip he has: only while he has few (2 or less), so it doesn't eat the pips the
+        // finisher is saving.
+        foreach (var h in hand.Where(h => h.Castable && !h.Card.Hit && (h.Card.XPip ? pips <= X_SETUP_PIPS : h.Card.Rank + big.Hand.Card.Rank <= pips + 2))) {
             if (h.Card.Blade && !h.Card.BladeOnlyTeammate && Fits(h.Card.BladeSchool, school) && Stacks(me, h.Card)) {
                 var gain = EstimateFull(big.Hand.Card, me, focus, h.Card.BladePercent, 0) - big.Damage;
                 setups.Add((h, h.Card.BladeWholeTeam ? -1 : me.SlotIndex, gain, $"{h.Card.Shown} on myself (+{h.Card.BladePercent}%)"));
@@ -324,6 +384,13 @@ internal static class BotCore {
             else if (h.Card.Trap && Fits(h.Card.TrapSchool, school) && Stacks(focus, h.Card) && h.Card.TrapPercent > 0) {
                 var gain = EstimateFull(big.Hand.Card, me, focus, 0, h.Card.TrapPercent) - big.Damage;
                 setups.Add((h, h.Card.TrapAll ? -1 : focus.SlotIndex, gain, $"{h.Card.Shown} on {Name(focus)} (+{h.Card.TrapPercent}%)"));
+            }
+            // A global for the big hit's school, stronger than the one up, and none the enemies hit with (it boosts them too):
+            // it lasts the whole fight for him and his team.
+            else if (GlobalOf(h.Card) is { Percent: > 0 } bubble && Fits(bubble.School, school) && bubble.Percent > GlobalUp(me, school)
+                     && !enemies.Any(e => e.IsAlive && Fits(bubble.School, RewrittenAI.SchoolOf(e)))) {
+                var gain = (int) (big.Damage * (bubble.Percent - GlobalUp(me, school)) / 100.0);
+                setups.Add((h, -1, gain, $"{h.Card.Shown} on the battlefield (+{bubble.Percent}% for the whole fight, my team too)"));
             }
         }
 
@@ -340,6 +407,7 @@ internal static class BotCore {
     }
 
     internal const int STACK_MOST = 5;
+    private const int X_SETUP_PIPS = 2;
     private const double STACK_GAIN = 0.2;
 
     internal static bool Fits(string charmSchool, string hitSchool)
