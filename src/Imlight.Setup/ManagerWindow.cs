@@ -453,7 +453,7 @@ internal sealed partial class ManagerWindow : Window {
             Tab(STREET_BOTS_TAB, StreetBotsTab),
             Tab(TRUE_FORM_TAB, TrueFormTab),
             Tab(HIVE_MIND_TAB, HiveMindTab),
-        }.Concat(Tco7Tabs()).Concat(KitharasTabs()).ToDictionary(t => (string) t.Tag!);
+        }.Concat(Tco7Tabs()).Concat(KitharasTabs()).Concat(ZoomTabs()).ToDictionary(t => (string) t.Tag!);
         // The side bar's pages, with these tabs inside them (ManagerWindow.Navigation.cs).
         var nav = Navigation(tabs);
         AddHandler(KeyDownEvent, OnShortcutKey, Avalonia.Interactivity.RoutingStrategies.Tunnel);
@@ -3185,6 +3185,8 @@ internal sealed partial class ManagerWindow : Window {
         ["Server"] = ("server", "Start, restart and stop the server, and pick where the server comes from."),
         ["Game Modes"] = ("dice", "Whole-server modes such as Randomizer and Die = Delete, and what spell trainers ask for."),
         ["Battles and World"] = ("sword", "Switches for battles, pips, pets, jewels, houses and the world, Tamed Drops, and how fast plants grow."),
+        [ZOOM_TAB] = ("user", "Zoom, the Story quest scout: his own page like every contender's, with his Overview, Issues and Logs."),
+        [ZOOM_MIND_TAB] = ("flag", "Zoom's mind: the broken quests and broken quest steps Zoom found ahead of Ultimus and the teams, and the quests he scouted."),
         [TRUE_FORM_TAB] = ("user", "True Form, the helper bot anyone can call: where he is, who he helps, how he plays, his gear, jewels and look."),
         [STREET_BOTS_TAB] = ("users", "Bot Players: wizards the server plays in the streets so the game feels busy. Turn them on, how many, and the ones out now."),
         ["On and Off"] = ("power", "Turn any NPC, creature, zone or world of the game, or any of your customs, on or off, with no restart."),
