@@ -191,8 +191,13 @@ internal sealed partial class UltimusDirectorActor {
         // A creature that beat him twice or more is met like a boss, at his tough-foe health: after a bots update his own
         // "full health first" remedy is forgotten, and he walked into Earth Elemental at 54% after three losses to it
         // (2026-11-21 10:34; the game's map does not mark it as a boss).
-        var rivalHere = target?.Kind == UltimusPlanner.FIGHT && target.Template != 0
-                        && UltimusFoes.Of((uint) Math.Min(target.Template, uint.MaxValue)) is { Lost: >= 2 }
+        // The door or exit whose step is that rival counts the same (it names the step): past it, in a dungeon, side trips
+        // are closed and he goes on at whatever health he walked in with. After a bots update cut his fifth Vasek Ashweaver fight he walked back into
+        // Vault 1933 at 41% ("I only go looking for wisps or potions under 25%, so I go on") and started it there (his log,
+        // 2026-11-22 01:40-01:44, "One Good Deed").
+        var rivalHere = (target?.Kind == UltimusPlanner.FIGHT && target.Template != 0
+                         && UltimusFoes.Of((uint) Math.Min(target.Template, uint.MaxValue)) is { Lost: >= 2 }
+                         || target?.Kind is UltimusPlanner.EXIT or UltimusPlanner.DOOR && UltimusFoes.RivalNamedIn(target.What) is not null)
                         && share < UltimusPlaybook.Value("Quest.ToughFoeHealth");
         var rival = rivalHere || onRivalTrip;
         var bossNext = (BossNext(leader, target) && share < 0.5) || rival;
@@ -838,6 +843,21 @@ internal sealed partial class UltimusDirectorActor {
     private const string HUB_KEY = "hubbutton|";
     private DateTime _hubPressedAt = DateTime.MinValue;
 
+    /// <summary>
+    /// The Commons button goes to the hub of the world he is in: pressed in that hub it only moves him to its arrival spot,
+    /// so it is no way on from there. Idunn in Jade Palace pressed it 6 times in 90 seconds toward Catmandu's wisps, each
+    /// time landing at (0, 0) of Jade Palace again (her log, 2026-11-22 01:35-01:37, "For the Emperor!").
+    /// </summary>
+    private static bool ButtonLandsHere(UltimusMember.Status leader) {
+        if (string.IsNullOrEmpty(leader.Zone)) {
+            return false;
+        }
+
+        ZoneService.ResolveWorldHub(leader.Zone, out var hub, out _);
+
+        return !string.IsNullOrEmpty(hub) && OverlayQuestTracker.SameZone(hub, leader.Zone);
+    }
+
     // The Commons button press toward <paramref name="zone"/> (its hub first): a target at his own feet, pressed in HealFirst.
     private static UltimusPlanner.Target HubButton(UltimusMember.Status leader, string zone, string why) =>
         new(UltimusPlanner.SPOT, leader.X, leader.Y, $"pressing the Commons button, then on {why} in {UltimusText.Zone(zone)}", Key: HUB_KEY + zone);
@@ -908,7 +928,13 @@ internal sealed partial class UltimusDirectorActor {
                 Think($"I can't buy potions (no gold or no bottles) and found no wisps nearby, so I search the hub areas for wisps: " +
                       $"{UltimusText.Zone(zone)}.", "hubwisp|" + zone);
 
-                return UltimusPlanner.Travel(leader, zone, why, "wispzone|" + zone) ?? HubButton(leader, zone, why);
+                if (UltimusPlanner.Travel(leader, zone, why, "wispzone|" + zone) is { } walk) {
+                    return walk;
+                }
+
+                if (!ButtonLandsHere(leader)) {
+                    return HubButton(leader, zone, why);
+                }
             }
         }
 
@@ -932,10 +958,12 @@ internal sealed partial class UltimusDirectorActor {
                 continue;
             }
 
-            hops = away;
             var why = $"to pick up {(health ? "health" : "mana")} wisps";
-
-            return viaHub ? HubButton(leader, zone, why) : UltimusPlanner.Travel(leader, zone, why, "wispzone|" + zone);
+            var go = viaHub && !ButtonLandsHere(leader) ? HubButton(leader, zone, why) : UltimusPlanner.Travel(leader, zone, why, "wispzone|" + zone);
+            if (go is not null) {
+                hops = away;
+                return go;
+            }
         }
 
         return null;

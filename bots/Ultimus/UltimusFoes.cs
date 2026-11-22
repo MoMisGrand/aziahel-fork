@@ -114,6 +114,21 @@ internal static class UltimusFoes {
         }
     }
 
+    /// <summary>
+    /// A creature that beat him twice or more and whose name is in <paramref name="what"/> (a door's "to Vault 1933 (Defeat
+    /// and Collect Vasek Ashweaver)"), or null. The door into a dungeon names its step, and so the rival behind it.
+    /// </summary>
+    internal static Foe RivalNamedIn(string what) {
+        if (string.IsNullOrWhiteSpace(what)) {
+            return null;
+        }
+
+        lock (s_lock) {
+            return Foes().Values.Where(f => f.Lost >= 2 && f.Name.Trim().Length >= 4 && what.Contains(f.Name.Trim(), StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(f => f.Name.Length).FirstOrDefault();
+        }
+    }
+
     // logs/ultimus/rivals.txt: his rivals in plain words, for Niduus.
     private static void WriteRivals() {
         try {
