@@ -113,7 +113,7 @@ internal sealed partial class ManagerWindow {
         var top = new StackPanel {
             Margin = new Thickness(24, 10, 24, 0), Spacing = 6, MaxWidth = ManagerTheme.PAGE_MAX_WIDTH, HorizontalAlignment = HorizontalAlignment.Left,
             Children = {
-                new TextBlock { Text = $"{seat.Name}  ·  {seat.School}  ·  Essential", FontWeight = FontWeight.SemiBold, FontSize = ManagerTheme.FONT_SMALL + 3 },
+                new TextBlock { Text = $"{seat.Name}  ·  {seat.School}  ·  {(seat.IsZoom ? "Quest Scout" : "Essential")}", FontWeight = FontWeight.SemiBold, FontSize = ManagerTheme.FONT_SMALL + 3 },
                 note,
                 Row([.. buttons]),
             },
@@ -238,7 +238,12 @@ internal sealed partial class ManagerWindow {
         }
 
         var why = TeamOffWhy(seat);
-        note.Text = why.Length > 0
+        note.Text = seat.IsZoom
+            ? why.Length > 0
+                ? $"Zoom stays logged out: {why}."
+                : "Everything below is Zoom's own: his folder is logs\\zoom, and a setting left as Ultimus's follows his. Zoom scouts the " +
+                  "main Story quests ahead of the others with teleports and one-hit wins; the broken quests and steps he finds are on Zoom's mind."
+            : why.Length > 0
             ? $"{seat.Name} stays logged out: {why}. Change it on the {seat.TeamName} page; then this page shows {seat.Name} playing."
             : $"Everything below is {seat.Name}'s own: its folder is logs\\{seat.Folder.Replace('/', '\\')}, and a setting left as Ultimus's follows his. " +
               "It reads all Ultimus has learned and tries to beat his quest times.";

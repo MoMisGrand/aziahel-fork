@@ -266,11 +266,14 @@ internal sealed partial class ManagerWindow {
 
         internal bool IsKitharas => Team == KITHARAS;
 
+        /// <summary>Zoom, the quest scout (ManagerWindow.Zoom.cs): a contender with no team.</summary>
+        internal bool IsZoom => Team == ZOOM_TEAM;
+
         /// <summary>Its switch in its team's section: the TCO7's by name ("Tulkar"), the family's by key ("KitharasMoon").</summary>
         internal string SwitchKey => Key ?? Name;
 
         /// <summary>What its team is called on the pages.</summary>
-        internal string TeamName => IsKitharas ? "Kitharas Family" : "TCO7";
+        internal string TeamName => IsKitharas ? "Kitharas Family" : IsZoom ? "Zoom" : "TCO7";
     }
 
     private const string KITHARAS = "Kitharas";
@@ -306,7 +309,7 @@ internal sealed partial class ManagerWindow {
         => new(name, school, "kitharas/" + word, KITHARAS + "-" + key, KITHARAS, key);
 
     /// <summary>Every member page: the TCO7, then the Kitharas Family.</summary>
-    private static IEnumerable<UltSeat> MemberSeats => s_tco7Seats.Concat(s_kitharasSeats);
+    private static IEnumerable<UltSeat> MemberSeats => s_tco7Seats.Concat(s_kitharasSeats).Append(s_zoomSeat);
 
     /// <summary>
     /// Why a team member is kept out though its own Enabled is on: its team is off, its switch on the team's page is off, or
@@ -315,6 +318,10 @@ internal sealed partial class ManagerWindow {
     private string TeamOffWhy(UltSeat seat) {
         if (!seat.IsTco7) {
             return "";
+        }
+
+        if (seat.IsZoom) {
+            return ZoomOffWhy();
         }
 
         bool On(UltSeat s) => !string.Equals(_manager.GetSetting(s.Team, s.SwitchKey)?.Trim(), "false", StringComparison.OrdinalIgnoreCase);
@@ -586,7 +593,7 @@ internal sealed partial class ManagerWindow {
 
         _manager.SaveSettings([new Setting(UltSection, "Enabled", on ? "true" : "false", "")]);
         _settings = [];
-        Say(on ? $"{UltName} is on. With the server running{(UltIsTco7 && !_manager.GetSwitch(_ultSeat.Team, "Enabled") ? $" and the {_ultSeat.TeamName} turned on (Bots > {_ultSeat.TeamName})" : "")}, it logs in within a few seconds and starts questing."
+        Say(on ? $"{UltName} is on. With the server running{(UltIsTco7 && !_ultSeat.IsZoom && !_manager.GetSwitch(_ultSeat.Team, "Enabled") ? $" and the {_ultSeat.TeamName} turned on (Bots > {_ultSeat.TeamName})" : "")}, it logs in within a few seconds and starts questing."
             : $"{UltName} is off. It logs out within a few seconds.");
         RefreshUltimus();
 

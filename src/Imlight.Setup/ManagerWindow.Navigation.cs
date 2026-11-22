@@ -110,6 +110,8 @@ internal sealed partial class ManagerWindow {
         ("Kitharas Family", "users", KitharasTabNames),
         ("Quest Team", "users", [QUEST_TEAM_TAB, QUEST_TEAM_WIZARDS_TAB, QUEST_TEAM_ISSUES_TAB, QUEST_TEAM_LOGS_TAB]),
         ("True Form", "user", [TRUE_FORM_TAB]),
+        // Niduus, 2026-11-22: "Panel in the EXE, same as the other contenders in the exact same way" (ManagerWindow.Zoom.cs).
+        ("Zoom", "user", ZoomTabNames),
         ("Street bots", "users", [STREET_BOTS_TAB]),
         // Niduus, 2026-11-19: the bots update on their own, without a new Ahziael (ManagerWindow.BotUpdates.cs).
         ("Bot updates", "download", [BOT_UPDATES_TAB]),
