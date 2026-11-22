@@ -79,8 +79,9 @@ internal sealed class UltimusSeat {
     /// Zoom, the Story quest scout (Niduus, 2026-11-22: "Replicating True Form, we need to make another bot: Zoom ... to
     /// teleport complete tasks in the Story Main quests. This way he can get ahead of broken quests before Ultimus and TCO7
     /// hit Arc 2"). Made as True Form is (the top level, the best gear, every spell), he plays Ultimus's questing brain on
-    /// the main story, but he may teleport to each step and one-shot whatever he fights (UltimusDirector.Zoom.cs,
-    /// bots/Zoom). A step that never finishes is written up as a broken quest (logs/zoom/broken-quests.txt) and he moves on.
+    /// the main story, reading what Ultimus and the Hive mind know, but he may teleport to each step and one-shot whatever he
+    /// fights (UltimusDirector.Zoom.cs, bots/Zoom). Broken quests and broken steps go into his own mind file
+    /// (logs/zoom/zoom-mind.json); he never finishes anything by command. He shows in Friendly Players like every bot.
     /// His runs are no player's runs: none of his fights, times or walks go into what Ultimus and the teams learn from.
     /// </summary>
     internal static readonly UltimusSeat Zoom = new("Zoom", "Zoom", "Storm", ZOOM_FOLDER, "Zoom-Scout", 9);
