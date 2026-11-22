@@ -243,9 +243,17 @@ internal sealed partial class UltimusDirectorActor {
 
             // His open sockets get the best jewels in his backpack (Niduus, 2026-11-21: "since he's level 15+, he can now use
             // jewels as well"), one at a time, as a player drags each in.
-            if (BotJewelPlan.FromBackpack(wizard, BotGear.SchoolOf(wizard), StyleOf(member)) is { } fit
+            // A jewel or socket just asked for waits JEWEL_ANSWER for his backpack to show it went in, so the same jewel is
+            // not sent twice and a second jewel is not sent to the socket the first one is filling (21:13 on bots-v134: 109
+            // requests for 76 jewels, Rock's Mending Opal sent 3x into one Dirk socket).
+            var now = DateTime.UtcNow;
+            if (BotJewelPlan.FromBackpack(wizard, BotGear.SchoolOf(wizard), StyleOf(member),
+                    (jewel, item, socket) => now - _jewelSentAt.GetValueOrDefault(jewel) < JEWEL_ANSWER
+                                             || now - _jewelSentAt.GetValueOrDefault(item ^ (ulong) (socket + 1) << 56) < JEWEL_ANSWER) is { } fit
                 && _jewelAsked.GetValueOrDefault(fit.Jewel.m_globalID.Full) < 2) {
                 _jewelAsked[fit.Jewel.m_globalID.Full] = _jewelAsked.GetValueOrDefault(fit.Jewel.m_globalID.Full) + 1;
+                _jewelSentAt[fit.Jewel.m_globalID.Full] = now;
+                _jewelSentAt[fit.Item.m_globalID.Full ^ (ulong) (fit.Socket + 1) << 56] = now;
                 Think($"My {fit.ItemName} has an open {JewelSockets.ShapeName(fit.Shape)} socket and I carry {fit.JewelName}, which helps my " +
                       "damage and staying power, so it goes in.", "jewel|" + fit.Jewel.m_globalID.Full);
                 UltimusJournal.Write(UltimusJournal.GEAR, $"Put {fit.JewelName} in my {fit.ItemName}.", WorldOf(member.Zone), UltimusText.Zone(member.Zone),
@@ -471,6 +479,10 @@ internal sealed partial class UltimusDirectorActor {
 
     // Socket requests sent for each jewel in his backpack (two at most: one the server refuses is not asked for again).
     private readonly Dictionary<ulong, int> _jewelAsked = [];
+
+    // When each jewel, and each socket (item id mixed with the socket number), was last asked for.
+    private readonly Dictionary<ulong, DateTime> _jewelSentAt = [];
+    private static readonly TimeSpan JEWEL_ANSWER = TimeSpan.FromSeconds(90);
 
     // Trips started to another area for one piece; after two with no sale, that piece is not looked for again (audit A3:
     // the Jewel of Instinct trip again on v0.10.855).

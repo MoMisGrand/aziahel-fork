@@ -1,0 +1,4 @@
+Fixed: Bots ask for each jewel once instead of two or three times.
+After a bot asked to put a jewel in a socket, it asked again a few seconds later before its backpack showed the jewel had gone in, and sometimes sent a second jewel to the socket the first one was filling. On bots-v134 the bots sent 109 socket requests for 76 jewels (Rock sent his Mending Opal three times into one Dirk socket), and the extras came back as "That item or jewel is not in your backpack." A jewel or socket a bot just asked for now waits 90 seconds for the answer before it is tried again.
+Where: bots/Ultimus/UltimusDirector.Gear.cs (KeepGearAndDecks), bots/BotShared/BotJewelPlan.cs (FromBackpack).
+Test: After a bots update, each "puts ... in its ..." line appears once per jewel, and no "That item or jewel is not in your backpack." lines follow it.
