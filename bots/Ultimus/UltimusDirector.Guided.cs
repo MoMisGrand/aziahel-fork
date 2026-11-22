@@ -160,6 +160,24 @@ internal static class UltimusGuided {
             return null;
         }
 
+        // The step lies behind him on the run (the run went the other way: up a tower he is now leaving): following it on
+        // takes him away from the step. Big Ben, 2026-11-21 23:26-00:00: Kitharas Rock, leaving from Level 11, came down to
+        // Level 10, and the run Walter Blanco guided him up sent him back to Level 11 (its spots lie near the ground floor's
+        // exit on the map), 20 times in 35 minutes.
+        var nearest = 0;
+        var nearestFar = float.MaxValue;
+        for (var i = 0; i < spots.Count; i++) {
+            var d = Far(spots[i].X, spots[i].Y, toX, toY) + (OnFloor(toZ, spots[i].Z) ? 0 : 5000);
+            if (d < nearestFar) {
+                nearestFar = d;
+                nearest = i;
+            }
+        }
+
+        if (nearest < here) {
+            return null;
+        }
+
         // Where the run comes nearest the step: it must be further on than here.
         var goal = here;
         var goalFar = Far(spots[here].X, spots[here].Y, toX, toY) + (OnFloor(toZ, spots[here].Z) ? 0 : 5000);
