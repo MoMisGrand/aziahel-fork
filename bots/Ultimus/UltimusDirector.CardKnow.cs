@@ -70,6 +70,14 @@ internal sealed partial class UltimusDirectorActor {
             return null;
         }
 
+        // A global for his school (or every school): it boosts his hits and his team's for the whole fight (Niduus,
+        // 2026-11-21: "He should be able to cast Globals as well"); one that only boosts other schools is no use to him.
+        if (BotCore.GlobalOf(card) is { Percent: > 0 } bubble) {
+            var mineToo = BotCore.Fits(bubble.School, school);
+            return mineToo ? new TcUseOf("global", 50 + bubble.Percent, $"on the battlefield before my big hit (+{bubble.Percent}% to {(string.IsNullOrEmpty(bubble.School) ? "every school" : bubble.School)} for the whole fight, my team too)")
+                : new TcUseOf("global", 5, $"not for me: it only boosts {bubble.School}");
+        }
+
         foes ??= [];
         var cardSchool = (string) template.m_sMagicSchoolName ?? "";
         var own = string.Equals(cardSchool, school, StringComparison.OrdinalIgnoreCase);
