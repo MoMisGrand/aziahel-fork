@@ -43,6 +43,9 @@ internal static class TrueFormJewels {
 
     private const string JEWELS_FILE = "jewels.txt";
 
+    // Zoom is filled the same way (ZoomMaker), so the log names whose sockets these are.
+    private static string Who => UltimusSeat.Current.IsZoom ? "Zoom" : "True Form";
+
     internal static void Fill(Wizard wizard, string school, BotStyle style) {
         try {
             // The game's books are read in the background: up to a minute for them.
@@ -53,7 +56,7 @@ internal static class TrueFormJewels {
             }
 
             if (jewels.Count == 0) {
-                Logger.Warning("True Form: the game's jewels could not be read; his sockets stay as they are.");
+                Logger.Warning(Who + ": the game's jewels could not be read; his sockets stay as they are.");
                 return;
             }
 
@@ -109,7 +112,7 @@ internal static class TrueFormJewels {
                         changed |= best.Jewel.Id != nowId;
                         put += best.Jewel.Id != nowId ? 1 : 0;
                         if (best.Jewel.Id != nowId) {
-                            Logger.Information("True Form: put {0} in his {1} ({2} socket).",
+                            Logger.Information(Who + ": put {0} in his {1} ({2} socket).",
                                 Logger.Args(best.Jewel.Name, BotJewels.NameOf(template), JewelSockets.ShapeName(shape.Value)));
                         }
                     }
@@ -134,17 +137,17 @@ internal static class TrueFormJewels {
 
             EquipmentExtras.Refresh(wizard);
             try {
-                Directory.CreateDirectory(UltimusSeat.TrueForm.Folder);
-                File.WriteAllLines(Path.Combine(UltimusSeat.TrueForm.Folder, JEWELS_FILE), lines);
+                Directory.CreateDirectory(TrueFormMaker.MakerFolder);
+                File.WriteAllLines(Path.Combine(TrueFormMaker.MakerFolder, JEWELS_FILE), lines);
             }
             catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
-                Logger.Debug("True Form: could not write his jewel list: {0}", Logger.Args(e.Message));
+                Logger.Debug(Who + ": could not write his jewel list: {0}", Logger.Args(e.Message));
             }
 
-            Logger.Information("True Form: his sockets are filled ({0} jewels put in, {1} sockets in all).", Logger.Args(put, lines.Count));
+            Logger.Information(Who + ": his sockets are filled ({0} jewels put in, {1} sockets in all).", Logger.Args(put, lines.Count));
         }
         catch (Exception e) {
-            Logger.Warning("True Form: could not give him his jewels: {0}", Logger.Args(e.Message));
+            Logger.Warning(Who + ": could not give him his jewels: {0}", Logger.Args(e.Message));
         }
     }
 

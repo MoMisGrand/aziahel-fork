@@ -81,6 +81,10 @@ internal static class ZoomMaker {
                 }
 
                 TrueFormMaker.Dress(wizard, top, School.ToString(), BotStyle.GlassCannon, School.ToString());
+                // Every socket of what he wears gets the best jewel there is for his hitting setup, picked by the shared
+                // jewel picker every bot uses (BotJewelPicker), as True Form's are (Niduus, 2026-11-22: "Zoom has the slots
+                // open but nothing in them").
+                TrueFormJewels.Fill(wizard, School.ToString(), BotStyle.GlassCannon);
                 TrueFormSpells.Give(wizard, top, School.ToString(), BotStyle.GlassCannon);
                 Directory.CreateDirectory(UltimusSeat.Zoom.Folder);
                 Logger.Information("Zoom: ready as a level {0} {1} quest scout.", Logger.Args(top, School));
