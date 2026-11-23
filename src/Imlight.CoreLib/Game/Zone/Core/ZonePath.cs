@@ -364,7 +364,19 @@ public sealed class ZonePath : ZoneEntity {
         }
 
         var spawnObject = _creatures[index];
+        // A street creature whose actor stopped without its delete reaching the zone still held the spawn point, and the
+        // check below sent every "only if nobody holds it" call away before HandleCreatureSpawn could free it. Kitharas Moon
+        // waited over an hour in Plaza of Conquests for the Earth Elemental ("No Weaklings Allowed") after a bots update
+        // logged him out in the round he beat it (2026-11-22 20:47). It is freed first now.
+        if (message.OnlyIfAbsent && !Zone.IsInstance) {
+            ForgetGone(spawnObject);
+        }
+
         if (message.OnlyIfAbsent && CreatureCount(spawnObject) > 0) {
+            if (message.PlayerWizard is not null) {
+                TellWhatHoldsIt(spawnObject);
+            }
+
             return;
         }
 
@@ -529,6 +541,24 @@ public sealed class ZonePath : ZoneEntity {
             _living.Remove(id);
             Fighting.TryRemove(id, out _);
             _creatureActors.Remove(creature.Actor);
+        }
+    }
+
+    // A quest step asked for this spawner's creature and something still holds the spawn point: what it is, so a creature
+    // that never comes back can be told apart from one that is there (a living one, one in a battle, one still loading).
+    private void TellWhatHoldsIt(SpawnObject spawnObject) {
+        try {
+            var held = _living.Where(l => _spawnObjectInfo.TryGetValue(l.Key, out var s) && ReferenceEquals(s, spawnObject))
+                .Select(l => $"{l.Key} (template {l.Value.Template}"
+                             + (l.Value.Actor is IInternalActorRef { IsTerminated: true } ? ", gone" : "")
+                             + (Fighting.ContainsKey(l.Key) ? ", in a battle" : "")
+                             + (_loadingCreatures.ContainsKey(l.Value.Actor) ? ", loading" : "") + ")")
+                .ToList();
+            Logger.Information("Zone {0}: spawner {1} is held ({2} counted): {3}.",
+                Logger.Args(Zone.ZonePath, spawnObject.m_name, CreatureCount(spawnObject), held.Count > 0 ? string.Join(", ", held) : "nothing living is known"));
+        }
+        catch (Exception ex) {
+            Logger.Debug("Zone {0}: what holds spawner {1} could not be read: {2}", Logger.Args(Zone.ZonePath, spawnObject.m_name, ex.Message));
         }
     }
 
