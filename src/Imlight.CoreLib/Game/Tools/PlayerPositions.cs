@@ -129,16 +129,18 @@ internal static class PlayerPositions {
             }
 
             // One wizard per line, tab separated: name, zone, X, Y, Z, facing (radians), local time of the last move,
-            // and "local" when that wizard's game runs on this PC (else "remote"), so Use my position can pick the host's wizard.
+            // "local" when that wizard's game runs on this PC (else "remote"), so Use my position can pick the host's wizard,
+            // and the wizard's id (for commands meant for that one wizard, such as Blood Moon's "Go here in the game").
             var text = new StringBuilder();
-            foreach (var p in s_positions.Values.OrderByDescending(p => p.Updated)) {
+            foreach (var (charId, p) in s_positions.OrderByDescending(e => e.Value.Updated)) {
                 text.Append(p.Wizard).Append('\t').Append(p.Zone).Append('\t')
                     .Append(p.X.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)).Append('\t')
                     .Append(p.Y.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)).Append('\t')
                     .Append(p.Z.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)).Append('\t')
                     .Append(p.Facing.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)).Append('\t')
                     .Append(p.Updated.ToString("HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture)).Append('\t')
-                    .Append(p.OnThisPc ? "local" : "remote").Append('\n');
+                    .Append(p.OnThisPc ? "local" : "remote").Append('\t')
+                    .Append(charId.ToString(System.Globalization.CultureInfo.InvariantCulture)).Append('\n');
             }
 
             var folder = Path.Combine(Directory.GetCurrentDirectory(), "logs");
