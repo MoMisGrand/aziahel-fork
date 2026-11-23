@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -29,6 +30,8 @@ namespace Imlight.CoreLib.Game.Tools;
 /// <summary>
 /// Writes where each wizard on the server is standing to logs/positions.txt, for the Position card in
 /// ImlightManager. It only reads what the game already sends the server when a wizard moves.
+/// Also writes logs/player-looks.json: each wizard's look (the avatar parts and colours chosen at creation) and the
+/// gear they wear, slot by slot, for Blood Moon to show every wizard in a zone as they really look.
 /// </summary>
 internal static class PlayerPositions {
 
@@ -38,6 +41,68 @@ internal static class PlayerPositions {
     private static readonly TimeSpan s_forgetAfter = TimeSpan.FromMinutes(10);
     private static Timer s_timer;
     private static int s_dirty;
+
+    private sealed record WizardLook(string Wizard, Dictionary<string, object> Avatar, List<Gear> Gear);
+    private sealed record Gear(string Slot, ulong TemplateID, string Name);
+
+    private static readonly ConcurrentDictionary<ulong, (WizardLook Look, DateTime Read)> s_looks = new();
+    private static readonly TimeSpan s_lookEvery = TimeSpan.FromSeconds(5);
+
+    /// <summary>
+    /// Notes a wizard's look and worn gear, at most every few seconds per wizard (a gear change shows within that).
+    /// </summary>
+    internal static void Look(ulong charId, Imlight.CoreLib.WizardData.Models.Player.Wizard wizard) {
+        if (wizard is null || charId == 0) {
+            return;
+        }
+
+        var now = DateTime.Now;
+        if (s_looks.TryGetValue(charId, out var known) && now - known.Read < s_lookEvery) {
+            return;
+        }
+
+        try {
+            var avatar = new Dictionary<string, object>();
+            if (wizard.WizardAvatar is { } a) {
+                foreach (var prop in a.GetType().GetProperties()) {
+                    if (!prop.Name.StartsWith("m_", StringComparison.Ordinal) || prop.GetIndexParameters().Length != 0) {
+                        continue;
+                    }
+
+                    // Most avatar parts are small packed numbers (Bui2..Bui7), which convert to plain numbers.
+                    var value = prop.GetValue(a);
+                    if (prop.PropertyType.IsEnum) {
+                        avatar[prop.Name] = value?.ToString();
+                    } else if (prop.PropertyType.IsPrimitive) {
+                        avatar[prop.Name] = value;
+                    } else if (value is IConvertible convertible) {
+                        avatar[prop.Name] = convertible.ToInt64(System.Globalization.CultureInfo.InvariantCulture);
+                    }
+                }
+            }
+
+            var gear = new List<Gear>();
+            var equipment = wizard.EquipmentBehavior;
+            if (equipment?.SlotList is not null && equipment.EquippedItems is not null) {
+                foreach (var slot in equipment.SlotList.ToList()) {
+                    var item = equipment.EquippedItems.FirstOrDefault(i => i is not null && i.m_globalID == slot.ItemId);
+                    if (item is not null) {
+                        gear.Add(new Gear(slot.SlotType.ToString().Split('.')[^1], (ulong) item.m_templateID, slot.ItemName ?? ""));
+                    }
+                }
+            }
+
+            var look = new WizardLook(wizard.PlayerNameBehavior?.GetWizardName() ?? "", avatar, gear);
+            var changed = !s_looks.TryGetValue(charId, out var before)
+                || System.Text.Json.JsonSerializer.Serialize(before.Look) != System.Text.Json.JsonSerializer.Serialize(look);
+            s_looks[charId] = (look, now);
+            if (changed) {
+                Interlocked.Exchange(ref s_dirty, 1);
+            }
+        } catch (Exception ex) {
+            Logger.Debug("Could not read a wizard's look: {0}", Logger.Args(ex.Message));
+        }
+    }
 
     /// <summary>
     /// Records a wizard's position. The file is written at most twice a second.
@@ -82,6 +147,12 @@ internal static class PlayerPositions {
             var temp = path + ".tmp";
             File.WriteAllText(temp, text.ToString());
             File.Move(temp, path, overwrite: true);
+
+            // The looks of the wizards listed above, by name.
+            var looks = s_positions.Keys.Where(s_looks.ContainsKey).Select(id => s_looks[id].Look).ToList();
+            var looksPath = Path.Combine(folder, "player-looks.json");
+            File.WriteAllText(looksPath + ".tmp", System.Text.Json.JsonSerializer.Serialize(looks, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+            File.Move(looksPath + ".tmp", looksPath, overwrite: true);
         }
         catch (Exception ex) {
             Logger.Debug("Could not write player positions: {0}", Logger.Args(ex.Message));
