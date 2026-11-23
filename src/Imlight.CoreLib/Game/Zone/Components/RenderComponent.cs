@@ -45,6 +45,7 @@ using Imcodec.CoreObject;
 using Imcodec.Cryptography;
 using Imcodec.IO;
 using Imcodec.MessageLayer.Generated;
+using Imcodec.Math;
 using Imcodec.ObjectProperty;
 using Imcodec.ObjectProperty.TypeCache;
 using Imlight.Common;
@@ -90,6 +91,7 @@ internal sealed class RenderComponent(ZoneEntity entity) : ZoneEntityComponent(e
     // last checked again.
     private readonly Dictionary<IActorRef, Wizard> _hiddenUntilQuest = [];
     private readonly Dictionary<IActorRef, System.DateTime> _questCheckedAt = [];
+    private readonly Dictionary<IActorRef, System.DateTime> _spotCheckedAt = [];
     private static readonly System.TimeSpan QUEST_CHECK_INTERVAL = System.TimeSpan.FromSeconds(2);
 
     // The enemy show check (Niduus, 2026-11-12: "tighten enemy appearances. Sometimes they do project as invisible. Have
@@ -205,6 +207,10 @@ internal sealed class RenderComponent(ZoneEntity entity) : ZoneEntityComponent(e
         foreach (var mod in relevantDynaMods) {
             // If the player has a dynamod that disables this object, do not spawn it for them.
             if (IsDespawnState(mod.ModState)) {
+                var tag = Entity.Info?.m_zoneTag;
+                if (QuestLeftovers.ActiveUsageNames(wizard, tag?.ToString()) || CharacterOfferedByQuest(wizard)) {
+                    continue;
+                }
                 _playerIgnoreBecauseDynamod[suspect] = wizard;
                 LogMajid($"hidden by dynamod {mod.ModState} from", suspect);
 
@@ -300,6 +306,7 @@ internal sealed class RenderComponent(ZoneEntity entity) : ZoneEntityComponent(e
 
     public override void OnPlayerMove(CoreObject playerObj, IActorRef playerActor, Wizard playerWizard) {
         _lastSeen[playerActor] = (playerObj, playerWizard ?? _lastSeen.GetValueOrDefault(playerActor).Wizard);
+        SyncSpot(playerActor);
         if (playerWizard is not null && Entity.Info?.m_spawnRequirements is null && _joinedPlayers.Add(playerActor)) {
             if (IsQuestOnly) {
                 // This player was in the zone before the object was made, so OnStart did not send it to them.
@@ -620,7 +627,8 @@ internal sealed class RenderComponent(ZoneEntity entity) : ZoneEntityComponent(e
     }
 
     private bool IsQuestOnly
-        => _isQuestOnly ??= Entity.Info is { m_bUndetectable: true, m_spawnRequirements: null } info
+        => _isQuestOnly ??= Entity.Info is { m_spawnRequirements: null } info
+           && (info.m_bUndetectable || IsDungeonStepNpc())
            && info.GetType() == typeof(CoreObjectInfo)
            && !IsAlwaysShown(info)
            && Entity.ActiveGameObject is not WizClientPet
@@ -659,6 +667,17 @@ internal sealed class RenderComponent(ZoneEntity entity) : ZoneEntityComponent(e
     private static bool IsQuestService(IServiceComponent service)
         => service is InteractPersonaGoalComponent or InteractQuestOfferComponent or InteractQuestUnderwayComponent
            or InteractQuestSelectComponent;
+
+    private bool IsDungeonStepNpc()
+        => Entity.Zone?.IsInstance == true
+           && Entity.GetComponentOfType<InteractPersonaGoalComponent>() is not null
+           && Entity.GetComponentOfType<InteractQuestOfferComponent>() is null;
+
+    private bool CharacterOfferedByQuest(Wizard wizard) {
+        if (!Entity.Template.m_behaviors.Any(b => b is NPCBehaviorTemplate)) return false;
+        return InteractPersonaGoalComponent.HasPendingGoalFor(Entity, wizard)
+            || Entity.GetComponentOfType<InteractQuestOfferComponent>()?.GetServiceOptions(wizard).Any() == true;
+    }
 
     private bool? _isQuestOnly;
 
@@ -848,9 +867,33 @@ internal sealed class RenderComponent(ZoneEntity entity) : ZoneEntityComponent(e
         }
     }
 
+    private Vector3? UpdateSpot(IActorRef player) {
+        if (!_lastSeen.TryGetValue(player, out var seen) || seen.Wizard is null) return null;
+        var spot = InteractPersonaGoalComponent.ActiveGoalSpot(Entity, seen.Wizard);
+        var fullId = seen.Object?.m_globalID.Full;
+        if (fullId is not null && spot.HasValue) Entity.PlayerSpots[fullId.Value] = spot.Value;
+        else if (fullId is not null) Entity.PlayerSpots.TryRemove(fullId.Value, out _);
+        return spot;
+    }
+
+    private void SyncSpot(IActorRef player) {
+        var utcNow = System.DateTime.UtcNow;
+        if (!_sentTo.Contains(player)
+            || (_spotCheckedAt.TryGetValue(player, out var last) && utcNow - last < System.TimeSpan.FromSeconds(2))
+            || !_lastSeen.TryGetValue(player, out var seen)
+            || seen.Object is null) return;
+        _spotCheckedAt[player] = utcNow;
+        var hadSpot = Entity.PlayerSpots.ContainsKey(seen.Object.m_globalID.Full);
+        if (UpdateSpot(player).HasValue != hadSpot) {
+            DespawnObjectForPlayer(player);
+            CreateObjectForPlayer(player);
+        }
+    }
+
     private void SendObjectTo(IActorRef player) {
         // Serialize the client object.
         var clientObj = Entity.GetClientObject();
+        if (UpdateSpot(player) is { } spot) clientObj.m_location = spot;
         if (!_serializer.Serialize(clientObj, _propertyFlags, out var serializedData)) {
             Logger.Error("Failed to serialize object data.");
 
