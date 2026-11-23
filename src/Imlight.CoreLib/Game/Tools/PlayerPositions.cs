@@ -65,10 +65,18 @@ internal static class PlayerPositions {
             var avatar = new Dictionary<string, object>();
             if (wizard.WizardAvatar is { } a) {
                 foreach (var prop in a.GetType().GetProperties()) {
-                    if (prop.Name.StartsWith("m_", StringComparison.Ordinal) && prop.GetIndexParameters().Length == 0
-                        && (prop.PropertyType.IsPrimitive || prop.PropertyType.IsEnum)) {
-                        var value = prop.GetValue(a);
-                        avatar[prop.Name] = prop.PropertyType.IsEnum ? value?.ToString() : value;
+                    if (!prop.Name.StartsWith("m_", StringComparison.Ordinal) || prop.GetIndexParameters().Length != 0) {
+                        continue;
+                    }
+
+                    // Most avatar parts are small packed numbers (Bui2..Bui7), which convert to plain numbers.
+                    var value = prop.GetValue(a);
+                    if (prop.PropertyType.IsEnum) {
+                        avatar[prop.Name] = value?.ToString();
+                    } else if (prop.PropertyType.IsPrimitive) {
+                        avatar[prop.Name] = value;
+                    } else if (value is IConvertible convertible) {
+                        avatar[prop.Name] = convertible.ToInt64(System.Globalization.CultureInfo.InvariantCulture);
                     }
                 }
             }
