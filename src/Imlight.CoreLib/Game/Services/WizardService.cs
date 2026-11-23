@@ -386,6 +386,8 @@ internal class WizardService(SessionActor sessionActor) : MessageService(session
         // For the Position card in ImlightManager.
         Imlight.CoreLib.Game.Tools.PlayerPositions.Update(_activeWizard.CharId, _activeWizard.PlayerNameBehavior?.GetWizardName(),
             _activeWizard.Zone, position.X, position.Y, position.Z, radians, CommandService.IsThisPcCached(SessionActor.RemoteIp));
+        // And how they look, for Blood Moon.
+        Imlight.CoreLib.Game.Tools.PlayerPositions.Look(_activeWizard.CharId, _activeWizard);
     }
 
     #endregion
