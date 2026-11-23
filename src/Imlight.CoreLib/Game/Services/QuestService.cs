@@ -1927,7 +1927,7 @@ internal partial class QuestService(SessionActor sessionActor) : MessageService(
                 if (gTemplate is not WaypointGoalTemplate waypointGoal) {
                     continue;
                 }
-                if (waypointGoal.m_zoneTag != currentZone) {
+                if (!QuestSpotGoals.MatchesZone(waypointGoal, currentZone)) {
                     // Player is not in the correct zone for this goal.
                     continue;
                 }
@@ -2061,7 +2061,11 @@ internal partial class QuestService(SessionActor sessionActor) : MessageService(
         if (goalTemplate is not WaypointGoalTemplate waypointGoal || !waypointGoal.m_zoneEntry) {
             return;
         }
-        if (waypointGoal.m_zoneTag != wizard.Zone) {
+        if (!QuestSpotGoals.MatchesZone(waypointGoal, wizard.Zone)) {
+            return;
+        }
+        var questTemplate = CachedQuestTemplates.FirstOrDefault(q => q.m_questName == questInstance.QuestName);
+        if (QuestSpotGoals.SpotsFor(questTemplate, goalTemplate, wizard.Zone).Length > 0) {
             return;
         }
         // Guards against double completion (already completed or never started).

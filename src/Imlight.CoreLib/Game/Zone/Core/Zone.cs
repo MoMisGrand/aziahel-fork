@@ -361,6 +361,7 @@ public partial class Zone : ReceiveProtocolDispatcher, IWithTimers {
 
         _pendingPlayerMoves.Add(message);
         NoteBattlegroundPlayerMoved(message);
+        QuestSpotGoals.OnPlayerMoved(ZonePath, message);
     }
 
     [MessageHandler(typeof(ZONE_102_PROTOCOL.MSG_CREATUREMOVE))]
