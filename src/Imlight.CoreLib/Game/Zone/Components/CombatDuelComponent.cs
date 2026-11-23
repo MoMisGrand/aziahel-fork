@@ -3832,6 +3832,18 @@ internal sealed partial class CombatDuelComponent(ZoneEntity entity)
         var creaturesWin = AliveAndInDuelPlayerCount <= 0;
         var playersWin = AliveAndInDuelCreatureCount <= 0 && !(creaturesWin && creaturesNotYetIn);
 
+        // Beaten in the round every wizard left (a bots update logged them out while the hit played): the battle ends before
+        // the creature's death is played, so nothing tells it it died, and it stayed "in a battle" holding its spawn point.
+        // The Earth Elemental in Plaza of Conquests never came back for over an hour that way (2026-11-22 20:47). It is told now.
+        if (playersWin && creaturesWin) {
+            EnactActionOnSubCircles(circle => {
+                if (circle is { Occupied: true, OccupiedTeam: CombatTeam.Monster, IsSummonedMinion: false, IsAlive: false }
+                    && circle.ParticipantActor is { } creature) {
+                    creature.Tell(new COMBAT_106_PROTOCOL.MSG_COMBATDEATH());
+                }
+            });
+        }
+
         // A queued tutorial card grant must not leak into the next duel on this sigil.
         _tutorialDirector.OnDuelEnded();
 

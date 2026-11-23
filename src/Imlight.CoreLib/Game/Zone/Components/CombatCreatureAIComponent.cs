@@ -351,6 +351,36 @@ internal sealed partial class CombatCreatureAIComponent(ZoneEntity entity) : Zon
         }
     }
 
+    // A creature still marked as in a battle that is over, or that holds someone else in its circle now, was left behind by
+    // it: the Earth Elemental in Plaza of Conquests was beaten in the round a bots update logged its two fighters out
+    // (2026-11-22 20:47), the battle ended without its death being played, and it held its spawn point "in a battle" for
+    // over an hour while Kitharas Moon waited for it ("No Weaklings Allowed"). It is taken away, so its spawn point fills.
+    [MessageHandler(typeof(ZONE_102_PROTOCOL.MSG_CHECKSTALEBATTLE))]
+    private void ReceiveCheckStaleBattle(ZONE_102_PROTOCOL.MSG_CHECKSTALEBATTLE message) {
+        if (!_isInDuel || _sentFinalKill || Entity.IsCombatOnlyMinion) {
+            return;
+        }
+
+        var duel = _currentDuelComponent;
+        var circle = _currentSubCircle;
+        var self = Entity.ActiveGameObject;
+        if (self is null) {
+            return;
+        }
+
+        var stillIn = duel is not null && duel.IsDuelActive
+                      && circle?.ParticipantObject is { } held && held.m_globalID == self.m_globalID;
+        if (stillIn) {
+            return;
+        }
+
+        Logger.Warning("Creature {0} ({1}) was still marked as in a battle that is over; it is taken away so its spawn point brings it back.",
+            Logger.Args(self.m_debugName, self.m_globalID.Full));
+        _sentFinalKill = true;
+        Imlight.CoreLib.Game.Zone.Core.ZonePath.Fighting.TryRemove(self.m_globalID.Full, out _);
+        Entity.DeleteObject();
+    }
+
     private void LeaveDuelOnDeath() {
         if (_sentFinalKill || !_isInDuel) {
             Entity.DeleteObject();

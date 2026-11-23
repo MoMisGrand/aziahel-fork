@@ -556,6 +556,12 @@ public sealed class ZonePath : ZoneEntity {
                 .ToList();
             Logger.Information("Zone {0}: spawner {1} is held ({2} counted): {3}.",
                 Logger.Args(Zone.ZonePath, spawnObject.m_name, CreatureCount(spawnObject), held.Count > 0 ? string.Join(", ", held) : "nothing living is known"));
+
+            // One "in a battle" may have been left behind by a battle that ended without it: it is asked, and goes if so.
+            foreach (var (id, creature) in _living.Where(l => Fighting.ContainsKey(l.Key)
+                         && _spawnObjectInfo.TryGetValue(l.Key, out var s) && ReferenceEquals(s, spawnObject)).ToList()) {
+                creature.Actor?.Tell(new ZONE_102_PROTOCOL.MSG_CHECKSTALEBATTLE());
+            }
         }
         catch (Exception ex) {
             Logger.Debug("Zone {0}: what holds spawner {1} could not be read: {2}", Logger.Args(Zone.ZonePath, spawnObject.m_name, ex.Message));
