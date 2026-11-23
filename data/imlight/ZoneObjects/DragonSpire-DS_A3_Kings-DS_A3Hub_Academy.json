@@ -1,6 +1,6 @@
 {
   "Zone": "DragonSpire/DS_A3_Kings/DS_A3Hub_Academy",
-  "Notes": "The Fire School door (Forged in Fire, DS-ACAD-C01-003: Go to the Fire School, DS_School_Fire, and use the forge). The game files have no way into the Fire School from the Academy: the only teleport at the school's doorway (Teleport location 1, beside the FromFireSchool landing at -3386, 3077) is the dragon flight to Dragon's Roost in the live game's capture (SpiralDB), and the school's door is no object of the hub. Nobody could reach the forge (Ultimus stood in the Academy from 2026-11-22 15:59 CT). This press-X door (the game's own Dragonspyre door, DS_Door_Regular_01) stands between the flight's doorway and the landing spot, 168 from the flight volume's middle (its radius is 100), so walking to it never boards the flight, and takes you into the Fire School (StoryTeleports.json names where); the school's own exit brings you back out here. Move it in the Customs tab if it stands somewhere awkward. Exit: the door is made a press-X door into the Fire School by its template (Doors), the way the Mausoleum's warp portal is, so it works even when the server does not see the template as a door; Triggers names only this door, so none of the hub's own exits change.",
+  "Notes": "The Fire School door (Forged in Fire, DS-ACAD-C01-003: Go to the Fire School, DS_School_Fire, and use the forge). The game files have no way into the Fire School from the Academy: the only teleport at the school's doorway (Teleport location 1, beside the FromFireSchool landing at -3386, 3077) is the dragon flight to Dragon's Roost in the live game's capture (SpiralDB), and the school's door is no object of the hub. Nobody could reach the forge (Ultimus stood in the Academy from 2026-11-22 15:59 CT). This press-X door (the game's own Dragonspyre door, DS_Door_Regular_01) stands between the flight's doorway and the landing spot, 168 from the flight volume's middle (its radius is 100), so walking to it never boards the flight, and takes you into the Fire School (StoryTeleports.json names where); the school's own exit brings you back out here. Move it in the Customs tab if it stands somewhere awkward. Exit: the door is made a press-X door into the Fire School by its template (Doors), the way the Mausoleum's warp portal is, so it works even when the server does not see the template as a door; Triggers names only this door, so none of the hub's own exits change. Teleport location 1 (the Fire School's own doorway) is also sent into the Fire School: SpiralDB's capture has it as the dragon flight, and Niduus walked into it on 2026-11-22 18:38 CT and was flown to Dragon's Roost instead of the school.",
   "Objects": [
     {
       "Name": "FireSchoolDoor",
@@ -16,7 +16,8 @@
     "Zone": "DragonSpire/DS_A3_Kings/Interiors/DS_School_Fire",
     "Loc": "Start",
     "Triggers": [
-      "FireSchoolDoor"
+      "FireSchoolDoor",
+      "Teleport location 1"
     ],
     "Doors": [
       126830
