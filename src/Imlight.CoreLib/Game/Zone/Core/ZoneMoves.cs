@@ -23,10 +23,10 @@
  * Moves of a zone's OWN objects and NPCs (the ones in its gamedata.bin), made in Blood Moon, Niduus's 3D zone viewer
  * (Niduus, 2026-11-22: "moving certain NPC's update to Ahziael in real time"). Read from
  * spiraldb-extra/Customs/ZoneMoves.json, which Blood Moon writes; the game files are never changed. The file:
- *   { "WizardCity/WC_Hub": { "88:77892": { "X": .., "Y": .., "Z": .., "Yaw": .., "Scale": .., "Name": "..", "TemplateID": 77892 } } }
+ *   { "WizardCity/WC_Hub": { "88:77892": { "X": .., "Y": .., "Z": .., "Yaw": .., "Pitch": .., "Roll": .., "Scale": .., "Name": "..", "TemplateID": 77892 } } }
  * A key is the object's place in the zone's own object list (gamedata.bin m_objectList, empty entries counted) and its
- * template id; the template must match, so a game update that reorders the list moves nothing by mistake. Yaw is in
- * radians. Name, TemplateID and Saved are notes for Blood Moon.
+ * template id; the template must match, so a game update that reorders the list moves nothing by mistake. Yaw, Pitch
+ * (tip forward or back) and Roll (lean sideways) are in radians; a tilt left out keeps the game's own. Name, TemplateID and Saved are notes for Blood Moon.
  * Every copy of the zone uses the moves when it loads (ZoneObjects.AddTo marks the list before anything is added or left
  * out), and the file is watched: a change reaches every loaded copy at once (MSG_ZONEOBJECTSCHANGED OwnMovesChanged), where
  * ZoneObjectSupervisor takes a moved object away from the players and sends it again at its new place. An object whose
@@ -35,7 +35,7 @@
  *
  * Created by: Claude
  * Version: KALI 1.0
- * Last Updated: 11/22/2026
+ * Last Updated: 11/23/2026
  */
 
 using System;
@@ -63,6 +63,8 @@ internal static class ZoneMoves {
         public float? Y { get; set; }
         public float? Z { get; set; }
         public float? Yaw { get; set; }
+        public float? Pitch { get; set; }
+        public float? Roll { get; set; }
         public float? Scale { get; set; }
     }
 
@@ -121,7 +123,7 @@ internal static class ZoneMoves {
         var scale = own.Scale;
         if (MovesFor(own.Zone) is { } moves && moves.TryGetValue(own.Key, out var move) && move is not null) {
             location = new Vector3(move.X ?? location.X, move.Y ?? location.Y, move.Z ?? location.Z);
-            orientation = new Vector3(orientation.X, orientation.Y, move.Yaw ?? orientation.Z);
+            orientation = new Vector3(move.Pitch ?? orientation.X, move.Roll ?? orientation.Y, move.Yaw ?? orientation.Z);
             if (move.Scale is > 0.01f and < 100f) {
                 scale = move.Scale.Value;
             }
