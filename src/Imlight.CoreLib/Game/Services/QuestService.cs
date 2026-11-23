@@ -2146,6 +2146,26 @@ internal partial class QuestService(SessionActor sessionActor) : MessageService(
 
         // The Manager's Spell Quests tab shows which step each wizard is on.
         NoteProgress(wizard);
+        RefreshMawInteractOptions(wizard);
+    }
+
+    private void RefreshMawInteractOptions(Wizard wizard) {
+        if (wizard is null
+            || !wizard.QuestBehavior.CurrentQuestInstances.Any(q =>
+                string.Equals(q.QuestName, "AZ-THREE-C01-002", StringComparison.OrdinalIgnoreCase)
+                && q.GoalProgress.Any(g =>
+                    g.GoalName == "1_WizardQuestGoalsUseItem"
+                    && g.DoesPlayerHaveGoal()
+                    && !g.IsGoalCompleted()))) {
+            return;
+        }
+
+        SessionActor.GetZoneActor()?.Tell(new ZONE_102_PROTOCOL.MSG_POSTEVENT {
+            EventName = "EnterZone",
+            PlayerActor = SessionActor.ActorRef,
+            PlayerGameObject = GetActiveGameObject(),
+            RetryRefused = true,
+        });
     }
 
     // Zone triggers listen for this event to react to a goal (an NPC walks to a new spot, a barricade falls).
@@ -2153,6 +2173,47 @@ internal partial class QuestService(SessionActor sessionActor) : MessageService(
         var zoneActor = SessionActor.GetZoneActor();
         if (zoneActor is null) {
             return;
+        }
+
+        var quest = CachedQuestTemplates.FirstOrDefault(q => q.m_questName == questName);
+        var goalTemplate = quest?.m_goals?.FirstOrDefault(g =>
+            g is not null && string.Equals(g.m_goalName, goalName, StringComparison.OrdinalIgnoreCase));
+        if (goalTemplate?.m_goalType == GOAL_TYPE.GOAL_TYPE_USAGE) {
+            foreach (var tag in QuestLeftovers.FinishedUsageBlockerTags(goalTemplate.m_destinationZone, goalTemplate)) {
+                zoneActor.Tell(new ZONE_102_PROTOCOL.MSG_REMOVETRIGGEROBJECT {
+                    ObjectName = tag,
+                });
+                SessionActor.ActorRef.Tell(new CHARACTER_103_PROTOCOL.MSG_ADDDYNAMOD {
+                    DynaMod = new ResAddDynaMod {
+                        m_dynaModClientTag = tag,
+                        m_dynaModState = "Off",
+                        m_zoneName = (string)goalTemplate.m_destinationZone,
+                        m_bShowsObject = false,
+                        m_persist = true,
+                    },
+                    ContextActor = SessionActor.ActorRef,
+                });
+            }
+        }
+
+        if (string.Equals(questName, "AZ-THREE-C01-002", StringComparison.OrdinalIgnoreCase)) {
+            zoneActor.Tell(new ZONE_102_PROTOCOL.MSG_POSTEVENT {
+                EventName = "ExplodeIt",
+                PlayerActor = SessionActor.ActorRef,
+                PlayerGameObject = GetActiveGameObject(),
+            });
+
+            foreach (var objectName in new[] {
+                         "AZ_Rubble-TheMawCollision",
+                         "AZ_Rubble-TheMawCollision instance",
+                         "AZ-MagicalWard_Maw",
+                         "AZ_Rubble-TheMaw",
+                         "AZ_Rubble-TheMaw instance",
+                     }) {
+                zoneActor.Tell(new ZONE_102_PROTOCOL.MSG_REMOVETRIGGEROBJECT {
+                    ObjectName = objectName,
+                });
+            }
         }
 
         // The game's triggers wait on its own names for the steps of quests we rebuilt ("GoalComplete_<quest>_Goal 6"),

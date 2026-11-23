@@ -490,6 +490,9 @@ internal sealed class RenderComponent(ZoneEntity entity) : ZoneEntityComponent(e
             && (msg.ObjectName == goTemplate.m_objectName || msg.TemplateID == goTemplate.m_templateID)) {
             _removedByScript = true;
             _sentTo.Clear();
+            foreach (var player in _joinedPlayers.Concat(_lastSeen.Keys).Distinct().ToList()) {
+                DespawnObjectForPlayer(player);
+            }
         }
     }
 

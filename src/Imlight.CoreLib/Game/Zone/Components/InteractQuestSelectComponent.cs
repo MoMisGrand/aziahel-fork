@@ -66,6 +66,7 @@ internal sealed class InteractQuestSelectComponent(ZoneEntity entity)
     public string StateName => null;
     public string InteractWizBang => null;
     public string DisplayKey => null;
+    public float DEFAULT_INTERACTION_RADIUS => 1000f;
 
     private readonly Dictionary<string, List<GoalTemplate>> _usageGoalsByQuest = [];
 
@@ -74,11 +75,27 @@ internal sealed class InteractQuestSelectComponent(ZoneEntity entity)
 
     public static bool ShouldAttachToEntity(CoreTemplate template)
         => template is GameObjectTemplate gameObjectTemplate
-        && (HasBehavior(template, "WizardSelectBehavior") || IsNamedByAnyUsageGoal(gameObjectTemplate));
+           && (HasBehavior(template, "WizardSelectBehavior")
+               || IsNamedByAnyUsageGoal(gameObjectTemplate)
+               || string.Equals(gameObjectTemplate.m_objectName.ToString(), "AZ_Rubble-TheMaw", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(gameObjectTemplate.m_objectName.ToString(), "AZ_Rubble-TheMaw instance", StringComparison.OrdinalIgnoreCase));
 
     public IEnumerable<ServiceOptionBase> GetServiceOptions(Wizard playerCharacter) {
         if (playerCharacter?.QuestBehavior?.CurrentQuestInstances == null) {
             yield break;
+        }
+
+        var hasMawUseStep = playerCharacter.QuestBehavior.CurrentQuestInstances.Any(q =>
+            string.Equals(q.QuestName, "AZ-THREE-C01-002", StringComparison.OrdinalIgnoreCase)
+            && q.GoalProgress.Any(g =>
+                g.GoalName == "1_WizardQuestGoalsUseItem"
+                && g.DoesPlayerHaveGoal()
+                && !g.IsGoalCompleted()));
+        if (hasMawUseStep
+            && Entity.Template is GameObjectTemplate mawTemplate
+            && (string.Equals(mawTemplate.m_objectName.ToString(), "AZ_Rubble-TheMaw", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(mawTemplate.m_objectName.ToString(), "AZ_Rubble-TheMaw instance", StringComparison.OrdinalIgnoreCase))) {
+            yield return new InteractableOption { m_serviceName = ServiceName };
         }
 
         // If we did not find any quests with active usage goals, don't show the interaction option at all.
@@ -122,6 +139,25 @@ internal sealed class InteractQuestSelectComponent(ZoneEntity entity)
     }
 
     public void OnServiceInteraction(IActorRef playerActor, Wizard playerCharacter, CoreObject playerObject, uint serviceOptionIndex) {
+        var mawQuest = playerCharacter?.QuestBehavior?.CurrentQuestInstances?.FirstOrDefault(q =>
+            string.Equals(q.QuestName, "AZ-THREE-C01-002", StringComparison.OrdinalIgnoreCase));
+        var mawGoal = mawQuest?.GoalProgress?.FirstOrDefault(g =>
+            g.GoalName == "1_WizardQuestGoalsUseItem"
+            && g.DoesPlayerHaveGoal()
+            && !g.IsGoalCompleted());
+        if (mawQuest is not null
+            && mawGoal is not null
+            && Entity.Template is GameObjectTemplate mawTemplate
+            && (string.Equals(mawTemplate.m_objectName.ToString(), "AZ_Rubble-TheMaw", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(mawTemplate.m_objectName.ToString(), "AZ_Rubble-TheMaw instance", StringComparison.OrdinalIgnoreCase))) {
+            playerActor.Tell(new CHARACTER_103_PROTOCOL.MSG_COMPLETEUSAGEGOAL {
+                QuestID = mawQuest.ID,
+                GoalID = mawGoal.ID,
+                SuppressCompletionDialog = false,
+            });
+            return;
+        }
+
         // One use completes every active usage goal that matches this object, across all of the
         // player's quests, each through the normal goal-completion path.
         var activeGoals = FindActiveMatchingGoals(playerCharacter);

@@ -274,7 +274,14 @@ internal sealed class ZoneObjectSupervisor(Core.Zone zone) : ZoneEntitySuperviso
 
     [MessageHandler(typeof(ZONE_102_PROTOCOL.MSG_REMOVETRIGGEROBJECT))]
     private void ReceiveRemoveTriggerObject(ZONE_102_PROTOCOL.MSG_REMOVETRIGGEROBJECT message) {
-        foreach (var placed in _placed.Where(p => IsNamed(p, message.ObjectName))) {
+        foreach (var placed in _placed.Where(p =>
+                     IsNamed(p, message.ObjectName)
+                     || (string.Equals(message.ObjectName, "AZ_Rubble-TheMawCollision", StringComparison.OrdinalIgnoreCase)
+                         && p.Info.m_templateID.Full == 1546446)
+                     || (string.Equals(message.ObjectName, "AZ_Rubble-TheMawCollision instance", StringComparison.OrdinalIgnoreCase)
+                         && p.Info.m_templateID.Full == 1546446)
+                     || (string.Equals(message.ObjectName, "AZ-MagicalWard_Maw", StringComparison.OrdinalIgnoreCase)
+                         && p.Info.m_templateID.Full == 643381))) {
             placed.TriggerRemoved = true;
             if (placed.Actor is null) {
                 continue;
