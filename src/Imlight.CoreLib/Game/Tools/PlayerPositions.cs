@@ -43,7 +43,9 @@ internal static class PlayerPositions {
     private static int s_dirty;
 
     private sealed record WizardLook(string Wizard, Dictionary<string, object> Avatar, List<Gear> Gear);
-    private sealed record Gear(string Slot, ulong TemplateID, string Name);
+    // DisplayID: the look a stitched item wears (0 when not stitched). Color, Decal and Pattern: the colour picked when it
+    // was bought or dyed (its picture), its second colour and its pattern (the item lock bit left out).
+    private sealed record Gear(string Slot, ulong TemplateID, string Name, ulong DisplayID = 0, int Color = 0, int Decal = 0, int Pattern = 0);
 
     private static readonly ConcurrentDictionary<ulong, (WizardLook Look, DateTime Read)> s_looks = new();
     private static readonly TimeSpan s_lookEvery = TimeSpan.FromSeconds(5);
@@ -87,7 +89,8 @@ internal static class PlayerPositions {
                 foreach (var slot in equipment.SlotList.ToList()) {
                     var item = equipment.EquippedItems.FirstOrDefault(i => i is not null && i.m_globalID == slot.ItemId);
                     if (item is not null) {
-                        gear.Add(new Gear(slot.SlotType.ToString().Split('.')[^1], (ulong) item.m_templateID, slot.ItemName ?? ""));
+                        gear.Add(new Gear(slot.SlotType.ToString().Split('.')[^1], (ulong) item.m_templateID, slot.ItemName ?? "",
+                            (uint) item.m_displayID, item.m_primaryColor, item.m_secondaryColor, item.m_pattern & 0x7FFFFFFF));
                     }
                 }
             }
