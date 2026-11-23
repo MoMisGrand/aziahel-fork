@@ -23,7 +23,7 @@
  * Moves of a zone's OWN objects and NPCs (the ones in its gamedata.bin), made in Blood Moon, Niduus's 3D zone viewer
  * (Niduus, 2026-11-22: "moving certain NPC's update to Ahziael in real time"). Read from
  * spiraldb-extra/Customs/ZoneMoves.json, which Blood Moon writes; the game files are never changed. The file:
- *   { "WizardCity/WC_Hub": { "88:77892": { "X": .., "Y": .., "Z": .., "Yaw": .., "Name": "..", "TemplateID": 77892 } } }
+ *   { "WizardCity/WC_Hub": { "88:77892": { "X": .., "Y": .., "Z": .., "Yaw": .., "Scale": .., "Name": "..", "TemplateID": 77892 } } }
  * A key is the object's place in the zone's own object list (gamedata.bin m_objectList, empty entries counted) and its
  * template id; the template must match, so a game update that reorders the list moves nothing by mistake. Yaw is in
  * radians. Name, TemplateID and Saved are notes for Blood Moon.
@@ -63,10 +63,11 @@ internal static class ZoneMoves {
         public float? Y { get; set; }
         public float? Z { get; set; }
         public float? Yaw { get; set; }
+        public float? Scale { get; set; }
     }
 
     // A zone's own object as the game placed it, and its key in the file.
-    private sealed record Own(string Zone, string Key, Vector3 Location, Vector3 Orientation);
+    private sealed record Own(string Zone, string Key, Vector3 Location, Vector3 Orientation, float Scale);
 
     private static readonly ConditionalWeakTable<CoreObjectInfo, Own> s_own = [];
     private static readonly object s_lock = new();
@@ -96,7 +97,7 @@ internal static class ZoneMoves {
                 continue;
             }
 
-            s_own.AddOrUpdate(info, new Own(zonePath, $"{i}:{info.m_templateID.Full}", info.m_location, info.m_orientation));
+            s_own.AddOrUpdate(info, new Own(zonePath, $"{i}:{info.m_templateID.Full}", info.m_location, info.m_orientation, info.m_fScale));
             if (Apply(info)) {
                 moved++;
             }
@@ -117,17 +118,22 @@ internal static class ZoneMoves {
 
         var location = own.Location;
         var orientation = own.Orientation;
+        var scale = own.Scale;
         if (MovesFor(own.Zone) is { } moves && moves.TryGetValue(own.Key, out var move) && move is not null) {
             location = new Vector3(move.X ?? location.X, move.Y ?? location.Y, move.Z ?? location.Z);
             orientation = new Vector3(orientation.X, orientation.Y, move.Yaw ?? orientation.Z);
+            if (move.Scale is > 0.01f and < 100f) {
+                scale = move.Scale.Value;
+            }
         }
 
-        if (location.Equals(info.m_location) && orientation.Equals(info.m_orientation)) {
+        if (location.Equals(info.m_location) && orientation.Equals(info.m_orientation) && scale.Equals(info.m_fScale)) {
             return false;
         }
 
         info.m_location = location;
         info.m_orientation = orientation;
+        info.m_fScale = scale;
 
         return true;
     }
