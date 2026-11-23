@@ -51,6 +51,7 @@
  *   TemplateID  the object or creature template (a .lookup id).
  *   X, Y, Z     where it stands.
  *   Yaw         which way it faces, in radians (the in-game "Rotation"; "Angle" is the same in degrees).
+ *   Pitch, Roll its tilt forward or back and to one side, in radians, 0 (upright) if left out (Blood Moon's tilt rings).
  *   Scale       its size, 1 if left out (objects only).
  *   StartState  the state it starts in, empty for the template's own (objects only).
  *   Sigil       for a dungeon sigil pad (a MinigameSigilInfo, made by ZoneSigilSupervisor and used through
@@ -72,7 +73,7 @@
  * Placements (Niduus, 2026-10-22: "if I have to turn it or move it, it works immediately and does NOT require another
  * prompt or server reset"): the Manager's Customs tab saves where an object stands to spiraldb-extra/Customs/
  * Placements.json, which updates never replace (they replace the files here). For a room (the zone, with @variant for a
- * variant's file) and an object name it holds X, Y, Z, Yaw and Scale over the file's, a TemplateID to swap the object
+ * variant's file) and an object name it holds X, Y, Z, Yaw, Pitch, Roll and Scale over the file's, a TemplateID to swap the object
  * (or, with a name the file does not have, to add one), and Removed to leave the object out.
  *
  * Vendors and trainers (Niduus, 2026-10-23): the Customs tab's own shopkeepers and trainers, in
@@ -160,6 +161,8 @@ internal static class ZoneObjects {
         public float Y { get; set; }
         public float Z { get; set; }
         public float Yaw { get; set; }
+        public float Pitch { get; set; }
+        public float Roll { get; set; }
         public float Scale { get; set; } = 1.0f;
         public string StartState { get; set; } = "";
         // A creature's custom of the Customs tab (Customs.cs), 0 for the creature itself.
@@ -668,7 +671,7 @@ internal static class ZoneObjects {
     }
 
     private static bool SamePlacement(ZoneObject a, ZoneObject b)
-        => a.X == b.X && a.Y == b.Y && a.Z == b.Z && a.Yaw == b.Yaw && a.Scale == b.Scale
+        => a.X == b.X && a.Y == b.Y && a.Z == b.Z && a.Yaw == b.Yaw && a.Pitch == b.Pitch && a.Roll == b.Roll && a.Scale == b.Scale
            && a.StartState == b.StartState && JsonSerializer.Serialize(a.Sigil) == JsonSerializer.Serialize(b.Sigil)
            && JsonSerializer.Serialize(a.CombatSigil) == JsonSerializer.Serialize(b.CombatSigil);
 
@@ -905,7 +908,7 @@ internal static class ZoneObjects {
 
         info.m_templateID = obj.TemplateID;
         info.m_location = new Vector3(obj.X, obj.Y, obj.Z);
-        info.m_orientation = new Vector3(0, 0, obj.Yaw);
+        info.m_orientation = new Vector3(obj.Pitch, obj.Roll, obj.Yaw);
         info.m_fScale = obj.Scale > 0 ? obj.Scale : 1.0f;
         info.m_zoneTag = obj.Name;
         info.m_startState = obj.StartState ?? "";
@@ -991,6 +994,8 @@ internal static class ZoneObjects {
         public float? Y { get; set; }
         public float? Z { get; set; }
         public float? Yaw { get; set; }
+        public float? Pitch { get; set; }
+        public float? Roll { get; set; }
         public float? Scale { get; set; }
         public bool Removed { get; set; }
     }
@@ -1059,6 +1064,8 @@ internal static class ZoneObjects {
                 obj.Y = placement.Y ?? obj.Y;
                 obj.Z = placement.Z ?? obj.Z;
                 obj.Yaw = placement.Yaw ?? obj.Yaw;
+                obj.Pitch = placement.Pitch ?? obj.Pitch;
+                obj.Roll = placement.Roll ?? obj.Roll;
                 obj.Scale = placement.Scale is > 0 ? placement.Scale.Value : obj.Scale;
             }
         }
