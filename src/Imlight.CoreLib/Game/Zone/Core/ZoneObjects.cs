@@ -327,6 +327,11 @@ internal static class ZoneObjects {
             AddArenaMonsters(zonePath, variant, arenaMonsters, results);
         }
 
+        // Blood Moon's moves of the zone's own objects, while the list is still as the game files have it (ZoneMoves).
+        if (results?.ZoneData?.m_objectList is { } own && !isArena) {
+            ZoneMoves.Mark(zonePath, own);
+        }
+
         if (!Enabled || results?.ZoneData is null || string.IsNullOrEmpty(zonePath)) {
             return Applied.None;
         }
