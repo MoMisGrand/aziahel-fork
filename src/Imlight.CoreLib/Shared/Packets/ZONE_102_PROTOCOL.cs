@@ -1805,6 +1805,14 @@ public class ZONE_102_PROTOCOL : IServerProtocol {
     /// global ids, and their spawn points spawn them again. A ZoneObjects distinct spawner that waited during the battle
     /// fills up again.
     /// </summary>
+    // Asks a creature that counts as in a battle whether that battle is still going (ZonePath, when a quest step wants the
+    // creature and its spawn point is held): one left in a battle that ended without it is taken away so it comes back.
+    public sealed class MSG_CHECKSTALEBATTLE : IServerMessage {
+
+        public byte MessageOrder { get; } = 115;
+        public byte ServiceID { get; } = 102;
+    }
+
     public sealed class MSG_ENCOUNTERBATTLEENDED : IServerMessage {
 
         public byte MessageOrder { get; } = 98;
