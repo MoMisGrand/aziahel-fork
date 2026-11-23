@@ -17,17 +17,28 @@
  */
 
 using System;
+using System.Collections.Concurrent;
 using System.Linq;
 using Akka.Actor;
+using Imcodec.ObjectProperty;
 using Imcodec.ObjectProperty.TypeCache;
 using Imlight.Common;
+using Imlight.CoreLib.Game.Battlegrounds;
+using Imlight.CoreLib.Game.Events;
 using Imlight.CoreLib.Game.Housing;
+using Imlight.CoreLib.Game.Raids;
 using Imlight.CoreLib.Game.Results.Contexts;
 using Imlight.CoreLib.Shared.Packets;
+using Imlight.CoreLib.WizardData.Collections;
+using Imlight.CoreLib.WizardData.Models.Player;
 
 namespace Imlight.CoreLib.Game.Results.Handlers;
 
 internal sealed class ResTeleportHandler : BaseResultHandler<ResTeleport> {
+
+    private sealed record DungeonRoomTarget(string Zone, string Location);
+
+    private static readonly ConcurrentDictionary<(ulong CharacterId, string Zone, string Trigger), DateTime> s_forwardEvents = new();
 
     public override bool Execute(IResultContext context) {
         if (context.GetPlayerObj() is not WizClientObject playerObj) {
@@ -41,6 +52,24 @@ internal sealed class ResTeleportHandler : BaseResultHandler<ResTeleport> {
 
         var destinationZone = Result.m_destinationZone;
         var destinationLocation = Result.m_destinationLoc;
+
+        if (context is GenericResultContext { TriggerName: { } triggerName }
+            && IsForwardDungeonTrigger(triggerName)
+            && context.GetZonePath() is { } forwardZone
+            && forwardZone.Contains("/Interiors/", StringComparison.OrdinalIgnoreCase)
+            && TryDungeonForwardGate(playerObj.m_characterId, forwardZone, triggerName)
+            && ActiveDungeonRoom(context.GetPlayerRef(), forwardZone, playerObj.m_characterId) is { } activeRoom) {
+            destinationZone = activeRoom.Zone;
+            destinationLocation = activeRoom.Location;
+            Logger.Information("Dungeon room: trigger {0} in {1} goes forward to {2} ({3}).",
+                Logger.Args(triggerName, forwardZone, destinationZone, destinationLocation));
+        }
+
+        if (context is GenericResultContext { TriggerName: "Teleport to Cenote" }
+            && string.Equals(context.GetZonePath(), "Azteca/AZ_Z01_ThreePoints", StringComparison.OrdinalIgnoreCase)) {
+            destinationZone = "Azteca/AZ_Z02_Cenote";
+            destinationLocation = "Start";
+        }
 
         // A clickable portal (Dragon's Roost's portal to the Academy) runs its own teleport, which names no destination:
         // the teleport stored under the portal's name (SpiralDB or spiraldb-extra/DungeonTeleports) says where it goes.
@@ -59,6 +88,17 @@ internal sealed class ResTeleportHandler : BaseResultHandler<ResTeleport> {
         }
 
         if (string.IsNullOrEmpty(destinationZone)) {
+            if (context is GenericResultContext { TriggerName: { } roomTrigger }
+                && !roomTrigger.Contains("Backdoor", StringComparison.OrdinalIgnoreCase)
+                && !roomTrigger.Contains("Exit", StringComparison.OrdinalIgnoreCase)
+                && IsForwardDungeonTrigger(roomTrigger)
+                && ActiveDungeonRoom(context.GetPlayerRef(), context.GetZonePath(), playerObj.m_characterId) is { } roomTarget) {
+                destinationZone = roomTarget.Zone;
+                destinationLocation = roomTarget.Location;
+                Logger.Information("Dungeon room: teleport trigger {0} in {1} goes forward to {2} ({3}).",
+                    Logger.Args(roomTrigger, context.GetZonePath(), destinationZone, destinationLocation));
+            }
+
             // A raid's teleport pad names no destination either: it goes to the location at the pad's other end.
             if (context is GenericResultContext { TriggerName: { } triggerName }
                 && Raids.Raids.TeleportTarget(context.GetZonePath(), triggerName) is { } padTarget) {
