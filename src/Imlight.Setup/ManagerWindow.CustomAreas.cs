@@ -238,7 +238,8 @@ internal sealed partial class ManagerWindow {
         if (BossChanges.FindIn(placements, area.Room) is JsonObject room) {
             var objects = Arr(work, "Objects");
             foreach (var (name, node) in room) {
-                if (node is not JsonObject placement) {
+                // Things made in Blood Moon stay Blood Moon's: never folded into the area file (CustomPlacements.MadeInBloodMoon).
+                if (node is not JsonObject placement || CustomPlacements.MadeInBloodMoon(placement)) {
                     continue;
                 }
 
@@ -1252,6 +1253,10 @@ internal sealed partial class ManagerWindow {
         if (edit.HasPlacements) {
             // The moved and added objects are in the file now; taken-out ones stay out.
             foreach (var (name, node) in BossChanges.FindIn(SafePlacements(), oldRoom) as JsonObject ?? []) {
+                if (node is JsonObject made && CustomPlacements.MadeInBloodMoon(made)) {
+                    continue;
+                }
+
                 if (!(node is JsonObject p && BossChanges.FindIn(p, "Removed") is JsonValue r && r.ToJsonString() == "true")) {
                     CustomPlacements.Set(_manager.CustomsFolder, oldRoom, name, null);
                 }

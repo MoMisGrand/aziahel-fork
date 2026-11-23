@@ -203,6 +203,14 @@ internal static class CustomPlacements {
         return File.Exists(file) && JsonNode.Parse(File.ReadAllText(file), documentOptions: s_read) is JsonObject json ? json : [];
     }
 
+    /// <summary>
+    /// Whether a placement was made in Blood Moon, Niduus's 3D zone viewer ("By": "Blood Moon"): Blood Moon keeps those
+    /// itself, so the Customs tab leaves them as they are (never folds them into an area file or clears them on Save).
+    /// </summary>
+    internal static bool MadeInBloodMoon(JsonObject placement)
+        => BossChanges.FindIn(placement, "By") is JsonValue by && by.TryGetValue<string>(out var who)
+           && string.Equals(who, "Blood Moon", StringComparison.OrdinalIgnoreCase);
+
     /// <summary>The placement of an object in a room, or null.</summary>
     internal static JsonObject? Of(JsonObject placements, string room, string name)
         => BossChanges.FindIn(placements, room) is JsonObject objects ? BossChanges.FindIn(objects, name) as JsonObject : null;
